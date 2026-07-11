@@ -124,3 +124,98 @@ theorem list_monoid_fold_unique[T, A: Monoid](h: List[T] -> A, f: T -> A) {
         h = list_monoid_fold_fn(f)
     }
 }
+
+/// The evaluator agrees pointwise for functions that agree on every element of the list.
+theorem list_monoid_fold_of_pointwise[T, A: Monoid](items: List[T], f: T -> A, g: T -> A) {
+    forall(x: T) { items.contains(x) implies f(x) = g(x) } implies
+        list_monoid_fold(items, f) = list_monoid_fold(items, g)
+} by {
+    define p(xs: List[T]) -> Bool {
+        forall(x: T) { xs.contains(x) implies f(x) = g(x) } implies
+            list_monoid_fold(xs, f) = list_monoid_fold(xs, g)
+    }
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            if forall(x: T) { List.cons(head, tail).contains(x) implies f(x) = g(x) } {
+                forall(x: T) {
+                    if tail.contains(x) {
+                        List.cons(head, tail).contains(x)
+                        f(x) = g(x)
+                    }
+                }
+                list_monoid_fold(tail, f) = list_monoid_fold(tail, g)
+                List.cons(head, tail).contains(head)
+                f(head) = g(head)
+                list_monoid_fold(List.cons(head, tail), f) = f(head) * list_monoid_fold(tail, f)
+                list_monoid_fold(List.cons(head, tail), g) = g(head) * list_monoid_fold(tail, g)
+                f(head) * list_monoid_fold(tail, f) = g(head) * list_monoid_fold(tail, g)
+                list_monoid_fold(List.cons(head, tail), f) = list_monoid_fold(List.cons(head, tail), g)
+            }
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(function(xs: List[T]) { p(xs) })
+    forall(xs: List[T]) { p(xs) }
+    p(items)
+}
+
+/// If all mapped generators are the identity, the evaluator is the identity.
+theorem list_monoid_fold_all_identity[T, A: Monoid](items: List[T], f: T -> A) {
+    forall(x: T) { items.contains(x) implies f(x) = A.1 } implies
+        list_monoid_fold(items, f) = A.1
+} by {
+    define p(xs: List[T]) -> Bool {
+        forall(x: T) { xs.contains(x) implies f(x) = A.1 } implies
+            list_monoid_fold(xs, f) = A.1
+    }
+    p(List.nil[T])
+    forall(head: T, tail: List[T]) {
+        if p(tail) {
+            if forall(x: T) { List.cons(head, tail).contains(x) implies f(x) = A.1 } {
+                forall(x: T) {
+                    if tail.contains(x) {
+                        List.cons(head, tail).contains(x)
+                        f(x) = A.1
+                    }
+                }
+                list_monoid_fold(tail, f) = A.1
+                List.cons(head, tail).contains(head)
+                f(head) = A.1
+                list_monoid_fold(List.cons(head, tail), f) = f(head) * list_monoid_fold(tail, f)
+                f(head) * list_monoid_fold(tail, f) = A.1 * A.1
+                A.1 * A.1 = A.1
+                list_monoid_fold(List.cons(head, tail), f) = A.1
+            }
+            p(List.cons(head, tail))
+        }
+    }
+    List.induction(function(xs: List[T]) { p(xs) })
+    forall(xs: List[T]) { p(xs) }
+    p(items)
+}
+
+/// Appending one generator multiplies the evaluator on the right by that generator's value.
+theorem list_monoid_fold_append_singleton[T, A: Monoid](items: List[T], item: T, f: T -> A) {
+    list_monoid_fold(items.append(item), f) = list_monoid_fold(items, f) * f(item)
+} by {
+    items.append(item) = items + List.singleton(item)
+    list_monoid_fold_append(items, List.singleton(item), f)
+    list_monoid_fold(items + List.singleton(item), f) =
+        list_monoid_fold(items, f) * list_monoid_fold(List.singleton(item), f)
+    list_monoid_fold_singleton(item, f)
+    list_monoid_fold(List.singleton(item), f) = f(item)
+    list_monoid_fold(items.append(item), f) = list_monoid_fold(items, f) * f(item)
+}
+
+/// The evaluator of a two-element list is the product of the mapped entries.
+theorem list_monoid_fold_pair[T, A: Monoid](first: T, second: T, f: T -> A) {
+    list_monoid_fold(List.cons(first, List.singleton(second)), f) = f(first) * f(second)
+} by {
+    list_monoid_fold_cons(first, List.singleton(second), f)
+    list_monoid_fold(List.cons(first, List.singleton(second)), f) =
+        f(first) * list_monoid_fold(List.singleton(second), f)
+    list_monoid_fold_singleton(second, f)
+    list_monoid_fold(List.singleton(second), f) = f(second)
+    list_monoid_fold(List.cons(first, List.singleton(second)), f) = f(first) * f(second)
+}
