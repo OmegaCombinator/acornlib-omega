@@ -7,8 +7,9 @@ from number_theory.lcm import lcm_divides_left, lcm_divides_right
 from nat import exp_zero, exp_ne_zero
 from nat import divides_self, divides_zero, has_prime_divisor, strong_induction,
     true_below, divides_trans, mul_cancel_left, mul_to_zero, divides_mul_left,
-    add_cancels_left, lte_antisymm, lte_ref, lt_suc_left, add_identity_right,
-    alt_add_zero, lte_imp_not_lt, alt_suc_ne_zero, only_zero_lte_zero,
+    add_cancels_left, lte_antisymm, lte_ref, lt_suc, lt_suc_left,
+    lt_imp_lte_suc, add_identity_right, alt_add_zero, lte_imp_not_lt,
+    alt_suc_ne_zero, only_zero_lte_zero,
     nat_lte_meet_of_bounds
 from list import List, list_not_contains_impl_count_zero
 from list import product
@@ -1374,6 +1375,157 @@ theorem prime_pow_divides_iff(p: Nat, k: Nat, n: Nat) {
             p.pow(k).divides(n)
         }
         p.pow(k).divides(n) = (k <= count_prime_factor(p, n))
+    }
+}
+
+/// Exact prime-power divisibility predicate: `p^k` divides `n`, but the next
+/// power `p^(k+1)` does not. This is a compact API for saying that `k` is the
+/// exact exponent of the prime `p` in `n`.
+define exactly_divides_prime_power(p: Nat, k: Nat, n: Nat) -> Bool {
+    p.pow(k).divides(n) and not p.pow(k.suc).divides(n)
+}
+
+/// Unfold the exact prime-power divisibility predicate into the divisibility
+/// statement for `p^k` and non-divisibility for `p^(k+1)`.
+theorem exactly_divides_prime_power_unfold(p: Nat, k: Nat, n: Nat) {
+    exactly_divides_prime_power(p, k, n) =
+        (p.pow(k).divides(n) and not p.pow(k.suc).divides(n))
+}
+
+/// If the prime factor count is exactly `k`, then `p^k` is the exact prime
+/// power of `p` dividing `n`.
+theorem count_eq_imp_exactly_divides_prime_power(p: Nat, k: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 and count_prime_factor(p, n) = k
+        implies exactly_divides_prime_power(p, k, n)
+} by {
+    if p.is_prime and n != Nat.0 and count_prime_factor(p, n) = k {
+        count_le_imp_prime_pow_divides(p, k, n)
+        p.pow(k).divides(n)
+        if p.pow(k.suc).divides(n) {
+            prime_pow_divides_imp_count_le(p, k.suc, n)
+            k.suc <= count_prime_factor(p, n)
+            k.suc <= k
+            lt_suc(k)
+            k < k.suc
+            lte_imp_not_lt(k.suc, k)
+            not k < k.suc
+            false
+        }
+        not p.pow(k.suc).divides(n)
+        exactly_divides_prime_power(p, k, n)
+    }
+}
+
+/// If `p^k` is the exact prime power of `p` dividing nonzero `n`, then the
+/// prime factor count of `p` in `n` is exactly `k`.
+theorem exactly_divides_prime_power_imp_count_eq(p: Nat, k: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 and exactly_divides_prime_power(p, k, n)
+        implies count_prime_factor(p, n) = k
+} by {
+    if p.is_prime and n != Nat.0 and exactly_divides_prime_power(p, k, n) {
+        p.pow(k).divides(n)
+        not p.pow(k.suc).divides(n)
+        prime_pow_divides_imp_count_le(p, k, n)
+        k <= count_prime_factor(p, n)
+        if k < count_prime_factor(p, n) {
+            lt_imp_lte_suc(k, count_prime_factor(p, n))
+            k.suc <= count_prime_factor(p, n)
+            count_le_imp_prime_pow_divides(p, k.suc, n)
+            p.pow(k.suc).divides(n)
+            false
+        } else {
+            count_prime_factor(p, n) <= k
+        }
+        lte_antisymm(count_prime_factor(p, n), k)
+        count_prime_factor(p, n) = k
+    }
+}
+
+/// Multiplying by `p^k` shifts the `p`-prime count by exactly `k`, provided the
+/// cofactor is nonzero.
+theorem count_prime_factor_mul_prime_pow_left(p: Nat, k: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 implies
+        count_prime_factor(p, p.pow(k) * n) = k + count_prime_factor(p, n)
+} by {
+    if p.is_prime and n != Nat.0 {
+        Nat.1 < p
+        p != Nat.0
+        exp_ne_zero(p, k)
+        p.pow(k) != Nat.0
+        count_prime_factor_mul(p, p.pow(k), n)
+        count_prime_factor(p, p.pow(k) * n) =
+            count_prime_factor(p, p.pow(k)) + count_prime_factor(p, n)
+        count_prime_factor_pow(p, k)
+        count_prime_factor(p, p.pow(k)) = k
+        count_prime_factor(p, p.pow(k) * n) = k + count_prime_factor(p, n)
+    }
+}
+
+/// Multiplying by `p^k` on the right shifts the `p`-prime count by exactly `k`,
+/// provided the cofactor is nonzero.
+theorem count_prime_factor_mul_prime_pow_right(p: Nat, k: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 implies
+        count_prime_factor(p, n * p.pow(k)) = count_prime_factor(p, n) + k
+} by {
+    if p.is_prime and n != Nat.0 {
+        Nat.1 < p
+        p != Nat.0
+        exp_ne_zero(p, k)
+        p.pow(k) != Nat.0
+        count_prime_factor_mul(p, n, p.pow(k))
+        count_prime_factor(p, n * p.pow(k)) =
+            count_prime_factor(p, n) + count_prime_factor(p, p.pow(k))
+        count_prime_factor_pow(p, k)
+        count_prime_factor(p, p.pow(k)) = k
+        count_prime_factor(p, n * p.pow(k)) = count_prime_factor(p, n) + k
+    }
+}
+
+/// The exact prime-power exponent shifts additively after multiplying by a
+/// prime power on the left.
+theorem exactly_divides_prime_power_mul_prime_pow_left(p: Nat, k: Nat, r: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 and count_prime_factor(p, n) = r
+        implies exactly_divides_prime_power(p, k + r, p.pow(k) * n)
+} by {
+    if p.is_prime and n != Nat.0 and count_prime_factor(p, n) = r {
+        Nat.1 < p
+        p != Nat.0
+        exp_ne_zero(p, k)
+        p.pow(k) != Nat.0
+        if p.pow(k) * n = Nat.0 {
+            mul_to_zero(p.pow(k), n)
+            false
+        }
+        p.pow(k) * n != Nat.0
+        count_prime_factor_mul_prime_pow_left(p, k, n)
+        count_prime_factor(p, p.pow(k) * n) = k + count_prime_factor(p, n)
+        count_prime_factor(p, p.pow(k) * n) = k + r
+        count_eq_imp_exactly_divides_prime_power(p, k + r, p.pow(k) * n)
+        exactly_divides_prime_power(p, k + r, p.pow(k) * n)
+    }
+}
+
+/// The exact prime-power exponent shifts additively after multiplying by a
+/// prime power on the right.
+theorem exactly_divides_prime_power_mul_prime_pow_right(p: Nat, k: Nat, r: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 and count_prime_factor(p, n) = r
+        implies exactly_divides_prime_power(p, r + k, n * p.pow(k))
+} by {
+    if p.is_prime and n != Nat.0 and count_prime_factor(p, n) = r {
+        Nat.1 < p
+        p != Nat.0
+        exp_ne_zero(p, k)
+        p.pow(k) != Nat.0
+        if n * p.pow(k) = Nat.0 {
+            mul_to_zero(n, p.pow(k))
+            false
+        }
+        n * p.pow(k) != Nat.0
+        count_prime_factor_mul_prime_pow_right(p, k, n)
+        count_prime_factor(p, n * p.pow(k)) = count_prime_factor(p, n) + k
+        count_prime_factor(p, n * p.pow(k)) = r + k
+        count_eq_imp_exactly_divides_prime_power(p, r + k, n * p.pow(k))
+        exactly_divides_prime_power(p, r + k, n * p.pow(k))
     }
 }
 
