@@ -4,21 +4,34 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: acorn check
     runs-on: ubuntu-latest
+    env:
+      ACORN_VERSION: "0.2.4"
+      ACORN_SHA256: "8cc01b6e44502b57cfe8e28d5c724f73b5bacfcabdb34f3978cf5db5e0b9a41a"
+      ACORN_BINARY: "acorn-0.2.4-linux-x64"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
+      - name: Install Acorn 0.2.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          acorn_url="https://github.com/acornprover/acorn/releases/download/v${ACORN_VERSION}/${ACORN_BINARY}"
+          acorn_path="${RUNNER_TEMP}/acorn"
+          curl --fail --location --show-error --silent "$acorn_url" --output "$acorn_path"
+          printf '%s  %s\n' "$ACORN_SHA256" "$acorn_path" | sha256sum --check -
+          chmod +x "$acorn_path"
+          printf '%s\n' "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
-      - name: Install Acorn CLI
-        run: npm install -g @acornprover/cli
+      - name: Show Acorn version
+        run: acorn --version
 
       - name: Run Acorn
         run: acorn check --strict
