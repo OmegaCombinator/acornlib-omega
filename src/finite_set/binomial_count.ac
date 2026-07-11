@@ -8,7 +8,8 @@ from set import Set, list_set, list_set_contains_eq, set_ext, insert_contains_eq
 from list import List, unique_implies_tail_unique, add_length, map, map_filter_length_of_pointwise,
     filter_contained_by_and, filter_false_length
 from binary_words import filter_add, unique_cons_not_contains
-from combinatorics import Nat, choose_zero, choose_out_of_bounds, pascal_suc_unbounded
+from combinatorics import Nat, choose_n, choose_symm_sub_form, choose_zero,
+    choose_out_of_bounds, pascal_suc_unbounded
 numerals Nat
 
 /// A singleton filtered by a predicate true at its member has length one.
@@ -438,5 +439,112 @@ theorem finite_k_subsets_cardinality_is_binom[T](s: FiniteSet[T], n: Nat, k: Nat
         finite_k_subsets[T](s, k).cardinality_is(items.length.binom(k))
         items.length.binom(k) = n.binom(k)
         finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+    }
+}
+
+/// A finite set with cardinality `n` has exactly one zero-element subset.
+theorem finite_k_subsets_cardinality_zero_is_one[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, Nat.0).cardinality_is(Nat.1)
+} by {
+    if s.cardinality_is(n) {
+        finite_k_subsets_cardinality_is_binom[T](s, n, Nat.0)
+        finite_k_subsets[T](s, Nat.0).cardinality_is(n.binom(Nat.0))
+        choose_zero(n)
+        n.binom(Nat.0) = Nat.1
+        finite_k_subsets[T](s, Nat.0).cardinality_is(Nat.1)
+    }
+}
+
+/// A finite set with cardinality `n` has exactly one subset of full cardinality.
+theorem finite_k_subsets_cardinality_self_is_one[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, n).cardinality_is(Nat.1)
+} by {
+    if s.cardinality_is(n) {
+        finite_k_subsets_cardinality_is_binom[T](s, n, n)
+        finite_k_subsets[T](s, n).cardinality_is(n.binom(n))
+        choose_n(n)
+        n.binom(n) = Nat.1
+        finite_k_subsets[T](s, n).cardinality_is(Nat.1)
+    }
+}
+
+/// If `k` is larger than the cardinality of a finite set, there are no `k`-subsets.
+theorem finite_k_subsets_cardinality_out_of_bounds[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and n < k implies finite_k_subsets[T](s, k).cardinality_is(Nat.0)
+} by {
+    if s.cardinality_is(n) and n < k {
+        finite_k_subsets_cardinality_is_binom[T](s, n, k)
+        finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+        choose_out_of_bounds(n, k)
+        n.binom(k) = Nat.0
+        finite_k_subsets[T](s, k).cardinality_is(Nat.0)
+    }
+}
+
+/// Complementary subset sizes have finite families with the same cardinality.
+theorem finite_k_subsets_cardinality_complement_eq[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and k <= n implies
+        finite_k_subsets[T](s, k).cardinality_is(n.binom(n - k))
+} by {
+    if s.cardinality_is(n) and k <= n {
+        finite_k_subsets_cardinality_is_binom[T](s, n, k)
+        finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+        choose_symm_sub_form(n, k)
+        n.binom(k) = n.binom(n - k)
+        finite_k_subsets[T](s, k).cardinality_is(n.binom(n - k))
+    }
+}
+
+/// The family of complementary-size subsets has the same binomial cardinality as the `k`-subset family.
+theorem finite_complement_k_subsets_cardinality_eq[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and k <= n implies
+        finite_k_subsets[T](s, n - k).cardinality_is(n.binom(k))
+} by {
+    if s.cardinality_is(n) and k <= n {
+        n - k <= n
+        finite_k_subsets_cardinality_is_binom[T](s, n, n - k)
+        finite_k_subsets[T](s, n - k).cardinality_is(n.binom(n - k))
+        choose_symm_sub_form(n, k)
+        n.binom(k) = n.binom(n - k)
+        finite_k_subsets[T](s, n - k).cardinality_is(n.binom(k))
+    }
+}
+
+/// A duplicate-free list has one zero-subset in its filtered subset enumeration.
+theorem list_k_subsets_zero_length_is_one[T](items: List[T]) {
+    items.is_unique implies list_k_subsets[T](items, Nat.0).length = Nat.1
+} by {
+    if items.is_unique {
+        list_k_subsets_length_binom[T](items, Nat.0)
+        list_k_subsets[T](items, Nat.0).length = items.length.binom(Nat.0)
+        choose_zero(items.length)
+        items.length.binom(Nat.0) = Nat.1
+        list_k_subsets[T](items, Nat.0).length = Nat.1
+    }
+}
+
+/// A duplicate-free list has one full-cardinality subset in its filtered subset enumeration.
+theorem list_k_subsets_self_length_is_one[T](items: List[T]) {
+    items.is_unique implies list_k_subsets[T](items, items.length).length = Nat.1
+} by {
+    if items.is_unique {
+        list_k_subsets_length_binom[T](items, items.length)
+        list_k_subsets[T](items, items.length).length = items.length.binom(items.length)
+        choose_n(items.length)
+        items.length.binom(items.length) = Nat.1
+        list_k_subsets[T](items, items.length).length = Nat.1
+    }
+}
+
+/// A duplicate-free list has no filtered `k`-subsets when `k` exceeds its length.
+theorem list_k_subsets_out_of_bounds_length_zero[T](items: List[T], k: Nat) {
+    items.is_unique and items.length < k implies list_k_subsets[T](items, k).length = Nat.0
+} by {
+    if items.is_unique and items.length < k {
+        list_k_subsets_length_binom[T](items, k)
+        list_k_subsets[T](items, k).length = items.length.binom(k)
+        choose_out_of_bounds(items.length, k)
+        items.length.binom(k) = Nat.0
+        list_k_subsets[T](items, k).length = Nat.0
     }
 }

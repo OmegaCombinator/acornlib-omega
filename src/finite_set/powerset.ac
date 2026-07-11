@@ -1,10 +1,10 @@
+from combinatorics import Nat, binom_row_sum
 from finite_set.base import FiniteSet, finite_set_cardinality_is_well_defined,
     finite_set_from_unique_list_cardinality_is_length, finite_set_has_unique_list,
     fs_from_list
-from list import List
+from list import List, partial
 from finite_set.list_subsets import finite_powerset_from_list,
     finite_powerset_from_list_cardinality, finite_powerset_from_list_exact
-from nat import Nat
 
 /// The powerset of a finite set, represented through a duplicate-free list of its elements.
 let finite_powerset[T](s: FiniteSet[T]) -> result: FiniteSet[FiniteSet[T]] satisfy {
@@ -69,4 +69,17 @@ theorem finite_powerset_cardinality[T](s: FiniteSet[T], n: Nat) {
     finite_powerset_from_list_cardinality[T](items)
     finite_powerset_from_list[T](items).cardinality_is(Nat.2.pow(items.length))
     finite_powerset[T](s).cardinality_is(Nat.2.pow(n))
+}
+
+/// The powerset cardinality agrees with the binomial row sum for a finite set of cardinality `n`.
+theorem finite_powerset_cardinality_as_binomial_row_sum[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_powerset[T](s).cardinality_is(partial(n.binom, n.suc))
+} by {
+    if s.cardinality_is(n) {
+        finite_powerset_cardinality[T](s, n)
+        finite_powerset[T](s).cardinality_is(Nat.2.pow(n))
+        binom_row_sum(n)
+        partial(n.binom, n.suc) = Nat.2.pow(n)
+        finite_powerset[T](s).cardinality_is(partial(n.binom, n.suc))
+    }
 }

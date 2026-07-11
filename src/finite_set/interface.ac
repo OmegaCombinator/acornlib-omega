@@ -1,3 +1,4 @@
+from combinatorics import choose_n, choose_out_of_bounds, choose_symm_sub_form, choose_zero
 from nat import Nat
 from list import List
 from list import map
@@ -603,6 +604,24 @@ define list_subsets[A](items: List[A]) -> List[FiniteSet[A]] {
     }
 }
 
+/// The list of members of `list_subsets(items)` whose finite cardinality is `k`.
+define list_k_subsets[A](items: List[A], k: Nat) -> List[FiniteSet[A]] {
+    list_subsets[A](items).filter(function(s: FiniteSet[A]) { s.cardinality_is(k) })
+}
+
+/// The finite set represented by the filtered k-subset list.
+define finite_k_subsets_from_list[A](items: List[A], k: Nat) -> FiniteSet[FiniteSet[A]] {
+    fs_from_list[FiniteSet[A]](list_k_subsets[A](items, k))
+}
+
+/// The finite family of `k`-element subsets of a finite set.
+let finite_k_subsets[T](s: FiniteSet[T], k: Nat) -> result: FiniteSet[FiniteSet[T]] satisfy {
+    exists(items: List[T]) {
+        fs_from_list(items) = s and items.is_unique and
+        result = finite_k_subsets_from_list[T](items, k)
+    }
+}
+
 /// The finite powerset represented by the subset list associated to `items`.
 define finite_powerset_from_list[A](items: List[A]) -> FiniteSet[FiniteSet[A]] {
     fs_from_list[FiniteSet[A]](list_subsets[A](items))
@@ -618,6 +637,116 @@ theorem finite_powerset_from_list_exact[A](items: List[A]) {
 /// A list-backed finite powerset over a duplicate-free base has cardinality `2 ^ items.length`.
 theorem finite_powerset_from_list_cardinality[A](items: List[A]) {
     items.is_unique implies finite_powerset_from_list[A](items).cardinality_is(Nat.2.pow(items.length))
+}
+
+/// A finite set occurs in the filtered k-subset family exactly when it is a subset with cardinality `k`.
+theorem list_k_subsets_exact[A](items: List[A], k: Nat, t: FiniteSet[A]) {
+    list_k_subsets[A](items, k).contains(t) =
+        (t.subset_eq(FiniteSet.from_list[A](items)) and t.cardinality_is(k))
+}
+
+/// The finite filtered k-subset family contains exactly the k-cardinality subsets.
+theorem finite_k_subsets_from_list_exact[A](items: List[A], k: Nat, t: FiniteSet[A]) {
+    finite_k_subsets_from_list[A](items, k).contains(t) =
+        (t.subset_eq(FiniteSet.from_list[A](items)) and t.cardinality_is(k))
+}
+
+/// Filtering `list_subsets` by cardinality preserves duplicate-freedom for duplicate-free bases.
+theorem list_k_subsets_unique[A](items: List[A], k: Nat) {
+    items.is_unique implies list_k_subsets[A](items, k).is_unique
+}
+
+/// The list-backed finite k-subset family is counted by its duplicate-free filtered list.
+theorem finite_k_subsets_from_list_cardinality_is_length[A](items: List[A], k: Nat) {
+    items.is_unique implies finite_k_subsets_from_list[A](items, k).cardinality_is(list_k_subsets[A](items, k).length)
+}
+
+/// Pascal step for nonzero k-subset list lengths over a duplicate-free cons base.
+theorem list_k_subsets_cons_suc_length[A](head: A, tail: List[A], k: Nat) {
+    List.cons[A](head, tail).is_unique implies
+    list_k_subsets[A](List.cons[A](head, tail), k.suc).length =
+        list_k_subsets[A](tail, k.suc).length + list_k_subsets[A](tail, k).length
+}
+
+/// The finite k-subset family contains exactly the finite subsets of cardinality `k`.
+theorem finite_k_subsets_exact[T](s: FiniteSet[T], k: Nat) {
+    forall(t: FiniteSet[T]) {
+        finite_k_subsets[T](s, k).contains(t) = (t.subset_eq(s) and t.cardinality_is(k))
+    }
+}
+
+/// Any duplicate-free list witness for `s` produces the same finite k-subset family.
+theorem finite_k_subsets_from_list_eq_of_unique_list[T](s: FiniteSet[T], k: Nat, items: List[T]) {
+    fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k) = finite_k_subsets_from_list[T](items, k)
+}
+
+/// The finite k-subset family is counted by the canonical filtered list for any duplicate-free witness.
+theorem finite_k_subsets_cardinality_from_list_length[T](s: FiniteSet[T], k: Nat) {
+    forall(items: List[T]) {
+        fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k).cardinality_is(list_k_subsets[T](items, k).length)
+    }
+}
+
+/// A duplicate-free list has exactly `items.length choose k` k-element subsets.
+theorem list_k_subsets_length_binom[A](items: List[A], k: Nat) {
+    items.is_unique implies list_k_subsets[A](items, k).length = items.length.binom(k)
+}
+
+/// A duplicate-free list witness for a finite set gives binomial cardinality
+/// for the finite family of k-subsets.
+theorem finite_k_subsets_cardinality_is_binom_from_list[T](s: FiniteSet[T], items: List[T], k: Nat) {
+    fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k).cardinality_is(items.length.binom(k))
+}
+
+/// Cardinality-parameter endpoint: a finite set with cardinality `n` has
+/// exactly `n choose k` k-element subsets.
+theorem finite_k_subsets_cardinality_is_binom[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+}
+
+/// A finite set with cardinality `n` has exactly one zero-element subset.
+theorem finite_k_subsets_cardinality_zero_is_one[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, Nat.0).cardinality_is(Nat.1)
+}
+
+/// A finite set with cardinality `n` has exactly one subset of full cardinality.
+theorem finite_k_subsets_cardinality_self_is_one[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, n).cardinality_is(Nat.1)
+}
+
+/// If `k` is larger than the cardinality of a finite set, there are no `k`-subsets.
+theorem finite_k_subsets_cardinality_out_of_bounds[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and n < k implies finite_k_subsets[T](s, k).cardinality_is(Nat.0)
+}
+
+/// Complementary subset sizes have finite families with the same cardinality.
+theorem finite_k_subsets_cardinality_complement_eq[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and k <= n implies
+        finite_k_subsets[T](s, k).cardinality_is(n.binom(n - k))
+}
+
+/// The family of complementary-size subsets has the same binomial cardinality as the `k`-subset family.
+theorem finite_complement_k_subsets_cardinality_eq[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) and k <= n implies
+        finite_k_subsets[T](s, n - k).cardinality_is(n.binom(k))
+}
+
+/// A duplicate-free list has one zero-subset in its filtered subset enumeration.
+theorem list_k_subsets_zero_length_is_one[T](items: List[T]) {
+    items.is_unique implies list_k_subsets[T](items, Nat.0).length = Nat.1
+}
+
+/// A duplicate-free list has one full-cardinality subset in its filtered subset enumeration.
+theorem list_k_subsets_self_length_is_one[T](items: List[T]) {
+    items.is_unique implies list_k_subsets[T](items, items.length).length = Nat.1
+}
+
+/// A duplicate-free list has no filtered `k`-subsets when `k` exceeds its length.
+theorem list_k_subsets_out_of_bounds_length_zero[T](items: List[T], k: Nat) {
+    items.is_unique and items.length < k implies list_k_subsets[T](items, k).length = Nat.0
 }
 
 /// The sum of `f` over the elements of a finite set.
