@@ -1,9 +1,9 @@
 from finite_set import FiniteSet, fs_union
 from logic import exists_intro
 from list import List
-from multiset import Multiset, add_multiplicity, insert_multiplicity_other,
-    insert_multiplicity_self, multiset_ext, singleton_multiplicity_other,
-    singleton_multiplicity_self
+from multiset import Multiset, add_multiplicity, filter_multiplicity_false,
+    filter_multiplicity_true, insert_multiplicity_other, insert_multiplicity_self,
+    multiset_ext, singleton_multiplicity_other, singleton_multiplicity_self
 from multiset_list import from_list_has_finite_support_witness, from_list_singleton
 from nat import Nat, add_to_zero
 from set import not_union_contains_eq
@@ -248,5 +248,44 @@ theorem multiset_insert_preserves_finite_support[T](a: Multiset[T], item: T) {
         (a + Multiset.singleton(item)).has_finite_support
         multiset_insert_eq_add_singleton(a, item)
         a.insert(item).has_finite_support
+    }
+}
+
+/// Filtering a finitely supported multiset preserves finite support.
+theorem multiset_filter_preserves_finite_support[T](a: Multiset[T], pred: T -> Bool) {
+    a.has_finite_support implies a.filter(pred).has_finite_support
+} by {
+    if a.has_finite_support {
+        let support: FiniteSet[T] satisfy {
+            forall(x: T) {
+                not support.contains(x) implies a.multiplicity(x) = Nat.0
+            }
+        }
+        forall(x: T) {
+            if not support.contains(x) {
+                a.multiplicity(x) = Nat.0
+                if pred(x) {
+                    filter_multiplicity_true(a, pred, x)
+                    a.filter(pred).multiplicity(x) = a.multiplicity(x)
+                    a.filter(pred).multiplicity(x) = Nat.0
+                }
+                if not pred(x) {
+                    filter_multiplicity_false(a, pred, x)
+                    a.filter(pred).multiplicity(x) = Nat.0
+                }
+                a.filter(pred).multiplicity(x) = Nat.0
+            }
+        }
+        exists_intro(function(s: FiniteSet[T]) {
+            forall(x: T) {
+                not s.contains(x) implies a.filter(pred).multiplicity(x) = Nat.0
+            }
+        }, support)
+        exists(s: FiniteSet[T]) {
+            forall(x: T) {
+                not s.contains(x) implies a.filter(pred).multiplicity(x) = Nat.0
+            }
+        }
+        a.filter(pred).has_finite_support
     }
 }
