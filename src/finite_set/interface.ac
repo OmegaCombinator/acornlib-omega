@@ -2,7 +2,7 @@ from combinatorics import choose_n, choose_out_of_bounds, choose_symm_sub_form, 
 from nat import Nat
 from list import List
 from list import map
-from list import pigeonhole_map_into_list, sum
+from list import pigeonhole_map_into_list, sum, partial
 from add_comm_monoid import AddCommMonoid
 from add_semigroup import add_fn
 from semigroup import mul_fn
@@ -637,6 +637,31 @@ theorem finite_powerset_from_list_exact[A](items: List[A]) {
 /// A list-backed finite powerset over a duplicate-free base has cardinality `2 ^ items.length`.
 theorem finite_powerset_from_list_cardinality[A](items: List[A]) {
     items.is_unique implies finite_powerset_from_list[A](items).cardinality_is(Nat.2.pow(items.length))
+}
+
+/// The powerset of a finite set, represented through a duplicate-free list of its elements.
+let finite_powerset[T](s: FiniteSet[T]) -> result: FiniteSet[FiniteSet[T]] satisfy {
+    exists(items: List[T]) {
+        fs_from_list(items) = s and items.is_unique and
+        result = finite_powerset_from_list[T](items)
+    }
+}
+
+/// The finite powerset contains exactly the finite subsets of its base set.
+theorem finite_powerset_exact[T](s: FiniteSet[T]) {
+    forall(t: FiniteSet[T]) {
+        finite_powerset[T](s).contains(t) = t.subset_eq(s)
+    }
+}
+
+/// A finite set of cardinality `n` has a powerset of cardinality `2 ^ n`.
+theorem finite_powerset_cardinality[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_powerset[T](s).cardinality_is(Nat.2.pow(n))
+}
+
+/// The powerset cardinality agrees with the binomial row sum for a finite set of cardinality `n`.
+theorem finite_powerset_cardinality_as_binomial_row_sum[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_powerset[T](s).cardinality_is(partial(n.binom, n.suc))
 }
 
 /// A finite set occurs in the filtered k-subset family exactly when it is a subset with cardinality `k`.
