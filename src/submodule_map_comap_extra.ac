@@ -11,12 +11,17 @@ from submodule import Submodule, submodule_subset, submodule_subset_refl,
     submodule_closure, submodule_closure_mono,
     submodule_closure_subset_of_set_subset,
     set_subset_submodule, zero_submodule, zero_submodule_carrier_eq,
-    zero_submodule_contains_eq, full_submodule,
+    zero_submodule_contains_eq, full_submodule, full_submodule_carrier_eq,
     full_submodule_contains_everything, submodule_contains_zero,
     linear_map_preimage_submodule, linear_map_preimage_submodule_carrier_eq,
     linear_map_preimage_submodule_contains_of_image_in,
     linear_map_preimage_submodule_image_in_of_contains,
     linear_map_preimage_submodule_mono,
+    linear_map_preimage_submodule_full_subset,
+    full_submodule_subset_linear_map_preimage_full,
+    linear_map_preimage_submodule_zero_subset_kernel,
+    linear_map_kernel_subset_preimage_submodule_zero,
+    linear_map_kernel_submodule, linear_map_kernel_submodule_carrier_eq,
     linear_map_image, linear_map_image_submodule,
     linear_map_image_submodule_carrier_eq,
     linear_map_image_submodule_contains_apply,
@@ -173,6 +178,49 @@ theorem linear_map_submodule_image_preimage_subset[R: Ring, M: AddCommGroup, N: 
         }
         linear_map_submodule_image_subset_of_maps_into(src, dst, f, preimage, t)
         submodule_subset(linear_map_submodule_image(src, dst, f, preimage), t)
+    }
+}
+
+/// The preimage of the full submodule is the full source submodule.
+theorem linear_map_preimage_submodule_full_eq_full[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], dst: Module[R, N], f: M -> N
+) {
+    is_linear_map(src, dst, f) implies
+        linear_map_preimage_submodule(src, full_submodule(dst), f) = full_submodule(src)
+} by {
+    if is_linear_map(src, dst, f) {
+        linear_map_preimage_submodule_full_subset(src, dst, f)
+        full_submodule_subset_linear_map_preimage_full(src, dst, f)
+        linear_map_preimage_submodule_carrier_eq(src, full_submodule(dst), f)
+        full_submodule_carrier_eq(src)
+        linear_map_preimage_submodule(src, full_submodule(dst), f).carrier = src
+        full_submodule(src).carrier = src
+        linear_map_preimage_submodule(src, full_submodule(dst), f).carrier = full_submodule(src).carrier
+        submodule_subset_antisymm(linear_map_preimage_submodule(src, full_submodule(dst), f), full_submodule(src))
+        linear_map_preimage_submodule(src, full_submodule(dst), f) = full_submodule(src)
+    }
+}
+
+/// The preimage of the zero submodule is the kernel submodule.
+theorem linear_map_preimage_submodule_zero_eq_kernel[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    src: Module[R, M], dst: Module[R, N], f: M -> N
+) {
+    is_linear_map(src, dst, f) implies
+        linear_map_preimage_submodule(src, zero_submodule(dst), f) = linear_map_kernel_submodule(src, dst, f)
+} by {
+    if is_linear_map(src, dst, f) {
+        linear_map_preimage_submodule_zero_subset_kernel(src, dst, f)
+        linear_map_kernel_subset_preimage_submodule_zero(src, dst, f)
+        linear_map_preimage_submodule_carrier_eq(src, zero_submodule(dst), f)
+        linear_map_kernel_submodule_carrier_eq(src, dst, f)
+        linear_map_preimage_submodule(src, zero_submodule(dst), f).carrier = src
+        linear_map_kernel_submodule(src, dst, f).carrier = src
+        linear_map_preimage_submodule(src, zero_submodule(dst), f).carrier =
+            linear_map_kernel_submodule(src, dst, f).carrier
+        submodule_subset_antisymm(
+            linear_map_preimage_submodule(src, zero_submodule(dst), f),
+            linear_map_kernel_submodule(src, dst, f))
+        linear_map_preimage_submodule(src, zero_submodule(dst), f) = linear_map_kernel_submodule(src, dst, f)
     }
 }
 
