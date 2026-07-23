@@ -8,10 +8,12 @@
 /// proper-divisor formulation of perfect numbers.
 
 from nat import Nat
-from list import List, sum, filter_contains_and, filter_contained_by_and
+from list import List, sum, filter_contains_and, filter_contained_by_and,
+    filter_preserves_unique
 from pair import Pair
 from list_pair_product import list_pair_product, list_pair_product_contains_of_contains,
-    list_pair_product_contains_imp_left, list_pair_product_contains_imp_right
+    list_pair_product_contains_imp_left, list_pair_product_contains_imp_right,
+    list_pair_product_unique
 from number_theory.divisor_sum import divisor_list, divisor_list_zero, divisor_list_one,
     divisor_list_prime, divisor_list_contains_implies, divisor_list_contains_of,
     divisor_list_is_unique
@@ -29,7 +31,7 @@ define divisors(n: Nat) -> List[Nat] {
 /// `proper_divisors(n)` is the list of positive divisors of `n` other than `n`.
 /// By convention this is empty at `0`, because `divisor_list(0)` is empty.
 define proper_divisors(n: Nat) -> List[Nat] {
-    divisor_list(n).filter(function(d: Nat) { d != n })
+    divisor_list(n).filter(function(d: Nat) { n != d })
 }
 
 /// The sum of the proper divisors of `n`.
@@ -109,14 +111,70 @@ theorem divisors_is_unique(n: Nat) {
     divisor_list_is_unique(n)
 }
 
+/// Membership in `proper_divisors(n)` gives a positive divisor of `n` that is not `n`.
+theorem proper_divisors_contains_implies(n: Nat, d: Nat) {
+    proper_divisors(n).contains(d) implies Nat.0 < d and d.divides(n) and n != d
+} by {
+    if proper_divisors(n).contains(d) {
+        proper_divisors(n) = divisor_list(n).filter(function(x: Nat) { n != x })
+        divisor_list(n).filter(function(x: Nat) { n != x }).contains(d)
+        filter_contained_by_and(divisor_list(n), function(x: Nat) { n != x }, d)
+        divisor_list(n).contains(d)
+        n != d
+        divisor_list_contains_implies(n, d)
+        Nat.0 < d
+        d.divides(n)
+        Nat.0 < d and d.divides(n)
+        Nat.0 < d and d.divides(n) and n != d
+    }
+}
+
+/// A positive divisor of positive `n`, other than `n`, belongs to `proper_divisors(n)`.
+theorem proper_divisors_contains_of(n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n) and Nat.0 < d and n != d implies
+        proper_divisors(n).contains(d)
+} by {
+    if Nat.0 < n and d.divides(n) and Nat.0 < d and n != d {
+        divisor_list_contains_of(n, d)
+        divisor_list(n).contains(d)
+        n != d
+        filter_contains_and(divisor_list(n), function(x: Nat) { n != x }, d)
+        divisor_list(n).filter(function(x: Nat) { n != x }).contains(d)
+        proper_divisors(n) = divisor_list(n).filter(function(x: Nat) { n != x })
+        proper_divisors(n).contains(d)
+    }
+}
+
+/// No natural number is a member of its own proper-divisor collection.
+theorem proper_divisors_self_not_contains(n: Nat) {
+    not proper_divisors(n).contains(n)
+} by {
+    if proper_divisors(n).contains(n) {
+        proper_divisors_contains_implies(n, n)
+        n != n
+        false
+    }
+}
+
+/// Filtering the unique certified divisor list preserves uniqueness.
+theorem proper_divisors_is_unique(n: Nat) {
+    proper_divisors(n).is_unique
+} by {
+    divisor_list_is_unique(n)
+    filter_preserves_unique(divisor_list(n), function(x: Nat) { n != x })
+    divisor_list(n).filter(function(x: Nat) { n != x }).is_unique
+    proper_divisors(n) = divisor_list(n).filter(function(x: Nat) { n != x })
+    proper_divisors(n).is_unique
+}
+
 /// The proper-divisor collection is empty at zero.
 theorem proper_divisors_zero {
     proper_divisors(Nat.0) = List.nil[Nat]
 } by {
-    proper_divisors(Nat.0) = divisor_list(Nat.0).filter(function(d: Nat) { d != Nat.0 })
+    proper_divisors(Nat.0) = divisor_list(Nat.0).filter(function(d: Nat) { Nat.0 != d })
     divisor_list_zero
     divisor_list(Nat.0) = List.nil[Nat]
-    List.nil[Nat].filter(function(d: Nat) { d != Nat.0 }) = List.nil[Nat]
+    List.nil[Nat].filter(function(d: Nat) { Nat.0 != d }) = List.nil[Nat]
 }
 
 /// The proper-divisor sum at zero is zero.
@@ -127,6 +185,74 @@ theorem proper_divisor_sum_zero {
     proper_divisor_sum(Nat.0) = sum(proper_divisors(Nat.0))
     proper_divisor_sum(Nat.0) = sum(List.nil[Nat])
     sum(List.nil[Nat]) = Nat.0
+}
+
+/// Membership in the divisor antidiagonal gives divisor membership of both coordinates
+/// and the required product equation.
+theorem divisors_antidiagonal_contains_implies(n: Nat, a: Nat, b: Nat) {
+    divisors_antidiagonal(n).contains(Pair.new(a, b)) implies
+        divisors(n).contains(a) and divisors(n).contains(b) and a * b = n
+} by {
+    if divisors_antidiagonal(n).contains(Pair.new(a, b)) {
+        let product = list_pair_product(divisors(n), divisors(n))
+        let pair = Pair.new(a, b)
+        divisors_antidiagonal(n) = product.filter(divisor_pair_product_eq(n))
+        product.filter(divisor_pair_product_eq(n)).contains(pair)
+        filter_contained_by_and(product, divisor_pair_product_eq(n), pair)
+        product.contains(pair)
+        divisor_pair_product_eq(n)(pair)
+        pair.first = a
+        pair.second = b
+        list_pair_product_contains_imp_left(divisors(n), divisors(n), pair)
+        divisors(n).contains(pair.first)
+        divisors(n).contains(a)
+        list_pair_product_contains_imp_right(divisors(n), divisors(n), pair)
+        divisors(n).contains(pair.second)
+        divisors(n).contains(b)
+        divisor_pair_product_eq(n)(pair) = (pair.first * pair.second = n)
+        pair.first * pair.second = n
+        a * b = n
+        divisors(n).contains(a) and divisors(n).contains(b)
+        divisors(n).contains(a) and divisors(n).contains(b) and a * b = n
+    }
+}
+
+/// A pair of divisors whose product is `n` belongs to the divisor antidiagonal.
+theorem divisors_antidiagonal_contains_of(n: Nat, a: Nat, b: Nat) {
+    divisors(n).contains(a) and divisors(n).contains(b) and a * b = n implies
+        divisors_antidiagonal(n).contains(Pair.new(a, b))
+} by {
+    if divisors(n).contains(a) and divisors(n).contains(b) and a * b = n {
+        let product = list_pair_product(divisors(n), divisors(n))
+        let pair = Pair.new(a, b)
+        list_pair_product_contains_of_contains(divisors(n), divisors(n), a, b)
+        product.contains(pair)
+        pair.first = a
+        pair.second = b
+        divisor_pair_product_eq(n)(pair) = (pair.first * pair.second = n)
+        pair.first * pair.second = n
+        divisor_pair_product_eq(n)(pair)
+        filter_contains_and(product, divisor_pair_product_eq(n), pair)
+        product.filter(divisor_pair_product_eq(n)).contains(pair)
+        divisors_antidiagonal(n) = product.filter(divisor_pair_product_eq(n))
+        divisors_antidiagonal(n).contains(pair)
+        pair = Pair.new(a, b)
+        divisors_antidiagonal(n).contains(Pair.new(a, b))
+    }
+}
+
+/// The divisor antidiagonal has no repeated pairs.
+theorem divisors_antidiagonal_is_unique(n: Nat) {
+    divisors_antidiagonal(n).is_unique
+} by {
+    divisors_is_unique(n)
+    list_pair_product_unique(divisors(n), divisors(n))
+    list_pair_product(divisors(n), divisors(n)).is_unique
+    filter_preserves_unique(list_pair_product(divisors(n), divisors(n)), divisor_pair_product_eq(n))
+    list_pair_product(divisors(n), divisors(n)).filter(divisor_pair_product_eq(n)).is_unique
+    divisors_antidiagonal(n) =
+        list_pair_product(divisors(n), divisors(n)).filter(divisor_pair_product_eq(n))
+    divisors_antidiagonal(n).is_unique
 }
 
 /// The divisor antidiagonal is empty at zero.
