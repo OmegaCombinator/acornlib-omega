@@ -1,0 +1,188 @@
+/// Mathlib-style divisor collections for natural numbers.
+///
+/// This module starts the translation of `Mathlib/NumberTheory/Divisors.lean`.
+/// The current Acorn number-theory library already has the certified positive
+/// divisor list `divisor_list` and divisor sums in `divisor_sum.ac`; this file
+/// exposes Mathlib-oriented names around that infrastructure and adds the first
+/// source-ready scaffold for proper divisors, divisor antidiagonals, and the
+/// proper-divisor formulation of perfect numbers.
+
+from nat import Nat
+from list import List, sum, filter_contains_and, filter_contained_by_and
+from pair import Pair
+from list_pair_product import list_pair_product, list_pair_product_contains_of_contains,
+    list_pair_product_contains_imp_left, list_pair_product_contains_imp_right
+from number_theory.divisor_sum import divisor_list, divisor_list_zero, divisor_list_one,
+    divisor_list_prime, divisor_list_contains_implies, divisor_list_contains_of,
+    divisor_list_is_unique
+from number_theory.perfect_number import is_perfect_number, zero_not_perfect_number,
+    one_not_perfect_number, prime_not_perfect_number
+
+numerals Nat
+
+/// `divisors(n)` is the list of positive divisors of `n`, using the existing
+/// certified divisor list. By convention this is empty at `0`.
+define divisors(n: Nat) -> List[Nat] {
+    divisor_list(n)
+}
+
+/// `proper_divisors(n)` is the list of positive divisors of `n` other than `n`.
+/// By convention this is empty at `0`, because `divisor_list(0)` is empty.
+define proper_divisors(n: Nat) -> List[Nat] {
+    divisor_list(n).filter(function(d: Nat) { d != n })
+}
+
+/// The sum of the proper divisors of `n`.
+define proper_divisor_sum(n: Nat) -> Nat {
+    sum(proper_divisors(n))
+}
+
+/// Predicate selecting pairs whose product is the given natural.
+define divisor_pair_product_eq(n: Nat) -> (Pair[Nat, Nat] -> Bool) {
+    function(p: Pair[Nat, Nat]) { p.first * p.second = n }
+}
+
+/// The list version of the divisor antidiagonal of `n`: pairs `(a, b)` of
+/// positive divisors whose product is `n`. Since it is built from `divisors(0)`,
+/// it is empty at `0`.
+define divisors_antidiagonal(n: Nat) -> List[Pair[Nat, Nat]] {
+    list_pair_product(divisors(n), divisors(n)).filter(divisor_pair_product_eq(n))
+}
+
+/// Mathlib's perfect-number predicate, stated through proper divisors: `n` is
+/// positive and the proper-divisor sum is exactly `n`.
+define perfect_via_proper_divisors(n: Nat) -> Bool {
+    Nat.0 < n and proper_divisor_sum(n) = n
+}
+
+/// Existing Acorn perfect-number predicate, kept under a short Mathlib-style
+/// name while the bridge to `perfect_via_proper_divisors` is developed.
+define perfect(n: Nat) -> Bool {
+    is_perfect_number(n)
+}
+
+/// The Mathlib-style divisor collection is empty at zero.
+theorem divisors_zero {
+    divisors(Nat.0) = List.nil[Nat]
+} by {
+    divisor_list_zero
+}
+
+/// The divisor collection of one contains only one.
+theorem divisors_one {
+    divisors(Nat.1) = List.cons(Nat.1, List.nil[Nat])
+} by {
+    divisor_list_one
+}
+
+/// The divisor collection of a prime contains the prime and one.
+theorem divisors_prime(p: Nat) {
+    p.is_prime implies divisors(p) = List.cons(p, List.cons(Nat.1, List.nil[Nat]))
+} by {
+    if p.is_prime {
+        divisor_list_prime(p)
+    }
+}
+
+/// Membership in `divisors(n)` gives a positive divisor of `n`.
+theorem divisors_contains_implies(n: Nat, d: Nat) {
+    divisors(n).contains(d) implies Nat.0 < d and d.divides(n)
+} by {
+    if divisors(n).contains(d) {
+        divisor_list_contains_implies(n, d)
+    }
+}
+
+/// A positive divisor of positive `n` belongs to `divisors(n)`.
+theorem divisors_contains_of(n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n) and Nat.0 < d implies divisors(n).contains(d)
+} by {
+    if Nat.0 < n and d.divides(n) and Nat.0 < d {
+        divisor_list_contains_of(n, d)
+    }
+}
+
+/// The divisor collection has no repeated entries.
+theorem divisors_is_unique(n: Nat) {
+    divisors(n).is_unique
+} by {
+    divisor_list_is_unique(n)
+}
+
+/// The proper-divisor collection is empty at zero.
+theorem proper_divisors_zero {
+    proper_divisors(Nat.0) = List.nil[Nat]
+} by {
+    proper_divisors(Nat.0) = divisor_list(Nat.0).filter(function(d: Nat) { d != Nat.0 })
+    divisor_list_zero
+    divisor_list(Nat.0) = List.nil[Nat]
+    List.nil[Nat].filter(function(d: Nat) { d != Nat.0 }) = List.nil[Nat]
+}
+
+/// The proper-divisor sum at zero is zero.
+theorem proper_divisor_sum_zero {
+    proper_divisor_sum(Nat.0) = Nat.0
+} by {
+    proper_divisors_zero
+    proper_divisor_sum(Nat.0) = sum(proper_divisors(Nat.0))
+    proper_divisor_sum(Nat.0) = sum(List.nil[Nat])
+    sum(List.nil[Nat]) = Nat.0
+}
+
+/// The divisor antidiagonal is empty at zero.
+theorem divisors_antidiagonal_zero {
+    divisors_antidiagonal(Nat.0) = List.nil[Pair[Nat, Nat]]
+} by {
+    divisors_zero
+    divisors(Nat.0) = List.nil[Nat]
+    list_pair_product(List.nil[Nat], List.nil[Nat]) = List.nil[Pair[Nat, Nat]]
+    divisors_antidiagonal(Nat.0) =
+        list_pair_product(divisors(Nat.0), divisors(Nat.0)).filter(divisor_pair_product_eq(Nat.0))
+    divisors_antidiagonal(Nat.0) = List.nil[Pair[Nat, Nat]].filter(divisor_pair_product_eq(Nat.0))
+    List.nil[Pair[Nat, Nat]].filter(divisor_pair_product_eq(Nat.0)) = List.nil[Pair[Nat, Nat]]
+}
+
+/// The short Mathlib-style `perfect` name agrees with the existing Acorn predicate.
+theorem perfect_eq_is_perfect_number(n: Nat) {
+    perfect(n) = is_perfect_number(n)
+} by {
+    perfect(n) = is_perfect_number(n)
+}
+
+/// Zero is not perfect for the Mathlib-style `perfect` wrapper.
+theorem zero_not_perfect {
+    not perfect(Nat.0)
+} by {
+    if perfect(Nat.0) {
+        perfect_eq_is_perfect_number(Nat.0)
+        is_perfect_number(Nat.0)
+        zero_not_perfect_number
+        false
+    }
+}
+
+/// One is not perfect for the Mathlib-style `perfect` wrapper.
+theorem one_not_perfect {
+    not perfect(Nat.1)
+} by {
+    if perfect(Nat.1) {
+        perfect_eq_is_perfect_number(Nat.1)
+        is_perfect_number(Nat.1)
+        one_not_perfect_number
+        false
+    }
+}
+
+/// No prime natural number is perfect for the Mathlib-style `perfect` wrapper.
+theorem prime_not_perfect(p: Nat) {
+    p.is_prime implies not perfect(p)
+} by {
+    if p.is_prime {
+        if perfect(p) {
+            perfect_eq_is_perfect_number(p)
+            is_perfect_number(p)
+            prime_not_perfect_number(p)
+            false
+        }
+    }
+}
