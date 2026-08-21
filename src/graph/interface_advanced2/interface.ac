@@ -1,0 +1,2386 @@
+theorem is_proper_coloring_on_intro[V, C](g: SimpleGraph[V], s: FiniteSet[V], color: V -> C) {
+    (forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y) implies color(x) != color(y)
+    }) implies is_proper_coloring_on(g, s, color)
+}
+
+theorem is_proper_coloring_on_of_simple_graph_coloring[V, C](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> C
+) {
+    simple_graph_coloring(g, color) implies is_proper_coloring_on(g, s, color)
+}
+
+define is_k_colorable[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) -> Bool {
+    exists(color: V -> Nat) {
+        is_proper_coloring_on(g, s, color) and forall(v: V) {
+            s.contains(v) implies color(v) < k
+        }
+    }
+}
+
+theorem is_k_colorable_intro[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat, color: V -> Nat) {
+    is_proper_coloring_on(g, s, color) and forall(v: V) { s.contains(v) implies color(v) < k }
+        implies is_k_colorable(g, s, k)
+}
+
+theorem is_k_colorable_witness[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_k_colorable(g, s, k) implies exists(color: V -> Nat) {
+        is_proper_coloring_on(g, s, color) and forall(v: V) {
+            s.contains(v) implies color(v) < k
+        }
+    }
+}
+
+theorem is_k_colorable_mono[V](g: SimpleGraph[V], s: FiniteSet[V], k1: Nat, k2: Nat) {
+    is_k_colorable(g, s, k1) and k1 <= k2 implies is_k_colorable(g, s, k2)
+}
+
+theorem nat_lt_two_cases(n: Nat) {
+    n < Nat.2 implies n = Nat.0 or n = Nat.1
+}
+
+theorem nat_lt_two_one_of_ne_zero(n: Nat) {
+    n < Nat.2 and n != Nat.0 implies n = Nat.1
+}
+
+theorem two_color_ne_imp_one_eq_ne(a: Nat, b: Nat) {
+    a < Nat.2 and b < Nat.2 and a != b implies (a = Nat.1) != (b = Nat.1)
+}
+
+define part_of_two_color[V](color: V -> Nat) -> (V -> Bool) {
+    function(v: V) {
+        color(v) = Nat.1
+    }
+}
+
+theorem part_of_two_color_eq[V](color: V -> Nat, v: V) {
+    part_of_two_color(color)(v) = (color(v) = Nat.1)
+}
+
+define two_color_of_part[V](part: V -> Bool) -> (V -> Nat) {
+    function(v: V) {
+        if part(v) {
+            Nat.1
+        } else {
+            Nat.0
+        }
+    }
+}
+
+theorem two_color_of_part_eq[V](part: V -> Bool, v: V) {
+    two_color_of_part(part)(v) = if part(v) { Nat.1 } else { Nat.0 }
+}
+
+theorem is_k_colorable_two_imp_is_bipartite[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_k_colorable(g, s, Nat.2) implies is_bipartite(g, s)
+}
+
+theorem is_bipartite_imp_is_k_colorable_two[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_bipartite(g, s) implies is_k_colorable(g, s, Nat.2)
+}
+
+theorem is_k_colorable_two_eq_is_bipartite[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_k_colorable(g, s, Nat.2) = is_bipartite(g, s)
+}
+
+define is_chromatic_number[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) -> Bool {
+    is_k_colorable(g, s, k) and forall(j: Nat) {
+        j < k implies not is_k_colorable(g, s, j)
+    }
+}
+
+theorem is_chromatic_number_apply[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_chromatic_number(g, s, k) implies
+        is_k_colorable(g, s, k) and forall(j: Nat) {
+            j < k implies not is_k_colorable(g, s, j)
+        }
+}
+
+theorem is_chromatic_number_intro[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_k_colorable(g, s, k) and forall(j: Nat) {
+        j < k implies not is_k_colorable(g, s, j)
+    } implies is_chromatic_number(g, s, k)
+}
+
+theorem is_chromatic_number_k_colorable[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_chromatic_number(g, s, k) implies is_k_colorable(g, s, k)
+}
+
+theorem is_chromatic_number_not_k_colorable_below[V](
+    g: SimpleGraph[V], s: FiniteSet[V], k: Nat, j: Nat
+) {
+    is_chromatic_number(g, s, k) and j < k implies not is_k_colorable(g, s, j)
+}
+
+theorem is_chromatic_number_unique[V](g: SimpleGraph[V], s: FiniteSet[V], k1: Nat, k2: Nat) {
+    is_chromatic_number(g, s, k1) and is_chromatic_number(g, s, k2) implies k1 = k2
+}
+
+define nat_range_set(n: Nat) -> FiniteSet[Nat] {
+    fs_from_list(n.range)
+}
+
+theorem nat_range_set_contains_eq(n: Nat, x: Nat) {
+    nat_range_set(n).contains(x) = (x < n)
+}
+
+theorem nat_range_set_card(n: Nat) {
+    fs_card(nat_range_set(n)) = n
+}
+
+define nat_identity(v: Nat) -> Nat { v }
+
+theorem nat_identity_eq(v: Nat) {
+    nat_identity(v) = v
+}
+
+theorem map_unique_length_le_of_contains[T, U](items: List[T], targets: List[U], f: T -> U) {
+    forall(x: T) {
+        items.contains(x) implies targets.contains(f(x))
+    } implies map(items, f).unique.length <= targets.length
+}
+
+theorem complete_graph_nat_range_is_k_colorable(n: Nat) {
+    is_k_colorable(complete_graph[Nat], nat_range_set(n), n)
+}
+
+theorem complete_graph_nat_range_not_k_colorable_below(n: Nat, k: Nat) {
+    k < n implies not is_k_colorable(complete_graph[Nat], nat_range_set(n), k)
+}
+
+theorem complete_graph_nat_range_chromatic_number(n: Nat) {
+    is_chromatic_number(complete_graph[Nat], nat_range_set(n), n)
+}
+
+theorem bool_ne_not_self(x: Bool) {
+    x != not x
+}
+
+theorem cycle_graph_even_suc_parity_ne(n: Nat, x: Nat, y: Nat) {
+    not nat_odd(n) and x < n and y < n and x.suc.mod(n) = y
+        implies nat_odd(x) != nat_odd(y)
+}
+
+theorem cycle_graph_even_adj_parity_ne(n: Nat, x: Nat, y: Nat) {
+    not nat_odd(n) and x < n and y < n and cycle_graph(n).adj(x, y)
+        implies nat_odd(x) != nat_odd(y)
+}
+
+theorem cycle_graph_even_bipartition(n: Nat) {
+    not nat_odd(n) implies is_bipartition(cycle_graph(n), nat_range_set(n), nat_odd)
+}
+
+theorem cycle_graph_even_is_k_colorable_two(n: Nat) {
+    not nat_odd(n) implies is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.2)
+}
+
+theorem nat_lt_one_eq_zero(n: Nat) {
+    n < Nat.1 implies n = Nat.0
+}
+
+theorem not_is_k_colorable_zero[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    s.contains(v) implies not is_k_colorable(g, s, Nat.0)
+}
+
+theorem not_is_k_colorable_one_of_adj[V](g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V) {
+    s.contains(x) and s.contains(y) and g.adj(x, y) implies not is_k_colorable(g, s, Nat.1)
+}
+
+theorem cycle_graph_even_chromatic_number(n: Nat) {
+    Nat.3 <= n and not nat_odd(n) implies
+        is_chromatic_number(cycle_graph(n), nat_range_set(n), Nat.2)
+}
+
+theorem proper_two_color_imp_is_bipartition[V](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> Nat
+) {
+    is_proper_coloring_on(g, s, color) and forall(v: V) {
+        s.contains(v) implies color(v) < Nat.2
+    } implies is_bipartition(g, s, part_of_two_color(color))
+}
+
+define nat_inc(v: Nat) -> Nat { v.suc }
+
+theorem nat_inc_eq(v: Nat) {
+    nat_inc(v) = v.suc
+}
+
+theorem nat_inc_injective {
+    is_injective_fn(nat_inc)
+}
+
+theorem nat_sub_one_suc(n: Nat) {
+    Nat.0 < n implies (n - Nat.1).suc = n
+}
+
+theorem nat_two_le_sub_one(n: Nat) {
+    Nat.3 <= n implies Nat.2 <= n - Nat.1
+}
+
+theorem cycle_graph_walk_range(n: Nat, k: Nat) {
+    k < n implies simple_graph_walk(cycle_graph(n), Nat.0, k, map(k.range, nat_inc))
+}
+
+theorem cycle_graph_closed_walk_all(n: Nat) {
+    Nat.3 <= n implies
+        simple_graph_walk(cycle_graph(n), Nat.0, Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+}
+
+theorem walk_in_set_of_all_targets_in[V](s: FiniteSet[V], steps: List[V]) {
+    (forall(v: V) { steps.contains(v) implies s.contains(v) }) implies walk_in_set(s, steps)
+}
+
+theorem cycle_graph_walk_all_in_set(n: Nat) {
+    Nat.3 <= n implies
+        walk_in_set(nat_range_set(n), map((n - Nat.1).range, nat_inc).append(Nat.0))
+}
+
+theorem cycle_graph_odd_closed_walk(n: Nat) {
+    Nat.3 <= n and nat_odd(n) implies
+        simple_graph_closed_walk(cycle_graph(n), Nat.0,
+            map((n - Nat.1).range, nat_inc).append(Nat.0))
+}
+
+theorem cycle_graph_odd_not_k_colorable_two(n: Nat) {
+    Nat.3 <= n and nat_odd(n) implies not is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.2)
+}
+
+define cycle_three_color(n: Nat) -> (Nat -> Nat) {
+    function(v: Nat) {
+        if v = n - Nat.1 {
+            Nat.2
+        } else {
+            if nat_odd(v) {
+                Nat.1
+            } else {
+                Nat.0
+            }
+        }
+    }
+}
+
+theorem cycle_three_color_eq(n: Nat, v: Nat) {
+    cycle_three_color(n)(v) = if v = n - Nat.1 {
+        Nat.2
+    } else {
+        if nat_odd(v) {
+            Nat.1
+        } else {
+            Nat.0
+        }
+    }
+}
+
+theorem cycle_three_color_last(n: Nat) {
+    cycle_three_color(n)(n - Nat.1) = Nat.2
+}
+
+theorem cycle_three_color_parity(n: Nat, v: Nat) {
+    v != n - Nat.1 and nat_odd(v) implies cycle_three_color(n)(v) = Nat.1
+}
+
+theorem cycle_three_color_even(n: Nat, v: Nat) {
+    v != n - Nat.1 and not nat_odd(v) implies cycle_three_color(n)(v) = Nat.0
+}
+
+theorem nat_suc_eq_cancel(a: Nat, b: Nat) {
+    a.suc = b.suc implies a = b
+}
+
+theorem nat_sub_one_ne_zero(n: Nat) {
+    Nat.3 <= n implies n - Nat.1 != Nat.0
+}
+
+theorem cycle_graph_three_suc_color_ne(n: Nat, x: Nat, y: Nat) {
+    Nat.3 <= n and x < n and y < n and x.suc.mod(n) = y
+        implies cycle_three_color(n)(x) != cycle_three_color(n)(y)
+}
+
+theorem cycle_graph_three_adj_color_ne(n: Nat, x: Nat, y: Nat) {
+    Nat.3 <= n and x < n and y < n and cycle_graph(n).adj(x, y)
+        implies cycle_three_color(n)(x) != cycle_three_color(n)(y)
+}
+
+theorem cycle_three_color_lt_three(n: Nat, v: Nat) {
+    Nat.3 <= n implies cycle_three_color(n)(v) < Nat.3
+}
+
+theorem cycle_graph_odd_is_k_colorable_three(n: Nat) {
+    Nat.3 <= n implies is_k_colorable(cycle_graph(n), nat_range_set(n), Nat.3)
+}
+
+theorem nat_lt_three_cases(n: Nat) {
+    n < Nat.3 implies n = Nat.0 or n = Nat.1 or n = Nat.2
+}
+
+theorem cycle_graph_odd_chromatic_number(n: Nat) {
+    Nat.3 <= n and nat_odd(n) implies
+        is_chromatic_number(cycle_graph(n), nat_range_set(n), Nat.3)
+}
+
+theorem find_first_idx_injective_of_unique[T](list: List[T], x: T, y: T) {
+    list.is_unique and list.contains(x) and list.contains(y) and
+        list.find_first_idx(x) = list.find_first_idx(y) implies x = y
+}
+
+theorem find_first_idx_lt_of_contains[T](list: List[T], item: T) {
+    list.contains(item) implies list.find_first_idx(item) < list.length
+}
+
+define list_index[V](items: List[V]) -> (V -> Nat) {
+    function(v: V) {
+        items.find_first_idx(v)
+    }
+}
+
+theorem list_index_eq[V](items: List[V], v: V) {
+    list_index(items)(v) = items.find_first_idx(v)
+}
+
+theorem is_k_colorable_of_card[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_k_colorable(g, s, fs_card(s))
+}
+
+define chromatic_size_pred[V](g: SimpleGraph[V], s: FiniteSet[V]) -> (Nat -> Bool) {
+    function(k: Nat) {
+        is_k_colorable(g, s, k)
+    }
+}
+
+theorem chromatic_size_pred_eq[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    chromatic_size_pred(g, s)(k) = is_k_colorable(g, s, k)
+}
+
+let chromatic_number[V](g: SimpleGraph[V], s: FiniteSet[V]) -> result: Nat satisfy {
+    is_min(chromatic_size_pred(g, s), result)
+}
+
+theorem chromatic_number_is_chromatic_number[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_chromatic_number(g, s, chromatic_number(g, s))
+}
+
+theorem complete_graph_chromatic_number_value(n: Nat) {
+    chromatic_number(complete_graph[Nat], nat_range_set(n)) = n
+}
+
+define is_forest[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    is_acyclic(g, s)
+}
+
+theorem forest_acyclic[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_forest(g, s) implies is_acyclic(g, s)
+}
+
+theorem forest_of_acyclic[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) implies is_forest(g, s)
+}
+
+theorem forest_subset[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) {
+    is_forest(g, s) and t.subset_eq(s) implies is_forest(g, t)
+}
+
+theorem forest_of_card_le_two[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    fs_card(s) <= Nat.2 implies is_forest(g, s)
+}
+
+theorem forest_has_edge[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_forest(g, s) and is_tree(g, s) and Nat.2 <= fs_card(s) implies
+        exists(x: V, y: V) {
+            s.contains(x) and s.contains(y) and x != y and g.adj(x, y)
+        }
+}
+
+define walk_last[V](start: V, steps: List[V]) -> V {
+    match steps {
+        List.nil[V] { start }
+        List.cons(head, tail) { walk_last(head, tail) }
+    }
+}
+
+define walk_penultimate[V](start: V, steps: List[V]) -> V {
+    match steps {
+        List.nil[V] { start }
+        List.cons(head, tail) {
+            match tail {
+                List.nil[V] { start }
+                List.cons(head2, tail2) { walk_penultimate(head, tail) }
+            }
+        }
+    }
+}
+
+define simple_graph_path_in[V](g: SimpleGraph[V], s: FiniteSet[V], start: V, steps: List[V]) -> Bool {
+    simple_graph_path(g, start, walk_last(start, steps), steps) and s.contains(start) and
+        (forall(x: V) { steps.contains(x) implies s.contains(x) })
+}
+
+theorem walk_finish_eq_last[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) implies b = walk_last(a, steps)
+}
+
+theorem walk_last_in[V](start: V, steps: List[V]) {
+    walk_last(start, steps) = start or steps.contains(walk_last(start, steps))
+}
+
+theorem path_in_walk[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies
+        simple_graph_walk(g, a, walk_last(a, steps), steps)
+}
+
+theorem path_in_path[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies
+        simple_graph_path(g, a, walk_last(a, steps), steps)
+}
+
+theorem path_in_start_in[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies s.contains(a)
+}
+
+theorem path_in_steps_in[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], x: V) {
+    simple_graph_path_in(g, s, a, steps) implies (steps.contains(x) implies s.contains(x))
+}
+
+theorem path_in_vertices_unique[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies
+        simple_graph_walk_vertices(a, steps).is_unique
+}
+
+theorem path_in_endpoint_in[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies s.contains(walk_last(a, steps))
+}
+
+theorem path_in_intro[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path(g, a, walk_last(a, steps), steps) and s.contains(a) and
+        (forall(x: V) { steps.contains(x) implies s.contains(x) })
+        implies simple_graph_path_in(g, s, a, steps)
+}
+
+theorem walk_penultimate_adj[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) and Nat.1 <= steps.length implies
+        g.adj(walk_penultimate(a, steps), b)
+}
+
+theorem walk_penultimate_vertex[V](start: V, steps: List[V]) {
+    walk_penultimate(start, steps) = start or steps.contains(walk_penultimate(start, steps))
+}
+
+theorem append_unique[T](xs: List[T], u: T) {
+    xs.is_unique and not xs.contains(u) implies xs.append(u).is_unique
+}
+
+theorem path_in_extend[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], u: V) {
+    simple_graph_path_in(g, s, a, steps) and s.contains(u) and g.adj(walk_last(a, steps), u) and
+        u != a and not steps.contains(u)
+        implies simple_graph_path_in(g, s, a, steps.append(u))
+}
+
+theorem drop_cons[T](h: T, t: List[T], n: Nat) {
+    List.cons(h, t).drop(n + Nat.1) = t.drop(n)
+}
+
+theorem drop_nil[T](n: Nat) {
+    List.nil[T].drop(n) = List.nil[T]
+}
+
+theorem sub_suc_suc(a: Nat, b: Nat) {
+    b <= a implies (a + Nat.1) - (b + Nat.1) = a - b
+}
+
+theorem drop_preserves_unique[T](xs: List[T], n: Nat) {
+    xs.is_unique implies xs.drop(n).is_unique
+}
+
+theorem drop_contains[T](xs: List[T], n: Nat, y: T) {
+    xs.drop(n).contains(y) implies xs.contains(y)
+}
+
+define drop_len_plus[T](xs: List[T], n: Nat) -> Nat {
+    xs.drop(n).length + n
+}
+
+theorem drop_length[T](xs: List[T], n: Nat) {
+    n <= xs.length implies xs.length = drop_len_plus(xs, n)
+}
+
+theorem get_idx_cons[T](h: T, t: List[T], n: Nat) {
+    List.cons(h, t).get_idx(n + Nat.1) = t.get_idx(n)
+}
+
+theorem find_first_idx_cons[T](head: T, tail: List[T], item: T) {
+    head != item implies List.cons(head, tail).find_first_idx(item) = Nat.1 + tail.find_first_idx(item)
+}
+
+theorem find_first_idx_works[T](xs: List[T], item: T) {
+    xs.contains(item) implies xs.get_idx(xs.find_first_idx(item)) = Option.some(item)
+}
+
+define greedy_guard[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], u: V) -> Bool {
+    s.contains(u) and g.adj(walk_last(a, steps), u) and u != a and not steps.contains(u)
+}
+
+define greedy_chosen[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) -> V {
+    choose_or_default(function(u: V) { greedy_guard(g, s, a, steps, u) }, a)
+}
+
+define greedy_path[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], fuel: Nat) -> List[V] {
+    match fuel {
+        Nat.zero { steps }
+        Nat.suc(f) {
+            if exists(u: V) { greedy_guard(g, s, a, steps, u) } {
+                greedy_path(g, s, a, steps.append(greedy_chosen(g, s, a, steps)), f)
+            } else {
+                steps
+            }
+        }
+    }
+}
+
+theorem greedy_path_preserves_path[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], fuel: Nat) {
+    simple_graph_path_in(g, s, a, steps) implies
+        simple_graph_path_in(g, s, a, greedy_path(g, s, a, steps, fuel))
+}
+
+theorem append_length_one[T](xs: List[T], u: T) {
+    xs.append(u).length = xs.length + Nat.1
+}
+
+theorem greedy_path_length_ge[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], fuel: Nat) {
+    steps.length <= greedy_path(g, s, a, steps, fuel).length
+}
+
+theorem unique_list_le_card[T](items: List[T], s: FiniteSet[T]) {
+    items.is_unique and (forall(x: T) { items.contains(x) implies s.contains(x) })
+        implies items.length <= fs_card(s)
+}
+
+theorem path_vertices_le_card[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) {
+    simple_graph_path_in(g, s, a, steps) implies
+        simple_graph_walk_vertices(a, steps).length <= fs_card(s)
+}
+
+define greedy_stuck[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V]) -> Bool {
+    forall(u: V) {
+        s.contains(u) and g.adj(walk_last(a, steps), u) implies (u = a or steps.contains(u))
+    }
+}
+
+theorem greedy_path_stuck_or_exhausted[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], fuel: Nat) {
+    greedy_stuck(g, s, a, greedy_path(g, s, a, steps, fuel)) or
+    (greedy_path(g, s, a, steps, fuel).length = steps.length + fuel)
+}
+
+theorem greedy_path_maximal[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, steps: List[V], fuel: Nat) {
+    simple_graph_path_in(g, s, a, steps) and fs_card(s) < steps.length + fuel
+        implies greedy_stuck(g, s, a, greedy_path(g, s, a, steps, fuel))
+}
+
+theorem length_zero_imp_nil[T](xs: List[T]) {
+    xs.length = Nat.0 implies xs = List.nil[T]
+}
+
+theorem find_first_idx_contains[T](xs: List[T], item: T) {
+    xs.contains(item) implies xs.find_first_idx(item) < xs.length
+}
+
+theorem penultimate_idx[V](start: V, steps: List[V]) {
+    Nat.2 <= steps.length implies
+        steps.get_idx(steps.length - Nat.2) = Option.some(walk_penultimate(start, steps))
+}
+
+theorem lte_suc_ne_imp_lte(a: Nat, b: Nat) {
+    a <= b + Nat.1 and a != b + Nat.1 implies a <= b
+}
+
+theorem singleton_length[T](u: T) {
+    List.singleton(u).length = Nat.1
+}
+
+theorem path_endpoint_leaf_one[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, r: List[V]) {
+    simple_graph_path_in(g, s, a, r) and r.length = Nat.1 and greedy_stuck(g, s, a, r)
+        implies exists(v: V) { s.contains(v) and is_leaf(g, s, v) }
+}
+
+theorem unique_not_contains_drop_suc[T](xs: List[T], w: T) {
+    xs.is_unique and xs.contains(w) implies
+        not xs.drop(xs.find_first_idx(w) + Nat.1).contains(w)
+}
+
+theorem lt_add_cancel_left(a: Nat, b: Nat, c: Nat) {
+    a + b < a + c implies b < c
+}
+
+theorem walk_suffix_at[V](g: SimpleGraph[V], a: V, b: V, steps: List[V], w: V) {
+    (simple_graph_walk(g, a, b, steps) and steps.contains(w) implies
+        simple_graph_walk(g, w, b, steps.drop(steps.find_first_idx(w) + Nat.1)))
+}
+
+theorem cycle_of_start_edge[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, r: List[V]) {
+    simple_graph_path_in(g, s, a, r) and Nat.2 <= r.length and g.adj(walk_last(a, r), a)
+        implies simple_graph_cycle(g, walk_last(a, r), simple_graph_walk_vertices(a, r))
+}
+
+theorem cycle_of_inner_edge[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, r: List[V], w: V, j: Nat) {
+    simple_graph_path_in(g, s, a, r) and s.contains(w) and r.contains(w) and
+        j = r.find_first_idx(w) and j + Nat.2 < r.length and g.adj(walk_last(a, r), w)
+        implies simple_graph_cycle(g, walk_last(a, r), List.cons(w, r.drop(j + Nat.1)))
+}
+
+theorem path_endpoint_leaf_many[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, r: List[V]) {
+    simple_graph_path_in(g, s, a, r) and Nat.2 <= r.length and greedy_stuck(g, s, a, r) and is_acyclic(g, s)
+        implies exists(v: V) { s.contains(v) and is_leaf(g, s, v) }
+}
+
+theorem path_endpoint_leaf[V](g: SimpleGraph[V], s: FiniteSet[V], a: V, r: List[V]) {
+    simple_graph_path_in(g, s, a, r) and Nat.1 <= r.length and greedy_stuck(g, s, a, r) and is_acyclic(g, s)
+        implies exists(v: V) { s.contains(v) and is_leaf(g, s, v) }
+}
+
+theorem forest_has_leaf[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) and Nat.1 <= directed_edge_count(g, s) implies
+        exists(v: V) { s.contains(v) and is_leaf(g, s, v) }
+}
+
+theorem directed_edges_mono[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) {
+    s.subset_eq(t) implies directed_edges(g, s).subset_eq(directed_edges(g, t))
+}
+
+theorem edges_remove_leaf[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    is_leaf(g, s, v) and s.contains(v) implies
+        directed_edge_count(g, s) = directed_edge_count(g, fs_remove(s, v)) + Nat.2
+}
+
+theorem fs_card_zero_of_no_members[T](s: FiniteSet[T]) {
+    (forall(x: T) { not s.contains(x) }) implies fs_card(s) = Nat.0
+}
+
+theorem not_one_lte_imp_zero(x: Nat) {
+    not (Nat.1 <= x) implies x = Nat.0
+}
+
+define forest_edges_bound_at[V](g: SimpleGraph[V], n: Nat) -> Bool {
+    forall(s: FiniteSet[V]) {
+        fs_card(s) = n implies (is_acyclic(g, s) implies
+            directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2)
+    }
+}
+
+theorem forest_edges_bound[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) implies directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2
+}
+
+theorem reachable_mono_on[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], x: V, y: V) {
+    t.subset_eq(s) and simple_graph_reachable(induced_subgraph(g, t.underlying_set), x, y)
+        implies simple_graph_reachable(induced_subgraph(g, s.underlying_set), x, y)
+}
+
+theorem fs_card_one_members_eq[T](s: FiniteSet[T]) {
+    fs_card(s) = Nat.1 implies (forall(x: T, y: T) { s.contains(x) and s.contains(y) implies x = y })
+}
+
+define forest_tree_at[V](g: SimpleGraph[V], n: Nat) -> Bool {
+    forall(s: FiniteSet[V]) {
+        fs_card(s) = n implies
+            ((is_acyclic(g, s) and Nat.1 <= fs_card(s) and
+                directed_edge_count(g, s) = Nat.2 * fs_card(s) - Nat.2)
+            implies simple_graph_connected_on(g, s))
+    }
+}
+
+theorem two_mul_sub_two_pos(n: Nat) {
+    Nat.2 <= n implies Nat.1 <= Nat.2 * n - Nat.2
+}
+
+define forest_tree_shift_at[V](g: SimpleGraph[V], m: Nat) -> Bool {
+    forall(s: FiniteSet[V]) {
+        fs_card(s) = m + Nat.1 implies
+            ((is_acyclic(g, s) and Nat.1 <= fs_card(s) and
+                directed_edge_count(g, s) = Nat.2 * fs_card(s) - Nat.2)
+            implies simple_graph_connected_on(g, s))
+    }
+}
+
+theorem forest_tree_of_edge_count[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) and Nat.1 <= fs_card(s) and
+        directed_edge_count(g, s) = Nat.2 * fs_card(s) - Nat.2
+        implies simple_graph_connected_on(g, s)
+}
+
+define add_edge_adj[V](g: SimpleGraph[V], x: V, y: V) -> (V -> V -> Bool) {
+    function(a: V, b: V) {
+        g.adj(a, b) or (((a = x and b = y) or (a = y and b = x)) and a != b)
+    }
+}
+
+theorem add_edge_adj_symmetric_case[V](g: SimpleGraph[V], x: V, y: V, a: V, b: V) {
+    add_edge_adj(g, x, y)(a, b) and not g.adj(a, b) and not (a = x and b = y)
+        implies (a = y and b = x)
+}
+
+theorem add_edge_adj_symmetric[V](g: SimpleGraph[V], x: V, y: V) {
+    is_symmetric(add_edge_adj(g, x, y))
+}
+
+theorem add_edge_adj_irreflexive[V](g: SimpleGraph[V], x: V, y: V) {
+    is_irreflexive(add_edge_adj(g, x, y))
+}
+
+let add_edge_graph[V](g: SimpleGraph[V], x: V, y: V) -> result: SimpleGraph[V] satisfy {
+    SimpleGraph.new(add_edge_adj(g, x, y)) = Option.some(result)
+}
+
+theorem is_k_colorable_card_bound[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_k_colorable(g, s, fs_card(s))
+}
+
+theorem chromatic_number_le_card[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    chromatic_number(g, s) <= fs_card(s)
+}
+
+theorem is_k_colorable_two_imp_no_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_k_colorable(g, s, Nat.2) implies not has_odd_cycle(g, s)
+}
+
+theorem bool_ne_not_left(p: Bool, q: Bool) {
+    p != q and not p implies q
+}
+
+theorem nonempty_length_pos[T](xs: List[T]) {
+    xs != List.nil[T] implies Nat.0 < xs.length
+}
+
+theorem not_closed_walk_length_one[V](g: SimpleGraph[V], x: V, steps: List[V]) {
+    simple_graph_closed_walk(g, x, steps) implies not (steps.length = Nat.1)
+}
+
+theorem walk_targets_contains_finish_of_nonempty[V](
+    g: SimpleGraph[V], a: V, b: V, steps: List[V]
+) {
+    simple_graph_walk(g, a, b, steps) and steps.length > Nat.0 implies steps.contains(b)
+}
+
+theorem walk_in_set_contains_member[V](s: FiniteSet[V], steps: List[V], v: V) {
+    walk_in_set(s, steps) and steps.contains(v) implies s.contains(v)
+}
+
+theorem not_unique_imp_two_occurrences[T](xs: List[T]) {
+    not xs.is_unique implies exists(w: T) {
+        xs.contains(w) and xs.drop(xs.find_first_idx(w) + Nat.1).contains(w)
+    }
+}
+
+theorem walk_canonical_split[V](g: SimpleGraph[V], a: V, b: V, c: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) and steps.contains(c) implies
+        exists(pre: List[V], suf: List[V]) {
+            steps = pre + suf and simple_graph_walk(g, a, c, pre) and simple_graph_walk(g, c, b, suf) and
+            pre != List.nil[V] and suf = steps.drop(steps.find_first_idx(c) + Nat.1)
+        }
+}
+
+theorem has_odd_closed_walk_imp_has_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    has_odd_closed_walk(g, s) implies has_odd_cycle(g, s)
+}
+
+theorem is_k_colorable_two_of_no_odd_cycle[V](
+    g: SimpleGraph[V], s: FiniteSet[V], r: V
+) {
+    s.contains(r) and walk_reachable_from(g, s, r) and not has_odd_cycle(g, s)
+        implies is_k_colorable(g, s, Nat.2)
+}
+
+theorem is_k_colorable_two_eq_no_odd_cycle[V](
+    g: SimpleGraph[V], s: FiniteSet[V], r: V
+) {
+    s.contains(r) and walk_reachable_from(g, s, r) implies
+        (is_k_colorable(g, s, Nat.2) = not has_odd_cycle(g, s))
+}
+
+theorem induced_walk_imp_base_walk_in_set[V](
+    g: SimpleGraph[V], s: FiniteSet[V], a: V, b: V, steps: List[V]
+) {
+    simple_graph_walk(induced_subgraph(g, s.underlying_set), a, b, steps) implies
+        simple_graph_walk(g, a, b, steps) and walk_in_set(s, steps)
+}
+
+theorem connected_on_imp_walk_reachable_helper[V](g: SimpleGraph[V], s: FiniteSet[V], r: V) {
+    simple_graph_connected_on(g, s) and s.contains(r) implies
+        forall(x: V) {
+            s.contains(x) implies exists(steps: List[V]) {
+                simple_graph_walk(g, r, x, steps) and walk_in_set(s, steps)
+            }
+        }
+}
+
+theorem connected_on_imp_walk_reachable_from[V](g: SimpleGraph[V], s: FiniteSet[V], r: V) {
+    simple_graph_connected_on(g, s) and s.contains(r) implies walk_reachable_from(g, s, r)
+}
+
+theorem acyclic_imp_no_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) implies not has_odd_cycle(g, s)
+}
+
+theorem empty_set_two_colorable[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    (forall(r: V) { not s.contains(r) }) implies is_k_colorable(g, s, Nat.2)
+}
+
+theorem tree_is_k_colorable_two[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_tree(g, s) implies is_k_colorable(g, s, Nat.2)
+}
+
+theorem graph_handshake_lemma[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    degree_sum(g, s) = fs_card(directed_edges_from_set(g, s, s))
+}
+
+theorem graph_handshake_directed[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    degree_sum(g, s) = directed_edge_count(g, s)
+}
+
+theorem walk_has_path[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) implies exists(steps2: List[V]) {
+        simple_graph_path(g, a, b, steps2)
+    }
+}
+
+theorem walk_imp_path[V](g: SimpleGraph[V], a: V, b: V) {
+    exists(steps: List[V]) { simple_graph_walk(g, a, b, steps) } implies
+    exists(steps: List[V]) { simple_graph_path(g, a, b, steps) }
+}
+
+define walk_connected[V](g: SimpleGraph[V], x: V, y: V) -> Bool {
+    exists(steps: List[V]) {
+        simple_graph_walk(g, x, y, steps)
+    }
+}
+
+theorem walk_connected_refl[V](g: SimpleGraph[V], x: V) {
+    walk_connected(g, x, x)
+}
+
+theorem walk_connected_symmetric[V](g: SimpleGraph[V], x: V, y: V) {
+    walk_connected(g, x, y) implies walk_connected(g, y, x)
+}
+
+theorem walk_connected_transitive[V](g: SimpleGraph[V], x: V, y: V, z: V) {
+    walk_connected(g, x, y) and walk_connected(g, y, z) implies walk_connected(g, x, z)
+}
+
+theorem walk_connected_iff_reachable[V](g: SimpleGraph[V], x: V, y: V) {
+    walk_connected(g, x, y) = simple_graph_reachable(g, x, y)
+}
+
+theorem walk_connected_eq_reachable[V](g: SimpleGraph[V]) {
+    walk_connected(g) = simple_graph_reachable(g)
+}
+
+theorem walk_connected_is_equivalence[V](g: SimpleGraph[V]) {
+    is_equivalence(walk_connected(g))
+}
+
+theorem reachable_is_equivalence[V](g: SimpleGraph[V]) {
+    is_equivalence(simple_graph_reachable(g))
+}
+
+theorem graph_tree_connected[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_tree(g, s) implies simple_graph_connected_on(g, s)
+}
+
+theorem graph_tree_acyclic[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_tree(g, s) implies is_acyclic(g, s)
+}
+
+theorem graph_tree_of_edge_count[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) and Nat.1 <= fs_card(s) and
+        directed_edge_count(g, s) = Nat.2 * fs_card(s) - Nat.2
+        implies simple_graph_connected_on(g, s)
+}
+
+theorem graph_forest_edges_bound[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_acyclic(g, s) implies directed_edge_count(g, s) <= Nat.2 * fs_card(s) - Nat.2
+}
+
+theorem graph_bipartite_no_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_bipartite(g, s) implies not has_odd_cycle(g, s)
+}
+
+let six_vertices: FiniteSet[Nat] = range_set(Nat.6)
+
+/// The five vertices `{0, ..., 4}` on which the lower bound lives.
+
+let five_vertices: FiniteSet[Nat] = range_set(Nat.5)
+
+/// The labels of the six vertices are ordered, and each is below the bound.
+///
+/// Comparisons between numerals are not free, so the ladder is stated once and read off.
+theorem six_labels_lt {
+    Nat.0 < Nat.1 and Nat.1 < Nat.2 and Nat.2 < Nat.3 and Nat.3 < Nat.4 and Nat.4 < Nat.5
+    and Nat.5 < Nat.6
+    and Nat.0 < Nat.6 and Nat.1 < Nat.6 and Nat.2 < Nat.6 and Nat.3 < Nat.6 and Nat.4 < Nat.6
+}
+
+theorem six_labels_distinct {
+    Nat.0 != Nat.1 and Nat.0 != Nat.2 and Nat.0 != Nat.3 and Nat.0 != Nat.4 and Nat.0 != Nat.5
+    and Nat.1 != Nat.2 and Nat.1 != Nat.3 and Nat.1 != Nat.4 and Nat.1 != Nat.5
+    and Nat.2 != Nat.3 and Nat.2 != Nat.4 and Nat.2 != Nat.5
+    and Nat.3 != Nat.4 and Nat.3 != Nat.5
+    and Nat.4 != Nat.5
+}
+
+theorem six_vertices_contains(x: Nat) {
+    x < Nat.6 implies six_vertices.contains(x)
+}
+
+theorem five_vertices_contains(x: Nat) {
+    x < Nat.5 implies five_vertices.contains(x)
+}
+
+theorem six_neighbor_of_zero(x: Nat) {
+    six_vertices.contains(x) and x != Nat.0 implies
+        neighborhood(complete_graph[Nat], six_vertices, Nat.0).contains(x)
+}
+
+define is_edge_2_coloring[V](g: SimpleGraph[V], color: (V, V) -> Bool) -> Bool {
+    forall(x: V, y: V) {
+        g.adj(x, y) implies color(x, y) = color(y, x)
+    }
+}
+
+theorem edge_2_coloring_comm[V](g: SimpleGraph[V], color: (V, V) -> Bool, x: V, y: V) {
+    is_edge_2_coloring(g, color) and g.adj(x, y) implies color(x, y) = color(y, x)
+}
+
+define has_red_triangle[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    exists(x: V, y: V, z: V) {
+        s.contains(x) and s.contains(y) and s.contains(z) and x != y and x != z and y != z
+        and color(x, y) and color(x, z) and color(y, z)
+    }
+}
+
+theorem has_red_triangle_intro[V](color: (V, V) -> Bool, s: FiniteSet[V], x: V, y: V, z: V) {
+    s.contains(x) and s.contains(y) and s.contains(z) and x != y and x != z and y != z
+    and color(x, y) and color(x, z) and color(y, z)
+    implies has_red_triangle(color, s)
+}
+
+define has_blue_triangle[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    exists(x: V, y: V, z: V) {
+        s.contains(x) and s.contains(y) and s.contains(z) and x != y and x != z and y != z
+        and not color(x, y) and not color(x, z) and not color(y, z)
+    }
+}
+
+theorem has_blue_triangle_intro[V](color: (V, V) -> Bool, s: FiniteSet[V], x: V, y: V, z: V) {
+    s.contains(x) and s.contains(y) and s.contains(z) and x != y and x != z and y != z
+    and not color(x, y) and not color(x, z) and not color(y, z)
+    implies has_blue_triangle(color, s)
+}
+
+define has_mono_triangle[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    has_red_triangle(color, s) or has_blue_triangle(color, s)
+}
+
+define three_edges_from_zero_share_color(color: (Nat, Nat) -> Bool) -> Bool {
+    exists(x: Nat, y: Nat, z: Nat) {
+        six_vertices.contains(x) and six_vertices.contains(y) and six_vertices.contains(z)
+        and x != Nat.0 and y != Nat.0 and z != Nat.0
+        and x != y and x != z and y != z
+        and color(Nat.0, x) = color(Nat.0, y) and color(Nat.0, y) = color(Nat.0, z)
+    }
+}
+
+theorem three_edges_from_zero_share_color_intro(color: (Nat, Nat) -> Bool, x: Nat, y: Nat, z: Nat) {
+    six_vertices.contains(x) and six_vertices.contains(y) and six_vertices.contains(z)
+    and x != Nat.0 and y != Nat.0 and z != Nat.0
+    and x != y and x != z and y != z
+    and color(Nat.0, x) = color(Nat.0, y) and color(Nat.0, y) = color(Nat.0, z)
+    implies three_edges_from_zero_share_color(color)
+}
+
+theorem three_edges_from_zero_share_color_witness(color: (Nat, Nat) -> Bool) {
+    three_edges_from_zero_share_color(color) implies exists(x: Nat, y: Nat, z: Nat) {
+        six_vertices.contains(x) and six_vertices.contains(y) and six_vertices.contains(z)
+        and x != Nat.0 and y != Nat.0 and z != Nat.0
+        and x != y and x != z and y != z
+        and color(Nat.0, x) = color(Nat.0, y) and color(Nat.0, y) = color(Nat.0, z)
+    }
+}
+
+theorem three_edges_from_zero_share_color_pigeonhole(color: (Nat, Nat) -> Bool) {
+    three_edges_from_zero_share_color(color)
+}
+
+theorem ramsey_r33_upper(color: (Nat, Nat) -> Bool) {
+    is_edge_2_coloring(complete_graph[Nat], color) implies
+    has_mono_triangle(color, six_vertices)
+}
+
+theorem nine_labels_lt_ladder {
+    Nat.0 < Nat.1 and Nat.1 < Nat.2 and Nat.2 < Nat.3 and Nat.3 < Nat.4 and Nat.4 < Nat.5 and Nat.5 < Nat.6 and Nat.6 < Nat.7 and Nat.7 < Nat.8 and Nat.8 < Nat.9
+}
+
+theorem nine_labels_lt_bound {
+    Nat.0 < Nat.9 and Nat.1 < Nat.9 and Nat.2 < Nat.9 and Nat.3 < Nat.9 and Nat.4 < Nat.9 and Nat.5 < Nat.9 and Nat.6 < Nat.9 and Nat.7 < Nat.9 and Nat.8 < Nat.9
+}
+
+theorem nine_labels_distinct_row0 {
+    Nat.0 != Nat.1 and Nat.0 != Nat.2 and Nat.0 != Nat.3 and Nat.0 != Nat.4 and Nat.0 != Nat.5 and Nat.0 != Nat.6 and Nat.0 != Nat.7 and Nat.0 != Nat.8
+}
+
+theorem nine_labels_distinct_row1 {
+    Nat.1 != Nat.2 and Nat.1 != Nat.3 and Nat.1 != Nat.4 and Nat.1 != Nat.5 and Nat.1 != Nat.6 and Nat.1 != Nat.7 and Nat.1 != Nat.8
+}
+
+theorem nine_labels_distinct_row2 {
+    Nat.2 != Nat.3 and Nat.2 != Nat.4 and Nat.2 != Nat.5 and Nat.2 != Nat.6 and Nat.2 != Nat.7 and Nat.2 != Nat.8
+}
+
+theorem nine_labels_distinct_row3 {
+    Nat.3 != Nat.4 and Nat.3 != Nat.5 and Nat.3 != Nat.6 and Nat.3 != Nat.7 and Nat.3 != Nat.8
+}
+
+theorem nine_labels_distinct_row4 {
+    Nat.4 != Nat.5 and Nat.4 != Nat.6 and Nat.4 != Nat.7 and Nat.4 != Nat.8
+}
+
+theorem nine_labels_distinct_row5 {
+    Nat.5 != Nat.6 and Nat.5 != Nat.7 and Nat.5 != Nat.8
+}
+
+theorem nine_labels_distinct_row6 {
+    Nat.6 != Nat.7 and Nat.6 != Nat.8
+}
+
+theorem nine_labels_distinct_row7 {
+    Nat.7 != Nat.8
+}
+
+theorem lt_1_9 {
+    Nat.1 < Nat.9
+}
+
+theorem lt_2_9 {
+    Nat.2 < Nat.9
+}
+
+theorem lt_3_9 {
+    Nat.3 < Nat.9
+}
+
+theorem lt_4_9 {
+    Nat.4 < Nat.9
+}
+
+theorem lt_5_9 {
+    Nat.5 < Nat.9
+}
+
+theorem lt_6_9 {
+    Nat.6 < Nat.9
+}
+
+theorem lt_7_9 {
+    Nat.7 < Nat.9
+}
+
+theorem lt_8_9 {
+    Nat.8 < Nat.9
+}
+
+theorem ne_1_0 {
+    Nat.1 != Nat.0
+}
+
+theorem ne_2_0 {
+    Nat.2 != Nat.0
+}
+
+theorem ne_3_0 {
+    Nat.3 != Nat.0
+}
+
+theorem ne_4_0 {
+    Nat.4 != Nat.0
+}
+
+theorem ne_5_0 {
+    Nat.5 != Nat.0
+}
+
+theorem ne_6_0 {
+    Nat.6 != Nat.0
+}
+
+theorem ne_7_0 {
+    Nat.7 != Nat.0
+}
+
+theorem ne_8_0 {
+    Nat.8 != Nat.0
+}
+
+theorem ne_1_2 {
+    Nat.1 != Nat.2
+}
+
+theorem ne_1_3 {
+    Nat.1 != Nat.3
+}
+
+theorem ne_1_4 {
+    Nat.1 != Nat.4
+}
+
+theorem ne_1_5 {
+    Nat.1 != Nat.5
+}
+
+theorem ne_1_6 {
+    Nat.1 != Nat.6
+}
+
+theorem ne_1_7 {
+    Nat.1 != Nat.7
+}
+
+theorem ne_1_8 {
+    Nat.1 != Nat.8
+}
+
+theorem ne_2_3 {
+    Nat.2 != Nat.3
+}
+
+theorem ne_2_4 {
+    Nat.2 != Nat.4
+}
+
+theorem ne_2_5 {
+    Nat.2 != Nat.5
+}
+
+theorem ne_2_6 {
+    Nat.2 != Nat.6
+}
+
+theorem ne_2_7 {
+    Nat.2 != Nat.7
+}
+
+theorem ne_2_8 {
+    Nat.2 != Nat.8
+}
+
+theorem ne_3_4 {
+    Nat.3 != Nat.4
+}
+
+theorem ne_3_5 {
+    Nat.3 != Nat.5
+}
+
+theorem ne_3_6 {
+    Nat.3 != Nat.6
+}
+
+theorem ne_3_7 {
+    Nat.3 != Nat.7
+}
+
+theorem ne_3_8 {
+    Nat.3 != Nat.8
+}
+
+theorem ne_4_5 {
+    Nat.4 != Nat.5
+}
+
+theorem ne_4_6 {
+    Nat.4 != Nat.6
+}
+
+theorem ne_4_7 {
+    Nat.4 != Nat.7
+}
+
+theorem ne_4_8 {
+    Nat.4 != Nat.8
+}
+
+theorem ne_5_6 {
+    Nat.5 != Nat.6
+}
+
+theorem ne_5_7 {
+    Nat.5 != Nat.7
+}
+
+theorem ne_5_8 {
+    Nat.5 != Nat.8
+}
+
+theorem ne_6_7 {
+    Nat.6 != Nat.7
+}
+
+theorem ne_6_8 {
+    Nat.6 != Nat.8
+}
+
+theorem ne_7_8 {
+    Nat.7 != Nat.8
+}
+
+define good_four(w: Nat, x: Nat, y: Nat, z: Nat) -> Bool {
+    w < Nat.9 and x < Nat.9 and y < Nat.9 and z < Nat.9
+    and w != Nat.0 and x != Nat.0 and y != Nat.0 and z != Nat.0
+    and w != x and w != y and w != z and x != y and x != z and y != z
+}
+
+theorem good_four_intro(w: Nat, x: Nat, y: Nat, z: Nat) {
+    w < Nat.9 and x < Nat.9 and y < Nat.9 and z < Nat.9
+    and w != Nat.0 and x != Nat.0 and y != Nat.0 and z != Nat.0
+    and w != x and w != y and w != z and x != y and x != z and y != z
+    implies good_four(w, x, y, z)
+}
+
+theorem good_four_1234 {
+    good_four(Nat.1, Nat.2, Nat.3, Nat.4)
+}
+
+theorem good_four_1235 {
+    good_four(Nat.1, Nat.2, Nat.3, Nat.5)
+}
+
+theorem good_four_1236 {
+    good_four(Nat.1, Nat.2, Nat.3, Nat.6)
+}
+
+theorem good_four_1237 {
+    good_four(Nat.1, Nat.2, Nat.3, Nat.7)
+}
+
+theorem good_four_1238 {
+    good_four(Nat.1, Nat.2, Nat.3, Nat.8)
+}
+
+theorem good_four_1245 {
+    good_four(Nat.1, Nat.2, Nat.4, Nat.5)
+}
+
+theorem good_four_1246 {
+    good_four(Nat.1, Nat.2, Nat.4, Nat.6)
+}
+
+theorem good_four_1247 {
+    good_four(Nat.1, Nat.2, Nat.4, Nat.7)
+}
+
+theorem good_four_1248 {
+    good_four(Nat.1, Nat.2, Nat.4, Nat.8)
+}
+
+theorem good_four_1256 {
+    good_four(Nat.1, Nat.2, Nat.5, Nat.6)
+}
+
+theorem good_four_1257 {
+    good_four(Nat.1, Nat.2, Nat.5, Nat.7)
+}
+
+theorem good_four_1258 {
+    good_four(Nat.1, Nat.2, Nat.5, Nat.8)
+}
+
+theorem good_four_1267 {
+    good_four(Nat.1, Nat.2, Nat.6, Nat.7)
+}
+
+theorem good_four_1268 {
+    good_four(Nat.1, Nat.2, Nat.6, Nat.8)
+}
+
+theorem good_four_1278 {
+    good_four(Nat.1, Nat.2, Nat.7, Nat.8)
+}
+
+theorem good_four_1345 {
+    good_four(Nat.1, Nat.3, Nat.4, Nat.5)
+}
+
+theorem good_four_1346 {
+    good_four(Nat.1, Nat.3, Nat.4, Nat.6)
+}
+
+theorem good_four_1347 {
+    good_four(Nat.1, Nat.3, Nat.4, Nat.7)
+}
+
+theorem good_four_1348 {
+    good_four(Nat.1, Nat.3, Nat.4, Nat.8)
+}
+
+theorem good_four_1356 {
+    good_four(Nat.1, Nat.3, Nat.5, Nat.6)
+}
+
+theorem good_four_1357 {
+    good_four(Nat.1, Nat.3, Nat.5, Nat.7)
+}
+
+theorem good_four_1358 {
+    good_four(Nat.1, Nat.3, Nat.5, Nat.8)
+}
+
+theorem good_four_1367 {
+    good_four(Nat.1, Nat.3, Nat.6, Nat.7)
+}
+
+theorem good_four_1368 {
+    good_four(Nat.1, Nat.3, Nat.6, Nat.8)
+}
+
+theorem good_four_1378 {
+    good_four(Nat.1, Nat.3, Nat.7, Nat.8)
+}
+
+theorem good_four_1456 {
+    good_four(Nat.1, Nat.4, Nat.5, Nat.6)
+}
+
+theorem good_four_1457 {
+    good_four(Nat.1, Nat.4, Nat.5, Nat.7)
+}
+
+theorem good_four_1458 {
+    good_four(Nat.1, Nat.4, Nat.5, Nat.8)
+}
+
+theorem good_four_1467 {
+    good_four(Nat.1, Nat.4, Nat.6, Nat.7)
+}
+
+theorem good_four_1468 {
+    good_four(Nat.1, Nat.4, Nat.6, Nat.8)
+}
+
+theorem good_four_1478 {
+    good_four(Nat.1, Nat.4, Nat.7, Nat.8)
+}
+
+theorem good_four_1567 {
+    good_four(Nat.1, Nat.5, Nat.6, Nat.7)
+}
+
+theorem good_four_1568 {
+    good_four(Nat.1, Nat.5, Nat.6, Nat.8)
+}
+
+theorem good_four_1578 {
+    good_four(Nat.1, Nat.5, Nat.7, Nat.8)
+}
+
+theorem good_four_1678 {
+    good_four(Nat.1, Nat.6, Nat.7, Nat.8)
+}
+
+theorem good_four_2345 {
+    good_four(Nat.2, Nat.3, Nat.4, Nat.5)
+}
+
+theorem good_four_2346 {
+    good_four(Nat.2, Nat.3, Nat.4, Nat.6)
+}
+
+theorem good_four_2347 {
+    good_four(Nat.2, Nat.3, Nat.4, Nat.7)
+}
+
+theorem good_four_2348 {
+    good_four(Nat.2, Nat.3, Nat.4, Nat.8)
+}
+
+theorem good_four_2356 {
+    good_four(Nat.2, Nat.3, Nat.5, Nat.6)
+}
+
+theorem good_four_2357 {
+    good_four(Nat.2, Nat.3, Nat.5, Nat.7)
+}
+
+theorem good_four_2358 {
+    good_four(Nat.2, Nat.3, Nat.5, Nat.8)
+}
+
+theorem good_four_2367 {
+    good_four(Nat.2, Nat.3, Nat.6, Nat.7)
+}
+
+theorem good_four_2368 {
+    good_four(Nat.2, Nat.3, Nat.6, Nat.8)
+}
+
+theorem good_four_2378 {
+    good_four(Nat.2, Nat.3, Nat.7, Nat.8)
+}
+
+theorem good_four_2456 {
+    good_four(Nat.2, Nat.4, Nat.5, Nat.6)
+}
+
+theorem good_four_2457 {
+    good_four(Nat.2, Nat.4, Nat.5, Nat.7)
+}
+
+theorem good_four_2458 {
+    good_four(Nat.2, Nat.4, Nat.5, Nat.8)
+}
+
+theorem good_four_2467 {
+    good_four(Nat.2, Nat.4, Nat.6, Nat.7)
+}
+
+theorem good_four_2468 {
+    good_four(Nat.2, Nat.4, Nat.6, Nat.8)
+}
+
+theorem good_four_2478 {
+    good_four(Nat.2, Nat.4, Nat.7, Nat.8)
+}
+
+theorem good_four_2567 {
+    good_four(Nat.2, Nat.5, Nat.6, Nat.7)
+}
+
+theorem good_four_2568 {
+    good_four(Nat.2, Nat.5, Nat.6, Nat.8)
+}
+
+theorem good_four_2578 {
+    good_four(Nat.2, Nat.5, Nat.7, Nat.8)
+}
+
+theorem good_four_2678 {
+    good_four(Nat.2, Nat.6, Nat.7, Nat.8)
+}
+
+theorem good_four_3456 {
+    good_four(Nat.3, Nat.4, Nat.5, Nat.6)
+}
+
+theorem good_four_3457 {
+    good_four(Nat.3, Nat.4, Nat.5, Nat.7)
+}
+
+theorem good_four_3458 {
+    good_four(Nat.3, Nat.4, Nat.5, Nat.8)
+}
+
+theorem good_four_3467 {
+    good_four(Nat.3, Nat.4, Nat.6, Nat.7)
+}
+
+theorem good_four_3468 {
+    good_four(Nat.3, Nat.4, Nat.6, Nat.8)
+}
+
+theorem good_four_3478 {
+    good_four(Nat.3, Nat.4, Nat.7, Nat.8)
+}
+
+theorem good_four_3567 {
+    good_four(Nat.3, Nat.5, Nat.6, Nat.7)
+}
+
+theorem good_four_3568 {
+    good_four(Nat.3, Nat.5, Nat.6, Nat.8)
+}
+
+theorem good_four_3578 {
+    good_four(Nat.3, Nat.5, Nat.7, Nat.8)
+}
+
+theorem good_four_3678 {
+    good_four(Nat.3, Nat.6, Nat.7, Nat.8)
+}
+
+theorem good_four_4567 {
+    good_four(Nat.4, Nat.5, Nat.6, Nat.7)
+}
+
+theorem good_four_4568 {
+    good_four(Nat.4, Nat.5, Nat.6, Nat.8)
+}
+
+theorem good_four_4578 {
+    good_four(Nat.4, Nat.5, Nat.7, Nat.8)
+}
+
+theorem good_four_4678 {
+    good_four(Nat.4, Nat.6, Nat.7, Nat.8)
+}
+
+theorem good_four_5678 {
+    good_four(Nat.5, Nat.6, Nat.7, Nat.8)
+}
+
+define has_red_k4[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    exists(w: V, x: V, y: V, z: V) {
+        s.contains(w) and s.contains(x) and s.contains(y) and s.contains(z)
+        and w != x and w != y and w != z and x != y and x != z and y != z
+        and color(w, x) and color(w, y) and color(w, z)
+        and color(x, y) and color(x, z) and color(y, z)
+    }
+}
+
+theorem has_red_k4_intro[V](color: (V, V) -> Bool, s: FiniteSet[V], w: V, x: V, y: V, z: V) {
+    s.contains(w) and s.contains(x) and s.contains(y) and s.contains(z)
+    and w != x and w != y and w != z and x != y and x != z and y != z
+    and color(w, x) and color(w, y) and color(w, z)
+    and color(x, y) and color(x, z) and color(y, z)
+    implies has_red_k4(color, s)
+}
+
+define has_blue_k4[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    exists(w: V, x: V, y: V, z: V) {
+        s.contains(w) and s.contains(x) and s.contains(y) and s.contains(z)
+        and w != x and w != y and w != z and x != y and x != z and y != z
+        and not color(w, x) and not color(w, y) and not color(w, z)
+        and not color(x, y) and not color(x, z) and not color(y, z)
+    }
+}
+
+theorem has_blue_k4_intro[V](color: (V, V) -> Bool, s: FiniteSet[V], w: V, x: V, y: V, z: V) {
+    s.contains(w) and s.contains(x) and s.contains(y) and s.contains(z)
+    and w != x and w != y and w != z and x != y and x != z and y != z
+    and not color(w, x) and not color(w, y) and not color(w, z)
+    and not color(x, y) and not color(x, z) and not color(y, z)
+    implies has_blue_k4(color, s)
+}
+
+define has_mono_k4[V](color: (V, V) -> Bool, s: FiniteSet[V]) -> Bool {
+    has_red_k4(color, s) or has_blue_k4(color, s)
+}
+
+define four_edges_from_zero_share_color(color: (Nat, Nat) -> Bool) -> Bool {
+    exists(w: Nat, x: Nat, y: Nat, z: Nat) {
+        good_four(w, x, y, z)
+        and color(Nat.0, w) = color(Nat.0, x) and color(Nat.0, x) = color(Nat.0, y)
+        and color(Nat.0, y) = color(Nat.0, z)
+    }
+}
+
+theorem four_edges_from_zero_share_color_intro(color: (Nat, Nat) -> Bool, w: Nat, x: Nat, y: Nat, z: Nat) {
+    good_four(w, x, y, z)
+        and color(Nat.0, w) = color(Nat.0, x) and color(Nat.0, x) = color(Nat.0, y)
+        and color(Nat.0, y) = color(Nat.0, z)
+        implies four_edges_from_zero_share_color(color)
+}
+
+theorem four_edges_from_zero_share_color_pigeonhole(color: (Nat, Nat) -> Bool) {
+    four_edges_from_zero_share_color(color)
+}
+
+theorem four_edges_from_zero_share_color_witness(color: (Nat, Nat) -> Bool) {
+    four_edges_from_zero_share_color(color) implies exists(w: Nat, x: Nat, y: Nat, z: Nat) {
+        good_four(w, x, y, z)
+        and color(Nat.0, w) = color(Nat.0, x) and color(Nat.0, x) = color(Nat.0, y)
+        and color(Nat.0, y) = color(Nat.0, z)
+    }
+}
+
+let nine_vertices: FiniteSet[Nat] = range_set(Nat.9)
+
+/// The eight vertices `{0, ..., 7}` on which the lower bound R(3, 4) > 8 lives.
+
+let eight_vertices: FiniteSet[Nat] = range_set(Nat.8)
+
+/// A natural below nine is a vertex of the nine-element set.
+theorem nine_vertices_contains(x: Nat) {
+    x < Nat.9 implies nine_vertices.contains(x)
+}
+
+theorem eight_vertices_contains(x: Nat) {
+    x < Nat.8 implies eight_vertices.contains(x)
+}
+
+theorem nine_neighbor_of_zero(x: Nat) {
+    nine_vertices.contains(x) and x != Nat.0 implies
+        neighborhood(complete_graph[Nat], nine_vertices, Nat.0).contains(x)
+}
+
+theorem ramsey_r34_upper(color: (Nat, Nat) -> Bool) {
+    is_edge_2_coloring(complete_graph[Nat], color) implies
+    (has_mono_triangle(color, nine_vertices) or has_mono_k4(color, nine_vertices))
+}
+
+define c5_color(x: Nat, y: Nat) -> Bool {
+    x.suc = y or y.suc = x or (x = Nat.4 and y = Nat.0) or (y = Nat.4 and x = Nat.0)
+}
+
+theorem five_labels_lt {
+    Nat.0 < Nat.1 and Nat.1 < Nat.2 and Nat.2 < Nat.3 and Nat.3 < Nat.4 and Nat.4 < Nat.5
+    and Nat.0 < Nat.5 and Nat.1 < Nat.5 and Nat.2 < Nat.5 and Nat.3 < Nat.5
+    and Nat.2 < Nat.4
+}
+
+theorem five_labels_distinct {
+    Nat.0 != Nat.1 and Nat.0 != Nat.2 and Nat.0 != Nat.3 and Nat.0 != Nat.4
+    and Nat.1 != Nat.2 and Nat.1 != Nat.3 and Nat.1 != Nat.4
+    and Nat.2 != Nat.3 and Nat.2 != Nat.4
+    and Nat.3 != Nat.4
+}
+
+theorem c5_red_0_1 {
+    c5_color(Nat.0, Nat.1)
+}
+
+theorem c5_red_1_2 {
+    c5_color(Nat.1, Nat.2)
+}
+
+theorem c5_red_2_3 {
+    c5_color(Nat.2, Nat.3)
+}
+
+theorem c5_red_3_4 {
+    c5_color(Nat.3, Nat.4)
+}
+
+theorem c5_red_4_0 {
+    c5_color(Nat.4, Nat.0)
+}
+
+theorem c5_red_1_0 {
+    c5_color(Nat.1, Nat.0)
+}
+
+theorem c5_red_2_1 {
+    c5_color(Nat.2, Nat.1)
+}
+
+theorem c5_red_3_2 {
+    c5_color(Nat.3, Nat.2)
+}
+
+theorem c5_red_4_3 {
+    c5_color(Nat.4, Nat.3)
+}
+
+theorem c5_red_0_4 {
+    c5_color(Nat.0, Nat.4)
+}
+
+theorem c5_diag_0_2 {
+    not c5_color(Nat.0, Nat.2)
+}
+
+theorem c5_diag_0_3 {
+    not c5_color(Nat.0, Nat.3)
+}
+
+theorem c5_diag_1_3 {
+    not c5_color(Nat.1, Nat.3)
+}
+
+theorem c5_diag_1_4 {
+    not c5_color(Nat.1, Nat.4)
+}
+
+theorem c5_diag_2_4 {
+    not c5_color(Nat.2, Nat.4)
+}
+
+theorem c5_diag_2_0 {
+    not c5_color(Nat.2, Nat.0)
+}
+
+theorem c5_diag_3_0 {
+    not c5_color(Nat.3, Nat.0)
+}
+
+theorem c5_diag_3_1 {
+    not c5_color(Nat.3, Nat.1)
+}
+
+theorem c5_diag_4_1 {
+    not c5_color(Nat.4, Nat.1)
+}
+
+theorem c5_diag_4_2 {
+    not c5_color(Nat.4, Nat.2)
+}
+
+theorem c5_loop_0_not {
+    not c5_color(Nat.0, Nat.0)
+}
+
+theorem c5_loop_1_not {
+    not c5_color(Nat.1, Nat.1)
+}
+
+theorem c5_loop_2_not {
+    not c5_color(Nat.2, Nat.2)
+}
+
+theorem c5_loop_3_not {
+    not c5_color(Nat.3, Nat.3)
+}
+
+theorem c5_loop_4_not {
+    not c5_color(Nat.4, Nat.4)
+}
+
+define value_at(xs: List[Nat], i: Nat, x: Nat) -> Bool {
+    xs.get_idx(i) = Option.some(x)
+}
+
+theorem get_idx_cons_zero[T](head: T, tail: List[T]) {
+    List.cons(head, tail).get_idx(0) = Option.some(head)
+}
+
+theorem get_idx_cons_suc[T](head: T, tail: List[T], i: Nat) {
+    List.cons(head, tail).get_idx(i.suc) = tail.get_idx(i)
+}
+
+theorem option_some_eq_iff[T](x: T, y: T) {
+    (Option.some(x) = Option.some(y)) = (x = y)
+}
+
+theorem value_at_cons_zero(head: Nat, tail: List[Nat], v: Nat) {
+    value_at(List.cons(head, tail), 0, v) = (head = v)
+}
+
+theorem value_at_cons_suc(head: Nat, tail: List[Nat], i: Nat, v: Nat) {
+    value_at(List.cons(head, tail), i.suc, v) = value_at(tail, i, v)
+}
+
+define esz_get_idx_prop(l: List[Nat]) -> Bool {
+    forall(idx: Nat) {
+        idx < l.length implies exists(x: Nat) {
+            l.get_idx(idx) = Option.some(x)
+        }
+    }
+}
+
+theorem esz_get_idx_prop_step(head: Nat, tail: List[Nat]) {
+    esz_get_idx_prop(tail) implies esz_get_idx_prop(List.cons(head, tail))
+}
+
+define esz_value_at_prop(l: List[Nat]) -> Bool {
+    forall(idx: Nat, v: Nat) {
+        value_at(l, idx, v) implies l.contains(v)
+    }
+}
+
+theorem esz_value_at_cons_body(head: Nat, tail: List[Nat], idx: Nat, v: Nat) {
+    esz_value_at_prop(tail) and value_at(List.cons(head, tail), idx, v)
+    implies List.cons(head, tail).contains(v)
+}
+
+theorem esz_value_at_prop_step(head: Nat, tail: List[Nat]) {
+    esz_value_at_prop(tail) implies esz_value_at_prop(List.cons(head, tail))
+}
+
+define clique_members[V](xs: List[V], s: FiniteSet[V]) -> Bool {
+    forall(x: V) {
+        xs.contains(x) implies s.contains(x)
+    }
+}
+
+define clique_pairwise_red[V](color: (V, V) -> Bool, xs: List[V]) -> Bool {
+    forall(x: V, y: V) {
+        xs.contains(x) and xs.contains(y) implies (x = y or color(x, y))
+    }
+}
+
+define clique_pairwise_blue[V](color: (V, V) -> Bool, xs: List[V]) -> Bool {
+    forall(x: V, y: V) {
+        xs.contains(x) and xs.contains(y) implies (x = y or not color(x, y))
+    }
+}
+
+define has_red_clique[V](color: (V, V) -> Bool, s: FiniteSet[V], k: Nat) -> Bool {
+    exists(xs: List[V]) {
+        xs.length = k and xs.is_unique and clique_members(xs, s) and clique_pairwise_red(color, xs)
+    }
+}
+
+define has_blue_clique[V](color: (V, V) -> Bool, s: FiniteSet[V], k: Nat) -> Bool {
+    exists(xs: List[V]) {
+        xs.length = k and xs.is_unique and clique_members(xs, s) and clique_pairwise_blue(color, xs)
+    }
+}
+
+define ramsey_number_upper(k: Nat, l: Nat, n: Nat) -> Bool {
+    forall(color: (Nat, Nat) -> Bool) {
+        is_edge_2_coloring(complete_graph[Nat], color) implies
+        (has_red_clique(color, range_set(n), k) or has_blue_clique(color, range_set(n), l))
+    }
+}
+
+define ramsey_recurrence(k: Nat, l: Nat, a: Nat, b: Nat) -> Bool {
+    ramsey_number_upper(k - Nat.1, l, a) and ramsey_number_upper(k, l - Nat.1, b)
+    implies ramsey_number_upper(k, l, a + b)
+}
+
+theorem ramsey_r35_bound_arith {
+    Nat.14 = Nat.5 + Nat.9
+}
+
+theorem ramsey_r44_bound_arith {
+    Nat.18 = Nat.9 + Nat.9
+}
+
+theorem ramsey_r35_from_recurrence {
+    ramsey_number_upper(Nat.2, Nat.5, Nat.5) and
+    ramsey_number_upper(Nat.3, Nat.4, Nat.9) and
+    ramsey_recurrence(Nat.3, Nat.5, Nat.5, Nat.9)
+    implies ramsey_number_upper(Nat.3, Nat.5, Nat.14)
+}
+
+theorem ramsey_r44_from_recurrence {
+    ramsey_number_upper(Nat.3, Nat.4, Nat.9) and
+    ramsey_number_upper(Nat.4, Nat.3, Nat.9) and
+    ramsey_recurrence(Nat.4, Nat.4, Nat.9, Nat.9)
+    implies ramsey_number_upper(Nat.4, Nat.4, Nat.18)
+}
+
+theorem three_list_length[T](x: T, y: T, z: T) {
+    List.cons(x, List.cons(y, List.cons(z, List.nil[T]))).length = Nat.3
+}
+
+theorem three_list_contains_cases[T](x: T, y: T, z: T, a: T) {
+    List.cons(x, List.cons(y, List.cons(z, List.nil[T]))).contains(a)
+        implies a = x or a = y or a = z
+}
+
+theorem three_list_unique[T](x: T, y: T, z: T) {
+    x != y and x != z and y != z implies
+    List.cons(x, List.cons(y, List.cons(z, List.nil[T]))).is_unique
+}
+
+theorem red_pairwise_three[V](color: (V, V) -> Bool, x: V, y: V, z: V, a: V, b: V) {
+    is_edge_2_coloring(complete_graph[V], color) and
+    color(x, y) and color(x, z) and color(y, z) and
+    (a = x or a = y or a = z) and (b = x or b = y or b = z)
+    implies (a = b or color(a, b))
+}
+
+theorem blue_pairwise_three[V](color: (V, V) -> Bool, x: V, y: V, z: V, a: V, b: V) {
+    is_edge_2_coloring(complete_graph[V], color) and
+    not color(x, y) and not color(x, z) and not color(y, z) and
+    (a = x or a = y or a = z) and (b = x or b = y or b = z)
+    implies (a = b or not color(a, b))
+}
+
+theorem red_pairwise_three_list[V](color: (V, V) -> Bool, x: V, y: V, z: V, u: V, v: V) {
+    is_edge_2_coloring(complete_graph[V], color) and
+    color(x, y) and color(x, z) and color(y, z) and
+    List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(u) and
+    List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(v)
+    implies (u = v or color(u, v))
+}
+
+theorem blue_pairwise_three_list[V](color: (V, V) -> Bool, x: V, y: V, z: V, u: V, v: V) {
+    is_edge_2_coloring(complete_graph[V], color) and
+    not color(x, y) and not color(x, z) and not color(y, z) and
+    List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(u) and
+    List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(v)
+    implies (u = v or not color(u, v))
+}
+
+theorem red_triangle_to_clique3[V](color: (V, V) -> Bool, s: FiniteSet[V]) {
+    is_edge_2_coloring(complete_graph[V], color) and has_red_triangle(color, s)
+    implies has_red_clique(color, s, Nat.3)
+}
+
+theorem blue_triangle_to_clique3[V](color: (V, V) -> Bool, s: FiniteSet[V]) {
+    is_edge_2_coloring(complete_graph[V], color) and has_blue_triangle(color, s)
+    implies has_blue_clique(color, s, Nat.3)
+}
+
+theorem ramsey_r33_upper_number {
+    ramsey_number_upper(Nat.3, Nat.3, Nat.6)
+}
+
+theorem ramsey_r33_upper_restated(color: (Nat, Nat) -> Bool) {
+    is_edge_2_coloring(complete_graph[Nat], color)
+    implies has_mono_triangle(color, six_vertices)
+}
+
+define lt_at(xs: List[Nat], i: Nat, j: Nat) -> Bool {
+    exists(x: Nat, y: Nat) {
+        value_at(xs, i, x) and value_at(xs, j, y) and x < y
+    }
+}
+
+define gt_at(xs: List[Nat], i: Nat, j: Nat) -> Bool {
+    lt_at(xs, j, i)
+}
+
+define esz_inc3(xs: List[Nat]) -> Bool {
+    exists(i: Nat, j: Nat, k: Nat) {
+        i < j and j < k and k < xs.length and lt_at(xs, i, j) and lt_at(xs, j, k) and lt_at(xs, i, k)
+    }
+}
+
+define esz_dec3(xs: List[Nat]) -> Bool {
+    exists(i: Nat, j: Nat, k: Nat) {
+        i < j and j < k and k < xs.length and gt_at(xs, i, j) and gt_at(xs, j, k) and gt_at(xs, i, k)
+    }
+}
+
+define esz_up(xs: List[Nat], i: Nat) -> Bool {
+    exists(j: Nat) {
+        i < j and j < xs.length and lt_at(xs, i, j)
+    }
+}
+
+define esz_dn(xs: List[Nat], i: Nat) -> Bool {
+    exists(j: Nat) {
+        i < j and j < xs.length and gt_at(xs, i, j)
+    }
+}
+
+define esz_tag(xs: List[Nat], i: Nat) -> Pair[Bool, Bool] {
+    Pair.new(esz_up(xs, i), esz_dn(xs, i))
+}
+
+define esz_tag_fn(xs: List[Nat], i: Nat) -> Pair[Bool, Bool] {
+    esz_tag(xs, i)
+}
+
+theorem value_at_det(xs: List[Nat], i: Nat, x: Nat, y: Nat) {
+    value_at(xs, i, x) and value_at(xs, i, y) implies x = y
+}
+
+theorem lt_at_of_values(xs: List[Nat], i: Nat, j: Nat, x: Nat, y: Nat) {
+    value_at(xs, i, x) and value_at(xs, j, y) and x < y implies lt_at(xs, i, j)
+}
+
+theorem lt_at_trans(xs: List[Nat], i: Nat, j: Nat, m: Nat) {
+    lt_at(xs, i, j) and lt_at(xs, j, m) implies lt_at(xs, i, m)
+}
+
+theorem get_idx_some_of_lt(xs: List[Nat], i: Nat) {
+    i < xs.length implies exists(x: Nat) {
+        xs.get_idx(i) = Option.some(x)
+    }
+}
+
+theorem value_at_imp_contains(xs: List[Nat], i: Nat, x: Nat) {
+    value_at(xs, i, x) implies xs.contains(x)
+}
+
+theorem count_ge_one_of_value_at(xs: List[Nat], i: Nat, x: Nat) {
+    value_at(xs, i, x) implies xs.count(x) >= Nat.1
+}
+
+theorem count_ge_two_of_two_positions(xs: List[Nat], i: Nat, j: Nat, x: Nat) {
+    value_at(xs, i, x) and value_at(xs, j, x) and i != j implies xs.count(x) >= Nat.2
+}
+
+theorem is_unique_distinct_values(xs: List[Nat], i: Nat, j: Nat) {
+    xs.is_unique and i < xs.length and j < xs.length and i != j implies
+    not exists(x: Nat) { value_at(xs, i, x) and value_at(xs, j, x) }
+}
+
+theorem lt_at_total(xs: List[Nat], i: Nat, j: Nat) {
+    xs.is_unique and i < j and j < xs.length implies lt_at(xs, i, j) or lt_at(xs, j, i)
+}
+
+let esz_bool_pairs: List[Pair[Bool, Bool]] = List.cons(Pair.new(true, true),
+    List.cons(Pair.new(true, false), List.cons(Pair.new(false, true),
+        List.cons(Pair.new(false, false), List.nil[Pair[Bool, Bool]]))))
+
+/// The head of the tag list contains the first tag.
+theorem esz_bool_pairs_contains_head {
+    esz_bool_pairs.contains(Pair.new(true, true))
+}
+
+theorem esz_bool_pairs_contains_second {
+    esz_bool_pairs.contains(Pair.new(true, false))
+}
+
+theorem esz_bool_pairs_contains_third {
+    esz_bool_pairs.contains(Pair.new(false, true))
+}
+
+theorem esz_bool_pairs_contains_fourth {
+    esz_bool_pairs.contains(Pair.new(false, false))
+}
+
+theorem esz_bool_false_eq(b: Bool) {
+    not b implies b = false
+}
+
+theorem esz_pair_eq_tt(p: Pair[Bool, Bool]) {
+    p.first and p.second implies Pair.new(true, true) = p
+}
+
+theorem esz_pair_eq_tf(p: Pair[Bool, Bool]) {
+    p.first and not p.second implies Pair.new(true, false) = p
+}
+
+theorem esz_pair_eq_ft(p: Pair[Bool, Bool]) {
+    not p.first and p.second implies Pair.new(false, true) = p
+}
+
+theorem esz_pair_eq_ff(p: Pair[Bool, Bool]) {
+    not p.first and not p.second implies Pair.new(false, false) = p
+}
+
+theorem esz_bool_pairs_contains(p: Pair[Bool, Bool]) {
+    esz_bool_pairs.contains(p)
+}
+
+theorem cons_length_generic[T](head: T, tail: List[T]) {
+    List.cons(head, tail).length = tail.length.suc
+}
+
+theorem esz_bool_pairs_length {
+    esz_bool_pairs.length = Nat.4
+}
+
+theorem esz33_collision(xs: List[Nat]) {
+    xs.is_unique and xs.length = Nat.5 implies
+    exists(i: Nat, j: Nat) {
+        i < j and j < xs.length and esz_tag(xs, i) = esz_tag(xs, j)
+    }
+}
+
+theorem esz_up_of_lt(xs: List[Nat], i: Nat, j: Nat) {
+    i < j and j < xs.length and lt_at(xs, i, j) implies esz_up(xs, i)
+}
+
+theorem esz_dn_of_gt(xs: List[Nat], i: Nat, j: Nat) {
+    i < j and j < xs.length and gt_at(xs, i, j) implies esz_dn(xs, i)
+}
+
+theorem esz_inc3_of_lt_pair(xs: List[Nat], i: Nat, j: Nat, k: Nat) {
+    i < j and j < k and k < xs.length and lt_at(xs, i, j) and lt_at(xs, j, k)
+    implies esz_inc3(xs)
+}
+
+theorem esz_dec3_of_gt_pair(xs: List[Nat], i: Nat, j: Nat, k: Nat) {
+    i < j and j < k and k < xs.length and gt_at(xs, i, j) and gt_at(xs, j, k)
+    implies esz_dec3(xs)
+}
+
+theorem esz_no_inc3_not_up(xs: List[Nat], i: Nat, j: Nat) {
+    not esz_inc3(xs) and i < j and j < xs.length and lt_at(xs, i, j) implies not esz_up(xs, j)
+}
+
+theorem esz_no_dec3_not_dn(xs: List[Nat], i: Nat, j: Nat) {
+    not esz_dec3(xs) and i < j and j < xs.length and gt_at(xs, i, j) implies not esz_dn(xs, j)
+}
+
+theorem erdos_szekeres_three_three(xs: List[Nat]) {
+    xs.is_unique and xs.length = Nat.5 implies esz_inc3(xs) or esz_dec3(xs)
+}
+
+theorem two_list_length[T](x: T, y: T) {
+    List.cons(x, List.cons(y, List.nil[T])).length = Nat.2
+}
+
+theorem two_list_unique[T](x: T, y: T) {
+    x != y implies List.cons(x, List.cons(y, List.nil[T])).is_unique
+}
+
+theorem two_list_contains_cases[T](x: T, y: T, a: T) {
+    List.cons(x, List.cons(y, List.nil[T])).contains(a)
+        implies a = x or a = y
+}
+
+theorem red_pairwise_two[V](color: (V, V) -> Bool, x: V, y: V, a: V, b: V) {
+    is_edge_2_coloring(complete_graph[V], color) and color(x, y) and
+    (a = x or a = y) and (b = x or b = y)
+    implies (a = b or color(a, b))
+}
+
+theorem red_clique2_of_edge[V](color: (V, V) -> Bool, s: FiniteSet[V], x: V, y: V) {
+    is_edge_2_coloring(complete_graph[V], color) and
+    s.contains(x) and s.contains(y) and x != y and color(x, y)
+    implies has_red_clique(color, s, Nat.2)
+}
+
+theorem ramsey_r2k_upper(k: Nat) {
+    ramsey_number_upper(Nat.2, k, k)
+}
+
+theorem ramsey_r23_upper {
+    ramsey_number_upper(Nat.2, Nat.3, Nat.3)
+}
+
+define r23_lb_color(x: Nat, y: Nat) -> Bool {
+    false
+}
+
+theorem r23_lb_color_is_edge_2_coloring {
+    is_edge_2_coloring(complete_graph[Nat], r23_lb_color)
+}
+
+theorem r23_lb_no_red_clique {
+    not has_red_clique(r23_lb_color, range_set(Nat.2), Nat.2)
+}
+
+theorem lt_two_cases(x: Nat) {
+    x < Nat.2 implies (x = Nat.0 or x = Nat.1)
+}
+
+theorem three_lt_two_not_distinct(x: Nat, y: Nat, z: Nat) {
+    x < Nat.2 and y < Nat.2 and z < Nat.2 implies (x = y or x = z or y = z)
+}
+
+theorem r23_lb_no_blue_clique {
+    not has_blue_clique(r23_lb_color, range_set(Nat.2), Nat.3)
+}
+
+theorem ramsey_r23_lower_bound {
+    exists(color: (Nat, Nat) -> Bool) {
+        is_edge_2_coloring(complete_graph[Nat], color) and
+        not has_red_clique(color, range_set(Nat.2), Nat.2) and
+        not has_blue_clique(color, range_set(Nat.2), Nat.3)
+    }
+}
+
+theorem ramsey_r23_exact {
+    ramsey_number_upper(Nat.2, Nat.3, Nat.3) and
+    exists(color: (Nat, Nat) -> Bool) {
+        is_edge_2_coloring(complete_graph[Nat], color) and
+        not has_red_clique(color, range_set(Nat.2), Nat.2) and
+        not has_blue_clique(color, range_set(Nat.2), Nat.3)
+    }
+}
+
+theorem ramsey_r33_upper_clique {
+    ramsey_number_upper(Nat.3, Nat.3, Nat.6)
+}
+
+theorem ramsey_r34_pigeonhole_restated(color: (Nat, Nat) -> Bool) {
+    four_edges_from_zero_share_color(color)
+}
+
+theorem ramsey_r34_upper_restated(color: (Nat, Nat) -> Bool) {
+    is_edge_2_coloring(complete_graph[Nat], color) implies
+    (has_mono_triangle(color, nine_vertices) or has_mono_k4(color, nine_vertices))
+}
+
+theorem ramsey_r25_upper {
+    ramsey_number_upper(Nat.2, Nat.5, Nat.5)
+}
+
+theorem ramsey_r35_bound_arith_restated {
+    Nat.14 = Nat.5 + Nat.9
+}
+
+theorem ramsey_r35_from_recurrence_restated {
+    ramsey_number_upper(Nat.2, Nat.5, Nat.5) and
+    ramsey_number_upper(Nat.3, Nat.4, Nat.9) and
+    ramsey_recurrence(Nat.3, Nat.5, Nat.5, Nat.9)
+    implies ramsey_number_upper(Nat.3, Nat.5, Nat.14)
+}
+
+define ramsey_binom_bound(k: Nat, l: Nat) -> Bool {
+    ramsey_number_upper(k, l, (k + l - Nat.2).binom(k - Nat.1))
+}
+
+theorem ramsey_binom_bound_small23 {
+    ramsey_binom_bound(Nat.2, Nat.3)
+}
+
+theorem ramsey_binom_bound_small33 {
+    ramsey_binom_bound(Nat.3, Nat.3)
+}
+
+theorem c5_color_symmetric(x: Nat, y: Nat) {
+    c5_color(x, y) = c5_color(y, x)
+}
+
+theorem c5_color_is_edge_2_coloring {
+    is_edge_2_coloring(complete_graph[Nat], c5_color)
+}
+
+theorem five_vertices_lt(x: Nat) {
+    five_vertices.contains(x) implies x < Nat.5
+}
+
+theorem lt_five_cases(x: Nat) {
+    x < Nat.5 implies (x = Nat.0 or x = Nat.1 or x = Nat.2 or x = Nat.3 or x = Nat.4)
+}
+
+define is_vertex_cover[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]) -> Bool {
+    forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
+    }
+}
+
+theorem is_vertex_cover_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], x: V, y: V
+) {
+    is_vertex_cover(g, s, c) and s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
+}
+
+theorem is_vertex_cover_intro[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]) {
+    (forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
+    }) implies is_vertex_cover(g, s, c)
+}
+
+theorem is_vertex_cover_self[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_vertex_cover(g, s, s)
+}
+
+theorem is_vertex_cover_of_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], d: FiniteSet[V]
+) {
+    c.subset_eq(d) and is_vertex_cover(g, s, c) implies is_vertex_cover(g, s, d)
+}
+
+theorem is_vertex_cover_of_smaller_ambient[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], c: FiniteSet[V]
+) {
+    t.subset_eq(s) and is_vertex_cover(g, s, c) implies is_vertex_cover(g, t, c)
+}
+
+define common_neighborhood[V](
+    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V
+) -> FiniteSet[V] {
+    finite_set_filter(neighborhood(g, s, u), neighbor_pred(g, v))
+}
+
+theorem common_neighborhood_contains_eq[V](
+    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
+) {
+    common_neighborhood(g, s, u, v).contains(w) = (s.contains(w) and g.adj(u, w) and g.adj(v, w))
+}
+
+theorem common_neighborhood_subset[V](g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V) {
+    common_neighborhood(g, s, u, v).subset_eq(neighborhood(g, s, u))
+}
+
+theorem common_neighborhood_adj_left[V](
+    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
+) {
+    common_neighborhood(g, s, u, v).contains(w) implies g.adj(u, w)
+}
+
+theorem common_neighborhood_adj_right[V](
+    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
+) {
+    common_neighborhood(g, s, u, v).contains(w) implies g.adj(v, w)
+}
+
+define is_independent_in[V](g: SimpleGraph[V], t: FiniteSet[V]) -> Bool {
+    forall(x: V, y: V) {
+        t.contains(x) and t.contains(y) implies not g.adj(x, y)
+    }
+}
+
+theorem is_independent_in_apply[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
+    is_independent_in(g, t) and t.contains(x) and t.contains(y) implies not g.adj(x, y)
+}
+
+theorem is_independent_in_intro[V](g: SimpleGraph[V], t: FiniteSet[V]) {
+    (forall(x: V, y: V) {
+        t.contains(x) and t.contains(y) implies not g.adj(x, y)
+    }) implies is_independent_in(g, t)
+}
+
+theorem is_independent_in_of_subset[V](g: SimpleGraph[V], t: FiniteSet[V], r: FiniteSet[V]) {
+    r.subset_eq(t) and is_independent_in(g, t) implies is_independent_in(g, r)
+}
+
+define is_clique_in[V](g: SimpleGraph[V], t: FiniteSet[V]) -> Bool {
+    forall(x: V, y: V) {
+        t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
+    }
+}
+
+theorem is_clique_in_apply[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
+    is_clique_in(g, t) and t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
+}
+
+theorem is_clique_in_intro[V](g: SimpleGraph[V], t: FiniteSet[V]) {
+    (forall(x: V, y: V) {
+        t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
+    }) implies is_clique_in(g, t)
+}
+
+theorem is_clique_in_of_subset[V](g: SimpleGraph[V], t: FiniteSet[V], r: FiniteSet[V]) {
+    r.subset_eq(t) and is_clique_in(g, t) implies is_clique_in(g, r)
+}
+
+theorem clique_and_independent_no_two[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
+    is_clique_in(g, t) and is_independent_in(g, t) and t.contains(x) and t.contains(y) implies x = y
+}
+
+theorem vertex_cover_of_independent_complement[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
+) {
+    is_independent_in(g, t) implies is_vertex_cover(g, s, fs_difference(s, t))
+}
+
+define has_no_common_neighbor[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
+) -> Bool {
+    forall(z: V) {
+        not common_neighborhood(g, s, x, y).contains(z)
+    }
+}
+
+theorem has_no_common_neighbor_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
+) {
+    has_no_common_neighbor(g, s, x, y) implies not common_neighborhood(g, s, x, y).contains(z)
+}
+
+theorem has_no_common_neighbor_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
+) {
+    (forall(z: V) { not common_neighborhood(g, s, x, y).contains(z) })
+        implies has_no_common_neighbor(g, s, x, y)
+}
+
+theorem has_no_common_neighbor_not_adj[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
+) {
+    has_no_common_neighbor(g, s, x, y) and s.contains(z) and g.adj(x, z)
+        implies not g.adj(y, z)
+}
+
+define is_triangle_free[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y)
+            implies has_no_common_neighbor(g, s, x, y)
+    }
+}
+
+theorem is_triangle_free_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
+) {
+    is_triangle_free(g, s) and s.contains(x) and s.contains(y) and g.adj(x, y) implies has_no_common_neighbor(g, s, x, y)
+}
+
+theorem is_triangle_free_intro[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    (forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y) implies has_no_common_neighbor(g, s, x, y)
+    }) implies is_triangle_free(g, s)
+}
+
+theorem is_triangle_free_no_triangle[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
+) {
+    is_triangle_free(g, s) and s.contains(x) and s.contains(y) and s.contains(z) and g.adj(x, y) and g.adj(x, z) implies not g.adj(y, z)
+}
+
+theorem is_triangle_free_of_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
+) {
+    t.subset_eq(s) and is_triangle_free(g, s) implies is_triangle_free(g, t)
+}
+
+theorem triangle_free_neighborhood_independent[V](
+    g: SimpleGraph[V], s: FiniteSet[V], v: V
+) {
+    is_triangle_free(g, s) and s.contains(v) implies is_independent_in(g, neighborhood(g, s, v))
+}

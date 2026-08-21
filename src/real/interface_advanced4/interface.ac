@@ -1,0 +1,2648 @@
+define pow_real_fn(n: Nat, x: Real) -> Real {
+    x.pow(n)
+}
+
+theorem pow_real_fn_zero {
+    pow_real_fn(Nat.0) = constant[Real, Real](Real.1)
+}
+
+theorem pow_real_fn_suc(n: Nat) {
+    pow_real_fn(n.suc) = pointwise_mul[Real, Real](identity_fn[Real], pow_real_fn(n))
+}
+
+theorem continuous_pow_real_fn(n: Nat) {
+    continuous(pow_real_fn(n))
+}
+
+define reciprocal_real(x: Real) -> Real {
+    x.inverse
+}
+
+define pointwise_div_real(f: Real -> Real, g: Real -> Real, x: Real) -> Real {
+    f(x) / g(x)
+}
+
+define pointwise_reciprocal_real(g: Real -> Real, x: Real) -> Real {
+    g(x).inverse
+}
+
+theorem reciprocal_real_apply(x: Real) {
+    reciprocal_real(x) = x.inverse
+}
+
+theorem pointwise_div_real_apply(f: Real -> Real, g: Real -> Real, x: Real) {
+    pointwise_div_real(f, g, x) = f(x) / g(x)
+}
+
+theorem pointwise_reciprocal_real_apply(g: Real -> Real, x: Real) {
+    pointwise_reciprocal_real(g, x) = g(x).inverse
+}
+
+theorem pointwise_reciprocal_real_eq_compose(g: Real -> Real) {
+    pointwise_reciprocal_real(g) = compose(reciprocal_real, g)
+}
+
+theorem pointwise_div_real_eq_mul_reciprocal(f: Real -> Real, g: Real -> Real) {
+    pointwise_div_real(f, g) = pointwise_mul(f, pointwise_reciprocal_real(g))
+}
+
+theorem pointwise_div_const_eq_mul_inverse(f: Real -> Real, c: Real) {
+    pointwise_div_real(f, constant[Real, Real](c)) = pointwise_mul(f, constant[Real, Real](c.inverse))
+}
+
+theorem sub_reverse_neg(a: Real, b: Real) {
+    a - b = -(b - a)
+}
+
+theorem div_div_denominator(a: Real, b: Real, c: Real) {
+    b != Real.0 and c != Real.0 implies (a / b) / c = a / (b * c)
+}
+
+theorem neg_div_mul_cancel_right(a: Real, b: Real) {
+    a != Real.0 and b != Real.0 implies (-a) / (a * b) = -Real.1 / b
+}
+
+theorem abs_lower_bound_near_nonzero(x0: Real) {
+    x0 != Real.0 implies exists(delta: Real) {
+        delta.is_positive and forall(x: Real) {
+            x.is_close(x0, delta) implies delta <= x.abs
+        }
+    }
+}
+
+theorem inverse_local_abs_bound(x0: Real) {
+    x0 != Real.0 implies exists(delta: Real, bound: Real) {
+        delta.is_positive and bound.is_positive and forall(x: Real) {
+            x.is_close(x0, delta) implies x != Real.0 and x.inverse.abs <= bound
+        }
+    }
+}
+
+theorem inverse_sub_inverse(a: Real, b: Real) {
+    a != Real.0 and b != Real.0 implies a.inverse - b.inverse = (b - a) / (a * b)
+}
+
+theorem difference_quotient_reciprocal_real(x0: Real, x: Real) {
+    x0 != Real.0 and x != Real.0 and x != x0 implies
+    difference_quotient(reciprocal_real, x0, x) = (x0 - x) / (x * x0) / (x - x0)
+}
+
+theorem difference_quotient_reciprocal_real_simplified(x0: Real, x: Real) {
+    x0 != Real.0 and x != Real.0 and x != x0 implies
+    difference_quotient(reciprocal_real, x0, x) = -Real.1 / (x * x0)
+}
+
+theorem reciprocal_difference_quotient_error(x0: Real, x: Real) {
+    x0 != Real.0 and x != Real.0 and x != x0 implies
+    difference_quotient(reciprocal_real, x0, x) - (-Real.1 / (x0 * x0)) =
+        (x - x0) * x.inverse * x0.inverse * x0.inverse
+}
+
+theorem reciprocal_error_abs_lt_bound(x0: Real, x: Real, bound: Real, eps_x: Real) {
+    x0 != Real.0 and x.inverse.abs <= bound and bound.is_positive and eps_x.is_positive
+    and (x - x0).abs < eps_x implies
+    ((x - x0) * x.inverse * x0.inverse * x0.inverse).abs <
+        eps_x * bound * x0.inverse.abs * x0.inverse.abs
+}
+
+theorem quotient_derivative_value_formula(f0: Real, g0: Real, df: Real, dg: Real) {
+    g0 != Real.0 implies
+    f0 * (((-Real.1 / (g0 * g0)) * dg)) + g0.inverse * df = (df * g0 - f0 * dg) / (g0 * g0)
+}
+
+theorem derivative_reciprocal_real(x0: Real) {
+    x0 != Real.0 implies has_derivative_at(reciprocal_real, x0, -Real.1 / (x0 * x0))
+}
+
+theorem derivative_pointwise_reciprocal_real(g: Real -> Real, x0: Real, dg: Real) {
+    has_derivative_at(g, x0, dg) and g(x0) != Real.0 implies
+    has_derivative_at(pointwise_reciprocal_real(g), x0, (-Real.1 / (g(x0) * g(x0))) * dg)
+}
+
+theorem differentiable_pointwise_reciprocal_real(g: Real -> Real, x0: Real) {
+    differentiable_at(g, x0) and g(x0) != Real.0 implies differentiable_at(pointwise_reciprocal_real(g), x0)
+}
+
+theorem derivative_pointwise_div_product_form(
+    f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real
+) {
+    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg) and g(x0) != Real.0 implies
+    has_derivative_at(
+        pointwise_div_real(f, g),
+        x0,
+        f(x0) * (((-Real.1 / (g(x0) * g(x0))) * dg)) + pointwise_reciprocal_real(g, x0) * df
+    )
+}
+
+theorem derivative_pointwise_div(
+    f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real
+) {
+    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg) and g(x0) != Real.0 implies
+    has_derivative_at(pointwise_div_real(f, g), x0, (df * g(x0) - f(x0) * dg) / (g(x0) * g(x0)))
+}
+
+theorem differentiable_pointwise_div(f: Real -> Real, g: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(g, x0) and g(x0) != Real.0
+    implies differentiable_at(pointwise_div_real(f, g), x0)
+}
+
+theorem derivative_pointwise_div_from_reciprocal(
+    f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dinv: Real
+) {
+    has_derivative_at(f, x0, df) and has_derivative_at(pointwise_reciprocal_real(g), x0, dinv)
+    implies has_derivative_at(
+        pointwise_div_real(f, g),
+        x0,
+        f(x0) * dinv + pointwise_reciprocal_real(g, x0) * df
+    )
+}
+
+theorem differentiable_pointwise_div_from_reciprocal(f: Real -> Real, g: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(pointwise_reciprocal_real(g), x0)
+    implies differentiable_at(pointwise_div_real(f, g), x0)
+}
+
+theorem derivative_pointwise_div_const(f: Real -> Real, c: Real, x0: Real, d: Real) {
+    has_derivative_at(f, x0, d)
+    implies has_derivative_at(pointwise_div_real(f, constant[Real, Real](c)), x0, d / c)
+}
+
+theorem differentiable_pointwise_div_const(f: Real -> Real, c: Real, x0: Real) {
+    differentiable_at(f, x0) implies differentiable_at(pointwise_div_real(f, constant[Real, Real](c)), x0)
+}
+
+theorem continuous_at_reciprocal_real(x0: Real) {
+    x0 != Real.0 implies continuous_at(reciprocal_real, x0)
+}
+
+theorem continuous_at_pointwise_reciprocal_real(g: Real -> Real, x0: Real) {
+    continuous_at(g, x0) and g(x0) != Real.0 implies
+        continuous_at(pointwise_reciprocal_real(g), x0)
+}
+
+theorem continuous_at_pointwise_div_real(f: Real -> Real, g: Real -> Real, x0: Real) {
+    continuous_at(f, x0) and continuous_at(g, x0) and g(x0) != Real.0 implies
+        continuous_at(pointwise_div_real(f, g), x0)
+}
+
+define exp_shift_term(x: Real, n: Nat) -> Real {
+    x.pow(n) / Real.from_rat(Rat.from_nat(n.suc.factorial))
+}
+
+theorem exp_shift_term_mul_x(x: Real, n: Nat) {
+    x * exp_shift_term(x, n) = exp_term(x, n.suc)
+}
+
+theorem mul_seq_shift_eq_tail(x: Real) {
+    mul_seq(x, exp_shift_term(x)) = tail(exp_term(x), Nat.1)
+}
+
+theorem exp_partial_shift_mul(x: Real, n: Nat) {
+    x * partial(exp_shift_term(x), n) = partial(exp_term(x), n.suc) - Real.1
+}
+
+theorem factorial_real_lte_suc(n: Nat) {
+    Real.from_rat(Rat.from_nat(n.factorial)) <= Real.from_rat(Rat.from_nat(n.suc.factorial))
+}
+
+theorem exp_shift_term_abs(x: Real, n: Nat) {
+    exp_shift_term(x, n).abs = x.abs.pow(n) / Real.from_rat(Rat.from_nat(n.suc.factorial))
+}
+
+theorem exp_shift_term_abs_le_exp_term_abs(x: Real, n: Nat) {
+    exp_shift_term(x, n).abs <= exp_term(x, n).abs
+}
+
+theorem exp_shift_term_abs_converges(x: Real) {
+    absolutely_converges(exp_shift_term(x))
+}
+
+theorem exp_sub_one_series(x: Real) {
+    x.exp - Real.1 = x * limit(partial(exp_shift_term(x)))
+}
+
+theorem half_pos {
+    Real.1 / two > Real.0
+}
+
+theorem half_lt_one {
+    Real.1 / two < Real.1
+}
+
+theorem partial_abs_le_partial_abs_fn(a: Nat -> Real, n: Nat) {
+    partial(a, n).abs <= partial(abs_fn(a), n)
+}
+
+theorem factorial_suc_real_ge_two(j: Nat) {
+    j >= Nat.1 implies Real.from_rat(Rat.from_nat(j.suc.factorial)) >= two
+}
+
+theorem exp_shift_term_abs_le_half_pow(h: Real, j: Nat) {
+    h.abs < Real.1 / two and j >= Nat.1 implies exp_shift_term(h, j).abs <= h.abs.pow(j) / two
+}
+
+theorem geom_partial_bound(h: Real, n: Nat) {
+    h.abs < Real.1 implies partial(h.abs.pow, n) <= Real.1 / (Real.1 - h.abs)
+}
+
+theorem geom_partial_minus_one_bound(h: Real, n: Nat) {
+    h.abs < Real.1 implies partial(h.abs.pow, n.suc) - Real.1 <= h.abs / (Real.1 - h.abs)
+}
+
+theorem half_geom_tail_bound(h: Real) {
+    h.abs < Real.1 / two implies (Real.1 / two) * (h.abs / (Real.1 - h.abs)) <= h.abs
+}
+
+theorem shift_partial_sum_bound(h: Real, n: Nat) {
+    h.abs < Real.1 / two implies partial(tail(abs_fn(exp_shift_term(h)), Nat.1), n) <= h.abs
+}
+
+theorem exp_shift_sum_close_one(h: Real) {
+    h.abs < Real.1 / two implies
+        (limit(partial(exp_shift_term(h))) - Real.1).abs <= h.abs
+}
+
+define exp_shift_sum(x: Real) -> Real {
+    limit(partial(exp_shift_term(x)))
+}
+
+theorem exp_sub_one_series_sum(x: Real) {
+    x.exp - Real.1 = x * exp_shift_sum(x)
+}
+
+theorem exp_shift_sum_close_one_sum(h: Real) {
+    h.abs < Real.1 / two implies (exp_shift_sum(h) - Real.1).abs <= h.abs
+}
+
+theorem exp_has_derivative_at(x0: Real) {
+    has_derivative_at(Real.exp, x0, x0.exp)
+}
+
+theorem exp_is_derivative_fn {
+    is_derivative_fn(Real.exp, Real.exp)
+}
+
+theorem close_from_both_sides(a: Real, b: Real, eps: Real) {
+    a > b - eps and a < b + eps implies a.is_close(b, eps)
+}
+
+theorem log_value_close(x0: Real, delta2: Real) {
+    x0 > Real.0 and delta2.is_positive implies exists(delta: Real) {
+        delta.is_positive and delta < x0 and forall(x: Real) {
+            x.is_close(x0, delta) implies x.log.get_or_else(Real.0).is_close(x0.log.get_or_else(Real.0), delta2)
+        }
+    }
+}
+
+theorem log_has_derivative_at_pos(x0: Real) {
+    x0 > Real.0 implies has_derivative_at(log_value, x0, Real.1 / x0)
+}
+
+theorem log_is_derivative_fn_on_positives {
+    forall(x: Real) {
+        x > Real.0 implies has_derivative_at(log_value, x, Real.1 / x)
+    }
+}
+
+define sin_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * x.pow(Nat.2 * n + Nat.1) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+define cos_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * x.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n).factorial))
+}
+
+attributes Real {
+    /// The sine function, defined by its power series.
+    define sin(self) -> Real {
+        limit(partial(sin_term(self)))
+    }
+
+    /// The cosine function, defined by its power series.
+    define cos(self) -> Real {
+        limit(partial(cos_term(self)))
+    }
+}
+
+theorem abs_one {
+    Real.1.abs = Real.1
+}
+
+theorem two_mul_suc(k: Nat) {
+    Nat.2 * k.suc = (Nat.2 * k).suc.suc
+}
+
+theorem alt_abs_step(k: Nat) {
+    alternating_sign[Real](k).abs = Real.1 implies alternating_sign[Real](k.suc).abs = Real.1
+}
+
+theorem alternating_sign_abs(n: Nat) {
+    alternating_sign[Real](n).abs = Real.1
+}
+
+theorem alt_double_step(k: Nat) {
+    alternating_sign[Real](Nat.2 * k) = Real.1 implies alternating_sign[Real](Nat.2 * k.suc) = Real.1
+}
+
+theorem alternating_sign_double(n: Nat) {
+    alternating_sign[Real](Nat.2 * n) = Real.1
+}
+
+theorem alt_double_suc_step(k: Nat) {
+    alternating_sign[Real](Nat.2 * k + Nat.1) = -Real.1 implies alternating_sign[Real](Nat.2 * k.suc + Nat.1) = -Real.1
+}
+
+theorem alternating_sign_double_suc(n: Nat) {
+    alternating_sign[Real](Nat.2 * n + Nat.1) = -Real.1
+}
+
+theorem suc_ge_one(n: Nat) {
+    Nat.1 <= n.suc
+}
+
+theorem two_mul_ge_one_step(k: Nat) {
+    Nat.2 * k.suc >= Nat.1
+}
+
+theorem two_mul_ge_one(n: Nat) {
+    n >= Nat.1 implies Nat.2 * n >= Nat.1
+}
+
+theorem sin_term_abs(x: Real, n: Nat) {
+    sin_term(x, n).abs = x.abs.pow(Nat.2 * n + Nat.1) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem sin_term_abs_exp(x: Real, n: Nat) {
+    sin_term(x, n).abs = exp_term(x.abs, Nat.2 * n + Nat.1)
+}
+
+theorem cos_term_abs(x: Real, n: Nat) {
+    cos_term(x, n).abs = x.abs.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n).factorial))
+}
+
+theorem cos_term_abs_exp(x: Real, n: Nat) {
+    cos_term(x, n).abs = exp_term(x.abs, Nat.2 * n)
+}
+
+theorem exp_term_nonneg(x: Real, n: Nat) {
+    x >= Real.0 implies exp_term(x, n) >= Real.0
+}
+
+theorem sin_bound_base(x: Real) {
+    Real.0 <= partial(exp_term(x.abs), Nat.1)
+}
+
+theorem sin_partial_bound_step(x: Real, k: Nat) {
+    partial(abs_fn(sin_term(x)), k) <= partial(exp_term(x.abs), Nat.2 * k + Nat.1)
+    implies
+    partial(abs_fn(sin_term(x)), k.suc) <= partial(exp_term(x.abs), Nat.2 * k.suc + Nat.1)
+}
+
+theorem sin_partial_bound(x: Real, n: Nat) {
+    partial(abs_fn(sin_term(x)), n) <= partial(exp_term(x.abs), Nat.2 * n + Nat.1)
+}
+
+theorem cos_partial_bound_step(x: Real, k: Nat) {
+    partial(abs_fn(cos_term(x)), k) <= partial(exp_term(x.abs), Nat.2 * k)
+    implies
+    partial(abs_fn(cos_term(x)), k.suc) <= partial(exp_term(x.abs), Nat.2 * k.suc)
+}
+
+theorem cos_partial_bound(x: Real, n: Nat) {
+    partial(abs_fn(cos_term(x)), n) <= partial(exp_term(x.abs), Nat.2 * n)
+}
+
+theorem sin_term_abs_converges(x: Real) {
+    absolutely_converges(sin_term(x))
+}
+
+theorem cos_term_abs_converges(x: Real) {
+    absolutely_converges(cos_term(x))
+}
+
+theorem sin_term_zero(n: Nat) {
+    sin_term(Real.0, n) = Real.0
+}
+
+theorem sin_partial_zero_step(k: Nat) {
+    partial(sin_term(Real.0), k) = Real.0 implies partial(sin_term(Real.0), k.suc) = Real.0
+}
+
+theorem sin_partial_zero(n: Nat) {
+    partial(sin_term(Real.0), n) = Real.0
+}
+
+theorem sin_zero {
+    (Real.0).sin = Real.0
+}
+
+theorem cos_term_zero(n: Nat) {
+    n >= Nat.1 implies cos_term(Real.0, n) = Real.0
+}
+
+theorem cos_zero_partial_step(k: Nat) {
+    partial(cos_term(Real.0), k.suc) = Real.1 implies partial(cos_term(Real.0), k.suc.suc) = Real.1
+}
+
+theorem cos_zero_partial(k: Nat) {
+    partial(cos_term(Real.0), k.suc) = Real.1
+}
+
+theorem cos_zero {
+    (Real.0).cos = Real.1
+}
+
+theorem real_pow_mul_distrib_step(x: Real, y: Real, k: Nat) {
+    (x * y).pow(k) = x.pow(k) * y.pow(k)
+    implies
+    (x * y).pow(k.suc) = x.pow(k.suc) * y.pow(k.suc)
+}
+
+theorem real_pow_mul_distrib(x: Real, y: Real, n: Nat) {
+    (x * y).pow(n) = x.pow(n) * y.pow(n)
+}
+
+theorem neg_pow_even(x: Real, n: Nat) {
+    (-x).pow(Nat.2 * n) = x.pow(Nat.2 * n)
+}
+
+theorem neg_pow_odd(x: Real, n: Nat) {
+    (-x).pow(Nat.2 * n + Nat.1) = -x.pow(Nat.2 * n + Nat.1)
+}
+
+theorem cos_term_neg(x: Real, n: Nat) {
+    cos_term(-x, n) = cos_term(x, n)
+}
+
+theorem sin_term_neg(x: Real, n: Nat) {
+    sin_term(-x, n) = -sin_term(x, n)
+}
+
+theorem partial_neg_seq(f: Nat -> Real, n: Nat) {
+    partial(neg_seq(f), n) = -partial(f, n)
+}
+
+theorem cos_neg(x: Real) {
+    (-x).cos = x.cos
+}
+
+theorem sin_neg(x: Real) {
+    (-x).sin = -x.sin
+}
+
+theorem alternating_sign_mul(a: Nat, b: Nat) {
+    alternating_sign[Real](a) * alternating_sign[Real](b) = alternating_sign[Real](a + b)
+}
+
+theorem two_mul_sub(n: Nat, k: Nat) {
+    k <= n implies Nat.2 * (n - k) = Nat.2 * n - Nat.2 * k
+}
+
+define even_subseq(f: Nat -> Real, k: Nat) -> Real {
+    f(Nat.2 * k)
+}
+
+define odd_subseq(f: Nat -> Real, k: Nat) -> Real {
+    f(Nat.2 * k + Nat.1)
+}
+
+theorem partial_split_even(f: Nat -> Real, n: Nat) {
+    partial(f, Nat.2 * n.suc) = partial(even_subseq(f), n.suc) + partial(odd_subseq(f), n.suc)
+}
+
+theorem add_swap_outers(a: Real, b: Real, c: Real, d: Real) {
+    a + b + c + d = a + d + b + c
+}
+
+theorem partial_split_odd(f: Nat -> Real, n: Nat) {
+    partial(f, Nat.2 * n + Nat.1) = partial(even_subseq(f), n.suc) + partial(odd_subseq(f), n)
+}
+
+theorem signed_mul_combine(s: Real, t: Real, a: Real, b: Real) {
+    (s * a) * (t * b) = (s * t) * (a * b)
+}
+
+theorem div_add_same_denom(a: Real, x: Real, y: Real, f: Real) {
+    f != Real.0 implies a * x / f + a * y / f = a * (x + y) / f
+}
+
+theorem signed_terms_binom_product(x: Real, y: Real, a: Nat, b: Nat, e: Nat, f: Nat) {
+    (alternating_sign[Real](a) * x.pow(Nat.2 * a + e) / Real.from_rat(Rat.from_nat((Nat.2 * a + e).factorial))) *
+    (alternating_sign[Real](b) * y.pow(Nat.2 * b + f) / Real.from_rat(Rat.from_nat((Nat.2 * b + f).factorial))) =
+        alternating_sign[Real](a + b) * binomial_term[Real](x, y, Nat.2 * a + e + Nat.2 * b + f, Nat.2 * a + e) /
+        Real.from_rat(Rat.from_nat((Nat.2 * a + e + Nat.2 * b + f).factorial))
+}
+
+theorem two_k_add_two_sub(n: Nat, k: Nat) {
+    k <= n implies Nat.2 * k + Nat.2 * (n - k) = Nat.2 * n
+}
+
+theorem two_k_suc_add_two_sub(n: Nat, k: Nat) {
+    k <= n implies Nat.2 * k + Nat.1 + Nat.2 * (n - k) = Nat.2 * n + Nat.1
+}
+
+theorem two_k_add_two_sub_suc(n: Nat, k: Nat) {
+    k <= n implies Nat.2 * k + Nat.2 * (n - k) + Nat.1 = Nat.2 * n + Nat.1
+}
+
+theorem two_k_suc_add_two_sub_suc(m: Nat, k: Nat) {
+    k <= m implies Nat.2 * k + Nat.1 + Nat.2 * (m - k) + Nat.1 = Nat.2 * m + Nat.2
+}
+
+theorem sin_cos_term_product(x: Real, y: Real, n: Nat, k: Nat) {
+    k <= n implies
+    sin_term(x, k) * cos_term(y, n - k) =
+        alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k + Nat.1) /
+        Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem cos_sin_term_product(x: Real, y: Real, n: Nat, k: Nat) {
+    k <= n implies
+    cos_term(x, k) * sin_term(y, n - k) =
+        alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k) /
+        Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem cos_cos_term_product(x: Real, y: Real, n: Nat, k: Nat) {
+    k <= n implies
+    cos_term(x, k) * cos_term(y, n - k) =
+        alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n, Nat.2 * k) /
+        Real.from_rat(Rat.from_nat((Nat.2 * n).factorial))
+}
+
+theorem sin_sin_term_product(x: Real, y: Real, m: Nat, k: Nat) {
+    k <= m implies
+    sin_term(x, k) * sin_term(y, m - k) =
+        alternating_sign[Real](m) * binomial_term[Real](x, y, Nat.2 * m + Nat.2, Nat.2 * k + Nat.1) /
+        Real.from_rat(Rat.from_nat((Nat.2 * m + Nat.2).factorial))
+}
+
+define sin_row_odd(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k + Nat.1) /
+    Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+define sin_row_even(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k) /
+    Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+define row_pair_sum(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k) + binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k + Nat.1)
+}
+
+define sin_row_sum(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    alternating_sign[Real](n) * row_pair_sum(x, y, n, k) /
+    Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem sin_add_cauchy(x: Real, y: Real, n: Nat) {
+    cauchy_product(sin_term(x), cos_term(y), n) + cauchy_product(cos_term(x), sin_term(y), n) = sin_term(x + y, n)
+}
+
+theorem div_sub_same_denom(a: Real, b: Real, x: Real, y: Real, f: Real) {
+    f != Real.0 implies a * x / f - b * y / f = (a * x - b * y) / f
+}
+
+theorem two_pred_add_two(n: Nat) {
+    n >= Nat.1 implies Nat.2 * (n - Nat.1) + Nat.2 = Nat.2 * n
+}
+
+define cos_row_even(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    alternating_sign[Real](n) * binomial_term[Real](x, y, Nat.2 * n, Nat.2 * k) /
+    Real.from_rat(Rat.from_nat((Nat.2 * n).factorial))
+}
+
+define sin_row_odd_shift(x: Real, y: Real, m: Nat, k: Nat) -> Real {
+    alternating_sign[Real](m) * binomial_term[Real](x, y, Nat.2 * m + Nat.2, Nat.2 * k + Nat.1) /
+    Real.from_rat(Rat.from_nat((Nat.2 * m + Nat.2).factorial))
+}
+
+theorem pred_suc(n: Nat) {
+    n >= Nat.1 implies (n - Nat.1).suc = n
+}
+
+theorem cos_add_cauchy(x: Real, y: Real, n: Nat) {
+    n >= Nat.1 implies
+    cauchy_product(cos_term(x), cos_term(y), n) - cauchy_product(sin_term(x), sin_term(y), n - Nat.1) = cos_term(x + y, n)
+}
+
+theorem cos_add_cauchy_seq(x: Real, y: Real, n: Nat) {
+    partial(cos_term(x + y), n) =
+        partial(cauchy_seq(cos_term(x), cos_term(y)), n) -
+        partial(cauchy_seq(sin_term(x), sin_term(y)), n - Nat.1)
+}
+
+theorem sin_add(x: Real, y: Real) {
+    (x + y).sin = x.sin * y.cos + x.cos * y.sin
+}
+
+theorem cos_add(x: Real, y: Real) {
+    (x + y).cos = x.cos * y.cos - x.sin * y.sin
+}
+
+theorem sin_sq_add_cos_sq(x: Real) {
+    x.sin.pow(Nat.2) + x.cos.pow(Nat.2) = Real.1
+}
+
+theorem sq_lte_base(x: Real) {
+    x >= Real.0 and x <= Real.1 implies x.pow(Nat.2) <= x
+}
+
+theorem sq_abs_lt_one(x: Real) {
+    x.abs < Real.1 implies x.abs.pow(Nat.2) < Real.1
+}
+
+theorem abs_of_nonneg(x: Real) {
+    x >= Real.0 implies x.abs = x
+}
+
+define sin_shift_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * x.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem sin_shift_term_mul_x(x: Real, n: Nat) {
+    x * sin_shift_term(x, n) = sin_term(x, n)
+}
+
+theorem mul_seq_sin_shift_eq_sin_term(x: Real) {
+    mul_seq(x, sin_shift_term(x)) = sin_term(x)
+}
+
+theorem sin_shift_term_abs(x: Real, n: Nat) {
+    sin_shift_term(x, n).abs = x.abs.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem sin_shift_term_abs_le_geom(x: Real, n: Nat) {
+    sin_shift_term(x, n).abs <= x.abs.pow(Nat.2).pow(n)
+}
+
+theorem sin_shift_term_abs_converges_small(x: Real) {
+    x.abs < Real.1 implies absolutely_converges(sin_shift_term(x))
+}
+
+define sin_shift_sum(x: Real) -> Real {
+    limit(partial(sin_shift_term(x)))
+}
+
+theorem sin_shift_partial_mul(x: Real, n: Nat) {
+    x * partial(sin_shift_term(x), n) = partial(sin_term(x), n)
+}
+
+theorem sin_series_small(x: Real) {
+    x.abs < Real.1 implies x.sin = x * sin_shift_sum(x)
+}
+
+define cos_shift_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n.suc) * x.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n.suc).factorial))
+}
+
+theorem cos_shift_term_mul_x2(x: Real, n: Nat) {
+    x.pow(Nat.2) * cos_shift_term(x, n) = cos_term(x, n.suc)
+}
+
+theorem mul_seq_cos_shift_eq_tail(x: Real) {
+    mul_seq(x.pow(Nat.2), cos_shift_term(x)) = tail(cos_term(x), Nat.1)
+}
+
+theorem cos_shift_term_abs(x: Real, n: Nat) {
+    cos_shift_term(x, n).abs = x.abs.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n.suc).factorial))
+}
+
+theorem cos_shift_term_abs_le_geom(x: Real, n: Nat) {
+    cos_shift_term(x, n).abs <= x.abs.pow(Nat.2).pow(n)
+}
+
+theorem cos_shift_term_abs_converges_small(x: Real) {
+    x.abs < Real.1 implies absolutely_converges(cos_shift_term(x))
+}
+
+define cos_shift_sum(x: Real) -> Real {
+    limit(partial(cos_shift_term(x)))
+}
+
+theorem cos_shift_partial_mul(x: Real, n: Nat) {
+    x.pow(Nat.2) * partial(cos_shift_term(x), n) = partial(cos_term(x), n.suc) - Real.1
+}
+
+theorem cos_sub_one_series_small(x: Real) {
+    x.abs < Real.1 implies x.cos - Real.1 = x.pow(Nat.2) * cos_shift_sum(x)
+}
+
+theorem sin_shift_tail_partial_bound(h: Real, n: Nat) {
+    h.abs < Real.1 / two implies partial(tail(abs_fn(sin_shift_term(h)), Nat.1), n) <= two * h.abs.pow(Nat.2)
+}
+
+theorem sin_shift_sum_close_one(h: Real) {
+    h.abs < Real.1 / two implies (sin_shift_sum(h) - Real.1).abs <= two * h.abs.pow(Nat.2)
+}
+
+theorem cos_shift_sum_bound(h: Real) {
+    h.abs < Real.1 / two implies cos_shift_sum(h).abs <= two
+}
+
+theorem sin_has_derivative_at(x0: Real) {
+    has_derivative_at(Real.sin, x0, x0.cos)
+}
+
+theorem sin_is_derivative_fn {
+    is_derivative_fn(Real.sin, Real.cos)
+}
+
+theorem cos_has_derivative_at(x0: Real) {
+    has_derivative_at(Real.cos, x0, -x0.sin)
+}
+
+theorem cos_is_derivative_fn {
+    is_derivative_fn(Real.cos, pointwise_neg(Real.sin))
+}
+
+theorem cos_derivative_is_neg_sin {
+    is_derivative_fn(Real.cos, pointwise_neg(Real.sin))
+}
+
+define interval_contains(a: Real, b: Real, x: Real) -> Bool {
+    a <= x and x <= b
+}
+
+define interval_set(a: Real, b: Real) -> Set[Real] {
+    Set[Real].new(interval_contains(a, b))
+}
+
+define interval_image(f: Real -> Real, x: Real, y: Real) -> Set[Real] {
+    function_image(f, interval_set(x, y))
+}
+
+define has_lower_bound(s: Set[Real]) -> Bool {
+    exists(b: Real) {
+        is_set_lower_bound(s, b)
+    }
+}
+
+define is_bounded_on(f: Real -> Real, a: Real, b: Real) -> Bool {
+    exists(lb: Real, ub: Real) {
+        forall(x: Real) {
+            interval_contains(a, b, x) implies lb <= f(x) and f(x) <= ub
+        }
+    }
+}
+
+theorem set_supremum_unique(s: Set[Real], m1: Real, m2: Real) {
+    is_set_supremum(s, m1) and is_set_supremum(s, m2) implies m1 = m2
+}
+
+theorem set_infimum_is_lower_bound(s: Set[Real], inf: Real) {
+    is_set_infimum(s, inf) implies is_set_lower_bound(s, inf)
+}
+
+theorem set_lower_bound_le_infimum(s: Set[Real], inf: Real, lb: Real) {
+    is_set_infimum(s, inf) and is_set_lower_bound(s, lb) implies lb <= inf
+}
+
+theorem set_lower_bound_contains_le(s: Set[Real], lb: Real, x: Real) {
+    is_set_lower_bound(s, lb) and s.contains(x) implies lb <= x
+}
+
+theorem neg_lte_flip(a: Real, b: Real) {
+    a <= b implies -b <= -a
+}
+
+theorem set_infimum_unique(s: Set[Real], m1: Real, m2: Real) {
+    is_set_infimum(s, m1) and is_set_infimum(s, m2) implies m1 = m2
+}
+
+theorem interval_set_contains_left(a: Real, b: Real) {
+    a <= b implies interval_set(a, b).contains(a)
+}
+
+theorem interval_set_contains_right(a: Real, b: Real) {
+    a <= b implies interval_set(a, b).contains(b)
+}
+
+theorem image_nonempty(f: Real -> Real, s: Set[Real]) {
+    is_nonempty(s) implies is_nonempty(function_image(f, s))
+}
+
+theorem neg_upper_bound_of_lower(s: Set[Real], lb: Real) {
+    is_set_lower_bound(s, lb)
+    implies
+    is_set_upper_bound(negate_set(s), -lb)
+}
+
+theorem negate_set_nonempty(s: Set[Real]) {
+    is_nonempty(s) implies is_nonempty(negate_set(s))
+}
+
+theorem inf_of_neg_sup(s: Set[Real], sup: Real) {
+    is_set_supremum(negate_set(s), sup)
+    implies
+    is_set_infimum(s, -sup)
+}
+
+theorem interval_sup_exists(f: Real -> Real, x: Real, y: Real) {
+    is_nonempty(interval_set(x, y)) and has_upper_bound(interval_image(f, x, y))
+    implies
+    exists(m: Real) {
+        is_set_supremum(interval_image(f, x, y), m)
+    }
+}
+
+theorem interval_inf_exists(f: Real -> Real, x: Real, y: Real) {
+    is_nonempty(interval_set(x, y)) and has_lower_bound(interval_image(f, x, y))
+    implies
+    exists(m: Real) {
+        is_set_infimum(interval_image(f, x, y), m)
+    }
+}
+
+theorem interval_sup_exists_or_zero(f: Real -> Real, x: Real, y: Real) {
+    exists(m: Real) {
+        if is_nonempty(interval_set(x, y)) and has_upper_bound(interval_image(f, x, y)) {
+            is_set_supremum(interval_image(f, x, y), m)
+        } else {
+            m = Real.0
+        }
+    }
+}
+
+theorem interval_inf_exists_or_zero(f: Real -> Real, x: Real, y: Real) {
+    exists(m: Real) {
+        if is_nonempty(interval_set(x, y)) and has_lower_bound(interval_image(f, x, y)) {
+            is_set_infimum(interval_image(f, x, y), m)
+        } else {
+            m = Real.0
+        }
+    }
+}
+
+let interval_sup(f: Real -> Real, x: Real, y: Real) -> m: Real satisfy {
+    if is_nonempty(interval_set(x, y)) and has_upper_bound(interval_image(f, x, y)) {
+        is_set_supremum(interval_image(f, x, y), m)
+    } else {
+        m = Real.0
+    }
+}
+
+let interval_inf(f: Real -> Real, x: Real, y: Real) -> m: Real satisfy {
+    if is_nonempty(interval_set(x, y)) and has_lower_bound(interval_image(f, x, y)) {
+        is_set_infimum(interval_image(f, x, y), m)
+    } else {
+        m = Real.0
+    }
+}
+
+theorem interval_sup_spec(f: Real -> Real, x: Real, y: Real) {
+    is_nonempty(interval_set(x, y)) and has_upper_bound(interval_image(f, x, y))
+    implies
+    is_set_supremum(interval_image(f, x, y), interval_sup(f, x, y))
+}
+
+theorem interval_inf_spec(f: Real -> Real, x: Real, y: Real) {
+    is_nonempty(interval_set(x, y)) and has_lower_bound(interval_image(f, x, y))
+    implies
+    is_set_infimum(interval_image(f, x, y), interval_inf(f, x, y))
+}
+
+theorem interval_sup_const(f: Real -> Real, c: Real, x: Real, y: Real) {
+    x <= y and (forall(t: Real) { interval_contains(x, y, t) implies f(t) = c })
+    implies
+    interval_sup(f, x, y) = c
+}
+
+theorem interval_inf_const(f: Real -> Real, c: Real, x: Real, y: Real) {
+    x <= y and (forall(t: Real) { interval_contains(x, y, t) implies f(t) = c })
+    implies
+    interval_inf(f, x, y) = c
+}
+
+define partition_monotone(p: Nat -> Real, n: Nat) -> Bool {
+    forall(i: Nat, j: Nat) {
+        i <= j and j <= n implies p(i) <= p(j)
+    }
+}
+
+define is_partition(p: Nat -> Real, a: Real, b: Real, n: Nat) -> Bool {
+    (p(Nat.0) = a) and (p(n) = b) and partition_monotone(p, n)
+}
+
+theorem partition_start(p: Nat -> Real, a: Real, b: Real, n: Nat) {
+    is_partition(p, a, b, n) implies p(Nat.0) = a
+}
+
+theorem partition_end(p: Nat -> Real, a: Real, b: Real, n: Nat) {
+    is_partition(p, a, b, n) implies p(n) = b
+}
+
+theorem partition_mono(p: Nat -> Real, a: Real, b: Real, n: Nat, i: Nat, j: Nat) {
+    is_partition(p, a, b, n) and i <= j and j <= n implies p(i) <= p(j)
+}
+
+theorem partition_point_in_interval(p: Nat -> Real, a: Real, b: Real, n: Nat, i: Nat) {
+    is_partition(p, a, b, n) and i <= n implies interval_contains(a, b, p(i))
+}
+
+define trivial_partition(a: Real, b: Real, i: Nat) -> Real {
+    if i = Nat.0 {
+        a
+    } else {
+        b
+    }
+}
+
+theorem trivial_partition_zero(a: Real, b: Real) {
+    trivial_partition(a, b, Nat.0) = a
+}
+
+theorem trivial_partition_one(a: Real, b: Real) {
+    trivial_partition(a, b, Nat.1) = b
+}
+
+theorem trivial_partition_is_partition(a: Real, b: Real) {
+    a <= b implies is_partition(trivial_partition(a, b), a, b, Nat.1)
+}
+
+define diff_step(p: Nat -> Real, i: Nat) -> Real {
+    p(i + 1) - p(i)
+}
+
+theorem ring_comm_add_sub(a: Real, b: Real, c: Real) {
+    a - b + c = c + a - b
+}
+
+theorem ring_cancel_sub(a: Real, b: Real, c: Real) {
+    (a - b) + b - c = a - c
+}
+
+theorem ring_diff_telescope(a: Real, b: Real, c: Real) {
+    a - b + (c - a) = c - b
+}
+
+theorem telescope(p: Nat -> Real, n: Nat) {
+    partial(diff_step(p), n) = p(n) - p(Nat.0)
+}
+
+define lower_step(f: Real -> Real, x: Real, y: Real) -> Real {
+    interval_inf(f, x, y) * (y - x)
+}
+
+define upper_step(f: Real -> Real, x: Real, y: Real) -> Real {
+    interval_sup(f, x, y) * (y - x)
+}
+
+define partition_step_lower(f: Real -> Real, p: Nat -> Real, i: Nat) -> Real {
+    interval_inf(f, p(i), p(i + 1)) * diff_step(p, i)
+}
+
+define partition_step_upper(f: Real -> Real, p: Nat -> Real, i: Nat) -> Real {
+    interval_sup(f, p(i), p(i + 1)) * diff_step(p, i)
+}
+
+define lower_sum(f: Real -> Real, p: Nat -> Real, n: Nat) -> Real {
+    partial(partition_step_lower(f, p), n)
+}
+
+define upper_sum(f: Real -> Real, p: Nat -> Real, n: Nat) -> Real {
+    partial(partition_step_upper(f, p), n)
+}
+
+define scalar_diff_step(c: Real, p: Nat -> Real, i: Nat) -> Real {
+    c * diff_step(p, i)
+}
+
+theorem interval_contains_left(a: Real, b: Real, x: Real) {
+    interval_contains(a, b, x) implies a <= x
+}
+
+theorem interval_contains_right(a: Real, b: Real, x: Real) {
+    interval_contains(a, b, x) implies x <= b
+}
+
+theorem interval_contains_mono(a: Real, b: Real, x: Real, y: Real, t: Real) {
+    interval_contains(a, b, x) and interval_contains(a, b, y) and x <= t and t <= y
+    implies
+    interval_contains(a, b, t)
+}
+
+theorem lower_step_const_on_partition(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, i: Nat, c: Real) {
+    is_partition(p, a, b, n) and i < n and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    partition_step_lower(f, p, i) = c * diff_step(p, i)
+}
+
+theorem upper_step_const_on_partition(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, i: Nat, c: Real) {
+    is_partition(p, a, b, n) and i < n and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    partition_step_upper(f, p, i) = c * diff_step(p, i)
+}
+
+theorem scalar_diff_step_eq_mul_fn(c: Real, p: Nat -> Real) {
+    scalar_diff_step(c, p) = mul_fn(c, diff_step(p))
+}
+
+theorem const_lower_sum(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, c: Real) {
+    is_partition(p, a, b, n) and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    lower_sum(f, p, n) = c * (b - a)
+}
+
+theorem const_upper_sum(f: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, c: Real) {
+    is_partition(p, a, b, n) and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    upper_sum(f, p, n) = c * (b - a)
+}
+
+define lower_sum_contains(f: Real -> Real, a: Real, b: Real, s: Real) -> Bool {
+    exists(p: Nat -> Real, n: Nat) {
+        is_partition(p, a, b, n) and s = lower_sum(f, p, n)
+    }
+}
+
+define lower_sum_set(f: Real -> Real, a: Real, b: Real) -> Set[Real] {
+    Set[Real].new(lower_sum_contains(f, a, b))
+}
+
+define upper_sum_contains(f: Real -> Real, a: Real, b: Real, s: Real) -> Bool {
+    exists(p: Nat -> Real, n: Nat) {
+        is_partition(p, a, b, n) and s = upper_sum(f, p, n)
+    }
+}
+
+define upper_sum_set(f: Real -> Real, a: Real, b: Real) -> Set[Real] {
+    Set[Real].new(upper_sum_contains(f, a, b))
+}
+
+theorem const_in_lower_sum_set(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    lower_sum_set(f, a, b).contains(c * (b - a))
+}
+
+theorem const_in_upper_sum_set(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    upper_sum_set(f, a, b).contains(c * (b - a))
+}
+
+theorem lower_sum_set_all_const(f: Real -> Real, c: Real, a: Real, b: Real, s: Real) {
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c }) and lower_sum_set(f, a, b).contains(s)
+    implies
+    s = c * (b - a)
+}
+
+theorem upper_sum_set_all_const(f: Real -> Real, c: Real, a: Real, b: Real, s: Real) {
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c }) and upper_sum_set(f, a, b).contains(s)
+    implies
+    s = c * (b - a)
+}
+
+theorem sup_of_all_equal(s: Set[Real], m: Real) {
+    s.contains(m) and (forall(x: Real) { s.contains(x) implies x = m })
+    implies
+    is_set_supremum(s, m)
+}
+
+theorem inf_of_all_equal(s: Set[Real], m: Real) {
+    s.contains(m) and (forall(x: Real) { s.contains(x) implies x = m })
+    implies
+    is_set_infimum(s, m)
+}
+
+define is_integrable(f: Real -> Real, a: Real, b: Real) -> Bool {
+    exists(m: Real) {
+        is_set_supremum(lower_sum_set(f, a, b), m) and is_set_infimum(upper_sum_set(f, a, b), m)
+    }
+}
+
+theorem const_lower_sum_set_sup(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    is_set_supremum(lower_sum_set(f, a, b), c * (b - a))
+}
+
+theorem const_upper_sum_set_inf(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    is_set_infimum(upper_sum_set(f, a, b), c * (b - a))
+}
+
+theorem constant_integrable(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    is_integrable(f, a, b)
+}
+
+theorem integral_exists_or_zero(f: Real -> Real, a: Real, b: Real) {
+    exists(v: Real) {
+        if is_integrable(f, a, b) {
+            is_set_supremum(lower_sum_set(f, a, b), v) and is_set_infimum(upper_sum_set(f, a, b), v)
+        } else {
+            v = Real.0
+        }
+    }
+}
+
+let integral(f: Real -> Real, a: Real, b: Real) -> v: Real satisfy {
+    if is_integrable(f, a, b) {
+        is_set_supremum(lower_sum_set(f, a, b), v) and is_set_infimum(upper_sum_set(f, a, b), v)
+    } else {
+        v = Real.0
+    }
+}
+
+theorem integral_spec(f: Real -> Real, a: Real, b: Real) {
+    is_integrable(f, a, b)
+    implies
+    is_set_supremum(lower_sum_set(f, a, b), integral(f, a, b)) and is_set_infimum(upper_sum_set(f, a, b), integral(f, a, b))
+}
+
+theorem integral_const(f: Real -> Real, c: Real, a: Real, b: Real) {
+    a <= b and (forall(t: Real) { interval_contains(a, b, t) implies f(t) = c })
+    implies
+    integral(f, a, b) = c * (b - a)
+}
+
+theorem sub_nonneg(a: Real, b: Real) {
+    a <= b implies Real.0 <= b - a
+}
+
+define truncate(f: Nat -> Real, n: Nat, k: Nat) -> Real {
+    if k < n {
+        f(k)
+    } else {
+        Real.0
+    }
+}
+
+theorem partial_lte(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(k: Nat) { k < n implies f(k) <= g(k) })
+    implies
+    partial(f, n) <= partial(g, n)
+}
+
+theorem image_lower_bound(f: Real -> Real, x: Real, y: Real, lb: Real) {
+    (forall(t: Real) { interval_contains(x, y, t) implies lb <= f(t) })
+    implies
+    is_set_lower_bound(interval_image(f, x, y), lb)
+}
+
+theorem interval_inf_mono(f: Real -> Real, g: Real -> Real, x: Real, y: Real, lb_f: Real, lb_g: Real) {
+    x <= y and
+    (forall(t: Real) { interval_contains(x, y, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= g(t) })
+    implies
+    interval_inf(f, x, y) <= interval_inf(g, x, y)
+}
+
+theorem lower_sum_mono(f: Real -> Real, g: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, lb_f: Real, lb_g: Real) {
+    is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= g(t) })
+    implies
+    lower_sum(f, p, n) <= lower_sum(g, p, n)
+}
+
+theorem sup_le_of_upper_bound(s: Set[Real], sup_s: Real, b: Real) {
+    is_set_supremum(s, sup_s) and (forall(x: Real) { s.contains(x) implies x <= b })
+    implies
+    sup_s <= b
+}
+
+theorem sup_lower_le_sup_lower(f: Real -> Real, g: Real -> Real, a: Real, b: Real, sup_f: Real, sup_g: Real, lb_f: Real, lb_g: Real) {
+    a <= b and
+    is_set_supremum(lower_sum_set(f, a, b), sup_f) and
+    is_set_supremum(lower_sum_set(g, a, b), sup_g) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= g(t) })
+    implies
+    sup_f <= sup_g
+}
+
+theorem comparison(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb_f: Real, lb_g: Real) {
+    a <= b and
+    is_integrable(f, a, b) and is_integrable(g, a, b) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= g(t) })
+    implies
+    integral(f, a, b) <= integral(g, a, b)
+}
+
+theorem nat_lte_cancel_add_right(x: Nat, y: Nat, b: Nat) {
+    x + b <= y + b implies x <= y
+}
+
+theorem nat_sub_lte(a: Nat, b: Nat, c: Nat) {
+    a <= b + c implies a - b <= c
+}
+
+theorem nat_sub_le_sub(a: Nat, b: Nat, k: Nat) {
+    a <= b implies a - k <= b - k
+}
+
+theorem nat_suc_sub(a: Nat, b: Nat) {
+    b <= a implies (a + 1) - b = (a - b) + 1
+}
+
+theorem ring_add_sub_cancel(a: Real, b: Real) {
+    (a + b) - b = a
+}
+
+theorem ring_sub_add_cancel(a: Real, b: Real) {
+    (a - b) + b = a
+}
+
+define concat_partition(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) -> Real {
+    if i <= n1 {
+        p1(i)
+    } else {
+        p2(i - n1)
+    }
+}
+
+theorem concat_partition_start(p1: Nat -> Real, n1: Nat, p2: Nat -> Real) {
+    concat_partition(p1, n1, p2, Nat.0) = p1(Nat.0)
+}
+
+theorem concat_partition_tail_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies concat_partition(p1, n1, p2, n1 + i) = p2(i)
+}
+
+theorem concat_partition_end(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies concat_partition(p1, n1, p2, n1 + n2) = c
+}
+
+theorem concat_partition_prefix_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i <= n1 implies concat_partition(p1, n1, p2, i) = p1(i)
+}
+
+theorem concat_partition_suffix_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies concat_partition(p1, n1, p2, i) = p2(i - n1)
+}
+
+theorem concat_partition_suffix_suc_point(p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies concat_partition(p1, n1, p2, i + 1) = p2((i + 1) - n1)
+}
+
+theorem concat_partition_mono(p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat, i: Nat, j: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and i <= j and j <= n1 + n2
+    implies concat_partition(p1, n1, p2, i) <= concat_partition(p1, n1, p2, j)
+}
+
+theorem concat_partition_is_partition(p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies is_partition(concat_partition(p1, n1, p2), a, c, n1 + n2)
+}
+
+theorem concat_partition_step_lower_prefix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i < n1 implies partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p1, i)
+}
+
+theorem concat_partition_step_lower_suffix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies partition_step_lower(f, concat_partition(p1, n1, p2), i) = partition_step_lower(f, p2, i - n1)
+}
+
+theorem concat_partition_lower_sum(f: Real -> Real, p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies lower_sum(f, concat_partition(p1, n1, p2), n1 + n2) = lower_sum(f, p1, n1) + lower_sum(f, p2, n2)
+}
+
+theorem concat_partition_step_upper_prefix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, i: Nat) {
+    i < n1 implies partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p1, i)
+}
+
+theorem concat_partition_step_upper_suffix(f: Real -> Real, p1: Nat -> Real, n1: Nat, p2: Nat -> Real, a: Real, b: Real, c: Real, n2: Nat, i: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2) and n1 <= i and i < n1 + n2
+    implies partition_step_upper(f, concat_partition(p1, n1, p2), i) = partition_step_upper(f, p2, i - n1)
+}
+
+theorem concat_partition_upper_sum(f: Real -> Real, p1: Nat -> Real, p2: Nat -> Real, a: Real, b: Real, c: Real, n1: Nat, n2: Nat) {
+    is_partition(p1, a, b, n1) and is_partition(p2, b, c, n2)
+    implies upper_sum(f, concat_partition(p1, n1, p2), n1 + n2) = upper_sum(f, p1, n1) + upper_sum(f, p2, n2)
+}
+
+theorem additivity_concat_lower(f: Real -> Real, a: Real, b: Real, c: Real, m_ac: Real) {
+    a <= b and b <= c and is_set_supremum(lower_sum_set(f, a, c), m_ac)
+    implies forall(x1: Real, x2: Real) {
+        lower_sum_set(f, a, b).contains(x1) and lower_sum_set(f, b, c).contains(x2)
+        implies x1 + x2 <= m_ac
+    }
+}
+
+theorem sup_lower_add_le(f: Real -> Real, a: Real, b: Real, c: Real, m_ab: Real, m_bc: Real, m_ac: Real) {
+    a <= b and b <= c and
+    is_set_supremum(lower_sum_set(f, a, b), m_ab) and
+    is_set_supremum(lower_sum_set(f, b, c), m_bc) and
+    is_set_supremum(lower_sum_set(f, a, c), m_ac)
+    implies m_ab + m_bc <= m_ac
+}
+
+theorem additivity_concat_upper(f: Real -> Real, a: Real, b: Real, c: Real, m_ac: Real) {
+    a <= b and b <= c and is_set_infimum(upper_sum_set(f, a, c), m_ac)
+    implies forall(x1: Real, x2: Real) {
+        upper_sum_set(f, a, b).contains(x1) and upper_sum_set(f, b, c).contains(x2)
+        implies m_ac <= x1 + x2
+    }
+}
+
+theorem inf_upper_add_ge(f: Real -> Real, a: Real, b: Real, c: Real, m_ab: Real, m_bc: Real, m_ac: Real) {
+    a <= b and b <= c and
+    is_set_infimum(upper_sum_set(f, a, b), m_ab) and
+    is_set_infimum(upper_sum_set(f, b, c), m_bc) and
+    is_set_infimum(upper_sum_set(f, a, c), m_ac)
+    implies m_ac <= m_ab + m_bc
+}
+
+theorem integral_additivity(f: Real -> Real, a: Real, b: Real, c: Real) {
+    a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c)
+    implies integral(f, a, c) = integral(f, a, b) + integral(f, b, c)
+}
+
+theorem integral_additivity_symm(f: Real -> Real, a: Real, b: Real, c: Real) {
+    a <= b and b <= c and is_integrable(f, a, b) and is_integrable(f, b, c) and is_integrable(f, a, c)
+    implies integral(f, a, b) + integral(f, b, c) = integral(f, a, c)
+}
+
+define const_sub_left(c: Real, f: Real -> Real, x: Real) -> Real {
+    c - f(x)
+}
+
+define const_sub_right(f: Real -> Real, c: Real, x: Real) -> Real {
+    f(x) - c
+}
+
+theorem const_sub_left_eq_const_add_left_neg(c: Real, f: Real -> Real) {
+    const_sub_left(c, f) = const_add_left(c, pointwise_neg[Real, Real](f))
+}
+
+theorem const_sub_right_eq_const_add_right_neg(f: Real -> Real, c: Real) {
+    const_sub_right(f, c) = const_add_right(f, -c)
+}
+
+theorem continuous_at_const_sub_left(c: Real, f: Real -> Real, x: Real) {
+    continuous_at(f, x)
+    implies continuous_at(const_sub_left(c, f), x)
+}
+
+theorem continuous_const_sub_left(c: Real, f: Real -> Real) {
+    continuous(f) implies continuous(const_sub_left(c, f))
+}
+
+theorem continuous_at_const_sub_right(f: Real -> Real, c: Real, x: Real) {
+    continuous_at(f, x)
+    implies continuous_at(const_sub_right(f, c), x)
+}
+
+theorem continuous_const_sub_right(f: Real -> Real, c: Real) {
+    continuous(f) implies continuous(const_sub_right(f, c))
+}
+
+theorem derivative_compose_three_right(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real,
+    x0: Real, df: Real, dg: Real, dh: Real
+) {
+    has_derivative_at(f, x0, df) and
+    has_derivative_at(g, f(x0), dg) and
+    has_derivative_at(h, g(f(x0)), dh)
+    implies has_derivative_at(compose(h, compose(g, f)), x0, dh * (dg * df))
+}
+
+theorem derivative_compose_three_left(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real,
+    x0: Real, df: Real, dg: Real, dh: Real
+) {
+    has_derivative_at(f, x0, df) and
+    has_derivative_at(g, f(x0), dg) and
+    has_derivative_at(h, g(f(x0)), dh)
+    implies has_derivative_at(compose(compose(h, g), f), x0, (dh * dg) * df)
+}
+
+theorem differentiable_compose_three_right(f: Real -> Real, g: Real -> Real, h: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(g, f(x0)) and differentiable_at(h, g(f(x0)))
+    implies differentiable_at(compose(h, compose(g, f)), x0)
+}
+
+theorem differentiable_compose_three_left(f: Real -> Real, g: Real -> Real, h: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(g, f(x0)) and differentiable_at(h, g(f(x0)))
+    implies differentiable_at(compose(compose(h, g), f), x0)
+}
+
+theorem derivative_compose_four_right(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real, k: Real -> Real,
+    x0: Real, df: Real, dg: Real, dh: Real, dk: Real
+) {
+    has_derivative_at(f, x0, df) and
+    has_derivative_at(g, f(x0), dg) and
+    has_derivative_at(h, g(f(x0)), dh) and
+    has_derivative_at(k, h(g(f(x0))), dk)
+    implies has_derivative_at(compose(k, compose(h, compose(g, f))), x0, dk * (dh * (dg * df)))
+}
+
+theorem derivative_compose_four_left(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real, k: Real -> Real,
+    x0: Real, df: Real, dg: Real, dh: Real, dk: Real
+) {
+    has_derivative_at(f, x0, df) and
+    has_derivative_at(g, f(x0), dg) and
+    has_derivative_at(h, g(f(x0)), dh) and
+    has_derivative_at(k, h(g(f(x0))), dk)
+    implies has_derivative_at(compose(compose(compose(k, h), g), f), x0, ((dk * dh) * dg) * df)
+}
+
+theorem differentiable_compose_four_right(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real, k: Real -> Real, x0: Real
+) {
+    differentiable_at(f, x0) and differentiable_at(g, f(x0)) and
+    differentiable_at(h, g(f(x0))) and differentiable_at(k, h(g(f(x0))))
+    implies differentiable_at(compose(k, compose(h, compose(g, f))), x0)
+}
+
+theorem differentiable_compose_four_left(
+    f: Real -> Real, g: Real -> Real, h: Real -> Real, k: Real -> Real, x0: Real
+) {
+    differentiable_at(f, x0) and differentiable_at(g, f(x0)) and
+    differentiable_at(h, g(f(x0))) and differentiable_at(k, h(g(f(x0))))
+    implies differentiable_at(compose(compose(compose(k, h), g), f), x0)
+}
+
+theorem derivative_compose_identity_outer(f: Real -> Real, x0: Real, d: Real) {
+    has_derivative_at(f, x0, d) implies has_derivative_at(compose(identity_fn[Real], f), x0, d)
+}
+
+theorem derivative_compose_identity_inner(f: Real -> Real, x0: Real, d: Real) {
+    has_derivative_at(f, x0, d) implies has_derivative_at(compose(f, identity_fn[Real]), x0, d)
+}
+
+theorem differentiable_compose_identity_outer(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) implies differentiable_at(compose(identity_fn[Real], f), x0)
+}
+
+theorem differentiable_compose_identity_inner(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) implies differentiable_at(compose(f, identity_fn[Real]), x0)
+}
+
+theorem derivative_self_compose(f: Real -> Real, x0: Real, d0: Real, d1: Real) {
+    has_derivative_at(f, x0, d0) and has_derivative_at(f, f(x0), d1)
+    implies has_derivative_at(compose(f, f), x0, d1 * d0)
+}
+
+theorem differentiable_self_compose(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(f, f(x0))
+    implies differentiable_at(compose(f, f), x0)
+}
+
+theorem derivative_self_compose_three_right(f: Real -> Real, x0: Real, d0: Real, d1: Real, d2: Real) {
+    has_derivative_at(f, x0, d0) and has_derivative_at(f, f(x0), d1) and
+    has_derivative_at(f, f(f(x0)), d2)
+    implies has_derivative_at(compose(f, compose(f, f)), x0, d2 * (d1 * d0))
+}
+
+theorem derivative_self_compose_three_left(f: Real -> Real, x0: Real, d0: Real, d1: Real, d2: Real) {
+    has_derivative_at(f, x0, d0) and has_derivative_at(f, f(x0), d1) and
+    has_derivative_at(f, f(f(x0)), d2)
+    implies has_derivative_at(compose(compose(f, f), f), x0, (d2 * d1) * d0)
+}
+
+theorem differentiable_self_compose_three_right(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(f, f(x0)) and differentiable_at(f, f(f(x0)))
+    implies differentiable_at(compose(f, compose(f, f)), x0)
+}
+
+theorem differentiable_self_compose_three_left(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) and differentiable_at(f, f(x0)) and differentiable_at(f, f(f(x0)))
+    implies differentiable_at(compose(compose(f, f), f), x0)
+}
+
+theorem derivative_affine_after(
+    c: Real, b: Real, f: Real -> Real, x0: Real, d: Real
+) {
+    has_derivative_at(f, x0, d)
+    implies has_derivative_at(
+        compose(pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)), f),
+        x0,
+        c * d
+    )
+}
+
+theorem differentiable_affine_after(c: Real, b: Real, f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0)
+    implies differentiable_at(
+        compose(pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)), f),
+        x0
+    )
+}
+
+theorem derivative_after_affine(
+    c: Real, b: Real, f: Real -> Real, x0: Real, d: Real
+) {
+    has_derivative_at(
+        f,
+        pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b), x0),
+        d
+    )
+    implies has_derivative_at(
+        compose(f, pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b))),
+        x0,
+        d * c
+    )
+}
+
+theorem differentiable_after_affine(c: Real, b: Real, f: Real -> Real, x0: Real) {
+    differentiable_at(
+        f,
+        pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b), x0)
+    )
+    implies differentiable_at(
+        compose(f, pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b))),
+        x0
+    )
+}
+
+theorem derivative_affine_after_affine(c: Real, b: Real, a: Real, r: Real, x0: Real) {
+    has_derivative_at(
+        compose(
+            pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
+            pointwise_add(pointwise_mul(constant[Real, Real](a), identity_fn[Real]), constant[Real, Real](r))
+        ),
+        x0,
+        c * a
+    )
+}
+
+theorem differentiable_affine_after_affine(c: Real, b: Real, a: Real, r: Real, x0: Real) {
+    differentiable_at(
+        compose(
+            pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
+            pointwise_add(pointwise_mul(constant[Real, Real](a), identity_fn[Real]), constant[Real, Real](r))
+        ),
+        x0
+    )
+}
+
+theorem derivative_affine_three_right(
+    e: Real, s: Real, c: Real, b: Real, a: Real, r: Real, x0: Real
+) {
+    has_derivative_at(
+        compose(
+            pointwise_add(pointwise_mul(constant[Real, Real](e), identity_fn[Real]), constant[Real, Real](s)),
+            compose(
+                pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
+                pointwise_add(pointwise_mul(constant[Real, Real](a), identity_fn[Real]), constant[Real, Real](r))
+            )
+        ),
+        x0,
+        e * (c * a)
+    )
+}
+
+theorem differentiable_affine_three_right(
+    e: Real, s: Real, c: Real, b: Real, a: Real, r: Real, x0: Real
+) {
+    differentiable_at(
+        compose(
+            pointwise_add(pointwise_mul(constant[Real, Real](e), identity_fn[Real]), constant[Real, Real](s)),
+            compose(
+                pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
+                pointwise_add(pointwise_mul(constant[Real, Real](a), identity_fn[Real]), constant[Real, Real](r))
+            )
+        ),
+        x0
+    )
+}
+
+theorem affine_real_eq_pointwise_affine(a: Real, b: Real) {
+    affine_real(a, b) =
+        pointwise_add(pointwise_mul(constant[Real, Real](a), identity_fn[Real]), constant[Real, Real](b))
+}
+
+theorem affine_real_has_derivative_at(a: Real, b: Real, x0: Real) {
+    has_derivative_at(affine_real(a, b), x0, a)
+}
+
+theorem affine_real_differentiable_at(a: Real, b: Real, x0: Real) {
+    differentiable_at(affine_real(a, b), x0)
+}
+
+theorem derivative_affine_real_after(
+    f: Real -> Real, a: Real, b: Real, x0: Real, d: Real
+) {
+    has_derivative_at(f, x0, d)
+        implies has_derivative_at(compose(affine_real(a, b), f), x0, a * d)
+}
+
+theorem differentiable_affine_real_after(f: Real -> Real, a: Real, b: Real, x0: Real) {
+    differentiable_at(f, x0)
+        implies differentiable_at(compose(affine_real(a, b), f), x0)
+}
+
+define differentiable_on_open(f: Real -> Real, lower: Real, upper: Real) -> Bool {
+    forall(x: Real) {
+        lower < x and x < upper implies differentiable_at(f, x)
+    }
+}
+
+define is_derivative_on_open(f: Real -> Real, df: Real -> Real, lower: Real, upper: Real) -> Bool {
+    forall(x: Real) {
+        lower < x and x < upper implies has_derivative_at(f, x, df(x))
+    }
+}
+
+define continuous_on_closed(f: Real -> Real, lower: Real, upper: Real) -> Bool {
+    forall(x: Real) {
+        closed_interval_set(lower, upper).contains(x) implies continuous_at(f, x)
+    }
+}
+
+theorem le_zero_div_pos_le_zero(a: Real, b: Real) {
+    a <= Real.0 and b.is_positive implies a / b <= Real.0
+}
+
+theorem le_zero_div_neg_ge_zero(a: Real, b: Real) {
+    a <= Real.0 and b.is_negative implies Real.0 <= a / b
+}
+
+theorem lt_all_eps_imp_lte_zero(d: Real) {
+    (forall(eps: Real) { eps.is_positive implies d < eps }) implies d <= Real.0
+}
+
+theorem close_le_zero_imp_lt_eps(q: Real, d: Real, eps: Real) {
+    q.is_close(d, eps) and q <= Real.0 implies d < eps
+}
+
+theorem close_ge_zero_imp_neg_lt_eps(q: Real, d: Real, eps: Real) {
+    q.is_close(d, eps) and Real.0 <= q implies -d < eps
+}
+
+theorem neg_le_zero_imp_ge_zero(x: Real) {
+    -x <= Real.0 implies Real.0 <= x
+}
+
+theorem lte_imp_sub_le_zero(u: Real, v: Real) {
+    u <= v implies u - v <= Real.0
+}
+
+theorem lte_imp_zero_le_sub(u: Real, v: Real) {
+    u <= v implies Real.0 <= v - u
+}
+
+theorem fermat_interior_maximum(f: Real -> Real, a: Real, b: Real, x0: Real, d: Real) {
+    a < x0 and x0 < b and
+    (forall(y: Real) { a < y and y < b implies f(y) <= f(x0) }) and
+    has_derivative_at(f, x0, d)
+    implies d = Real.0
+}
+
+theorem pos_add_one_is_pos(x: Real) {
+    x.is_positive implies (x + Real.1).is_positive
+}
+
+theorem abs_add_one_is_pos(x: Real) {
+    (x.abs + Real.1).is_positive
+}
+
+define bounded_above_on_prefix(f: Real -> Real, lower: Real, x: Real) -> Bool {
+    exists(bound: Real) {
+        forall(y: Real) {
+            closed_interval_set(lower, x).contains(y) implies f(y) <= bound
+        }
+    }
+}
+
+define bounded_prefix_contains(f: Real -> Real, a: Real, b: Real, x: Real) -> Bool {
+    a <= x and x <= b and bounded_above_on_prefix(f, a, x)
+}
+
+define bounded_prefix_set(f: Real -> Real, a: Real, b: Real) -> Set[Real] {
+    Set[Real].new(bounded_prefix_contains(f, a, b))
+}
+
+theorem bounded_prefix_set_contains_eq(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) = bounded_prefix_contains(f, a, b, x)
+}
+
+theorem bounded_prefix_contains_lower(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies bounded_prefix_set(f, a, b).contains(a)
+}
+
+theorem bounded_prefix_set_is_nonempty(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies is_nonempty(bounded_prefix_set(f, a, b))
+}
+
+theorem bounded_prefix_set_upper_bound(f: Real -> Real, a: Real, b: Real) {
+    is_set_upper_bound(bounded_prefix_set(f, a, b), b)
+}
+
+theorem bounded_prefix_set_has_upper_bound(f: Real -> Real, a: Real, b: Real) {
+    has_upper_bound(bounded_prefix_set(f, a, b))
+}
+
+theorem bounded_prefix_set_supremum_exists(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies exists(t: Real) {
+        is_set_supremum(bounded_prefix_set(f, a, b), t)
+    }
+}
+
+theorem bounded_prefix_member_in_interval(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) implies a <= x and x <= b
+}
+
+theorem bounded_prefix_member_bound(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) implies exists(bound: Real) {
+        forall(y: Real) {
+            closed_interval_set(a, x).contains(y) implies f(y) <= bound
+        }
+    }
+}
+
+theorem continuous_closed_interval_bounded_above(f: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b) and a < b
+    implies exists(bound: Real) {
+        forall(y: Real) {
+            closed_interval_set(a, b).contains(y) implies f(y) <= bound
+        }
+    }
+}
+
+define reciprocal_const_minus(c: Real, f: Real -> Real, x: Real) -> Real {
+    (c - f(x)).inverse
+}
+
+theorem continuous_at_reciprocal_const_minus(c: Real, f: Real -> Real, x0: Real) {
+    continuous_at(f, x0) and f(x0) < c implies
+        continuous_at(reciprocal_const_minus(c, f), x0)
+}
+
+theorem inverse_inverse(x: Real) {
+    x != Real.0 implies x.inverse.inverse = x
+}
+
+theorem continuous_closed_interval_attains_maximum(f: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b) and a < b
+    implies exists(x0: Real) {
+        closed_interval_set(a, b).contains(x0) and
+        (forall(y: Real) { closed_interval_set(a, b).contains(y) implies f(y) <= f(x0) })
+    }
+}
+
+theorem lte_imp_neg_lte_neg(a: Real, b: Real) {
+    a <= b implies -b <= -a
+}
+
+theorem continuous_closed_interval_attains_minimum(f: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b) and a < b
+    implies exists(x0: Real) {
+        closed_interval_set(a, b).contains(x0) and
+        (forall(y: Real) { closed_interval_set(a, b).contains(y) implies f(x0) <= f(y) })
+    }
+}
+
+theorem constant_on_interval_has_derivative_zero(f: Real -> Real, a: Real, b: Real, c: Real) {
+    a < c and c < b and
+    (forall(y: Real) { closed_interval_set(a, b).contains(y) implies f(y) = f(c) })
+    implies has_derivative_at(f, c, Real.0)
+}
+
+theorem rolle_theorem(f: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b) and a < b and differentiable_on_open(f, a, b) and
+    f(a) = f(b)
+    implies exists(c: Real) {
+        a < c and c < b and has_derivative_at(f, c, Real.0)
+    }
+}
+
+define secant_slope(f: Real -> Real, a: Real, b: Real) -> Real {
+    (f(b) - f(a)) / (b - a)
+}
+
+define secant_remainder(f: Real -> Real, a: Real, b: Real, x: Real) -> Real {
+    f(x) - secant_slope(f, a, b) * (x - a)
+}
+
+define secant_remainder_derivative(df: Real -> Real, f: Real -> Real, a: Real, b: Real, x: Real) -> Real {
+    df(x) - secant_slope(f, a, b)
+}
+
+theorem secant_remainder_eq_pointwise(f: Real -> Real, a: Real, b: Real) {
+    secant_remainder(f, a, b) = pointwise_add(f, pointwise_neg(
+        affine_real(secant_slope(f, a, b), -(secant_slope(f, a, b)) * a)))
+}
+
+theorem secant_remainder_continuous_on_closed(f: Real -> Real, a: Real, b: Real) {
+    continuous(f) implies continuous_on_closed(secant_remainder(f, a, b), a, b)
+}
+
+theorem secant_remainder_is_derivative_on_open(f: Real -> Real, df: Real -> Real, a: Real, b: Real) {
+    is_derivative_fn(f, df)
+    implies is_derivative_on_open(secant_remainder(f, a, b),
+        secant_remainder_derivative(df, f, a, b), a, b)
+}
+
+theorem secant_remainder_continuous_on_closed_local(f: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b)
+    implies continuous_on_closed(secant_remainder(f, a, b), a, b)
+}
+
+theorem secant_remainder_is_derivative_on_open_local(f: Real -> Real, df: Real -> Real, a: Real, b: Real) {
+    is_derivative_on_open(f, df, a, b)
+    implies is_derivative_on_open(secant_remainder(f, a, b),
+        secant_remainder_derivative(df, f, a, b), a, b)
+}
+
+theorem is_derivative_on_open_imp_differentiable_on_open(
+    f: Real -> Real, df: Real -> Real, a: Real, b: Real
+) {
+    is_derivative_on_open(f, df, a, b) implies differentiable_on_open(f, a, b)
+}
+
+theorem secant_remainder_endpoints_equal(f: Real -> Real, a: Real, b: Real) {
+    a < b implies secant_remainder(f, a, b, a) = secant_remainder(f, a, b, b)
+}
+
+theorem mean_value_theorem(f: Real -> Real, df: Real -> Real, a: Real, b: Real) {
+    continuous(f) and a < b and is_derivative_fn(f, df)
+    implies exists(c: Real) {
+        a < c and c < b and has_derivative_at(f, c, secant_slope(f, a, b))
+    }
+}
+
+theorem mean_value_theorem_local(f: Real -> Real, df: Real -> Real, a: Real, b: Real) {
+    continuous_on_closed(f, a, b) and a < b and is_derivative_on_open(f, df, a, b)
+    implies exists(c: Real) {
+        a < c and c < b and has_derivative_at(f, c, secant_slope(f, a, b))
+    }
+}
+
+theorem zero_derivative_imp_constant(
+    f: Real -> Real, a: Real, b: Real, x: Real
+) {
+    continuous(f) and a < b and is_derivative_fn(f, constant[Real, Real](Real.0)) and
+    closed_interval_set(a, b).contains(x)
+    implies f(x) = f(a)
+}
+
+theorem nonneg_derivative_imp_nondecreasing(
+    f: Real -> Real, df: Real -> Real, a: Real, b: Real, x: Real, y: Real
+) {
+    continuous(f) and a < b and is_derivative_fn(f, df) and
+    (forall(z: Real) { Real.0 <= df(z) }) and
+    closed_interval_set(a, b).contains(x) and closed_interval_set(a, b).contains(y) and
+    x <= y
+    implies f(x) <= f(y)
+}
+
+theorem exp_continuous {
+    continuous(Real.exp)
+}
+
+theorem exp_lte_mono(x: Real, y: Real) {
+    x <= y implies x.exp <= y.exp
+}
+
+theorem exp_lower_bound_on(a: Real, b: Real) {
+    a <= b implies forall(t: Real) { interval_contains(a, b, t) implies a.exp <= t.exp }
+}
+
+theorem exp_upper_bound_on(a: Real, b: Real) {
+    a <= b implies forall(t: Real) { interval_contains(a, b, t) implies t.exp <= b.exp }
+}
+
+theorem image_upper_bound(f: Real -> Real, x: Real, y: Real, ub: Real) {
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= ub })
+    implies
+    is_set_upper_bound(interval_image(f, x, y), ub)
+}
+
+define partition_g_values(g: Real -> Real, p: Nat -> Real, i: Nat) -> Real {
+    g(p(i))
+}
+
+theorem step_lower_le_g_increment(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb: Real, p: Nat -> Real, n: Nat, i: Nat) {
+    is_partition(p, a, b, n) and i < n and a <= b and continuous(g) and is_derivative_fn(g, f) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) })
+    implies
+    partition_step_lower(f, p, i) <= diff_step(partition_g_values(g, p), i)
+}
+
+theorem step_upper_ge_g_increment(f: Real -> Real, g: Real -> Real, a: Real, b: Real, ub: Real, p: Nat -> Real, n: Nat, i: Nat) {
+    is_partition(p, a, b, n) and i < n and a <= b and continuous(g) and is_derivative_fn(g, f) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    diff_step(partition_g_values(g, p), i) <= partition_step_upper(f, p, i)
+}
+
+theorem lower_sum_le_g_diff(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb: Real, p: Nat -> Real, n: Nat) {
+    a <= b and continuous(g) and is_derivative_fn(g, f) and
+    is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) })
+    implies
+    lower_sum(f, p, n) <= g(b) - g(a)
+}
+
+theorem g_diff_le_upper_sum(f: Real -> Real, g: Real -> Real, a: Real, b: Real, ub: Real, p: Nat -> Real, n: Nat) {
+    a <= b and continuous(g) and is_derivative_fn(g, f) and
+    is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    g(b) - g(a) <= upper_sum(f, p, n)
+}
+
+theorem ftc2_general(f: Real -> Real, g: Real -> Real, a: Real, b: Real, lb: Real, ub: Real) {
+    a <= b and continuous(g) and is_derivative_fn(g, f) and is_integrable(f, a, b) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies
+    integral(f, a, b) = g(b) - g(a)
+}
+
+theorem integral_exp_ftc2(a: Real, b: Real) {
+    a <= b and is_integrable(Real.exp, a, b)
+    implies
+    integral(Real.exp, a, b) = b.exp - a.exp
+}
+
+theorem add_sub_cancel_shift(a: Real, b: Real) {
+    a + (b - a) = b
+}
+
+theorem sub_add_cancel_shift(a: Real, x: Real, y: Real) {
+    (a + x) - (a + y) = x - y
+}
+
+theorem add_one_mul_sub(u: Real, h: Real) {
+    (u + Real.1) * h - u * h = h
+}
+
+theorem mul_frac_right(a: Real, b: Real, c: Real) {
+    b != Real.0 implies (a / b) * c = (a * c) / b
+}
+
+theorem interval_sup_exp_right(x: Real, y: Real) {
+    x <= y implies interval_sup(Real.exp, x, y) = y.exp
+}
+
+theorem interval_inf_exp_left(x: Real, y: Real) {
+    x <= y implies interval_inf(Real.exp, x, y) = x.exp
+}
+
+theorem div_nonneg_pos_denom(a: Real, d: Real) {
+    Real.0 <= a and d > Real.0 implies Real.0 <= a / d
+}
+
+theorem from_nat_lte_mono(m: Nat, n: Nat) {
+    m <= n implies from_nat[Real](m) <= from_nat[Real](n)
+}
+
+define uniform_partition(a: Real, b: Real, n: Nat, i: Nat) -> Real {
+    a + from_nat[Real](i) * ((b - a) / from_nat[Real](n.suc))
+}
+
+theorem uniform_partition_start(a: Real, b: Real, n: Nat) {
+    uniform_partition(a, b, n, Nat.0) = a
+}
+
+theorem uniform_partition_end(a: Real, b: Real, n: Nat) {
+    uniform_partition(a, b, n, n.suc) = b
+}
+
+theorem uniform_partition_monotone(a: Real, b: Real, n: Nat, i: Nat, j: Nat) {
+    a <= b and i <= j and j <= n.suc
+    implies uniform_partition(a, b, n, i) <= uniform_partition(a, b, n, j)
+}
+
+theorem uniform_partition_is_partition(a: Real, b: Real, n: Nat) {
+    a <= b implies is_partition(uniform_partition(a, b, n), a, b, n.suc)
+}
+
+theorem uniform_partition_width(a: Real, b: Real, n: Nat, i: Nat) {
+    i < n.suc implies
+    uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i) =
+        (b - a) / from_nat[Real](n.suc)
+}
+
+theorem uniform_upper_minus_lower(a: Real, b: Real, n: Nat) {
+    a <= b implies
+    upper_sum(Real.exp, uniform_partition(a, b, n), n.suc) -
+        lower_sum(Real.exp, uniform_partition(a, b, n), n.suc) =
+        ((b - a) / from_nat[Real](n.suc)) * (b.exp - a.exp)
+}
+
+theorem exp_lower_sum_set_bounded_above(a: Real, b: Real) {
+    a <= b implies is_set_upper_bound(lower_sum_set(Real.exp, a, b), b.exp - a.exp)
+}
+
+theorem exp_upper_sum_set_bounded_below(a: Real, b: Real) {
+    a <= b implies is_set_lower_bound(upper_sum_set(Real.exp, a, b), b.exp - a.exp)
+}
+
+theorem exp_lower_sum_set_sup_exists(a: Real, b: Real) {
+    a <= b implies exists(l: Real) {
+        is_set_supremum(lower_sum_set(Real.exp, a, b), l)
+    }
+}
+
+theorem exp_upper_sum_set_inf_exists(a: Real, b: Real) {
+    a <= b implies exists(u: Real) {
+        is_set_infimum(upper_sum_set(Real.exp, a, b), u)
+    }
+}
+
+theorem frac_all_n_imp_lte_zero(c: Real, d: Real) {
+    (forall(n: Nat) { d <= c / from_nat[Real](n.suc) })
+    implies d <= Real.0
+}
+
+theorem nonneg_frac_all_n_imp_zero(c: Real, d: Real) {
+    Real.0 <= d and (forall(n: Nat) { d <= c / from_nat[Real](n.suc) })
+    implies d = Real.0
+}
+
+theorem exp_integrable(a: Real, b: Real) {
+    a <= b implies is_integrable(Real.exp, a, b)
+}
+
+theorem integral_exp(a: Real, b: Real) {
+    a <= b implies integral(Real.exp, a, b) = b.exp - a.exp
+}
+
+theorem integral_exp_unit_value {
+    integral(Real.exp, Real.0, Real.1) = Real.e - Real.1
+}
+
+define nonvanishing_everywhere(f: Real -> Real) -> Bool {
+    forall(x: Real) {
+        f(x) != Real.0
+    }
+}
+
+theorem nonvanishing_everywhere_at(f: Real -> Real, x: Real) {
+    nonvanishing_everywhere(f) implies f(x) != Real.0
+}
+
+theorem nonvanishing_everywhere_constant(c: Real) {
+    c != Real.0 implies nonvanishing_everywhere(constant[Real, Real](c))
+}
+
+theorem reciprocal_real_nonzero(x: Real) {
+    x != Real.0 implies reciprocal_real(x) != Real.0
+}
+
+theorem nonvanishing_everywhere_reciprocal(f: Real -> Real) {
+    nonvanishing_everywhere(f) implies nonvanishing_everywhere(pointwise_reciprocal_real(f))
+}
+
+theorem nonvanishing_everywhere_mul(f: Real -> Real, g: Real -> Real) {
+    nonvanishing_everywhere(f) and nonvanishing_everywhere(g)
+        implies nonvanishing_everywhere(pointwise_mul(f, g))
+}
+
+theorem nonvanishing_everywhere_div(f: Real -> Real, g: Real -> Real) {
+    nonvanishing_everywhere(f) and nonvanishing_everywhere(g)
+        implies nonvanishing_everywhere(pointwise_div_real(f, g))
+}
+
+theorem reciprocal_real_has_derivative_at(x: Real) {
+    x != Real.0 implies has_derivative_at(reciprocal_real, x, -Real.1 / (x * x))
+}
+
+theorem reciprocal_has_derivative_at(
+    g: Real -> Real, x: Real, dg: Real
+) {
+    has_derivative_at(g, x, dg) and g(x) != Real.0 implies
+        has_derivative_at(pointwise_reciprocal_real(g), x, (-Real.1 / (g(x) * g(x))) * dg)
+}
+
+theorem reciprocal_differentiable_at(g: Real -> Real, x: Real) {
+    differentiable_at(g, x) and g(x) != Real.0
+        implies differentiable_at(pointwise_reciprocal_real(g), x)
+}
+
+theorem quotient_has_derivative_at(
+    f: Real -> Real, g: Real -> Real, x: Real, df: Real, dg: Real
+) {
+    has_derivative_at(f, x, df) and has_derivative_at(g, x, dg) and g(x) != Real.0 implies
+        has_derivative_at(pointwise_div_real(f, g), x, (df * g(x) - f(x) * dg) / (g(x) * g(x)))
+}
+
+theorem quotient_differentiable_at(f: Real -> Real, g: Real -> Real, x: Real) {
+    differentiable_at(f, x) and differentiable_at(g, x) and g(x) != Real.0
+        implies differentiable_at(pointwise_div_real(f, g), x)
+}
+
+theorem div_const_has_derivative_at(f: Real -> Real, c: Real, x: Real, d: Real) {
+    has_derivative_at(f, x, d) implies has_derivative_at(pointwise_div_real(f, constant[Real, Real](c)), x, d / c)
+}
+
+theorem div_const_differentiable_at(f: Real -> Real, c: Real, x: Real) {
+    differentiable_at(f, x) implies differentiable_at(pointwise_div_real(f, constant[Real, Real](c)), x)
+}
+
+theorem derivative_fn_reciprocal(g: Real -> Real, dg: Real -> Real) {
+    is_derivative_fn(g, dg) and nonvanishing_everywhere(g) implies
+        is_derivative_fn(
+            pointwise_reciprocal_real(g),
+            pointwise_mul(pointwise_div_real(constant[Real, Real](-Real.1), pointwise_mul(g, g)), dg)
+        )
+}
+
+theorem derivative_fn_quotient(
+    f: Real -> Real, g: Real -> Real, df: Real -> Real, dg: Real -> Real
+) {
+    is_derivative_fn(f, df) and is_derivative_fn(g, dg) and nonvanishing_everywhere(g) implies
+        is_derivative_fn(
+            pointwise_div_real(f, g),
+            pointwise_div_real(
+                pointwise_add(pointwise_mul(df, g), pointwise_neg(pointwise_mul(f, dg))),
+                pointwise_mul(g, g)
+            )
+        )
+}
+
+theorem derivative_fn_div_const(f: Real -> Real, df: Real -> Real, c: Real) {
+    is_derivative_fn(f, df) implies
+        is_derivative_fn(pointwise_div_real(f, constant[Real, Real](c)), pointwise_div_real(df, constant[Real, Real](c)))
+}
+
+theorem differentiable_everywhere_reciprocal(g: Real -> Real) {
+    differentiable_everywhere(g) and nonvanishing_everywhere(g)
+        implies differentiable_everywhere(pointwise_reciprocal_real(g))
+}
+
+theorem differentiable_everywhere_quotient(f: Real -> Real, g: Real -> Real) {
+    differentiable_everywhere(f) and differentiable_everywhere(g) and nonvanishing_everywhere(g)
+        implies differentiable_everywhere(pointwise_div_real(f, g))
+}
+
+theorem differentiable_everywhere_div_const(f: Real -> Real, c: Real) {
+    differentiable_everywhere(f) implies differentiable_everywhere(pointwise_div_real(f, constant[Real, Real](c)))
+}
+
+define square_real(x: Real) -> Real {
+    x * x
+}
+
+theorem square_real_eq_pointwise_mul_identity {
+    square_real = pointwise_mul[Real, Real](identity_fn[Real], identity_fn[Real])
+}
+
+theorem continuous_at_square_real(x: Real) {
+    continuous_at(square_real, x)
+}
+
+theorem continuous_square_real {
+    continuous(square_real)
+}
+
+define cube_real(x: Real) -> Real {
+    x * x * x
+}
+
+theorem cube_real_eq_pointwise_mul_square_identity {
+    cube_real = pointwise_mul[Real, Real](square_real, identity_fn[Real])
+}
+
+theorem continuous_at_cube_real(x: Real) {
+    continuous_at(cube_real, x)
+}
+
+theorem continuous_cube_real {
+    continuous(cube_real)
+}
+
+theorem square_real_has_derivative_at(x0: Real) {
+    has_derivative_at(square_real, x0, x0 * Real.1 + x0 * Real.1)
+}
+
+theorem square_real_differentiable_at(x0: Real) {
+    differentiable_at(square_real, x0)
+}
+
+theorem cube_real_has_derivative_at(x0: Real) {
+    has_derivative_at(
+        cube_real,
+        x0,
+        square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1)
+    )
+}
+
+theorem cube_real_differentiable_at(x0: Real) {
+    differentiable_at(cube_real, x0)
+}
+
+theorem derivative_square_real_compose(f: Real -> Real, x0: Real, d: Real) {
+    has_derivative_at(f, x0, d)
+    implies has_derivative_at(compose(square_real, f), x0, (f(x0) * Real.1 + f(x0) * Real.1) * d)
+}
+
+theorem derivative_cube_real_compose(f: Real -> Real, x0: Real, d: Real) {
+    has_derivative_at(f, x0, d)
+    implies has_derivative_at(
+        compose(cube_real, f),
+        x0,
+        (square_real(f(x0)) * Real.1 + f(x0) * (f(x0) * Real.1 + f(x0) * Real.1)) * d
+    )
+}
+
+theorem differentiable_square_real_compose(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) implies differentiable_at(compose(square_real, f), x0)
+}
+
+theorem differentiable_cube_real_compose(f: Real -> Real, x0: Real) {
+    differentiable_at(f, x0) implies differentiable_at(compose(cube_real, f), x0)
+}
+
+theorem derivative_fn_affine_real(a: Real, b: Real) {
+    is_derivative_fn(affine_real(a, b), constant[Real, Real](a))
+}
+
+theorem differentiable_everywhere_affine_real(a: Real, b: Real) {
+    differentiable_everywhere(affine_real(a, b))
+}
+
+theorem derivative_fn_square_real {
+    is_derivative_fn(square_real, pointwise_add(identity_fn[Real], identity_fn[Real]))
+}
+
+theorem differentiable_everywhere_square_real {
+    differentiable_everywhere(square_real)
+}
+
+theorem differentiable_everywhere_cube_real {
+    differentiable_everywhere(cube_real)
+}
+
+theorem derivative_fn_identity_div_const(c: Real) {
+    is_derivative_fn(
+        pointwise_div_real(identity_fn[Real], constant[Real, Real](c)),
+        pointwise_div_real(constant[Real, Real](Real.1), constant[Real, Real](c))
+    )
+}
+
+theorem differentiable_everywhere_identity_div_const(c: Real) {
+    differentiable_everywhere(pointwise_div_real(identity_fn[Real], constant[Real, Real](c)))
+}
+
+theorem derivative_fn_affine_div_const(a: Real, b: Real, c: Real) {
+    is_derivative_fn(
+        pointwise_div_real(affine_real(a, b), constant[Real, Real](c)),
+        pointwise_div_real(constant[Real, Real](a), constant[Real, Real](c))
+    )
+}
+
+theorem differentiable_everywhere_affine_div_const(a: Real, b: Real, c: Real) {
+    differentiable_everywhere(pointwise_div_real(affine_real(a, b), constant[Real, Real](c)))
+}
+
+theorem derivative_fn_square_div_const(c: Real) {
+    is_derivative_fn(
+        pointwise_div_real(square_real, constant[Real, Real](c)),
+        pointwise_div_real(pointwise_add(identity_fn[Real], identity_fn[Real]), constant[Real, Real](c))
+    )
+}
+
+theorem differentiable_everywhere_square_div_const(c: Real) {
+    differentiable_everywhere(pointwise_div_real(square_real, constant[Real, Real](c)))
+}
+
+theorem derivative_fn_reciprocal_constant(c: Real) {
+    c != Real.0 implies is_derivative_fn(
+        pointwise_reciprocal_real(constant[Real, Real](c)),
+        pointwise_mul(
+            pointwise_div_real(
+                constant[Real, Real](-Real.1),
+                pointwise_mul(constant[Real, Real](c), constant[Real, Real](c))
+            ),
+            constant[Real, Real](Real.0)
+        )
+    )
+}
+
+theorem differentiable_everywhere_reciprocal_constant(c: Real) {
+    c != Real.0 implies differentiable_everywhere(pointwise_reciprocal_real(constant[Real, Real](c)))
+}
+
+theorem derivative_fn_reciprocal_affine_real(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies is_derivative_fn(
+        pointwise_reciprocal_real(affine_real(a, b)),
+        pointwise_mul(
+            pointwise_div_real(
+                constant[Real, Real](-Real.1),
+                pointwise_mul(affine_real(a, b), affine_real(a, b))
+            ),
+            constant[Real, Real](a)
+        )
+    )
+}
+
+theorem differentiable_everywhere_reciprocal_affine_real(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies
+        differentiable_everywhere(pointwise_reciprocal_real(affine_real(a, b)))
+}
+
+theorem derivative_fn_reciprocal_square_real {
+    nonvanishing_everywhere(square_real) implies is_derivative_fn(
+        pointwise_reciprocal_real(square_real),
+        pointwise_mul(
+            pointwise_div_real(
+                constant[Real, Real](-Real.1),
+                pointwise_mul(square_real, square_real)
+            ),
+            pointwise_add(identity_fn[Real], identity_fn[Real])
+        )
+    )
+}
+
+theorem differentiable_everywhere_reciprocal_square_real {
+    nonvanishing_everywhere(square_real) implies
+        differentiable_everywhere(pointwise_reciprocal_real(square_real))
+}
+
+theorem derivative_fn_affine_over_affine(a: Real, b: Real, c: Real, d: Real) {
+    nonvanishing_everywhere(affine_real(c, d)) implies is_derivative_fn(
+        pointwise_div_real(affine_real(a, b), affine_real(c, d)),
+        pointwise_div_real(
+            pointwise_add(
+                pointwise_mul(constant[Real, Real](a), affine_real(c, d)),
+                pointwise_neg(pointwise_mul(affine_real(a, b), constant[Real, Real](c)))
+            ),
+            pointwise_mul(affine_real(c, d), affine_real(c, d))
+        )
+    )
+}
+
+theorem differentiable_everywhere_affine_over_affine(a: Real, b: Real, c: Real, d: Real) {
+    nonvanishing_everywhere(affine_real(c, d)) implies
+        differentiable_everywhere(pointwise_div_real(affine_real(a, b), affine_real(c, d)))
+}
+
+theorem derivative_fn_square_over_affine(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies is_derivative_fn(
+        pointwise_div_real(square_real, affine_real(a, b)),
+        pointwise_div_real(
+            pointwise_add(
+                pointwise_mul(pointwise_add(identity_fn[Real], identity_fn[Real]), affine_real(a, b)),
+                pointwise_neg(pointwise_mul(square_real, constant[Real, Real](a)))
+            ),
+            pointwise_mul(affine_real(a, b), affine_real(a, b))
+        )
+    )
+}
+
+theorem differentiable_everywhere_square_over_affine(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies
+        differentiable_everywhere(pointwise_div_real(square_real, affine_real(a, b)))
+}
+
+theorem derivative_fn_affine_over_square(a: Real, b: Real) {
+    nonvanishing_everywhere(square_real) implies is_derivative_fn(
+        pointwise_div_real(affine_real(a, b), square_real),
+        pointwise_div_real(
+            pointwise_add(
+                pointwise_mul(constant[Real, Real](a), square_real),
+                pointwise_neg(pointwise_mul(affine_real(a, b), pointwise_add(identity_fn[Real], identity_fn[Real])))
+            ),
+            pointwise_mul(square_real, square_real)
+        )
+    )
+}
+
+theorem differentiable_everywhere_affine_over_square(a: Real, b: Real) {
+    nonvanishing_everywhere(square_real) implies
+        differentiable_everywhere(pointwise_div_real(affine_real(a, b), square_real))
+}
+
+theorem is_derivative_fn_imp_continuous(f: Real -> Real, df: Real -> Real) {
+    is_derivative_fn(f, df) implies continuous(f)
+}
+
+theorem differentiable_everywhere_imp_continuous(f: Real -> Real) {
+    differentiable_everywhere(f) implies continuous(f)
+}
+
+theorem continuous_reciprocal_of_differentiable_everywhere_nonvanishing(g: Real -> Real) {
+    differentiable_everywhere(g) and nonvanishing_everywhere(g)
+        implies continuous(pointwise_reciprocal_real(g))
+}
+
+theorem continuous_quotient_of_differentiable_everywhere_nonvanishing(f: Real -> Real, g: Real -> Real) {
+    differentiable_everywhere(f) and differentiable_everywhere(g) and nonvanishing_everywhere(g)
+        implies continuous(pointwise_div_real(f, g))
+}
+
+theorem continuous_reciprocal_affine_real(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies
+        continuous(pointwise_reciprocal_real(affine_real(a, b)))
+}
+
+theorem continuous_reciprocal_square_real {
+    nonvanishing_everywhere(square_real) implies
+        continuous(pointwise_reciprocal_real(square_real))
+}
+
+theorem continuous_affine_over_affine(a: Real, b: Real, c: Real, d: Real) {
+    nonvanishing_everywhere(affine_real(c, d)) implies
+        continuous(pointwise_div_real(affine_real(a, b), affine_real(c, d)))
+}
+
+theorem continuous_square_over_affine(a: Real, b: Real) {
+    nonvanishing_everywhere(affine_real(a, b)) implies
+        continuous(pointwise_div_real(square_real, affine_real(a, b)))
+}
+
+theorem continuous_affine_over_square(a: Real, b: Real) {
+    nonvanishing_everywhere(square_real) implies
+        continuous(pointwise_div_real(affine_real(a, b), square_real))
+}
+
+theorem continuous_condition_apply_local(
+    f: Real -> Real, x: Real, delta: Real, eps: Real, y: Real
+) {
+    continuous_condition(f, x, delta, eps) and y.is_close(x, delta)
+    implies f(y).is_close(f(x), eps)
+}
+
+theorem lt_target_neighborhood_apply(
+    f: Real -> Real, x: Real, target: Real, delta: Real, y: Real
+) {
+    (forall(z: Real) {
+        z.is_close(x, delta) implies f(z) < target
+    }) and y.is_close(x, delta) implies f(y) < target
+}
+
+theorem target_lt_neighborhood_apply(
+    f: Real -> Real, x: Real, target: Real, delta: Real, y: Real
+) {
+    (forall(z: Real) {
+        z.is_close(x, delta) implies target < f(z)
+    }) and y.is_close(x, delta) implies target < f(y)
+}
+
+theorem continuous_at_of_continuous_local(f: Real -> Real, x: Real) {
+    continuous(f) implies continuous_at(f, x)
+}
+
+theorem continuous_at_lt_target_neighborhood(f: Real -> Real, x: Real, target: Real) {
+    continuous_at(f, x) and f(x) < target implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies f(y) < target
+        }
+    }
+}
+
+theorem continuous_lt_target_neighborhood(f: Real -> Real, x: Real, target: Real) {
+    continuous(f) and f(x) < target implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies f(y) < target
+        }
+    }
+}
+
+theorem continuous_at_target_lt_neighborhood(f: Real -> Real, x: Real, target: Real) {
+    continuous_at(f, x) and target < f(x) implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies target < f(y)
+        }
+    }
+}
+
+theorem continuous_target_lt_neighborhood(f: Real -> Real, x: Real, target: Real) {
+    continuous(f) and target < f(x) implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies target < f(y)
+        }
+    }
+}
+
+theorem continuous_at_negative_neighborhood(f: Real -> Real, x: Real) {
+    continuous_at(f, x) and f(x) < Real.0 implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies f(y) < Real.0
+        }
+    }
+}
+
+theorem continuous_at_positive_neighborhood(f: Real -> Real, x: Real) {
+    continuous_at(f, x) and Real.0 < f(x) implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies Real.0 < f(y)
+        }
+    }
+}
+
+theorem continuous_negative_neighborhood(f: Real -> Real, x: Real) {
+    continuous(f) and f(x) < Real.0 implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies f(y) < Real.0
+        }
+    }
+}
+
+theorem continuous_positive_neighborhood(f: Real -> Real, x: Real) {
+    continuous(f) and Real.0 < f(x) implies exists(delta: Real) {
+        delta.is_positive and forall(y: Real) {
+            y.is_close(x, delta) implies Real.0 < f(y)
+        }
+    }
+}
+
+define closed_interval_sublevel_contains(f: Real -> Real, lower: Real, upper: Real, target: Real, x: Real) -> Bool {
+    lower <= x and x <= upper and f(x) <= target
+}
+
+define closed_interval_sublevel(f: Real -> Real, lower: Real, upper: Real, target: Real) -> Set[Real] {
+    Set[Real].new(closed_interval_sublevel_contains(f, lower, upper, target))
+}
+
+theorem closed_interval_sublevel_contains_eq(
+    f: Real -> Real, lower: Real, upper: Real, target: Real, x: Real
+) {
+    closed_interval_sublevel(f, lower, upper, target).contains(x) =
+        closed_interval_sublevel_contains(f, lower, upper, target, x)
+}
+
+theorem closed_interval_sublevel_contains_lower(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    lower <= upper and f(lower) <= target implies
+    closed_interval_sublevel(f, lower, upper, target).contains(lower)
+}
+
+theorem closed_interval_sublevel_is_nonempty(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    lower <= upper and f(lower) <= target implies
+    is_nonempty(closed_interval_sublevel(f, lower, upper, target))
+}
+
+theorem closed_interval_sublevel_upper_bound(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    is_set_upper_bound(closed_interval_sublevel(f, lower, upper, target), upper)
+}
+
+theorem closed_interval_sublevel_has_upper_bound(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    has_upper_bound(closed_interval_sublevel(f, lower, upper, target))
+}
+
+theorem closed_interval_sublevel_sup_le_upper(
+    f: Real -> Real, lower: Real, upper: Real, target: Real, sup: Real
+) {
+    is_set_supremum(closed_interval_sublevel(f, lower, upper, target), sup) implies sup <= upper
+}
+
+theorem closed_interval_sublevel_lower_le_sup(
+    f: Real -> Real, lower: Real, upper: Real, target: Real, sup: Real
+) {
+    lower <= upper and f(lower) <= target and
+    is_set_supremum(closed_interval_sublevel(f, lower, upper, target), sup)
+    implies lower <= sup
+}
+
+theorem closed_interval_sublevel_sup_in_interval(
+    f: Real -> Real, lower: Real, upper: Real, target: Real, sup: Real
+) {
+    lower <= upper and f(lower) <= target and
+    is_set_supremum(closed_interval_sublevel(f, lower, upper, target), sup)
+    implies closed_interval_set(lower, upper).contains(sup)
+}
+
+theorem closed_interval_sublevel_supremum_exists(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    lower <= upper and f(lower) <= target implies exists(sup: Real) {
+        is_set_supremum(closed_interval_sublevel(f, lower, upper, target), sup)
+    }
+}
+
+theorem intermediate_value_closed_interval(
+    f: Real -> Real, lower: Real, upper: Real, target: Real
+) {
+    continuous(f) and lower <= upper and f(lower) <= target and target <= f(upper)
+    implies exists(point: Real) {
+        closed_interval_set(lower, upper).contains(point) and f(point) = target
+    }
+}
+
+theorem cos_two_tail_pair_index_odd(m: Nat) {
+    Nat.2 * m.suc + Nat.1 = Nat.2 * m + Nat.3
+}
+
+theorem cos_two_tail_pair_index_even(m: Nat) {
+    Nat.2 * m.suc + Nat.2 = Nat.2 * m + Nat.4
+}
+
+theorem cos_two_tail_double_suc_index(m: Nat) {
+    Nat.2 * m.suc.suc = Nat.2 * m + Nat.4
+}
+
+theorem cos_two_tail_odd_suc(m: Nat) {
+    (Nat.2 * m + Nat.3).suc = Nat.2 * m + Nat.4
+}

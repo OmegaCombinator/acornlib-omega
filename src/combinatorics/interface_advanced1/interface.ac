@@ -1,0 +1,1910 @@
+define choose_exists(x: Nat, y: Nat) -> Bool {
+    (x.factorial * y.factorial).divides((x + y).factorial)
+}
+
+define choose_hyp(n: Nat) -> Bool {
+    forall(x: Nat, y: Nat) {
+        if x + y = n {
+            choose_exists(x, y)
+        }
+    }
+}
+
+theorem choose_exists_left_zero(x: Nat) {
+    choose_exists(0, x)
+}
+
+theorem choose_exists_right_zero(x: Nat) {
+    choose_exists(x, 0)
+}
+
+theorem choose_base {
+    choose_hyp(0)
+}
+
+theorem choose_lemma(a: Nat, b: Nat) {
+    a != 0 and b != 0 and choose_hyp(a + b - 1) implies
+    (a.factorial * b.factorial).divides((a + b - 1).factorial * b)
+}
+
+theorem choose_exists_is_true(z1: Nat, z2: Nat) {
+    choose_exists(z1, z2)
+}
+
+theorem choose_exists_sub_form(n: Nat, k: Nat) {
+    k <= n implies exists(c: Nat) {
+        c * k.factorial * (n - k).factorial = n.factorial
+    }
+}
+
+let binom(n: Nat, k: Nat) -> c: Nat satisfy {
+    if n < k {
+        c = 0
+    } else {
+        c * k.factorial * (n - k).factorial = n.factorial
+    }
+}
+
+attributes Nat {
+    /// The binomial coefficient "n choose k".
+    let binom = binom
+}
+
+theorem factorial_nonzero(n: Nat) {
+    n.factorial != 0
+}
+
+theorem choose_zero(n: Nat) {
+    n.binom(0) = 1
+}
+
+theorem choose_n(n: Nat) {
+    n.binom(n) = 1
+}
+
+theorem choose_add(a: Nat, b: Nat) {
+    (a + b).binom(a) * a.factorial * b.factorial = (a + b).factorial
+}
+
+theorem choose_symm_add_form(a: Nat, b: Nat) {
+    (a + b).binom(a) = (a + b).binom(b)
+}
+
+theorem choose_symm_sub_form(n: Nat, k: Nat) {
+    k <= n implies n.binom(k) = n.binom(n - k)
+}
+
+theorem choose_one(n: Nat) {
+    n.binom(1) = n
+}
+
+theorem binom_n_minus_one(n: Nat) {
+    1 <= n implies n.binom(n - 1) = n
+}
+
+theorem binom_two_double(n: Nat) {
+    2 <= n implies 2 * n.binom(2) = n * (n - 1)
+}
+
+theorem binom_three_factor(n: Nat) {
+    3 <= n implies 6 * n.binom(3) = n * (n - 1) * (n - 2)
+}
+
+theorem choose_out_of_bounds(n: Nat, k: Nat) {
+    n < k implies n.binom(k) = 0
+}
+
+theorem binom_pos(n: Nat, k: Nat) {
+    k <= n implies 0 < n.binom(k)
+}
+
+theorem pascal(n: Nat, k: Nat) {
+    0 < k and k <= n implies n.suc.binom(k) = n.binom(k - 1) + n.binom(k)
+}
+
+theorem pascal_suc(n: Nat, k: Nat) {
+    k <= n implies n.suc.binom(k.suc) = n.binom(k) + n.binom(k.suc)
+}
+
+define binomial_term(a: Nat, b: Nat, n: Nat, k: Nat) -> Nat {
+    n.binom(k) * a.pow(k) * b.pow(n - k)
+}
+
+theorem binomial_term_zero(a: Nat, b: Nat, m: Nat) {
+    binomial_term(a, b, m.suc, 0) = b * binomial_term(a, b, m, 0)
+}
+
+theorem binomial_term_top(a: Nat, b: Nat, m: Nat) {
+    binomial_term(a, b, m.suc, m.suc) = a * binomial_term(a, b, m, m)
+}
+
+theorem binomial_term_recurrence(a: Nat, b: Nat, m: Nat, k: Nat) {
+    0 < k and k <= m implies
+    binomial_term(a, b, m.suc, k) =
+    a * binomial_term(a, b, m, k - 1) + b * binomial_term(a, b, m, k)
+}
+
+theorem alt_binomial_term_recurrence(a: Nat, b: Nat, m: Nat, k: Nat) {
+    k < m implies
+    binomial_term(a, b, m.suc, k.suc) =
+    a * binomial_term(a, b, m, k) + b * binomial_term(a, b, m, k.suc)
+}
+
+theorem binomial_middle_sum(a: Nat, b: Nat, m: Nat) {
+    partial(compose(binomial_term(a, b, m.suc), Nat.suc), m) =
+        a * partial(binomial_term(a, b, m), m) + b * partial(compose(binomial_term(a, b, m), Nat.suc), m)
+}
+
+theorem binomial_distribution(a: Nat, b: Nat, m: Nat) {
+    (a + b) * partial(binomial_term(a, b, m), m.suc) = partial(binomial_term(a, b, m.suc), m.suc.suc)
+}
+
+theorem binomial(a: Nat, b: Nat, n: Nat) {
+    (a + b).pow(n) = partial(binomial_term(a, b, n), n.suc)
+}
+
+theorem binom_absorption(n: Nat, k: Nat) {
+    0 < k and k <= n implies k * n.binom(k) = n * (n - 1).binom(k - 1)
+}
+
+theorem binom_absorption_suc(n: Nat, k: Nat) {
+    k <= n implies k.suc * n.suc.binom(k.suc) = n.suc * n.binom(k)
+}
+
+theorem binom_complement_absorption(n: Nat, k: Nat) {
+    k < n implies (n - k) * n.binom(k) = k.suc * n.binom(k.suc)
+}
+
+theorem binom_le_binom_suc(n: Nat, k: Nat) {
+    2 * k.suc <= n implies n.binom(k) <= n.binom(k.suc)
+}
+
+theorem binom_suc_le_binom(n: Nat, k: Nat) {
+    n <= 2 * k implies n.binom(k.suc) <= n.binom(k)
+}
+
+theorem binom_subset_product(n: Nat, k: Nat, j: Nat) {
+    j <= k and k <= n implies n.binom(k) * k.binom(j) = n.binom(j) * (n - j).binom(k - j)
+}
+
+theorem pascal_suc_unbounded(n: Nat, k: Nat) {
+    n.suc.binom(k.suc) = n.binom(k) + n.binom(k.suc)
+}
+
+define vandermonde_term(m: Nat, n: Nat, k: Nat, j: Nat) -> Nat {
+    m.binom(j) * n.binom(k - j)
+}
+
+theorem vandermonde_zero_aux(n: Nat, k: Nat, m: Nat) {
+    partial(vandermonde_term(Nat.0, n, k), m.suc) = n.binom(k)
+}
+
+theorem vandermonde_step(big_m: Nat, n: Nat, k1: Nat) {
+    (forall(kk: Nat) {
+        partial(vandermonde_term(big_m, n, kk), kk.suc) = (big_m + n).binom(kk)
+    }) implies partial(vandermonde_term(big_m.suc, n, k1), k1.suc) = (big_m.suc + n).binom(k1)
+}
+
+define vandermonde_pred(m: Nat, n: Nat) -> Bool {
+    forall(k: Nat) {
+        partial(vandermonde_term(m, n, k), k.suc) = (m + n).binom(k)
+    }
+}
+
+theorem vandermonde(m: Nat, n: Nat, k: Nat) {
+    partial(vandermonde_term(m, n, k), k.suc) = (m + n).binom(k)
+}
+
+define binom_square_term(n: Nat, j: Nat) -> Nat {
+    n.binom(j) * n.binom(j)
+}
+
+theorem binom_square_sum(n: Nat) {
+    partial(binom_square_term(n), n.suc) = (n + n).binom(n)
+}
+
+define hockey_stick_term(r: Nat, j: Nat) -> Nat {
+    (r + j).binom(r)
+}
+
+theorem hockey_stick(r: Nat, n: Nat) {
+    partial(hockey_stick_term(r), n.suc) = (r + n.suc).binom(r.suc)
+}
+
+theorem binom_row_sum(n: Nat) {
+    partial(n.binom, n.suc) = 2.pow(n)
+}
+
+define binom_weighted_term(n: Nat, k: Nat) -> Nat {
+    k * n.binom(k)
+}
+
+theorem binom_weighted_row_sum(n: Nat) {
+    partial(binom_weighted_term(n), n.suc) = n * 2.pow(n - 1)
+}
+
+define binom_second_weighted_term(n: Nat, k: Nat) -> Nat {
+    k * (k - Nat.1) * n.binom(k)
+}
+
+theorem binom_second_weighted_row_sum(n: Nat) {
+    partial(binom_second_weighted_term(n), n.suc) =
+        n * (n - Nat.1) * 2.pow((n - Nat.1) - Nat.1)
+}
+
+define triangular(n: Nat) -> Nat {
+    match n {
+        Nat.zero {
+            Nat.0
+        }
+        Nat.suc(k) {
+            n + triangular(k)
+        }
+    }
+}
+
+theorem triangular_zero {
+    triangular(Nat.0) = Nat.0
+}
+
+theorem triangular_suc(k: Nat) {
+    triangular(k.suc) = k.suc + triangular(k)
+}
+
+theorem triangular_doubled_suc(k: Nat) {
+    Nat.2 * triangular(k) = k * (k + Nat.1)
+        implies Nat.2 * triangular(k.suc) = k.suc * (k.suc + Nat.1)
+}
+
+theorem triangular_doubled(n: Nat) {
+    Nat.2 * triangular(n) = n * (n + Nat.1)
+}
+
+define list_k_subsets_length_binom_pred[A](items: List[A]) -> Bool {
+    items.is_unique implies forall(k: Nat) {
+        list_k_subsets[A](items, k).length = items.length.binom(k)
+    }
+}
+
+theorem list_k_subsets_length_binom[A](items: List[A], k: Nat) {
+    items.is_unique implies list_k_subsets[A](items, k).length = items.length.binom(k)
+}
+
+theorem finite_k_subsets_cardinality_is_binom_from_list[T](s: FiniteSet[T], items: List[T], k: Nat) {
+    fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k).cardinality_is(items.length.binom(k))
+}
+
+theorem finite_k_subsets_cardinality_is_binom[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+}
+
+theorem nat_suc_sub_suc(a: Nat, b: Nat) {
+    a.suc - b.suc = a - b
+}
+
+theorem nat_add_sub_cancel(a: Nat, b: Nat, c: Nat) {
+    (a + c) - (b + c) = a - b
+}
+
+theorem nat_mul_sub_distrib_right(a: Nat, b: Nat, c: Nat) {
+    (a - b) * c = a * c - b * c
+}
+
+theorem nat_mul_sub_distrib_left(a: Nat, b: Nat, c: Nat) {
+    a * (b - c) = a * b - a * c
+}
+
+define catalan(n: Nat) -> Nat {
+    (n + n).binom(n) - (n + n).binom(n + Nat.1)
+}
+
+theorem catalan_zero {
+    catalan(Nat.0) = Nat.1
+}
+
+theorem catalan_one {
+    catalan(Nat.1) = Nat.1
+}
+
+theorem lt_n_n_plus_n(n: Nat) {
+    Nat.0 < n implies n < n + n
+}
+
+theorem nat_suc_lte_double_suc(n: Nat) {
+    n.suc <= n + n + Nat.1
+}
+
+theorem nat_pred_add_one(n: Nat) {
+    Nat.0 < n implies n - Nat.1 + Nat.1 = n
+}
+
+theorem nat_pred_suc(n: Nat) {
+    Nat.0 < n implies (n - Nat.1).suc = n
+}
+
+theorem nat_pred_lte_double(n: Nat) {
+    Nat.0 < n implies n - Nat.1 <= n + n
+}
+
+theorem nat_double_sub_pred(n: Nat) {
+    Nat.0 < n implies n + n - (n - Nat.1) = n.suc
+}
+
+theorem central_binom_adjacent(n: Nat) {
+    Nat.0 < n implies
+        n.suc * (n + n).binom(n.suc) = n * (n + n).binom(n)
+}
+
+theorem central_binom_adjacent_lte(n: Nat) {
+    (n + n).binom(n.suc) <= (n + n).binom(n)
+}
+
+theorem central_binom_suc(n: Nat) {
+    (n.suc + n.suc).binom(n.suc) =
+        Nat.2 * ((n + n).binom(n) + (n + n).binom(n.suc))
+}
+
+theorem central_binom_shift(n: Nat) {
+    (n.suc + n.suc).binom(n.suc.suc) =
+        (n + n).binom(n) + Nat.2 * (n + n).binom(n.suc) + (n + n).binom(n.suc.suc)
+}
+
+theorem central_binom_step(m: Nat, j: Nat) {
+    Nat.0 < j implies
+        (m.suc + m.suc).binom(m.suc + j) =
+            (m + m).binom(m + j - Nat.1) + Nat.2 * (m + m).binom(m + j) +
+            (m + m).binom(m + j.suc)
+}
+
+theorem catalan_mul_suc(n: Nat) {
+    catalan(n) * n.suc = (n + n).binom(n)
+}
+
+theorem catalan_shift(n: Nat) {
+    catalan(n.suc) = (n + n).binom(n) - (n + n).binom(n.suc.suc)
+}
+
+define cb_term(n: Nat, j: Nat, k: Nat) -> Nat {
+    catalan(k) * ((n - k) + (n - k)).binom(n - k + j)
+}
+
+define catalan_family_hyp(n: Nat) -> Bool {
+    forall(j: Nat) {
+        partial(cb_term(n, j), n.suc) = (n + n).binom(n + j) + (n + n).binom(n + j.suc)
+    }
+}
+
+theorem nat_suc_sub_shift(n: Nat, k: Nat) {
+    k <= n implies n.suc - k = (n - k) + Nat.1
+}
+
+theorem nat_add_sub_one(a: Nat, b: Nat) {
+    Nat.0 < b implies a + (b - Nat.1) = a + b - Nat.1
+}
+
+theorem catalan_middle_suc(n: Nat, j: Nat) {
+    Nat.0 < j implies
+        partial(cb_term(n.suc, j), n) =
+            partial(cb_term(n, j - Nat.1), n) +
+            Nat.2 * partial(cb_term(n, j), n) +
+            partial(cb_term(n, j.suc), n)
+}
+
+theorem catalan_middle_zero(n: Nat) {
+    partial(cb_term(n.suc, Nat.0), n) =
+        Nat.2 * partial(cb_term(n, Nat.0), n) +
+        Nat.2 * partial(cb_term(n, Nat.1), n)
+}
+
+theorem central_binom_second_lte(n: Nat) {
+    (n + n).binom(n.suc.suc) <= (n + n).binom(n)
+}
+
+theorem catalan_shift_merge(n: Nat) {
+    catalan(n.suc) + Nat.2 * (n + n).binom(n.suc.suc) =
+        (n + n).binom(n) + (n + n).binom(n.suc.suc)
+}
+
+theorem catalan_j0_cancel(n: Nat) {
+    Nat.2 * (n + n).binom(n) + Nat.4 * (n + n).binom(n.suc) +
+        Nat.2 * (n + n).binom(n.suc.suc) + catalan(n.suc) =
+        Nat.3 * (n + n).binom(n) + Nat.4 * (n + n).binom(n.suc) +
+        (n + n).binom(n.suc.suc)
+}
+
+theorem catalan_j0_merge(n: Nat) {
+    Nat.2 * partial(cb_term(n, Nat.0), n) +
+        Nat.2 * partial(cb_term(n, Nat.1), n) + Nat.2 * catalan(n) =
+        Nat.2 * partial(cb_term(n, Nat.0), n.suc) +
+        Nat.2 * partial(cb_term(n, Nat.1), n.suc)
+}
+
+theorem catalan_conv_family(n: Nat) {
+    catalan_family_hyp(n)
+}
+
+define catalan_conv_term(n: Nat, k: Nat) -> Nat {
+    catalan(k) * catalan(n - k)
+}
+
+define catalan_first_sum_term(n: Nat, k: Nat) -> Nat {
+    k.suc * catalan_conv_term(n, k)
+}
+
+define catalan_weighted_term(n: Nat, k: Nat) -> Nat {
+    (n - k).suc * catalan_conv_term(n, k)
+}
+
+theorem catalan_cb_weighted(n: Nat, k: Nat) {
+    cb_term(n, Nat.0, k) = catalan_weighted_term(n, k)
+}
+
+theorem catalan_weighted_sum(n: Nat) {
+    partial(catalan_weighted_term(n), n.suc) =
+        (n + n).binom(n) + (n + n).binom(n.suc)
+}
+
+theorem catalan_split_term(n: Nat, k: Nat) {
+    k <= n implies
+        (n + Nat.2) * catalan_conv_term(n, k) =
+            catalan_first_sum_term(n, k) + catalan_weighted_term(n, k)
+}
+
+theorem catalan_first_reversed(n: Nat, k: Nat) {
+    k <= n implies
+        reverse_index(catalan_first_sum_term(n), n, k) =
+            catalan(k) * ((n - k) + (n - k)).binom(n - k)
+}
+
+theorem catalan_first_sum(n: Nat) {
+    partial(catalan_first_sum_term(n), n.suc) =
+        (n + n).binom(n) + (n + n).binom(n.suc)
+}
+
+theorem catalan_recurrence(n: Nat) {
+    catalan(n.suc) = partial(catalan_conv_term(n), n.suc)
+}
+
+define hamming(xs: List[Bool], ys: List[Bool]) -> Nat {
+    match xs {
+        List.nil {
+            match ys {
+                List.nil {
+                    Nat.0
+                }
+                List.cons(hy, ty) {
+                    Nat.0
+                }
+            }
+        }
+        List.cons(hx, tx) {
+            match ys {
+                List.nil {
+                    Nat.0
+                }
+                List.cons(hy, ty) {
+                    if hx != hy {
+                        Nat.1 + hamming(tx, ty)
+                    } else {
+                        hamming(tx, ty)
+                    }
+                }
+            }
+        }
+    }
+}
+
+define bit_diff(a: Bool, b: Bool) -> Nat {
+    if a != b {
+        Nat.1
+    } else {
+        Nat.0
+    }
+}
+
+theorem length_zero_imp_nil[T](list: List[T]) {
+    list.length = Nat.0 implies list = List.nil[T]
+}
+
+theorem hamming_cons_eq(xs: List[Bool], ys: List[Bool], hx: Bool, hy: Bool) {
+    hamming(List.cons(hx, xs), List.cons(hy, ys)) = bit_diff(hx, hy) + hamming(xs, ys)
+}
+
+theorem bit_diff_sym(hx: Bool, hy: Bool) {
+    bit_diff(hx, hy) = bit_diff(hy, hx)
+}
+
+theorem lte_add_both(a: Nat, b: Nat, c: Nat, d: Nat) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+theorem n_lte_one_plus_n(n: Nat) {
+    n <= Nat.1 + n
+}
+
+theorem zero_lte(n: Nat) {
+    Nat.0 <= n
+}
+
+theorem bool_diff_or(hx: Bool, hy: Bool, hz: Bool) {
+    hx != hz implies hx != hy or hy != hz
+}
+
+theorem bit_diff_le_sum(hx: Bool, hy: Bool, hz: Bool) {
+    bit_diff(hx, hz) <= bit_diff(hx, hy) + bit_diff(hy, hz)
+}
+
+theorem hamming_nonneg(xs: List[Bool], ys: List[Bool]) {
+    Nat.0 <= hamming(xs, ys)
+}
+
+theorem hamming_self(xs: List[Bool]) {
+    hamming(xs, xs) = Nat.0
+}
+
+theorem hamming_sym(xs: List[Bool], ys: List[Bool]) {
+    xs.length = ys.length implies hamming(xs, ys) = hamming(ys, xs)
+}
+
+theorem bit_diff_zero_imp_eq(hx: Bool, hy: Bool) {
+    bit_diff(hx, hy) = Nat.0 implies hx = hy
+}
+
+theorem hamming_triangle(xs: List[Bool], ys: List[Bool], zs: List[Bool]) {
+    xs.length = ys.length and ys.length = zs.length implies
+        hamming(xs, zs) <= hamming(xs, ys) + hamming(ys, zs)
+}
+
+theorem hamming_zero_imp_eq(xs: List[Bool], ys: List[Bool]) {
+    xs.length = ys.length and hamming(xs, ys) = Nat.0 implies xs = ys
+}
+
+theorem hamming_zero_iff_eq(xs: List[Bool], ys: List[Bool]) {
+    xs.length = ys.length implies ((hamming(xs, ys) = Nat.0) = (xs = ys))
+}
+
+define is_word_length(xs: List[Bool], n: Nat) -> Bool {
+    xs.length = n
+}
+
+define is_code(words: List[List[Bool]], n: Nat) -> Bool {
+    words.is_unique and forall(w: List[Bool]) {
+        words.contains(w) implies w.length = n
+    }
+}
+
+define min_distance_at_least(words: List[List[Bool]], d: Nat) -> Bool {
+    forall(x: List[Bool], y: List[Bool]) {
+        words.contains(x) and words.contains(y) and x != y implies d <= hamming(x, y)
+    }
+}
+
+define zero_word(n: Nat) -> List[Bool] {
+    match n {
+        Nat.zero {
+            List.nil[Bool]
+        }
+        Nat.suc(k) {
+            List.cons(false, zero_word(k))
+        }
+    }
+}
+
+define one_word(n: Nat) -> List[Bool] {
+    match n {
+        Nat.zero {
+            List.nil[Bool]
+        }
+        Nat.suc(k) {
+            List.cons(true, one_word(k))
+        }
+    }
+}
+
+let repetition_code_three: List[List[Bool]] =
+    List.cons(zero_word(3), List.cons(one_word(3), List.nil[List[Bool]]))
+
+/// The word obtained from `000` by flipping the first bit.
+let flip_first_three: List[Bool] =
+    List.cons(true, zero_word(2))
+
+/// The word obtained from `000` by flipping the second bit.
+let flip_second_three: List[Bool] =
+    List.cons(false, List.cons(true, zero_word(1)))
+
+/// The word obtained from `000` by flipping the third bit.
+let flip_third_three: List[Bool] =
+    List.cons(false, List.cons(false, List.cons(true, zero_word(0))))
+
+
+/// The zero word of length `n` has length `n`.
+theorem zero_word_length(n: Nat) {
+    zero_word(n).length = n
+}
+
+theorem one_word_length(n: Nat) {
+    one_word(n).length = n
+}
+
+theorem zero_one_distinct(n: Nat) {
+    0 < n implies zero_word(n) != one_word(n)
+}
+
+theorem hamming_zero_one(n: Nat) {
+    hamming(zero_word(n), one_word(n)) = n
+}
+
+theorem contains_two_imp_eq[T](a: T, b: T, w: T) {
+    List.cons(a, List.cons(b, List.nil[T])).contains(w) implies w = a or w = b
+}
+
+theorem two_unique_distinct[T](a: T, b: T) {
+    a != b implies List.cons(a, List.cons(b, List.nil[T])).is_unique
+}
+
+theorem repetition_three_members_length(w: List[Bool]) {
+    repetition_code_three.contains(w) implies w.length = 3
+}
+
+theorem repetition_three_is_code {
+    is_code(repetition_code_three, 3)
+}
+
+theorem repetition_three_pair_distance(x: List[Bool], y: List[Bool]) {
+    repetition_code_three.contains(x) and repetition_code_three.contains(y) and x != y implies 3 <= hamming(x, y)
+}
+
+theorem repetition_three_min_distance {
+    min_distance_at_least(repetition_code_three, 3)
+}
+
+theorem hamming_ball_radius_one_size_three {
+    3.binom(0) + 3.binom(1) = 4
+}
+
+theorem two_pow_three {
+    2.pow(3) = 8
+}
+
+theorem m_times_four_le_eight_imp_le_two(m: Nat) {
+    m * 4 <= 8 implies m <= 2
+}
+
+theorem sphere_packing_bound_three(m: Nat) {
+    m * (3.binom(0) + 3.binom(1)) <= 2.pow(3) implies m <= 2
+}
+
+theorem repetition_three_satisfies_bound {
+    2 * (3.binom(0) + 3.binom(1)) <= 2.pow(3)
+}
+
+theorem flip_first_distance_one {
+    hamming(flip_first_three, zero_word(3)) = Nat.1
+}
+
+theorem flip_second_distance_one {
+    hamming(flip_second_three, zero_word(3)) = Nat.1
+}
+
+theorem flip_third_distance_one {
+    hamming(flip_third_three, zero_word(3)) = Nat.1
+}
+
+theorem flip_first_length {
+    flip_first_three.length = 3
+}
+
+theorem flip_second_length {
+    flip_second_three.length = 3
+}
+
+theorem flip_third_length {
+    flip_third_three.length = 3
+}
+
+theorem single_flip_closer(w: List[Bool]) {
+    w.length = 3 and hamming(w, zero_word(3)) = Nat.1 implies
+        hamming(w, zero_word(3)) < hamming(w, one_word(3))
+}
+
+theorem flip_first_closer {
+    hamming(flip_first_three, zero_word(3)) < hamming(flip_first_three, one_word(3))
+}
+
+theorem flip_second_closer {
+    hamming(flip_second_three, zero_word(3)) < hamming(flip_second_three, one_word(3))
+}
+
+theorem flip_third_closer {
+    hamming(flip_third_three, zero_word(3)) < hamming(flip_third_three, one_word(3))
+}
+
+theorem lte_one_cases(n: Nat) {
+    n <= Nat.1 implies n = Nat.0 or n = Nat.1
+}
+
+theorem repetition_three_corrects_one_error(w: List[Bool]) {
+    w.length = 3 and hamming(w, zero_word(3)) <= Nat.1 implies
+        hamming(w, zero_word(3)) < hamming(w, one_word(3))
+}
+
+theorem two_pow_nonneg(n: Nat) {
+    Nat.1 <= 2.pow(n)
+}
+
+theorem two_pow_ge_four_of_ge_two(k: Nat) {
+    2 <= k implies 4 <= 2.pow(k)
+}
+
+theorem two_pow_le_two_imp_le_one(k: Nat) {
+    2.pow(k) <= 2 implies k <= 1
+}
+
+theorem sphere_packing_bound_k_three(k: Nat) {
+    2.pow(k) * (3.binom(0) + 3.binom(1)) <= 2.pow(3) implies k <= 1
+}
+
+theorem binomial_term_zero_power[R: CommRing](a: R, b: R, n: Nat) {
+    binomial_term[R](a, b, n, 0) = b.pow(n)
+}
+
+theorem binomial_term_top_power[R: CommRing](a: R, b: R, n: Nat) {
+    binomial_term[R](a, b, n, n) = a.pow(n)
+}
+
+theorem binomial_term_zero_zero[R: CommRing](a: R, b: R) {
+    binomial_term[R](a, b, 0, 0) = R.1
+}
+
+theorem binomial_term_zero_succ_power[R: CommRing](a: R, b: R, m: Nat) {
+    binomial_term[R](a, b, m.suc, 0) = b * b.pow(m)
+}
+
+theorem binomial_term_top_succ_power[R: CommRing](a: R, b: R, m: Nat) {
+    binomial_term[R](a, b, m.suc, m.suc) = a * a.pow(m)
+}
+
+theorem binomial_term_recurrence_succ_index[R: CommRing](a: R, b: R, m: Nat, k: Nat) {
+    k < m implies
+    binomial_term[R](a, b, m.suc, k.suc) =
+    a * binomial_term[R](a, b, m, k) + b * binomial_term[R](a, b, m, k.suc)
+}
+
+theorem alternating_binomial_row_sum[R: CommRing](n: Nat) {
+    n > Nat.0 implies
+        partial(binomial_term[R](-R.1, R.1, n), n.suc) = R.0
+}
+
+define even_binomial_row_term[R: CommRing](n: Nat, k: Nat) -> R {
+    if Nat.2.divides(k) {
+        from_nat[R](n.binom(k))
+    } else {
+        R.0
+    }
+}
+
+define odd_binomial_row_term[R: CommRing](n: Nat, k: Nat) -> R {
+    if Nat.2.divides(k) {
+        R.0
+    } else {
+        from_nat[R](n.binom(k))
+    }
+}
+
+theorem alternating_binomial_term_parity[R: CommRing](n: Nat, k: Nat) {
+    binomial_term[R](-R.1, R.1, n, k) =
+        even_binomial_row_term[R](n, k) - odd_binomial_row_term[R](n, k)
+}
+
+theorem alternating_binomial_partial_decomposition[R: CommRing](n: Nat, m: Nat) {
+    partial(binomial_term[R](-R.1, R.1, n), m) =
+        partial(even_binomial_row_term[R](n), m) -
+        partial(odd_binomial_row_term[R](n), m)
+}
+
+theorem even_odd_binomial_row_sums_equal[R: CommRing](n: Nat) {
+    n > Nat.0 implies
+        partial(even_binomial_row_term[R](n), n.suc) =
+        partial(odd_binomial_row_term[R](n), n.suc)
+}
+
+theorem alternating_binomial_term_eq_sign_mul[R: CommRing](n: Nat, k: Nat) {
+    binomial_term[R](-R.1, R.1, n, k) =
+        alternating_sign[R](k) * from_nat[R](n.binom(k))
+}
+
+theorem alternating_binomial_partial_row[R: CommRing](n: Nat, m: Nat) {
+    partial(binomial_term[R](-R.1, R.1, n.suc), m.suc) =
+        alternating_sign[R](m) * from_nat[R](n.binom(m))
+}
+
+define binomial_derivative_term[R: CommRing](a: R, b: R, n: Nat, k: Nat) -> R {
+    from_nat[R](k) * from_nat[R](n.binom(k)) *
+        a.pow(k - Nat.1) * b.pow(n - k)
+}
+
+theorem binomial_derivative_term_zero[R: CommRing](a: R, b: R, n: Nat) {
+    binomial_derivative_term[R](a, b, n, Nat.0) = R.0
+}
+
+theorem binomial_derivative_term_suc[R: CommRing](
+    a: R, b: R, n: Nat, k: Nat
+) {
+    k <= n implies
+        binomial_derivative_term[R](a, b, n.suc, k.suc) =
+        from_nat[R](n.suc) * binomial_term[R](a, b, n, k)
+}
+
+theorem binomial_derivative_sum[R: CommRing](a: R, b: R, n: Nat) {
+    partial(binomial_derivative_term[R](a, b, n), n.suc) =
+        from_nat[R](n) * (a + b).pow(n - Nat.1)
+}
+
+define geom_sum_term[R: CommRing](a: R, b: R, n: Nat, k: Nat) -> R {
+    a.pow(k) * b.pow(n - k)
+}
+
+theorem geom_sum_term_step[R: CommRing](a: R, b: R, n: Nat) {
+    partial(geom_sum_term[R](a, b, n.suc), n.suc.suc) =
+        a.pow(n.suc) + b * partial(geom_sum_term[R](a, b, n), n.suc)
+}
+
+theorem geom_sum[R: CommRing](a: R, b: R, n: Nat) {
+    (a - b) * partial(geom_sum_term[R](a, b, n), n.suc) = a.pow(n.suc) - b.pow(n.suc)
+}
+
+theorem geom_sum_classical[R: CommRing](a: R, b: R, n: Nat) {
+    (a - b) * partial(geom_sum_term[R](a, b, n - Nat.1), n) = a.pow(n) - b.pow(n)
+}
+
+define residue_list(n: Nat, f: Nat -> Nat, m: Nat) -> List[Nat] {
+    map(m.range, function(i: Nat) { f(i).mod(n) })
+}
+
+theorem residue_list_length(n: Nat, f: Nat -> Nat, m: Nat) {
+    residue_list(n, f, m).length = m
+}
+
+theorem residue_list_lt(n: Nat, f: Nat -> Nat, m: Nat, x: Nat) {
+    n != Nat.0 and residue_list(n, f, m).contains(x) implies x < n
+}
+
+theorem lt_three_cases(x: Nat) {
+    x < Nat.3 implies x = Nat.0 or x = Nat.1 or x = Nat.2
+}
+
+theorem one_lte_two_add(x: Nat) {
+    Nat.1 + x <= Nat.2 + x
+}
+
+define pick_one(i: Nat) -> Nat -> Nat {
+    function(a: Nat) {
+        i
+    }
+}
+
+theorem pick_one_apply(i: Nat, a: Nat) {
+    pick_one(i)(a) = i
+}
+
+define pick_two(i: Nat, j: Nat) -> Nat -> Nat {
+    function(a: Nat) {
+        if a = 0 {
+            i
+        } else {
+            j
+        }
+    }
+}
+
+theorem pick_two_zero(i: Nat, j: Nat) {
+    pick_two(i, j)(0) = i
+}
+
+theorem pick_two_one(i: Nat, j: Nat) {
+    pick_two(i, j)(1) = j
+}
+
+define pick_three(i: Nat, j: Nat, k: Nat) -> Nat -> Nat {
+    function(a: Nat) {
+        if a = 0 {
+            i
+        } else {
+            if a = 1 {
+                j
+            } else {
+                k
+            }
+        }
+    }
+}
+
+theorem pick_three_zero(i: Nat, j: Nat, k: Nat) {
+    pick_three(i, j, k)(0) = i
+}
+
+theorem pick_three_one(i: Nat, j: Nat, k: Nat) {
+    pick_three(i, j, k)(1) = j
+}
+
+theorem pick_three_two(i: Nat, j: Nat, k: Nat) {
+    pick_three(i, j, k)(2) = k
+}
+
+theorem egz_bounds_one {
+    forall(j: Nat) { j < Nat.1 implies pick_one(Nat.0)(j) < Nat.1 }
+}
+
+theorem egz_inj_one {
+    forall(a: Nat, b: Nat) { a < b and b < Nat.1 implies pick_one(Nat.0)(a) != pick_one(Nat.0)(b) }
+}
+
+theorem egz_bounds_two(i: Nat, j: Nat) {
+    i < j and j < Nat.3 implies forall(j2: Nat) {
+        j2 < Nat.2 implies pick_two(i, j)(j2) < Nat.3
+    }
+}
+
+theorem lt_imp_ne_nat(a: Nat, b: Nat) {
+    a < b implies a != b
+}
+
+theorem egz_inj_two(i: Nat, j: Nat) {
+    i < j and j < Nat.3 implies forall(a: Nat, b: Nat) {
+        a < b and b < Nat.2 implies pick_two(i, j)(a) != pick_two(i, j)(b)
+    }
+}
+
+theorem lt_two_cases(x: Nat) {
+    x < Nat.2 implies x = Nat.0 or x = Nat.1
+}
+
+theorem lt_two_ne_zero_imp_one(x: Nat) {
+    x < Nat.2 and x != Nat.0 implies x = Nat.1
+}
+
+theorem lt_two_ne_one_imp_zero(x: Nat) {
+    x < Nat.2 and x != Nat.1 implies x = Nat.0
+}
+
+theorem range_sum_term_lte(f: Nat -> Nat, n: Nat, k: Nat) {
+    k < n implies f(k) <= range_sum(f, n)
+}
+
+theorem partial_term_lte(f: Nat -> Nat, n: Nat, k: Nat) {
+    k < n implies f(k) <= partial(f, n)
+}
+
+define binom_row(m: Nat, k: Nat) -> Nat {
+    m.binom(k)
+}
+
+theorem binomial_term_one_one(m: Nat, k: Nat) {
+    binomial_term(Nat.1, Nat.1, m, k) = binom_row(m, k)
+}
+
+theorem binom_lte_two_pow(m: Nat, k: Nat) {
+    k <= m implies m.binom(k) <= Nat.2.pow(m)
+}
+
+theorem range_sum_two_terms_lte(f: Nat -> Nat, n: Nat, j: Nat, k: Nat) {
+    j < k and k < n implies f(j) + f(k) <= range_sum(f, n)
+}
+
+theorem partial_two_terms_lte(f: Nat -> Nat, n: Nat, j: Nat, k: Nat) {
+    j < k and k < n implies f(j) + f(k) <= partial(f, n)
+}
+
+theorem odd_row_middle_symm(m: Nat) {
+    (m + m.suc).binom(m) = (m + m.suc).binom(m.suc)
+}
+
+theorem odd_row_middle_doubled(m: Nat) {
+    (m + m.suc).binom(m) + (m + m.suc).binom(m) <= Nat.2.pow(m + m.suc)
+}
+
+theorem two_pow_odd(m: Nat) {
+    Nat.2.pow(m + m.suc) = Nat.2 * Nat.4.pow(m)
+}
+
+theorem odd_binom_lte_four_pow(m: Nat) {
+    (m + m.suc).binom(m) <= Nat.4.pow(m)
+}
+
+define non_increasing_from(head: Nat, tail: List[Nat]) -> Bool {
+    match tail {
+        List.nil {
+            true
+        }
+        List.cons(head2, tail2) {
+            head2 <= head and non_increasing_from(head2, tail2)
+        }
+    }
+}
+
+define non_increasing(parts: List[Nat]) -> Bool {
+    match parts {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            non_increasing_from(head, tail)
+        }
+    }
+}
+
+define all_positive(parts: List[Nat]) -> Bool {
+    match parts {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            Nat.0 < head and all_positive(tail)
+        }
+    }
+}
+
+define is_partition(parts: List[Nat], n: Nat) -> Bool {
+    sum(parts) = n and non_increasing(parts) and all_positive(parts)
+}
+
+theorem is_partition_sum(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies sum(parts) = n
+}
+
+theorem is_partition_non_increasing(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies non_increasing(parts)
+}
+
+theorem is_partition_all_positive(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies all_positive(parts)
+}
+
+theorem is_partition_intro(parts: List[Nat], n: Nat) {
+    sum(parts) = n and non_increasing(parts) and all_positive(parts)
+    implies is_partition(parts, n)
+}
+
+theorem all_positive_head(a: Nat, t: List[Nat]) {
+    all_positive(List.cons(a, t)) implies Nat.0 < a
+}
+
+theorem all_positive_tail(a: Nat, t: List[Nat]) {
+    all_positive(List.cons(a, t)) implies all_positive(t)
+}
+
+theorem non_increasing_from_second(head: Nat, head2: Nat, tail: List[Nat]) {
+    non_increasing_from(head, List.cons(head2, tail)) implies head2 <= head
+}
+
+theorem non_increasing_from_tail(head: Nat, head2: Nat, tail: List[Nat]) {
+    non_increasing_from(head, List.cons(head2, tail)) implies non_increasing_from(head2, tail)
+}
+
+theorem non_increasing_second(head: Nat, head2: Nat, tail: List[Nat]) {
+    non_increasing(List.cons(head, List.cons(head2, tail))) implies head2 <= head
+}
+
+theorem non_increasing_tail(head: Nat, head2: Nat, tail: List[Nat]) {
+    non_increasing(List.cons(head, List.cons(head2, tail))) implies non_increasing(List.cons(head2, tail))
+}
+
+theorem ni_single(a: Nat) {
+    non_increasing(List.cons(a, List.nil[Nat])) = true
+}
+
+theorem ap_single(a: Nat) {
+    Nat.0 < a implies all_positive(List.cons(a, List.nil[Nat])) = true
+}
+
+theorem bool_eq_of_iff(a: Bool, b: Bool) {
+    (a implies b) and (b implies a) implies a = b
+}
+
+theorem partition_zero_members(l: List[Nat]) {
+    is_partition(l, Nat.0) implies l = List.nil[Nat]
+}
+
+theorem partition_zero_sound(l: List[Nat]) {
+    l = List.nil[Nat] implies is_partition(l, Nat.0)
+}
+
+theorem partition_zero_char(l: List[Nat]) {
+    is_partition(l, Nat.0) = (l = List.nil[Nat])
+}
+
+theorem partition_one_members(l: List[Nat]) {
+    is_partition(l, Nat.1) implies l = List.cons(Nat.1, List.nil[Nat])
+}
+
+theorem partition_one_sound(l: List[Nat]) {
+    l = List.cons(Nat.1, List.nil[Nat]) implies is_partition(l, Nat.1)
+}
+
+theorem partition_one_char(l: List[Nat]) {
+    is_partition(l, Nat.1) = (l = List.cons(Nat.1, List.nil[Nat]))
+}
+
+theorem lt_four_cases(a: Nat) {
+    a < Nat.4 implies (a = Nat.3 or a = Nat.2 or a = Nat.1 or a = Nat.0)
+}
+
+theorem two_parts_three(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.3 implies (a = Nat.2 and b = Nat.1)
+}
+
+theorem two_parts_four_small(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 and a < Nat.3 implies (a = Nat.2 and b = Nat.2)
+}
+
+theorem two_parts_four_big(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 and not a < Nat.3 implies (a = Nat.3 and b = Nat.1)
+}
+
+theorem two_parts_four(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 implies (a = Nat.3 and b = Nat.1) or (a = Nat.2 and b = Nat.2)
+}
+
+theorem three_parts_three(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.3 implies a = Nat.1 and b = Nat.1 and c = Nat.1
+}
+
+theorem three_parts_four(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.4 implies a = Nat.2 and b = Nat.1 and c = Nat.1
+}
+
+theorem partition_two_members(l: List[Nat]) {
+    is_partition(l, Nat.2) implies (l = List.cons(Nat.2, List.nil[Nat]) or
+
+         l = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+}
+
+theorem partition_two_sound(l: List[Nat]) {
+    (l = List.cons(Nat.2, List.nil[Nat]) or
+     l = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+    implies is_partition(l, Nat.2)
+}
+
+theorem partition_two_char(l: List[Nat]) {
+    is_partition(l, Nat.2) =
+        (l = List.cons(Nat.2, List.nil[Nat]) or
+         l = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+}
+
+theorem sum_ge_length_all_positive(l: List[Nat]) {
+    all_positive(l) implies l.length <= sum(l)
+}
+
+theorem ni_21 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ni_31 {
+    non_increasing(List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ni_22 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ni_111 {
+    non_increasing(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_211 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_1111 {
+    non_increasing(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem ap_21 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ap_31 {
+    all_positive(List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ap_22 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ap_111 {
+    all_positive(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_211 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_1111 {
+    all_positive(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem partition_three_members(l: List[Nat]) {
+    is_partition(l, Nat.3) implies (l = List.cons(Nat.3, List.nil[Nat]) or
+         l = List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])) or
+         l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+}
+
+theorem partition_three_sound(l: List[Nat]) {
+    (l = List.cons(Nat.3, List.nil[Nat]) or
+     l = List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])) or
+     l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+    implies is_partition(l, Nat.3)
+}
+
+theorem partition_three_char(l: List[Nat]) {
+    is_partition(l, Nat.3) =
+        (l = List.cons(Nat.3, List.nil[Nat]) or
+         l = List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])) or
+         l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+}
+
+theorem four_parts_four(a: Nat, b: Nat, c: Nat, d: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and b <= a and c <= b and d <= c and
+        a + b + c + d = Nat.4 implies a = Nat.1 and b = Nat.1 and c = Nat.1 and d = Nat.1
+}
+
+theorem partition_four_members(l: List[Nat]) {
+    is_partition(l, Nat.4) implies (l = List.cons(Nat.4, List.nil[Nat]) or
+         l = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat])) or
+         l = List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])) or
+         l = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))) or
+         l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))
+}
+
+theorem partition_four_sound(l: List[Nat]) {
+    (l = List.cons(Nat.4, List.nil[Nat]) or
+     l = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat])) or
+     l = List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])) or
+     l = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))) or
+     l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))
+    implies is_partition(l, Nat.4)
+}
+
+theorem partition_four_char(l: List[Nat]) {
+    is_partition(l, Nat.4) =
+        (l = List.cons(Nat.4, List.nil[Nat]) or
+         l = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat])) or
+         l = List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])) or
+         l = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))) or
+         l = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))
+}
+
+define is_partition_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_partition(parts, n)
+}
+
+define partition_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_partition_of_n(n))
+}
+
+theorem partition_set_contains_eq(n: Nat, parts: List[Nat]) {
+    partition_set(n).contains(parts) = is_partition_of_n(n, parts)
+}
+
+theorem partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    partition_set(n).contains(parts) = is_partition(parts, n)
+}
+
+define prepend_a(a: Nat, inners: List[List[Nat]]) -> List[List[Nat]] {
+    map(inners, function(rest: List[Nat]) { List.cons(a, rest) })
+}
+
+define prepend_alphabet(alphabet: List[Nat], inners: List[List[Nat]]) -> List[List[Nat]] {
+    match alphabet {
+        List.nil {
+            List.nil[List[Nat]]
+        }
+        List.cons(a, t) {
+            prepend_a(a, inners) + prepend_alphabet(t, inners)
+        }
+    }
+}
+
+define lists_of_length(alphabet: List[Nat], len: Nat) -> List[List[Nat]] {
+    match len {
+        Nat.zero {
+            List.singleton[List[Nat]](List.nil[Nat])
+        }
+        Nat.suc(k) {
+            prepend_alphabet(alphabet, lists_of_length(alphabet, k))
+        }
+    }
+}
+
+define all_lengths(alphabet: List[Nat], max_len: Nat) -> List[List[Nat]] {
+    match max_len {
+        Nat.zero {
+            lists_of_length(alphabet, Nat.zero)
+        }
+        Nat.suc(k) {
+            all_lengths(alphabet, k) + lists_of_length(alphabet, k.suc)
+        }
+    }
+}
+
+theorem prepend_alphabet_contains(alphabet: List[Nat], inners: List[List[Nat]], a: Nat, rest: List[Nat]) {
+    alphabet.contains(a) and inners.contains(rest) implies prepend_alphabet(alphabet, inners).contains(List.cons(a, rest))
+}
+
+theorem lists_of_length_contains(alphabet: List[Nat], parts: List[Nat], len: Nat) {
+    parts.length = len and (forall(x: Nat) { parts.contains(x) implies alphabet.contains(x) })
+    implies lists_of_length(alphabet, len).contains(parts)
+}
+
+theorem all_lengths_contains(alphabet: List[Nat], parts: List[Nat], max_len: Nat) {
+    parts.length <= max_len and (forall(x: Nat) { parts.contains(x) implies alphabet.contains(x) })
+    implies all_lengths(alphabet, max_len).contains(parts)
+}
+
+theorem contains_le_sum(l: List[Nat], x: Nat) {
+    l.contains(x) implies x <= sum(l)
+}
+
+theorem partition_set_finite(n: Nat) {
+    partition_set(n).is_finite
+}
+
+let p(n: Nat) -> result: Nat satisfy {
+    partition_set(n).cardinality_is(result)
+}
+
+theorem p_zero {
+    p(Nat.0) = Nat.1
+}
+
+let partitions_one: List[List[Nat]] = List.cons(List.cons(Nat.1, List.nil[Nat]), List.nil[List[Nat]])
+
+/// The explicit list of the partitions of two.
+let partitions_two: List[List[Nat]] =
+    List.cons(List.cons(Nat.2, List.nil[Nat]),
+        List.cons(List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])), List.nil[List[Nat]]))
+
+/// The explicit list of the partitions of three.
+let partitions_three: List[List[Nat]] =
+    List.cons(List.cons(Nat.3, List.nil[Nat]),
+        List.cons(List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])),
+            List.cons(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))),
+                List.nil[List[Nat]])))
+
+/// The explicit list of the partitions of four.
+let partitions_four: List[List[Nat]] =
+    List.cons(List.cons(Nat.4, List.nil[Nat]),
+        List.cons(List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat])),
+            List.cons(List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])),
+                List.cons(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))),
+                    List.cons(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))),
+                        List.nil[List[Nat]])))))
+
+/// A two-element list contains its last element.
+theorem contains_list_2(x: List[Nat], a: List[Nat], b: List[Nat]) {
+    x = b implies List.cons(a, List.cons(b, List.nil[List[Nat]])).contains(x)
+}
+
+theorem contains_list_3(x: List[Nat], a: List[Nat], b: List[Nat], c: List[Nat]) {
+    x = c implies List.cons(a, List.cons(b, List.cons(c, List.nil[List[Nat]]))).contains(x)
+}
+
+theorem contains_list_4(x: List[Nat], a: List[Nat], b: List[Nat], c: List[Nat], d: List[Nat]) {
+    x = d implies List.cons(a, List.cons(b, List.cons(c, List.cons(d, List.nil[List[Nat]])))).contains(x)
+}
+
+theorem partitions_one_contains(l: List[Nat]) {
+    is_partition(l, Nat.1) implies partitions_one.contains(l)
+}
+
+theorem partitions_two_contains(l: List[Nat]) {
+    is_partition(l, Nat.2) implies partitions_two.contains(l)
+}
+
+theorem partitions_three_contains(l: List[Nat]) {
+    is_partition(l, Nat.3) implies partitions_three.contains(l)
+}
+
+theorem pair_is_unique(a: List[Nat], b: List[Nat]) {
+    a != b implies List.cons(a, List.cons(b, List.nil[List[Nat]])).is_unique
+}
+
+theorem p_one {
+    p(Nat.1) = Nat.1
+}
+
+theorem triple_is_unique(a: List[Nat], b: List[Nat], c: List[Nat]) {
+    a != b and a != c and b != c implies List.cons(a, List.cons(b, List.cons(c, List.nil[List[Nat]]))).is_unique
+}
+
+theorem p_two {
+    p(Nat.2) = Nat.2
+}
+
+theorem quad_is_unique(a: List[Nat], b: List[Nat], c: List[Nat], d: List[Nat]) {
+    a != b and a != c and a != d and b != c and b != d and c != d implies List.cons(a, List.cons(b, List.cons(c, List.cons(d, List.nil[List[Nat]])))).is_unique
+}
+
+theorem p_three {
+    p(Nat.3) = Nat.3
+}
+
+theorem add_cons_cons(h1: List[Nat], h2: List[Nat], rest: List[List[Nat]]) {
+    List.cons(h1, List.cons(h2, List.nil[List[Nat]])) + rest = List.cons(h1, List.cons(h2, rest))
+}
+
+theorem add_cons_cons_cons(h1: List[Nat], h2: List[Nat], h3: List[Nat], rest: List[List[Nat]]) {
+    List.cons(h1, List.cons(h2, List.cons(h3, List.nil[List[Nat]]))) + rest =
+        List.cons(h1, List.cons(h2, List.cons(h3, rest)))
+}
+
+let p4_a: List[Nat] = List.cons(Nat.4, List.nil[Nat])
+let p4_b: List[Nat] = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))
+let p4_c: List[Nat] = List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat]))
+let p4_d: List[Nat] = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+let p4_e: List[Nat] = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+
+/// Every partition of four occurs in the explicit list.
+theorem partitions_four_contains(l: List[Nat]) {
+    is_partition(l, Nat.4) implies partitions_four.contains(l)
+}
+
+theorem cons_neq_head(a: Nat, b: Nat, t1: List[Nat], t2: List[Nat]) {
+    a != b implies List.cons(a, t1) != List.cons(b, t2)
+}
+
+theorem cons_cons_neq_head(a: Nat, b: Nat, c: Nat, t1: List[Nat], t2: List[Nat]) {
+    b != c implies List.cons(a, List.cons(b, t1)) != List.cons(a, List.cons(c, t2))
+}
+
+theorem p4_parts_distinct {
+    p4_a != p4_b and p4_a != p4_c and p4_a != p4_d and p4_a != p4_e and
+    p4_b != p4_c and p4_b != p4_d and p4_b != p4_e and
+    p4_c != p4_d and p4_c != p4_e and p4_d != p4_e
+}
+
+theorem partitions_four_unique {
+    partitions_four.is_unique
+}
+
+theorem p4_sound(l: List[Nat]) {
+    (l = p4_a or l = p4_b or l = p4_c or l = p4_d or l = p4_e) implies is_partition(l, Nat.4)
+}
+
+theorem partitions_four_membership(l: List[Nat]) {
+    partitions_four.contains(l) implies is_partition(l, Nat.4)
+}
+
+theorem filter_all_keep[T](l: List[T], f: T -> Bool) {
+    (forall(x: T) { l.contains(x) implies f(x) }) implies l.filter(f) = l
+}
+
+theorem p_four {
+    p(Nat.4) = Nat.5
+}
+
+define is_odd(n: Nat) -> Bool {
+    match n {
+        Nat.zero {
+            false
+        }
+        Nat.suc(pred) {
+            not is_odd(pred)
+        }
+    }
+}
+
+theorem is_odd_suc(k: Nat) {
+    is_odd(k.suc) = not is_odd(k)
+}
+
+theorem is_odd_zero {
+    is_odd(Nat.0) = false
+}
+
+theorem is_odd_one {
+    is_odd(Nat.1) = true
+}
+
+theorem is_odd_two {
+    is_odd(Nat.2) = false
+}
+
+theorem is_odd_three {
+    is_odd(Nat.3) = true
+}
+
+theorem is_odd_four {
+    is_odd(Nat.4) = false
+}
+
+define all_odd(parts: List[Nat]) -> Bool {
+    match parts {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            is_odd(head) and all_odd(tail)
+        }
+    }
+}
+
+theorem partition_parts_at_most_n(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+define is_partition_at_most(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+theorem partition_at_most_char(parts: List[Nat], n: Nat) {
+    is_partition_at_most(parts, n) = is_partition(parts, n)
+}
+
+define is_partition_at_most_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_partition_at_most(parts, n)
+}
+
+define partition_at_most_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_partition_at_most_of_n(n))
+}
+
+theorem partition_at_most_set_contains_iff(n: Nat, parts: List[Nat]) {
+    partition_at_most_set(n).contains(parts) = is_partition(parts, n)
+}
+
+theorem partition_at_most_set_eq(n: Nat) {
+    partition_at_most_set(n) = partition_set(n)
+}
+
+theorem partition_at_most_set_finite(n: Nat) {
+    partition_at_most_set(n).is_finite
+}
+
+theorem p_counts_parts_at_most_n(n: Nat) {
+    partition_at_most_set(n).cardinality_is(p(n))
+}
+
+define is_odd_part_partition(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and all_odd(parts)
+}
+
+define is_distinct_part_partition(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and parts.is_unique
+}
+
+define is_odd_part_partition_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_odd_part_partition(parts, n)
+}
+
+define is_distinct_part_partition_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_distinct_part_partition(parts, n)
+}
+
+define odd_partition_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_odd_part_partition_of_n(n))
+}
+
+define distinct_partition_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_distinct_part_partition_of_n(n))
+}
+
+theorem odd_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    odd_partition_set(n).contains(parts) = is_odd_part_partition(parts, n)
+}
+
+theorem distinct_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    distinct_partition_set(n).contains(parts) = is_distinct_part_partition(parts, n)
+}
+
+theorem all_odd_31 {
+    all_odd(List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem all_odd_1111 {
+    all_odd(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem all_odd_4 {
+    all_odd(List.cons(Nat.4, List.nil[Nat])) = false
+}
+
+theorem all_odd_22 {
+    all_odd(List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat]))) = false
+}
+
+theorem all_odd_211 {
+    all_odd(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = false
+}
+
+theorem pair_nat_unique(a: Nat, b: Nat) {
+    a != b implies List.cons(a, List.cons(b, List.nil[Nat])).is_unique
+}
+
+theorem not_unique_22 {
+    not List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])).is_unique
+}
+
+theorem not_unique_211 {
+    not List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))).is_unique
+}
+
+theorem not_unique_1111 {
+    not List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))).is_unique
+}
+
+let odd_four_a: List[Nat] = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))
+let odd_four_b: List[Nat] = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+
+/// The odd-part partitions of four are exactly 3 + 1 and 1 + 1 + 1 + 1.
+theorem odd_four_members(l: List[Nat]) {
+    is_odd_part_partition(l, Nat.4) implies (l = odd_four_a or l = odd_four_b)
+}
+
+theorem odd_four_sound(l: List[Nat]) {
+    (l = odd_four_a or l = odd_four_b) implies is_odd_part_partition(l, Nat.4)
+}
+
+theorem odd_four_char(l: List[Nat]) {
+    is_odd_part_partition(l, Nat.4) = (l = odd_four_a or l = odd_four_b)
+}
+
+theorem distinct_four_members(l: List[Nat]) {
+    is_distinct_part_partition(l, Nat.4) implies (l = p4_a or l = p4_b)
+}
+
+theorem distinct_four_sound(l: List[Nat]) {
+    (l = p4_a or l = p4_b) implies is_distinct_part_partition(l, Nat.4)
+}
+
+theorem distinct_four_char(l: List[Nat]) {
+    is_distinct_part_partition(l, Nat.4) = (l = p4_a or l = p4_b)
+}
+
+let odd_four_list: List[List[Nat]] =
+    List.cons(odd_four_a, List.cons(odd_four_b, List.nil[List[Nat]]))
+
+/// The explicit list of the distinct-part partitions of four.
+let distinct_four_list: List[List[Nat]] =
+    List.cons(p4_a, List.cons(p4_b, List.nil[List[Nat]]))
+
+/// The odd-part partitions of four are exactly two in number.
+theorem odd_four_cardinality {
+    odd_partition_set(Nat.4).cardinality_is(Nat.2)
+}
+
+theorem distinct_four_cardinality {
+    distinct_partition_set(Nat.4).cardinality_is(Nat.2)
+}
+
+theorem euler_odd_distinct_four {
+    exists(k: Nat) {
+        odd_partition_set(Nat.4).cardinality_is(k) and distinct_partition_set(Nat.4).cardinality_is(k)
+    }
+}
+
+theorem p_grows_one_two {
+    p(Nat.1) < p(Nat.2)
+}
+
+theorem p_grows_two_three {
+    p(Nat.2) < p(Nat.3)
+}
+
+theorem p_grows_three_four {
+    p(Nat.3) < p(Nat.4)
+}
+
+theorem p_monotone_small {
+    p(Nat.1) < p(Nat.2) and p(Nat.2) < p(Nat.3) and p(Nat.3) < p(Nat.4)
+}
+
+define pentagonal_twice(k: Nat) -> Nat {
+    k * (Nat.3 * k - Nat.1)
+}
+
+theorem pentagonal_recurrence_four {
+    p(Nat.4) = p(Nat.3) + p(Nat.2)
+}
+
+theorem pentagonal_recurrence_four_diff {
+    p(Nat.4) - p(Nat.3) - p(Nat.2) = Nat.0
+}
+
+theorem lt_five_cases(a: Nat) {
+    a < Nat.5 implies (a = Nat.4 or a = Nat.3 or a = Nat.2 or a = Nat.1 or a = Nat.0)
+}
+
+theorem lt_six_cases(a: Nat) {
+    a < Nat.6 implies (a = Nat.5 or a = Nat.4 or a = Nat.3 or a = Nat.2 or a = Nat.1 or a = Nat.0)
+}
+
+theorem two_parts_five(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.5 implies (a = Nat.4 and b = Nat.1) or (a = Nat.3 and b = Nat.2)
+}
+
+theorem three_parts_five(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.5 implies (a = Nat.3 and b = Nat.1 and c = Nat.1) or (a = Nat.2 and b = Nat.2 and c = Nat.1)
+}
+
+theorem four_parts_five(a: Nat, b: Nat, c: Nat, d: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and b <= a and c <= b and d <= c and
+        a + b + c + d = Nat.5 implies a = Nat.2 and b = Nat.1 and c = Nat.1 and d = Nat.1
+}
+
+theorem five_parts_five(a: Nat, b: Nat, c: Nat, d: Nat, e: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and Nat.1 <= e and
+        b <= a and c <= b and d <= c and e <= d and
+        a + (b + (c + (d + e))) = Nat.5 implies a = Nat.1 and b = Nat.1 and c = Nat.1 and d = Nat.1 and e = Nat.1
+}
+
+let p5_a: List[Nat] = List.cons(Nat.5, List.nil[Nat])
+let p5_b: List[Nat] = List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))
+let p5_c: List[Nat] = List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))
+let p5_d: List[Nat] = List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+let p5_e: List[Nat] = List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))
+let p5_f: List[Nat] = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+let p5_g: List[Nat] = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))
+// ---------------------------------------------------------------------------
+// Small lemmas about positive lists of small sums, and about the parts of
+// non-increasing lists.
+// ---------------------------------------------------------------------------
+
+/// A positive list of sum zero is empty.
+theorem sum_zero_nil(t: List[Nat]) {
+    sum(t) = Nat.0 and all_positive(t) implies t = List.nil[Nat]
+}
+
+theorem sum_one_singleton(t: List[Nat]) {
+    sum(t) = Nat.1 and all_positive(t) implies t = List.cons(Nat.1, List.nil[Nat])
+}
+
+theorem sum_two_cases(t: List[Nat]) {
+    sum(t) = Nat.2 and all_positive(t) implies (t = List.cons(Nat.2, List.nil[Nat]) or t = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+}
+
+theorem ni_tail_general(a: Nat, t: List[Nat]) {
+    non_increasing(List.cons(a, t)) implies non_increasing(t)
+}
+
+theorem parts_le_head(a: Nat, t: List[Nat], x: Nat) {
+    non_increasing(List.cons(a, t)) and t.contains(x) implies x <= a
+}
+
+let partitions_five: List[List[Nat]] =
+    List.cons(p5_a,
+        List.cons(p5_b,
+            List.cons(p5_c,
+                List.cons(p5_d,
+                    List.cons(p5_e,
+                        List.cons(p5_f,
+                            List.cons(p5_g, List.nil[List[Nat]])))))))
+
+/// Every partition of five occurs in the explicit list.
+theorem partitions_five_contains(l: List[Nat]) {
+    is_partition(l, Nat.5) implies partitions_five.contains(l)
+}
+
+theorem ni_41 {
+    non_increasing(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ni_32 {
+    non_increasing(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ni_311 {
+    non_increasing(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_221 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_2111 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem ni_11111 {
+    non_increasing(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
+}
+
+theorem ap_41 {
+    all_positive(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ap_32 {
+    all_positive(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ap_311 {
+    all_positive(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_221 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_2111 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem ap_11111 {
+    all_positive(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
+}
+
+theorem partition_five_sound(l: List[Nat]) {
+    (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g) implies is_partition(l, Nat.5)
+}
+
+theorem partitions_five_membership(l: List[Nat]) {
+    partitions_five.contains(l) implies is_partition(l, Nat.5)
+}
+
+theorem partition_five_char(l: List[Nat]) {
+    is_partition(l, Nat.5) = (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g)
+}
+
+theorem not_contains_p5_a {
+    not List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).contains(p5_a)
+}
+
+theorem not_contains_p5_b {
+    not List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).contains(p5_b)
+}
+
+theorem not_contains_p5_c {
+    not List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).contains(p5_c)
+}
+
+theorem not_contains_p5_d {
+    not List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).contains(p5_d)
+}
+
+theorem not_contains_p5_e {
+    not List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).contains(p5_e)
+}
+
+theorem not_contains_p5_f {
+    not List.cons(p5_g, List.nil[List[Nat]]).contains(p5_f)
+}
+
+theorem p5_suffix_unique_6 {
+    List.cons(p5_g, List.nil[List[Nat]]).is_unique
+}
+
+theorem p5_suffix_unique_5 {
+    List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).is_unique
+}
+
+theorem p5_suffix_unique_4 {
+    List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).is_unique
+}
+
+theorem p5_suffix_unique_3 {
+    List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).is_unique
+}
+
+theorem p5_suffix_unique_2 {
+    List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).is_unique
+}
+
+theorem p5_suffix_unique_1 {
+    List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).is_unique
+}
+
+theorem p5_suffix_unique_0 {
+    List.cons(p5_a, List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))))).is_unique
+}
+
+theorem partitions_five_unique {
+    partitions_five.is_unique
+}
+
+theorem p_five {
+    p(Nat.5) = Nat.7
+}

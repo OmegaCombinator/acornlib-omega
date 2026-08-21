@@ -1,6 +1,6 @@
-from algebra.ring.ring import Ring
-from algebra.add_comm_group import AddCommGroup
-from algebra.add_comm_group import AddCommGroupHom, is_add_comm_group_hom,
+from algebra_core import Ring
+from algebra_core import AddCommGroup
+from algebra_core import AddCommGroupHom, is_add_comm_group_hom,
     add_comm_group_hom_zero, add_comm_group_hom_neg
 from algebra.add_subgroup import AddSubgroup, add_zero_constraint, add_closure_constraint,
     neg_constraint, add_subgroup_constraint, add_subgroup_rel, add_subgroup_quotient_relation,
@@ -32,6 +32,7 @@ from set.set import Set, singleton_contains_eq, singleton_set_is_finite, empty_s
 from basic.functions import predicate_extensionality,
     is_injective_fn,
     is_surjective_fn
+from algebra.module.module_hom_kernel_image_eq import module_hom_image_subset_full
 
 /// True if a subset of a module contains the additive identity.
 define submodule_zero_constraint[R: Ring, M: AddCommGroup](
@@ -2359,7 +2360,7 @@ define linear_map_kernel[R: Ring, M: AddCommGroup, N: AddCommGroup](
 }
 
 /// A linear map sends the additive identity to the additive identity.
-theorem linear_map_zero[R: Ring, M: AddCommGroup, N: AddCommGroup](
+theorem linear_map_zero_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
     src: Module[R, M], dst: Module[R, N], f: M -> N
 ) {
     is_linear_map(src, dst, f) implies f(M.0) = N.0
@@ -2378,7 +2379,7 @@ theorem linear_map_zero[R: Ring, M: AddCommGroup, N: AddCommGroup](
 }
 
 /// A linear map preserves additive negation.
-theorem linear_map_neg[R: Ring, M: AddCommGroup, N: AddCommGroup](
+theorem linear_map_neg_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
     src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
 ) {
     is_linear_map(src, dst, f) implies f(-x) = -f(x)
@@ -2403,7 +2404,7 @@ theorem linear_map_kernel_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGr
     is_linear_map(src, dst, f) implies submodule_zero_constraint(src, linear_map_kernel[R, M, N](f))
 } by {
     if is_linear_map(src, dst, f) {
-        linear_map_zero(src, dst, f)
+        linear_map_zero_submodule(src, dst, f)
         f(M.0) = N.0
         linear_map_kernel[R, M, N](f, M.0)
     }
@@ -2445,7 +2446,7 @@ theorem linear_map_kernel_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGro
         forall(x: M) {
             if linear_map_kernel[R, M, N](f, x) {
                 f(x) = N.0
-                linear_map_neg(src, dst, f, x)
+                linear_map_neg_submodule(src, dst, f, x)
                 f(-x) = -f(x)
                 -f(x) = -N.0
                 -N.0 = N.0
@@ -2737,7 +2738,7 @@ theorem linear_map_image_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGro
     is_linear_map(src, dst, f) implies submodule_zero_constraint(dst, linear_map_image[M, N](f))
 } by {
     if is_linear_map(src, dst, f) {
-        linear_map_zero(src, dst, f)
+        linear_map_zero_submodule(src, dst, f)
         f(M.0) = N.0
         exists(x: M) {
             f(x) = N.0
@@ -2784,7 +2785,7 @@ theorem linear_map_image_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGrou
         forall(y: N) {
             if linear_map_image[M, N](f, y) {
                 let x: M satisfy { f(x) = y }
-                linear_map_neg(src, dst, f, x)
+                linear_map_neg_submodule(src, dst, f, x)
                 f(-x) = -f(x)
                 -f(x) = -y
                 f(-x) = -y
@@ -3083,7 +3084,7 @@ theorem linear_map_kernel_trivial_of_injective[R: Ring, M: AddCommGroup, N: AddC
         forall(x: M) {
             if linear_map_kernel[R, M, N](f, x) {
                 f(x) = N.0
-                linear_map_zero(src, dst, f)
+                linear_map_zero_submodule(src, dst, f)
                 f(M.0) = N.0
                 f(x) = f(M.0)
                 is_injective_fn(f) = forall(a: M, b: M) {
@@ -3104,7 +3105,7 @@ theorem linear_map_injective_of_kernel_trivial[R: Ring, M: AddCommGroup, N: AddC
     if is_linear_map(src, dst, f) and is_kernel_trivial[R, M, N](f) {
         forall(x: M, y: M) {
             if f(x) = f(y) {
-                linear_map_neg(src, dst, f, y)
+                linear_map_neg_submodule(src, dst, f, y)
                 f(-y) = -f(y)
                 is_linear_map(src, dst, f) = preserves_add(f) and preserves_smul(src, dst, f)
                 preserves_add(f)
@@ -3152,7 +3153,7 @@ theorem linear_map_kernel_submodule_contains_eq_zero_of_trivial[R: Ring, M: AddC
         }
         if zero_submodule(src).contains(x) {
             x = M.0
-            linear_map_zero(src, dst, f)
+            linear_map_zero_submodule(src, dst, f)
             f(M.0) = N.0
             f(x) = N.0
             linear_map_kernel_submodule_contains_of_map_eq_zero(src, dst, f, x)
@@ -3599,7 +3600,7 @@ theorem linear_map_preimage_zero_constraint[R: Ring, M: AddCommGroup, N: AddComm
         submodule_zero_constraint(src, linear_map_preimage[R, M, N](t, f))
 } by {
     if is_linear_map(src, t.carrier, f) {
-        linear_map_zero(src, t.carrier, f)
+        linear_map_zero_submodule(src, t.carrier, f)
         f(M.0) = N.0
         submodule_contains_zero(t)
         t.contains(N.0)
@@ -3644,7 +3645,7 @@ theorem linear_map_preimage_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommG
                 t.contains(f(x))
                 submodule_contains_neg(t, f(x))
                 t.contains(-f(x))
-                linear_map_neg(src, t.carrier, f, x)
+                linear_map_neg_submodule(src, t.carrier, f, x)
                 f(-x) = -f(x)
                 t.contains(f(-x))
                 linear_map_preimage[R, M, N](t, f, -x)
@@ -4527,11 +4528,3 @@ theorem module_hom_image_contains_smul[R: Ring, M: AddCommGroup, N: AddCommGroup
 }
 
 /// The image of a bundled module homomorphism is contained in the full destination submodule.
-theorem module_hom_image_subset_full[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    f: ModuleHom[R, M, N]
-) {
-    submodule_subset(module_hom_image(f), full_submodule(f.dst))
-} by {
-    module_hom_image_carrier(f)
-    submodule_subset_full(module_hom_image(f))
-}

@@ -1,0 +1,1567 @@
+theorem cycle_graph_closed_walk_suc(m: Nat) {
+    Nat.2 <= m implies simple_graph_closed_walk(cycle_graph(m.suc), Nat.0, cycle_steps(m.suc))
+}
+
+theorem complete_graph_walk_desc(n: Nat, m: Nat) {
+    m < n implies simple_graph_walk(complete_graph[Nat], m, Nat.0, cycle_steps(m))
+}
+
+theorem complete_graph_closed_walk_suc(m: Nat) {
+    Nat.2 <= m implies simple_graph_closed_walk(complete_graph[Nat], Nat.0, cycle_steps(m.suc))
+}
+
+theorem cycle_graph_suc_is_hamiltonian(m: Nat) {
+    Nat.2 <= m implies is_hamiltonian(cycle_graph(m.suc), range_set(m.suc))
+}
+
+theorem complete_graph_suc_is_hamiltonian(m: Nat) {
+    Nat.2 <= m implies is_hamiltonian(complete_graph[Nat], range_set(m.suc))
+}
+
+theorem cycle_graph_3_is_hamiltonian {
+    is_hamiltonian(cycle_graph(Nat.3), range_set(Nat.3))
+}
+
+theorem cycle_graph_4_is_hamiltonian {
+    is_hamiltonian(cycle_graph(Nat.4), range_set(Nat.4))
+}
+
+theorem cycle_graph_5_is_hamiltonian {
+    is_hamiltonian(cycle_graph(Nat.5), range_set(Nat.5))
+}
+
+theorem complete_graph_3_is_hamiltonian {
+    is_hamiltonian(complete_graph[Nat], range_set(Nat.3))
+}
+
+theorem complete_graph_4_is_hamiltonian {
+    is_hamiltonian(complete_graph[Nat], range_set(Nat.4))
+}
+
+theorem complete_graph_5_is_hamiltonian {
+    is_hamiltonian(complete_graph[Nat], range_set(Nat.5))
+}
+
+define walk_vertices_reachable_from[V](g: SimpleGraph[V], start: V, steps: List[V]) -> Bool {
+    forall(x: V) {
+        simple_graph_walk_vertices(start, steps).contains(x) implies simple_graph_reachable(g, start, x)
+    }
+}
+
+theorem walk_vertices_reachable_from_start[V](g: SimpleGraph[V], start: V, finish: V, steps: List[V]) {
+    simple_graph_walk(g, start, finish, steps) implies
+        forall(x: V) {
+            simple_graph_walk_vertices(start, steps).contains(x) implies simple_graph_reachable(g, start, x)
+        }
+}
+
+theorem hamiltonian_imp_set_connected[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_hamiltonian(g, s) implies simple_graph_fs_connected(g, s)
+}
+
+let petersen_edge_pairs: List[Pair[Nat, Nat]] = List.cons(Pair.new(Nat.0, Nat.1),
+    List.cons(Pair.new(Nat.1, Nat.2),
+    List.cons(Pair.new(Nat.2, Nat.3),
+    List.cons(Pair.new(Nat.3, Nat.4),
+    List.cons(Pair.new(Nat.4, Nat.0),
+    List.cons(Pair.new(Nat.0, Nat.5),
+    List.cons(Pair.new(Nat.1, Nat.6),
+    List.cons(Pair.new(Nat.2, Nat.7),
+    List.cons(Pair.new(Nat.3, Nat.8),
+    List.cons(Pair.new(Nat.4, Nat.9),
+    List.cons(Pair.new(Nat.5, Nat.7),
+    List.cons(Pair.new(Nat.7, Nat.9),
+    List.cons(Pair.new(Nat.9, Nat.6),
+    List.cons(Pair.new(Nat.6, Nat.8),
+    List.cons(Pair.new(Nat.8, Nat.5),
+    List.nil[Pair[Nat, Nat]])))))))))))))))
+
+/// Adjacency of the Petersen graph.
+///
+/// Two vertices are adjacent when they are distinct and their unordered pair is one
+/// of the fifteen edges.
+define petersen_adj(x: Nat, y: Nat) -> Bool {
+    x != y and (petersen_edge_pairs.contains(Pair.new(x, y)) or
+        petersen_edge_pairs.contains(Pair.new(y, x)))
+}
+
+theorem petersen_adj_is_symmetric {
+    is_symmetric(petersen_adj)
+}
+
+theorem petersen_adj_is_irreflexive {
+    is_irreflexive(petersen_adj)
+}
+
+theorem petersen_adj_constraint {
+    is_symmetric(petersen_adj) and is_irreflexive(petersen_adj)
+}
+
+theorem petersen_graph_exists {
+    exists(g: SimpleGraph[Nat]) { SimpleGraph.new(petersen_adj) = Option.some(g) }
+}
+
+let petersen_graph: SimpleGraph[Nat] satisfy {
+    SimpleGraph.new(petersen_adj) = Option.some(petersen_graph)
+}
+
+theorem petersen_graph_adj_iff(x: Nat, y: Nat) {
+    petersen_graph.adj(x, y) = (x != y and (petersen_edge_pairs.contains(Pair.new(x, y)) or
+        petersen_edge_pairs.contains(Pair.new(y, x))))
+}
+
+let petersen_vertices: FiniteSet[Nat] = range_set(Nat.10)
+
+/// The first ten labels are in increasing order.
+theorem petersen_labels_lt {
+    Nat.0 < Nat.1 and Nat.1 < Nat.2 and Nat.2 < Nat.3 and Nat.3 < Nat.4 and
+    Nat.4 < Nat.5 and Nat.5 < Nat.6 and Nat.6 < Nat.7 and Nat.7 < Nat.8 and Nat.8 < Nat.9
+}
+
+theorem petersen_lt_imp_ne(a: Nat, b: Nat) {
+    a < b implies a != b
+}
+
+theorem petersen_graph_adj_01 {
+    petersen_graph.adj(Nat.0, Nat.1)
+}
+
+define independent_dominating_size_pred[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) -> (Nat -> Bool) {
+    function(n: Nat) {
+        exists(t: FiniteSet[V]) {
+            is_independent_dominating_set(g, s, t) and fs_card(t) = n
+        }
+    }
+}
+
+theorem independent_dominating_size_pred_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
+) {
+    is_independent_dominating_set(g, s, t)
+        implies independent_dominating_size_pred(g, s)(fs_card(t))
+}
+
+theorem independent_dominating_size_pred_witness[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    exists(n: Nat) { independent_dominating_size_pred(g, s)(n) }
+}
+
+let independent_domination_number[V](g: SimpleGraph[V], s: FiniteSet[V]) -> result: Nat satisfy {
+    is_min(independent_dominating_size_pred(g, s), result)
+}
+
+theorem independent_domination_number_attained[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    independent_dominating_size_pred(g, s)(independent_domination_number(g, s))
+}
+
+theorem independent_domination_number_is_least[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
+) {
+    is_independent_dominating_set(g, s, t)
+        implies independent_domination_number(g, s) <= fs_card(t)
+}
+
+theorem minimum_independent_dominating_set_exists[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    exists(t: FiniteSet[V]) {
+        is_independent_dominating_set(g, s, t)
+            and fs_card(t) = independent_domination_number(g, s)
+    }
+}
+
+theorem domination_number_le_independent_domination_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    domination_number(g, s) <= independent_domination_number(g, s)
+}
+
+theorem independent_domination_number_le_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    independent_domination_number(g, s) <= independence_number(g, s)
+}
+
+theorem domination_number_le_independence_number[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    domination_number(g, s) <= independence_number(g, s)
+}
+
+theorem vertex_cover_number_le_card_sub_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    vertex_cover_number(g, s) <= fs_card(s) - independence_number(g, s)
+}
+
+theorem card_sub_cover_number_le_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    fs_card(s) - vertex_cover_number(g, s) <= independence_number(g, s)
+}
+
+theorem independence_number_add_cover_number_le_card[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    independence_number(g, s) + vertex_cover_number(g, s) <= fs_card(s)
+}
+
+theorem card_le_independence_number_add_cover_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    fs_card(s) <= independence_number(g, s) + vertex_cover_number(g, s)
+}
+
+theorem independence_number_add_cover_number_eq_card[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    independence_number(g, s) + vertex_cover_number(g, s) = fs_card(s)
+}
+
+theorem vertex_cover_number_eq_card_sub_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    vertex_cover_number(g, s) = fs_card(s) - independence_number(g, s)
+}
+
+theorem independence_number_eq_card_sub_cover_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    independence_number(g, s) = fs_card(s) - vertex_cover_number(g, s)
+}
+
+define color_class[V](s: FiniteSet[V], color: V -> Nat, c: Nat) -> FiniteSet[V] {
+    finite_set_filter(s, function(v: V) { color(v) = c })
+}
+
+theorem color_class_contains_eq[V](s: FiniteSet[V], color: V -> Nat, c: Nat, v: V) {
+    color_class(s, color, c).contains(v) = (s.contains(v) and color(v) = c)
+}
+
+theorem color_class_subset[V](s: FiniteSet[V], color: V -> Nat, c: Nat) {
+    color_class(s, color, c).subset_eq(s)
+}
+
+theorem color_class_independent[V](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> Nat, c: Nat
+) {
+    is_proper_coloring_on(g, s, color) implies is_independent_in(g, color_class(s, color, c))
+}
+
+theorem color_class_card_le_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> Nat, c: Nat
+) {
+    is_proper_coloring_on(g, s, color) implies
+        fs_card(color_class(s, color, c)) <= independence_number(g, s)
+}
+
+define below_color[V](s: FiniteSet[V], color: V -> Nat, k: Nat) -> FiniteSet[V] {
+    finite_set_filter(s, function(v: V) { color(v) < k })
+}
+
+theorem below_color_contains_eq[V](s: FiniteSet[V], color: V -> Nat, k: Nat, v: V) {
+    below_color(s, color, k).contains(v) = (s.contains(v) and color(v) < k)
+}
+
+theorem below_color_zero_card[V](s: FiniteSet[V], color: V -> Nat) {
+    fs_card(below_color(s, color, Nat.0)) = Nat.0
+}
+
+theorem below_color_suc_union_subset[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    below_color(s, color, k.suc).subset_eq(
+        fs_union(below_color(s, color, k), color_class(s, color, k)))
+}
+
+theorem below_color_suc_union_supset[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    fs_union(below_color(s, color, k), color_class(s, color, k)).subset_eq(
+        below_color(s, color, k.suc))
+}
+
+theorem below_color_suc_union[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    below_color(s, color, k.suc) = fs_union(below_color(s, color, k), color_class(s, color, k))
+}
+
+theorem below_color_disjoint_class[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    below_color(s, color, k).is_disjoint(color_class(s, color, k))
+}
+
+theorem below_color_suc_split[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    (fs_card(below_color(s, color, k.suc))
+        = fs_card(below_color(s, color, k)) + fs_card(color_class(s, color, k)))
+}
+
+theorem range_sum_color_class_eq_below[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    (range_sum(function(c: Nat) { fs_card(color_class(s, color, c)) }, k)
+        = fs_card(below_color(s, color, k)))
+}
+
+theorem below_color_card_eq_card[V](s: FiniteSet[V], color: V -> Nat, k: Nat) {
+    ((forall(v: V) { s.contains(v) implies color(v) < k })
+        implies fs_card(below_color(s, color, k)) = fs_card(s))
+}
+
+theorem k_colorable_card_le_mul_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V], k: Nat
+) {
+    is_k_colorable(g, s, k) implies fs_card(s) <= k * independence_number(g, s)
+}
+
+theorem chromatic_number_card_le_mul_independence_number[V](
+    g: SimpleGraph[V], s: FiniteSet[V], k: Nat
+) {
+    is_chromatic_number(g, s, k) implies fs_card(s) <= k * independence_number(g, s)
+}
+
+theorem complete_graph_independent_card_le_one[V](t: FiniteSet[V]) {
+    is_independent_in(complete_graph[V], t) implies fs_card(t) <= Nat.1
+}
+
+theorem complete_graph_singleton_independent[V](x: V) {
+    is_independent_in(complete_graph[V], FiniteSet.empty[V].insert(x))
+}
+
+theorem complete_graph_nat_range_independence_number(n: Nat) {
+    Nat.0 < n implies independence_number(complete_graph[Nat], nat_range_set(n)) = Nat.1
+}
+
+theorem complete_graph_nat_range_cover_number(n: Nat) {
+    Nat.0 < n implies vertex_cover_number(complete_graph[Nat], nat_range_set(n)) = n - Nat.1
+}
+
+theorem complete_graph_nat_range_independence_add_cover(n: Nat) {
+    Nat.0 < n implies
+        (independence_number(complete_graph[Nat], nat_range_set(n))
+            + vertex_cover_number(complete_graph[Nat], nat_range_set(n)) = n)
+}
+
+theorem finite_induced_adj_eq[V](g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V) {
+    induced_subgraph(g, s.underlying_set).adj(x, y) = (g.adj(x, y) and s.contains(x) and s.contains(y))
+}
+
+theorem finite_induced_adj_imp[V](g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V) {
+    induced_subgraph(g, s.underlying_set).adj(x, y) implies g.adj(x, y)
+}
+
+theorem finite_induced_adj_contains[V](g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V) {
+    induced_subgraph(g, s.underlying_set).adj(x, y) implies s.contains(x) and s.contains(y)
+}
+
+theorem is_independent_in_induced[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) {
+    is_independent_in(g, t) implies is_independent_in(induced_subgraph(g, s.underlying_set), t)
+}
+
+theorem is_clique_in_of_induced[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) {
+    is_clique_in(induced_subgraph(g, s.underlying_set), t) implies is_clique_in(g, t)
+}
+
+theorem is_clique_in_induced_of_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
+) {
+    t.subset_eq(s) and is_clique_in(g, t) implies is_clique_in(induced_subgraph(g, s.underlying_set), t)
+}
+
+theorem is_bipartition_induced[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], part: V -> Bool
+) {
+    is_bipartition(g, t, part) implies is_bipartition(induced_subgraph(g, s.underlying_set), t, part)
+}
+
+theorem is_vertex_cover_induced[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], c: FiniteSet[V]
+) {
+    is_vertex_cover(g, t, c) implies is_vertex_cover(induced_subgraph(g, s.underlying_set), t, c)
+}
+
+theorem iso_pair_adj_forward[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, x: V, y: V
+) {
+    is_graph_iso_pair(g, h, f, e) and g.adj(x, y) implies h.adj(f(x), f(y))
+}
+
+theorem iso_pair_adj_backward[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, x: V, y: V
+) {
+    is_graph_iso_pair(g, h, f, e) and h.adj(f(x), f(y)) implies g.adj(x, y)
+}
+
+define mapped_vertices[V, W](s: FiniteSet[V], f: V -> W) -> FiniteSet[W] {
+    fs_image(s, f)
+}
+
+define mapped_neighborhood[V, W](
+    h: SimpleGraph[W], s: FiniteSet[V], f: V -> W, v: V
+) -> FiniteSet[W] {
+    neighborhood(h, mapped_vertices(s, f), f(v))
+}
+
+define neighborhood_mapped[V, W](
+    g: SimpleGraph[V], s: FiniteSet[V], f: V -> W, v: V
+) -> FiniteSet[W] {
+    fs_image(neighborhood(g, s, v), f)
+}
+
+theorem mapped_neighborhood_contains_eq[V, W](
+    h: SimpleGraph[W], s: FiniteSet[V], f: V -> W, v: V, y: W
+) {
+    mapped_neighborhood(h, s, f, v).contains(y) = (mapped_vertices(s, f).contains(y) and h.adj(f(v), y))
+}
+
+theorem neighborhood_mapped_contains_eq[V, W](
+    g: SimpleGraph[V], s: FiniteSet[V], f: V -> W, v: V, y: W
+) {
+    neighborhood_mapped(g, s, f, v).contains(y) = exists(u: V) {
+        neighborhood(g, s, v).contains(u) and y = f(u)
+    }
+}
+
+theorem mapped_vertices_contains_eq[V, W](s: FiniteSet[V], f: V -> W, y: W) {
+    mapped_vertices(s, f).contains(y) = exists(u: V) { s.contains(u) and y = f(u) }
+}
+
+theorem iso_neighborhood_image_forward[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, s: FiniteSet[V], v: V, y: W
+) {
+    is_graph_iso_pair(g, h, f, e) and mapped_neighborhood(h, s, f, v).contains(y) implies neighborhood_mapped(g, s, f, v).contains(y)
+}
+
+theorem iso_neighborhood_image_backward[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, s: FiniteSet[V], v: V, y: W
+) {
+    is_graph_iso_pair(g, h, f, e) and neighborhood_mapped(g, s, f, v).contains(y) implies mapped_neighborhood(h, s, f, v).contains(y)
+}
+
+theorem iso_neighborhood_image_iff[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, s: FiniteSet[V], v: V, y: W
+) {
+    is_graph_iso_pair(g, h, f, e) implies mapped_neighborhood(h, s, f, v).contains(y) = neighborhood_mapped(g, s, f, v).contains(y)
+}
+
+theorem iso_neighborhood_image[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, s: FiniteSet[V], v: V
+) {
+    is_graph_iso_pair(g, h, f, e) implies mapped_neighborhood(h, s, f, v) = neighborhood_mapped(g, s, f, v)
+}
+
+theorem iso_degree_eq[V, W](
+    g: SimpleGraph[V], h: SimpleGraph[W], f: V -> W, e: W -> V, s: FiniteSet[V], v: V
+) {
+    is_graph_iso_pair(g, h, f, e) implies degree(h, mapped_vertices(s, f), f(v)) = degree(g, s, v)
+}
+
+define pairs_share_vertex[V](p: Pair[V, V], q: Pair[V, V]) -> Bool {
+    p.first = q.first or p.first = q.second or p.second = q.first or p.second = q.second
+}
+
+define is_matching[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) -> Bool {
+    m.subset_eq(directed_edges(g, s)) and forall(p: Pair[V, V], q: Pair[V, V]) {
+        m.contains(p) and m.contains(q) and pairs_share_vertex(p, q) implies p = q
+    }
+}
+
+define matching_size[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) -> Nat {
+    fs_card(m)
+}
+
+define matching_vertices[V](m: FiniteSet[Pair[V, V]]) -> FiniteSet[V] {
+    fs_union(fs_image(m, pair_first[V, V]), fs_image(m, pair_second[V, V]))
+}
+
+define is_perfect_matching[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) -> Bool {
+    is_matching(g, s, m) and forall(v: V) {
+        s.contains(v) implies exists(p: Pair[V, V]) {
+            m.contains(p) and (p.first = v or p.second = v)
+        }
+    }
+}
+
+theorem is_matching_apply_edge[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) implies directed_edges(g, s).contains(p)
+}
+
+theorem is_matching_apply_disjoint[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V], q: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) and m.contains(q) and pairs_share_vertex(p, q) implies p = q
+}
+
+theorem is_matching_intro[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    m.subset_eq(directed_edges(g, s)) and forall(p: Pair[V, V], q: Pair[V, V]) {
+        m.contains(p) and m.contains(q) and pairs_share_vertex(p, q) implies p = q
+    } implies is_matching(g, s, m)
+}
+
+theorem matching_pair_ne[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) implies p.first != p.second
+}
+
+theorem matching_pair_components_in[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) implies s.contains(p.first) and s.contains(p.second)
+}
+
+theorem matching_first_locally_injective[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V], q: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) and m.contains(q) and p.first = q.first implies p = q
+}
+
+theorem matching_second_locally_injective[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], p: Pair[V, V], q: Pair[V, V]) {
+    is_matching(g, s, m) and m.contains(p) and m.contains(q) and p.second = q.second implies p = q
+}
+
+theorem fs_card_image_eq_of_locally_injective[T, U](s: FiniteSet[T], f: T -> U) {
+    (forall(x: T, y: T) {
+        s.contains(x) and s.contains(y) and f(x) = f(y) implies x = y
+    }) implies fs_card(fs_image(s, f)) = fs_card(s)
+}
+
+theorem matching_first_image_card[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(fs_image(m, pair_first[V, V])) = fs_card(m)
+}
+
+theorem matching_second_image_card[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(fs_image(m, pair_second[V, V])) = fs_card(m)
+}
+
+theorem matching_images_disjoint[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_image(m, pair_first[V, V]).is_disjoint(fs_image(m, pair_second[V, V]))
+}
+
+theorem matching_vertices_card[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(matching_vertices(m)) = fs_card(m) + fs_card(m)
+}
+
+theorem matching_first_image_subset_ambient[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_image(m, pair_first[V, V]).subset_eq(s)
+}
+
+theorem matching_second_image_subset_ambient[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_image(m, pair_second[V, V]).subset_eq(s)
+}
+
+theorem matching_vertices_subset_ambient[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies matching_vertices(m).subset_eq(s)
+}
+
+theorem matching_size_le_half_vertices[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(m) + fs_card(m) <= fs_card(s)
+}
+
+theorem matching_size_le_vertices[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(m) <= fs_card(s)
+}
+
+define matching_size_pred[V](g: SimpleGraph[V], s: FiniteSet[V]) -> (Nat -> Bool) {
+    function(n: Nat) {
+        exists(m: FiniteSet[Pair[V, V]]) {
+            is_matching(g, s, m) and fs_card(m) = n
+        }
+    }
+}
+
+theorem matching_size_pred_intro[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies matching_size_pred(g, s)(fs_card(m))
+}
+
+theorem empty_set_is_matching[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_matching(g, s, FiniteSet.empty[Pair[V, V]])
+}
+
+theorem matching_size_pred_zero[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    matching_size_pred(g, s)(Nat.0)
+}
+
+theorem matching_size_pred_bounded[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_upper_bound_of(matching_size_pred(g, s), fs_card(s))
+}
+
+let maximum_matching_size[V](g: SimpleGraph[V], s: FiniteSet[V]) -> result: Nat satisfy {
+    is_max(matching_size_pred(g, s), result)
+}
+
+theorem maximum_matching_size_attained[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    matching_size_pred(g, s)(maximum_matching_size(g, s))
+}
+
+theorem maximum_matching_size_is_greatest[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) implies fs_card(m) <= maximum_matching_size(g, s)
+}
+
+theorem maximum_matching_exists[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    exists(m: FiniteSet[Pair[V, V]]) {
+        is_matching(g, s, m) and fs_card(m) = maximum_matching_size(g, s)
+    }
+}
+
+theorem is_perfect_matching_apply_cover[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], v: V) {
+    is_perfect_matching(g, s, m) and s.contains(v) implies exists(p: Pair[V, V]) {
+        m.contains(p) and (p.first = v or p.second = v)
+    }
+}
+
+theorem perfect_matching_is_matching[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_perfect_matching(g, s, m) implies is_matching(g, s, m)
+}
+
+theorem is_perfect_matching_intro[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_matching(g, s, m) and (forall(v: V) {
+        s.contains(v) implies exists(p: Pair[V, V]) {
+            m.contains(p) and (p.first = v or p.second = v)
+        }
+    }) implies is_perfect_matching(g, s, m)
+}
+
+theorem perfect_matching_vertices_cover[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_perfect_matching(g, s, m) implies matching_vertices(m) = s
+}
+
+theorem perfect_matching_size[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]]) {
+    is_perfect_matching(g, s, m) implies fs_card(s) = fs_card(m) + fs_card(m)
+}
+
+define neighborhood_of_set[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]) -> FiniteSet[V] {
+    fs_image(directed_edges_from_set(g, s, t), pair_second[V, V])
+}
+
+theorem neighborhood_of_set_contains_of_adj[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], x: V, y: V) {
+    t.contains(x) and s.contains(x) and s.contains(y) and g.adj(x, y)
+        implies neighborhood_of_set(g, s, t).contains(y)
+}
+
+theorem neighborhood_of_set_contains_imp_adj[V](g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], y: V) {
+    neighborhood_of_set(g, s, t).contains(y) implies exists(x: V) {
+        t.contains(x) and s.contains(x) and s.contains(y) and g.adj(x, y)
+    }
+}
+
+define covers_vertex[V](m: FiniteSet[Pair[V, V]], v: V) -> Bool {
+    exists(p: Pair[V, V]) {
+        m.contains(p) and (p.first = v or p.second = v)
+    }
+}
+
+define covers[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V]) -> Bool {
+    forall(v: V) {
+        t.contains(v) implies covers_vertex(m, v)
+    }
+}
+
+theorem covers_apply[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    covers(m, t) and t.contains(v) implies exists(p: Pair[V, V]) {
+        m.contains(p) and (p.first = v or p.second = v)
+    }
+}
+
+theorem covers_intro[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V]) {
+    (forall(v: V) {
+        t.contains(v) implies covers_vertex(m, v)
+    }) implies covers(m, t)
+}
+
+theorem covers_of_subset[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V], side: FiniteSet[V]) {
+    covers(m, side) and t.subset_eq(side) implies covers(m, t)
+}
+
+define covers_vertex_pred[V](m: FiniteSet[Pair[V, V]], v: V) -> (Pair[V, V] -> Bool) {
+    function(p: Pair[V, V]) {
+        m.contains(p) and (p.first = v or p.second = v)
+    }
+}
+
+theorem covers_vertex_witness[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    covers(m, t) and t.contains(v) implies exists(p: Pair[V, V]) {
+        finite_set_witness_predicate(m, covers_vertex_pred(m, v), p)
+    }
+}
+
+define covering_pair[V](m: FiniteSet[Pair[V, V]], v: V) -> Pair[V, V] {
+    choose_from_finite_set_or_default(m, covers_vertex_pred(m, v), Pair.new(v, v))
+}
+
+define matching_partner[V](m: FiniteSet[Pair[V, V]], v: V) -> V {
+    if covering_pair(m, v).first = v {
+        covering_pair(m, v).second
+    } else {
+        covering_pair(m, v).first
+    }
+}
+
+theorem matching_partner_pair_contains[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    covers(m, t) and t.contains(v) implies m.contains(covering_pair(m, v))
+}
+
+theorem matching_partner_pair_covers[V](m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    covers(m, t) and t.contains(v) implies covers_vertex_pred(m, v)(covering_pair(m, v))
+}
+
+theorem matching_partner_ne[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    is_matching(g, s, m) and covers(m, t) and t.contains(v) implies matching_partner(m, v) != v
+}
+
+theorem matching_partner_in_neighborhood[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V) {
+    is_matching(g, s, m) and covers(m, t) and t.contains(v)
+        implies neighborhood_of_set(g, s, t).contains(matching_partner(m, v))
+}
+
+theorem matching_partner_locally_injective[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], t: FiniteSet[V], v: V, w: V) {
+    is_matching(g, s, m) and covers(m, t) and t.contains(v) and t.contains(w) and
+        matching_partner(m, v) = matching_partner(m, w) implies v = w
+}
+
+define matching_partner_fn[V](m: FiniteSet[Pair[V, V]]) -> (V -> V) {
+    function(v: V) {
+        matching_partner(m, v)
+    }
+}
+
+theorem matching_covering_neighborhood_bound[V](g: SimpleGraph[V], s: FiniteSet[V], m: FiniteSet[Pair[V, V]], t: FiniteSet[V]) {
+    is_matching(g, s, m) and covers(m, t) implies
+        fs_card(t) <= fs_card(neighborhood_of_set(g, s, t))
+}
+
+theorem hall_necessary_condition[V](g: SimpleGraph[V], s: FiniteSet[V], part: V -> Bool) {
+    is_bipartition(g, s, part) and exists(m: FiniteSet[Pair[V, V]]) {
+        is_matching(g, s, m) and covers(m, bipartite_side(s, part))
+    } implies forall(t: FiniteSet[V]) {
+        t.subset_eq(bipartite_side(s, part)) implies
+            fs_card(t) <= fs_card(neighborhood_of_set(g, s, t))
+    }
+}
+
+define cover_vertex_pred[V](c: FiniteSet[V], p: Pair[V, V]) -> (V -> Bool) {
+    function(v: V) {
+        c.contains(v) and (v = p.first or v = p.second)
+    }
+}
+
+define cover_vertex_of[V](c: FiniteSet[V], p: Pair[V, V]) -> V {
+    choose_from_finite_set_or_default(c, cover_vertex_pred(c, p), p.first)
+}
+
+define cover_vertex_fn[V](c: FiniteSet[V]) -> (Pair[V, V] -> V) {
+    function(p: Pair[V, V]) {
+        cover_vertex_of(c, p)
+    }
+}
+
+theorem cover_vertex_witness_exists[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], p: Pair[V, V]) {
+    is_vertex_cover(g, s, c) and directed_edges(g, s).contains(p) implies
+        exists(v: V) {
+            finite_set_witness_predicate(c, cover_vertex_pred(c, p), v)
+        }
+}
+
+theorem cover_vertex_of_contains[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], p: Pair[V, V]) {
+    is_vertex_cover(g, s, c) and directed_edges(g, s).contains(p) implies c.contains(cover_vertex_of(c, p))
+}
+
+theorem cover_vertex_of_on_pair[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], p: Pair[V, V]) {
+    is_vertex_cover(g, s, c) and directed_edges(g, s).contains(p) implies
+        (cover_vertex_of(c, p) = p.first or cover_vertex_of(c, p) = p.second)
+}
+
+theorem cover_vertex_of_locally_injective[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V],
+    m: FiniteSet[Pair[V, V]], p: Pair[V, V], q: Pair[V, V]) {
+    is_vertex_cover(g, s, c) and is_matching(g, s, m) and m.contains(p) and m.contains(q) and
+        cover_vertex_of(c, p) = cover_vertex_of(c, q) implies p = q
+}
+
+theorem vertex_cover_bounds_matching[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V],
+    m: FiniteSet[Pair[V, V]]) {
+    is_vertex_cover(g, s, c) and is_matching(g, s, m) implies fs_card(m) <= fs_card(c)
+}
+
+theorem maximum_matching_size_le_vertex_cover_number[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    maximum_matching_size(g, s) <= vertex_cover_number(g, s)
+}
+
+theorem min_unique(f: Nat -> Bool, m: Nat, m2: Nat) {
+    is_min(f, m) and is_min(f, m2) implies m = m2
+}
+
+theorem double_lte_three(n: Nat) {
+    n + n <= Nat.3 implies n <= Nat.1
+}
+
+theorem double_lte_four(n: Nat) {
+    n + n <= Nat.4 implies n <= Nat.2
+}
+
+theorem single_pair_matching_is_matching[V](g: SimpleGraph[V], s: FiniteSet[V], a: Pair[V, V]) {
+    directed_edges(g, s).contains(a) implies
+        is_matching(g, s, fs_insert(FiniteSet.empty[Pair[V, V]], a))
+}
+
+theorem pairs_share_vertex_sym[V](p: Pair[V, V], q: Pair[V, V]) {
+    pairs_share_vertex(p, q) = pairs_share_vertex(q, p)
+}
+
+theorem share_false_of_eq[V](p: Pair[V, V], q: Pair[V, V], a: Pair[V, V], b: Pair[V, V]) {
+    p = a and q = b and not pairs_share_vertex(a, b) implies pairs_share_vertex(p, q) = false
+}
+
+theorem two_pair_matching_is_matching[V](g: SimpleGraph[V], s: FiniteSet[V], a: Pair[V, V], b: Pair[V, V]) {
+    directed_edges(g, s).contains(a) and directed_edges(g, s).contains(b) and
+        not pairs_share_vertex(a, b)
+        implies is_matching(g, s, fs_insert(fs_insert(FiniteSet.empty[Pair[V, V]], a), b))
+}
+
+theorem pairs_not_share_of_ne_components[V](a: Pair[V, V], b: Pair[V, V]) {
+    a.first != b.first and a.first != b.second and a.second != b.first and a.second != b.second
+        implies not pairs_share_vertex(a, b)
+}
+
+theorem part_false_of_ne[V](v: V, a: V, b: V) {
+    v != a and v != b implies (v = a or v = b) = false
+}
+
+define path3_part(v: Nat) -> Bool {
+    v = Nat.1
+}
+
+define path3_adj(x: Nat, y: Nat) -> Bool {
+    path3_part(x) != path3_part(y)
+}
+
+theorem path3_adj_is_symmetric {
+    is_symmetric(path3_adj)
+}
+
+theorem path3_adj_is_irreflexive {
+    is_irreflexive(path3_adj)
+}
+
+theorem path3_adj_constraint {
+    is_symmetric(path3_adj) and is_irreflexive(path3_adj)
+}
+
+theorem path3_graph_exists {
+    exists(g: SimpleGraph[Nat]) { SimpleGraph.new(path3_adj) = Option.some(g) }
+}
+
+let path3: SimpleGraph[Nat] satisfy {
+    SimpleGraph.new(path3_adj) = Option.some(path3)
+}
+
+theorem path3_adj_eq(x: Nat, y: Nat) {
+    path3.adj(x, y) = (path3_part(x) != path3_part(y))
+}
+
+theorem path3_is_bipartition {
+    is_bipartition(path3, range_set(Nat.3), path3_part)
+}
+
+theorem path3_is_bipartite {
+    is_bipartite(path3, range_set(Nat.3))
+}
+
+theorem path3_vertices_lt {
+    Nat.0 < Nat.3 and Nat.1 < Nat.3
+}
+
+theorem path3_vertex_zero {
+    range_set(Nat.3).contains(Nat.0)
+}
+
+theorem path3_vertex_one {
+    range_set(Nat.3).contains(Nat.1)
+}
+
+theorem path3_edge01 {
+    path3.adj(Nat.0, Nat.1)
+}
+
+theorem path3_directed_edge01 {
+    directed_edges(path3, range_set(Nat.3)).contains(Pair.new(Nat.0, Nat.1))
+}
+
+let path3_matching: FiniteSet[Pair[Nat, Nat]] = fs_insert(FiniteSet.empty[Pair[Nat, Nat]], Pair.new(Nat.0, Nat.1))
+
+/// The one-edge set of the path is a matching.
+theorem path3_matching_is_matching {
+    is_matching(path3, range_set(Nat.3), path3_matching)
+}
+
+theorem path3_matching_card {
+    fs_card(path3_matching) = Nat.1
+}
+
+theorem path3_matching_size_at_most_one(m: FiniteSet[Pair[Nat, Nat]]) {
+    is_matching(path3, range_set(Nat.3), m) implies fs_card(m) <= Nat.1
+}
+
+theorem path3_matching_size_pred_one {
+    matching_size_pred(path3, range_set(Nat.3))(Nat.1)
+}
+
+theorem path3_matching_size_pred_bounded(n: Nat) {
+    matching_size_pred(path3, range_set(Nat.3))(n) implies n <= Nat.1
+}
+
+theorem path3_maximum_matching_size {
+    maximum_matching_size(path3, range_set(Nat.3)) = Nat.1
+}
+
+let path3_cover: FiniteSet[Nat] = fs_insert(FiniteSet.empty[Nat], Nat.1)
+
+/// An edge of the path meets the middle vertex.
+theorem path3_adj_covered(x: Nat, y: Nat) {
+    path3.adj(x, y) implies path3_cover.contains(x) or path3_cover.contains(y)
+}
+
+theorem path3_cover_is_vertex_cover {
+    is_vertex_cover(path3, range_set(Nat.3), path3_cover)
+}
+
+theorem path3_cover_subset {
+    path3_cover.subset_eq(range_set(Nat.3))
+}
+
+theorem path3_cover_card {
+    fs_card(path3_cover) = Nat.1
+}
+
+theorem path3_cover_size_pred_one {
+    cover_size_pred(path3, range_set(Nat.3))(Nat.1)
+}
+
+theorem path3_cover_size_pred_bounded(n: Nat) {
+    cover_size_pred(path3, range_set(Nat.3))(n) implies Nat.1 <= n
+}
+
+theorem path3_vertex_cover_number {
+    vertex_cover_number(path3, range_set(Nat.3)) = Nat.1
+}
+
+theorem konig_on_path3 {
+    is_bipartite(path3, range_set(Nat.3)) and
+        maximum_matching_size(path3, range_set(Nat.3)) = vertex_cover_number(path3, range_set(Nat.3))
+}
+
+define c4_part(v: Nat) -> Bool {
+    v = Nat.0 or v = Nat.2
+}
+
+define c4_adj(x: Nat, y: Nat) -> Bool {
+    c4_part(x) != c4_part(y)
+}
+
+theorem c4_adj_is_symmetric {
+    is_symmetric(c4_adj)
+}
+
+theorem c4_adj_is_irreflexive {
+    is_irreflexive(c4_adj)
+}
+
+theorem c4_adj_constraint {
+    is_symmetric(c4_adj) and is_irreflexive(c4_adj)
+}
+
+theorem c4_graph_exists {
+    exists(g: SimpleGraph[Nat]) { SimpleGraph.new(c4_adj) = Option.some(g) }
+}
+
+let c4: SimpleGraph[Nat] satisfy {
+    SimpleGraph.new(c4_adj) = Option.some(c4)
+}
+
+theorem c4_adj_eq(x: Nat, y: Nat) {
+    c4.adj(x, y) = (c4_part(x) != c4_part(y))
+}
+
+theorem c4_is_bipartition {
+    is_bipartition(c4, range_set(Nat.4), c4_part)
+}
+
+theorem c4_is_bipartite {
+    is_bipartite(c4, range_set(Nat.4))
+}
+
+theorem c4_vertices_lt {
+    Nat.0 < Nat.4 and Nat.1 < Nat.4 and Nat.2 < Nat.4 and Nat.3 < Nat.4
+}
+
+theorem c4_vertex0 {
+    range_set(Nat.4).contains(Nat.0)
+}
+
+theorem c4_vertex1 {
+    range_set(Nat.4).contains(Nat.1)
+}
+
+theorem c4_vertex2 {
+    range_set(Nat.4).contains(Nat.2)
+}
+
+theorem c4_vertex3 {
+    range_set(Nat.4).contains(Nat.3)
+}
+
+theorem c4_part0 {
+    c4_part(Nat.0) = true
+}
+
+theorem c4_part1 {
+    c4_part(Nat.1) = false
+}
+
+theorem c4_part2 {
+    c4_part(Nat.2) = true
+}
+
+theorem c4_part3 {
+    c4_part(Nat.3) = false
+}
+
+theorem c4_edge01 {
+    c4.adj(Nat.0, Nat.1)
+}
+
+theorem c4_edge23 {
+    c4.adj(Nat.2, Nat.3)
+}
+
+theorem c4_directed_edge01 {
+    directed_edges(c4, range_set(Nat.4)).contains(Pair.new(Nat.0, Nat.1))
+}
+
+theorem c4_directed_edge23 {
+    directed_edges(c4, range_set(Nat.4)).contains(Pair.new(Nat.2, Nat.3))
+}
+
+theorem c4_pairs_not_share {
+    not pairs_share_vertex(Pair.new(Nat.0, Nat.1), Pair.new(Nat.2, Nat.3))
+}
+
+let c4_matching: FiniteSet[Pair[Nat, Nat]] = fs_insert(
+    fs_insert(FiniteSet.empty[Pair[Nat, Nat]], Pair.new(Nat.0, Nat.1)), Pair.new(Nat.2, Nat.3))
+
+/// The two-edge set of the cycle is a matching.
+theorem c4_matching_is_matching {
+    is_matching(c4, range_set(Nat.4), c4_matching)
+}
+
+theorem c4_matching_card {
+    fs_card(c4_matching) = Nat.2
+}
+
+theorem c4_matching_size_at_most_two(m: FiniteSet[Pair[Nat, Nat]]) {
+    is_matching(c4, range_set(Nat.4), m) implies fs_card(m) <= Nat.2
+}
+
+theorem c4_matching_size_pred_two {
+    matching_size_pred(c4, range_set(Nat.4))(Nat.2)
+}
+
+theorem c4_matching_size_pred_bounded(n: Nat) {
+    matching_size_pred(c4, range_set(Nat.4))(n) implies n <= Nat.2
+}
+
+theorem c4_maximum_matching_size {
+    maximum_matching_size(c4, range_set(Nat.4)) = Nat.2
+}
+
+let c4_cover: FiniteSet[Nat] = fs_insert(fs_insert(FiniteSet.empty[Nat], Nat.0), Nat.2)
+
+/// An edge of the cycle meets the cover {0, 2}.
+
+theorem c4_adj_covered(x: Nat, y: Nat) {
+    c4.adj(x, y) implies c4_cover.contains(x) or c4_cover.contains(y)
+}
+
+theorem c4_cover_is_vertex_cover {
+    is_vertex_cover(c4, range_set(Nat.4), c4_cover)
+}
+
+theorem c4_cover_subset {
+    c4_cover.subset_eq(range_set(Nat.4))
+}
+
+theorem c4_cover_card {
+    fs_card(c4_cover) = Nat.2
+}
+
+theorem c4_cover_size_pred_two {
+    cover_size_pred(c4, range_set(Nat.4))(Nat.2)
+}
+
+theorem c4_cover_size_pred_bounded(n: Nat) {
+    cover_size_pred(c4, range_set(Nat.4))(n) implies Nat.2 <= n
+}
+
+theorem c4_vertex_cover_number {
+    vertex_cover_number(c4, range_set(Nat.4)) = Nat.2
+}
+
+theorem konig_on_c4 {
+    is_bipartite(c4, range_set(Nat.4)) and
+        maximum_matching_size(c4, range_set(Nat.4)) = vertex_cover_number(c4, range_set(Nat.4))
+}
+
+define k22_part(v: Nat) -> Bool {
+    v = Nat.0 or v = Nat.1
+}
+
+define k22_adj(x: Nat, y: Nat) -> Bool {
+    k22_part(x) != k22_part(y)
+}
+
+theorem k22_adj_is_symmetric {
+    is_symmetric(k22_adj)
+}
+
+theorem k22_adj_is_irreflexive {
+    is_irreflexive(k22_adj)
+}
+
+theorem k22_adj_constraint {
+    is_symmetric(k22_adj) and is_irreflexive(k22_adj)
+}
+
+theorem k22_graph_exists {
+    exists(g: SimpleGraph[Nat]) { SimpleGraph.new(k22_adj) = Option.some(g) }
+}
+
+let k22: SimpleGraph[Nat] satisfy {
+    SimpleGraph.new(k22_adj) = Option.some(k22)
+}
+
+theorem k22_adj_eq(x: Nat, y: Nat) {
+    k22.adj(x, y) = (k22_part(x) != k22_part(y))
+}
+
+theorem k22_is_bipartition {
+    is_bipartition(k22, range_set(Nat.4), k22_part)
+}
+
+theorem k22_is_bipartite {
+    is_bipartite(k22, range_set(Nat.4))
+}
+
+theorem k22_part0 {
+    k22_part(Nat.0) = true
+}
+
+theorem k22_part1 {
+    k22_part(Nat.1) = true
+}
+
+theorem k22_part2 {
+    k22_part(Nat.2) = false
+}
+
+theorem k22_part3 {
+    k22_part(Nat.3) = false
+}
+
+theorem k22_edge02 {
+    k22.adj(Nat.0, Nat.2)
+}
+
+theorem k22_edge13 {
+    k22.adj(Nat.1, Nat.3)
+}
+
+theorem k22_directed_edge02 {
+    directed_edges(k22, range_set(Nat.4)).contains(Pair.new(Nat.0, Nat.2))
+}
+
+theorem k22_directed_edge13 {
+    directed_edges(k22, range_set(Nat.4)).contains(Pair.new(Nat.1, Nat.3))
+}
+
+theorem k22_pairs_not_share {
+    not pairs_share_vertex(Pair.new(Nat.0, Nat.2), Pair.new(Nat.1, Nat.3))
+}
+
+let k22_matching: FiniteSet[Pair[Nat, Nat]] = fs_insert(
+    fs_insert(FiniteSet.empty[Pair[Nat, Nat]], Pair.new(Nat.0, Nat.2)), Pair.new(Nat.1, Nat.3))
+
+/// The two-edge set of K_{2,2} is a matching.
+
+theorem k22_matching_is_matching {
+    is_matching(k22, range_set(Nat.4), k22_matching)
+}
+
+theorem k22_matching_card {
+    fs_card(k22_matching) = Nat.2
+}
+
+theorem k22_matching_size_at_most_two(m: FiniteSet[Pair[Nat, Nat]]) {
+    is_matching(k22, range_set(Nat.4), m) implies fs_card(m) <= Nat.2
+}
+
+theorem k22_matching_size_pred_two {
+    matching_size_pred(k22, range_set(Nat.4))(Nat.2)
+}
+
+theorem k22_matching_size_pred_bounded(n: Nat) {
+    matching_size_pred(k22, range_set(Nat.4))(n) implies n <= Nat.2
+}
+
+theorem k22_maximum_matching_size {
+    maximum_matching_size(k22, range_set(Nat.4)) = Nat.2
+}
+
+let k22_cover: FiniteSet[Nat] = fs_insert(fs_insert(FiniteSet.empty[Nat], Nat.0), Nat.1)
+
+/// An edge of K_{2,2} meets the cover {0, 1}.
+
+theorem k22_adj_covered(x: Nat, y: Nat) {
+    k22.adj(x, y) implies k22_cover.contains(x) or k22_cover.contains(y)
+}
+
+theorem k22_cover_is_vertex_cover {
+    is_vertex_cover(k22, range_set(Nat.4), k22_cover)
+}
+
+theorem k22_cover_subset {
+    k22_cover.subset_eq(range_set(Nat.4))
+}
+
+theorem k22_cover_card {
+    fs_card(k22_cover) = Nat.2
+}
+
+theorem k22_cover_size_pred_two {
+    cover_size_pred(k22, range_set(Nat.4))(Nat.2)
+}
+
+theorem k22_cover_size_pred_bounded(n: Nat) {
+    cover_size_pred(k22, range_set(Nat.4))(n) implies Nat.2 <= n
+}
+
+theorem k22_vertex_cover_number {
+    vertex_cover_number(k22, range_set(Nat.4)) = Nat.2
+}
+
+theorem konig_on_k22 {
+    is_bipartite(k22, range_set(Nat.4)) and
+        maximum_matching_size(k22, range_set(Nat.4)) = vertex_cover_number(k22, range_set(Nat.4))
+}
+
+define is_maximal_clique_in[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]
+) -> Bool {
+    c.subset_eq(s) and is_clique_in(g, c) and forall(d: FiniteSet[V]) {
+        c.subset_eq(d) and d.subset_eq(s) and is_clique_in(g, d) implies d = c
+    }
+}
+
+theorem is_maximal_clique_in_clique[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]
+) {
+    is_maximal_clique_in(g, s, c) implies c.subset_eq(s) and is_clique_in(g, c)
+}
+
+theorem is_maximal_clique_in_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], d: FiniteSet[V]
+) {
+    is_maximal_clique_in(g, s, c) and c.subset_eq(d) and d.subset_eq(s)
+        and is_clique_in(g, d)
+        implies d = c
+}
+
+theorem diamond_free_cross_adj[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], e: FiniteSet[V],
+    x: V, y: V, u: V, v: V
+) {
+    is_diamond_free(g, s) and g.adj(x, y)
+        and c.subset_eq(s) and is_clique_in(g, c) and c.contains(x) and c.contains(y)
+        and e.subset_eq(s) and is_clique_in(g, e) and e.contains(x) and e.contains(y)
+        and c.contains(u) and e.contains(v)
+        and u != x and u != y and v != x and v != y and u != v
+        implies g.adj(u, v)
+}
+
+theorem diamond_free_clique_union[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], e: FiniteSet[V], x: V, y: V
+) {
+    is_diamond_free(g, s) and g.adj(x, y)
+        and c.subset_eq(s) and is_clique_in(g, c) and c.contains(x) and c.contains(y)
+        and e.subset_eq(s) and is_clique_in(g, e) and e.contains(x) and e.contains(y)
+        implies is_clique_in(g, fs_union(c, e))
+}
+
+theorem diamond_free_maximal_clique_unique[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], e: FiniteSet[V], x: V, y: V
+) {
+    is_diamond_free(g, s) and g.adj(x, y)
+        and is_maximal_clique_in(g, s, c) and c.contains(x) and c.contains(y)
+        and is_maximal_clique_in(g, s, e) and e.contains(x) and e.contains(y)
+        implies c = e
+}
+
+define is_minimal_dominating_set[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) -> Bool {
+    is_dominating_set(g, s, d) and forall(v: V) {
+        d.contains(v) implies not is_dominating_set(g, s, fs_remove(d, v))
+    }
+}
+
+theorem is_minimal_dominating_set_dominating[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) {
+    is_minimal_dominating_set(g, s, d) implies is_dominating_set(g, s, d)
+}
+
+theorem is_minimal_dominating_set_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V], v: V
+) {
+    is_minimal_dominating_set(g, s, d) and d.contains(v)
+        implies not is_dominating_set(g, s, fs_remove(d, v))
+}
+
+theorem is_minimal_dominating_set_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) {
+    is_dominating_set(g, s, d) and (forall(v: V) {
+        d.contains(v) implies not is_dominating_set(g, s, fs_remove(d, v))
+    }) implies is_minimal_dominating_set(g, s, d)
+}
+
+theorem minimal_dominating_witness[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V], v: V
+) {
+    is_minimal_dominating_set(g, s, d) and d.contains(v)
+        implies exists(u: V) { s.contains(u) and not is_dominated(g, fs_remove(d, v), u) }
+}
+
+theorem positive_degree_witness[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    Nat.0 < degree(g, s, v) implies exists(w: V) { s.contains(w) and g.adj(v, w) }
+}
+
+theorem minimal_dominating_neighbor_outside[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V], v: V
+) {
+    has_no_isolated_vertices(g, s) and is_minimal_dominating_set(g, s, d) and s.contains(v)
+        and d.contains(v)
+        implies has_neighbor_in(g, fs_difference(s, d), v)
+}
+
+theorem minimal_dominating_complement_dominates[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) {
+    has_no_isolated_vertices(g, s) and is_minimal_dominating_set(g, s, d)
+        implies is_dominating_set(g, s, fs_difference(s, d))
+}
+
+theorem fs_difference_subset[T](s: FiniteSet[T], d: FiniteSet[T]) {
+    fs_difference(s, d).subset_eq(s)
+}
+
+theorem minimum_dominating_is_minimal[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) {
+    d.subset_eq(s) and is_dominating_set(g, s, d) and fs_card(d) = domination_number(g, s)
+        implies is_minimal_dominating_set(g, s, d)
+}
+
+theorem domination_number_double_le_card[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    has_no_isolated_vertices(g, s)
+        implies Nat.2 * domination_number(g, s) <= fs_card(s)
+}
+
+theorem neighbor_exists_of_positive_degree[V](
+    g: SimpleGraph[V], s: FiniteSet[V], v: V
+) {
+    Nat.0 < degree(g, s, v) implies exists(w: V) { s.contains(w) and g.adj(v, w) }
+}
+
+theorem neighbor_exists_of_no_isolated[V](
+    g: SimpleGraph[V], s: FiniteSet[V], v: V
+) {
+    has_no_isolated_vertices(g, s) and s.contains(v) implies exists(w: V) { s.contains(w) and g.adj(v, w) }
+}
+
+theorem degree_zero_of_no_neighbor[V](
+    g: SimpleGraph[V], s: FiniteSet[V], v: V
+) {
+    (forall(w: V) { not (s.contains(w) and g.adj(v, w)) }) implies degree(g, s, v) = Nat.0
+}
+
+theorem neighborhood_contains_of_ambient_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], v: V, w: V
+) {
+    t.subset_eq(s) and neighborhood(g, t, v).contains(w) implies neighborhood(g, s, v).contains(w)
+}
+
+theorem independent_neighborhood_empty[V](
+    g: SimpleGraph[V], t: FiniteSet[V], v: V, w: V
+) {
+    is_independent_in(g, t) and t.contains(v) implies not neighborhood(g, t, v).contains(w)
+}
+
+theorem clique_neighborhood_contains[V](
+    g: SimpleGraph[V], t: FiniteSet[V], v: V, w: V
+) {
+    is_clique_in(g, t) and t.contains(v) and t.contains(w) and v != w
+        implies neighborhood(g, t, v).contains(w)
+}
+
+theorem bipartition_neighborhood_opposite[V](
+    g: SimpleGraph[V], t: FiniteSet[V], part: V -> Bool, v: V, w: V
+) {
+    is_bipartition(g, t, part) and t.contains(v) and neighborhood(g, t, v).contains(w)
+        implies part(v) != part(w)
+}
+
+theorem vertex_cover_neighborhood_contains[V](
+    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], v: V, w: V
+) {
+    is_vertex_cover(g, s, c) and s.contains(v) and not c.contains(v)
+        and neighborhood(g, s, v).contains(w) implies c.contains(w)
+}
+
+theorem neighborhood_symmetric[V](g: SimpleGraph[V], s: FiniteSet[V], v: V, w: V) {
+    s.contains(v) and neighborhood(g, s, v).contains(w) implies neighborhood(g, s, w).contains(v)
+}
+
+theorem neighborhood_excludes_center[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    not neighborhood(g, s, v).contains(v)
+}
+
+theorem bipartition_same_side_not_neighbor[V](
+    g: SimpleGraph[V], t: FiniteSet[V], part: V -> Bool, v: V, w: V
+) {
+    is_bipartition(g, t, part) and t.contains(v) and part(v) = part(w)
+        implies not neighborhood(g, t, v).contains(w)
+}
+
+theorem path_prefix_can_force(n: Nat, k: Nat) {
+    k.suc < n implies can_force(path_graph, range_set(n), range_set(k.suc), k, k.suc)
+}
+
+theorem path_derived_set_step(n: Nat, k: Nat) {
+    k.suc < n implies
+        (derived_set(path_graph, range_set(n), range_set(k.suc)) = range_set(k.suc.suc))
+}
+
+theorem path_forcing_iterate_prefix(n: Nat, k: Nat) {
+    k.suc <= n implies
+        (forcing_iterate(path_graph, range_set(n), range_set(Nat.1), k) = range_set(k.suc))
+}
+
+theorem path_singleton_is_zero_forcing(n: Nat) {
+    Nat.1 <= n implies is_zero_forcing_set(path_graph, range_set(n.suc), range_set(Nat.1))
+}
+
+theorem path_zero_forcing_number_le_one(n: Nat) {
+    Nat.1 <= n implies zero_forcing_number(path_graph, range_set(n.suc)) <= Nat.1
+}
+
+theorem path_zero_forcing_number(n: Nat) {
+    Nat.1 <= n implies zero_forcing_number(path_graph, range_set(n.suc)) = Nat.1
+}
+
+theorem fs_subset_eq_of_same_card[T](s: FiniteSet[T], t: FiniteSet[T]) {
+    s.subset_eq(t) and fs_card(s) = fs_card(t) implies s = t
+}
+
+theorem fs_card_lt_of_proper_subset[T](s: FiniteSet[T], t: FiniteSet[T]) {
+    s.subset_eq(t) and s != t implies fs_card(s) < fs_card(t)
+}
+
+theorem derived_set_card_grows[V](g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]) {
+    b.subset_eq(s) and derived_set(g, s, b) != b implies fs_card(b) < fs_card(derived_set(g, s, b))
+}
+
+define strictly_growing_upto[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) -> Bool {
+    forall(k: Nat) {
+        k < n implies forcing_iterate(g, s, b, k.suc) != forcing_iterate(g, s, b, k)
+    }
+}
+
+theorem strictly_growing_upto_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat, k: Nat
+) {
+    strictly_growing_upto(g, s, b, n) and k < n
+        implies forcing_iterate(g, s, b, k.suc) != forcing_iterate(g, s, b, k)
+}
+
+theorem strictly_growing_upto_weaken[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat, m: Nat
+) {
+    strictly_growing_upto(g, s, b, n) and m <= n implies strictly_growing_upto(g, s, b, m)
+}
+
+theorem forcing_iterate_card_bound[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) and strictly_growing_upto(g, s, b, n)
+        implies fs_card(b) + n <= fs_card(forcing_iterate(g, s, b, n))
+}
+
+theorem forcing_iterate_becomes_stationary[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    b.subset_eq(s) implies not strictly_growing_upto(g, s, b, fs_card(s).suc)
+}
+
+theorem forcing_iterate_fixed_point_exists[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    b.subset_eq(s) implies exists(k: Nat) {
+        k <= fs_card(s) and forcing_iterate(g, s, b, k.suc) = forcing_iterate(g, s, b, k)
+    }
+}
+
+theorem complete_graph_can_force_last[V](
+    s: FiniteSet[V], v: V, u: V
+) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies can_force(complete_graph[V], s, fs_remove(s, v), u, v)
+}
+
+theorem complete_graph_derived_set_all[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies derived_set(complete_graph[V], s, fs_remove(s, v)) = s
+}
+
+theorem complete_graph_remove_is_zero_forcing[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies is_zero_forcing_set(complete_graph[V], s, fs_remove(s, v))
+}
+
+theorem complete_graph_zero_forcing_number_lt[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and s.contains(u) and u != v
+        implies zero_forcing_number(complete_graph[V], s) < fs_card(s)
+}
+
+theorem complete_graph_two_white_blocks_forcing[V](
+    s: FiniteSet[V], b: FiniteSet[V], w1: V, w2: V
+) {
+    s.contains(w1) and not b.contains(w1) and s.contains(w2) and not b.contains(w2)
+        and w1 != w2
+        implies is_forcing_closed(complete_graph[V], s, b)
+}
+
+theorem complete_graph_zero_forcing_set_card[V](s: FiniteSet[V], b: FiniteSet[V]) {
+    b.subset_eq(s) and is_zero_forcing_set(complete_graph[V], s, b)
+        implies fs_card(fs_difference(s, b)) < Nat.2
+}
+
+theorem walk_concat[V](g: SimpleGraph[V], a: V, m: V, b: V, w1: List[V], w2: List[V]) {
+    simple_graph_walk(g, a, m, w1) and simple_graph_walk(g, m, b, w2)
+        implies simple_graph_walk(g, a, b, w1 + w2)
+}
+
+theorem walk_reverse[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps)
+        implies simple_graph_walk(g, b, a, rev_walk_targets(steps, a))
+}
+
+define graph_distance[V](g: SimpleGraph[V], x: V, y: V, n: Nat) -> Bool {
+    exists(steps: List[V]) {
+        simple_graph_walk(g, x, y, steps) and steps.length = n and
+            forall(shorter: List[V]) {
+                simple_graph_walk(g, x, y, shorter) implies n <= shorter.length
+            }
+    }
+}
+
+theorem graph_distance_adj[V](g: SimpleGraph[V], x: V, y: V) {
+    g.adj(x, y) implies graph_distance(g, x, y, Nat.1)
+}
+
+theorem walk_contains_path[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) implies exists(steps2: List[V]) {
+        simple_graph_path(g, a, b, steps2)
+    }
+}
