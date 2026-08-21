@@ -1,0 +1,39 @@
+/// Interface: pair_set.
+
+from pair import Pair, pair_map
+
+from set.set import Set
+
+define pair_set_contains[T, U](left: Set[T], right: Set[U], p: Pair[T, U]) -> Bool {
+    left.contains(p.first) and right.contains(p.second)
+}
+
+define pair_set[T, U](left: Set[T], right: Set[U]) -> Set[Pair[T, U]] {
+    Set[Pair[T, U]].new(pair_set_contains(left, right))
+}
+
+theorem pair_set_contains_eq[T, U](left: Set[T], right: Set[U], p: Pair[T, U]) {
+    pair_set(left, right).contains(p) =
+    (left.contains(p.first) and right.contains(p.second))
+}
+
+theorem pair_set_contains_of_components[T, U](left: Set[T], right: Set[U], x: T, y: U) {
+    left.contains(x) and right.contains(y) implies
+    pair_set(left, right).contains(Pair.new(x, y))
+}
+
+theorem pair_set_contains_imp_left[T, U](left: Set[T], right: Set[U], p: Pair[T, U]) {
+    pair_set(left, right).contains(p) implies left.contains(p.first)
+}
+
+theorem pair_set_contains_imp_right[T, U](left: Set[T], right: Set[U], p: Pair[T, U]) {
+    pair_set(left, right).contains(p) implies right.contains(p.second)
+}
+
+theorem pair_map_preserves_pair_set[T, U, V, W](left: Set[T], right: Set[U],
+    left_target: Set[V], right_target: Set[W], f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_set(left, right).contains(p) and
+    (forall(x: T) { left.contains(x) implies left_target.contains(f(x)) }) and
+    (forall(y: U) { right.contains(y) implies right_target.contains(g(y)) })
+    implies pair_set(left_target, right_target).contains(pair_map(f, g, p))
+}

@@ -1,0 +1,222 @@
+/// Interface: set_list_partition.
+
+from list import List, map, sum, map_contains, map_contains_of_contains,
+    unique_implies_tail_unique, unique_implies_no_duplicate,
+    list_contains_implies_count_geq_one
+
+from nat import Nat
+
+from set.set import Set, cardinality_is_smallest_cardinality,
+    disjoint_union_is_length, empty_set_contains_eq, union_contains_cases,
+    union_is_at_most_length, set_ext, list_indexed_union,
+    list_indexed_union_contains_of_contains,
+    list_indexed_union_contains_witness
+
+define set_list_union[K](items: List[Set[K]]) -> Set[K] {
+    match items {
+        List.nil {
+            Set[K].empty_set
+        }
+        List.cons(head, tail) {
+            head.union(set_list_union[K](tail))
+        }
+    }
+}
+
+theorem set_list_union_contains_head[K](head: Set[K], tail: List[Set[K]], x: K) { head.contains(x) implies set_list_union[K](List.cons[Set[K]](head, tail)).contains(x) }
+
+theorem set_list_union_contains_tail[K](head: Set[K], tail: List[Set[K]], x: K) { set_list_union[K](tail).contains(x) implies set_list_union[K](List.cons[Set[K]](head, tail)).contains(x) }
+
+theorem set_list_union_contains_of_member[K](items: List[Set[K]], c: Set[K], x: K) {
+    items.contains(c) and c.contains(x) implies set_list_union[K](items).contains(x)
+}
+
+define set_list_all_cardinality_is[K](items: List[Set[K]], n: Nat) -> Bool {
+    forall(s: Set[K]) {
+        items.contains(s) implies s.cardinality_is(n)
+    }
+}
+
+define set_list_all_cardinality_by[K](items: List[Set[K]], card: Set[K] -> Nat) -> Bool {
+    forall(s: Set[K]) {
+        items.contains(s) implies s.cardinality_is(card(s))
+    }
+}
+
+define set_list_cardinality_sum[K](items: List[Set[K]], card: Set[K] -> Nat) -> Nat {
+    sum[Nat](map[Set[K], Nat](items, card))
+}
+
+define set_list_recursively_disjoint[K](items: List[Set[K]]) -> Bool {
+    match items {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            head.is_disjoint(set_list_union[K](tail)) and set_list_recursively_disjoint[K](tail)
+        }
+    }
+}
+
+theorem set_list_recursively_disjoint_tail[K](head: Set[K], tail: List[Set[K]]) {
+    set_list_recursively_disjoint[K](List.cons(head, tail)) implies set_list_recursively_disjoint[K](tail)
+}
+
+theorem set_list_recursively_disjoint_head[K](head: Set[K], tail: List[Set[K]]) {
+    set_list_recursively_disjoint[K](List.cons(head, tail)) implies head.is_disjoint(set_list_union[K](tail))
+}
+
+theorem set_list_union_nil_cardinality_is_zero[K] {
+    set_list_union[K](List.nil[Set[K]]).cardinality_is(Nat.0)
+}
+
+theorem set_list_all_cardinality_is_elim[K](items: List[Set[K]], n: Nat, s: Set[K]) {
+    set_list_all_cardinality_is[K](items, n) and items.contains(s) implies s.cardinality_is(n)
+}
+
+theorem set_list_all_cardinality_tail[K](head: Set[K], tail: List[Set[K]], n: Nat) {
+    set_list_all_cardinality_is[K](List.cons(head, tail), n) implies
+    set_list_all_cardinality_is[K](tail, n)
+}
+
+theorem set_list_all_cardinality_head[K](head: Set[K], tail: List[Set[K]], n: Nat) {
+    set_list_all_cardinality_is[K](List.cons(head, tail), n) implies head.cardinality_is(n)
+}
+
+theorem set_list_union_cardinality_recursive[K](items: List[Set[K]], n: Nat) {
+    set_list_all_cardinality_is[K](items, n) and
+    set_list_recursively_disjoint[K](items)
+    implies set_list_union[K](items).cardinality_is(n * items.length)
+}
+
+define set_list_pairwise_disjoint[K](items: List[Set[K]]) -> Bool {
+    forall(a: Set[K], b: Set[K]) {
+        items.contains(a) and items.contains(b) and a != b implies a.is_disjoint(b)
+    }
+}
+
+define set_list_exactly_covers[K](items: List[Set[K]], whole: Set[K]) -> Bool {
+    set_list_union[K](items) = whole
+}
+
+define set_list_partition_of[K](items: List[Set[K]], whole: Set[K]) -> Bool {
+    set_list_exactly_covers[K](items, whole) and items.is_unique and set_list_pairwise_disjoint[K](items)
+}
+
+theorem set_disjoint_from_all_implies_disjoint_union[K](s: Set[K], items: List[Set[K]]) {
+    (forall(t: Set[K]) { items.contains(t) implies s.is_disjoint(t) }) implies s.is_disjoint(set_list_union[K](items))
+}
+
+theorem set_list_pairwise_disjoint_tail[K](head: Set[K], tail: List[Set[K]]) {
+    set_list_pairwise_disjoint[K](List.cons(head, tail)) implies set_list_pairwise_disjoint[K](tail)
+}
+
+theorem unique_pairwise_implies_recursively_disjoint[K](items: List[Set[K]]) {
+    items.is_unique and set_list_pairwise_disjoint[K](items)
+    implies set_list_recursively_disjoint[K](items)
+}
+
+theorem set_list_partition_recursively_disjoint[K](items: List[Set[K]], whole: Set[K]) {
+    set_list_partition_of[K](items, whole) implies set_list_recursively_disjoint[K](items)
+}
+
+theorem set_list_union_cardinality_is_of_unique_pairwise[K](items: List[Set[K]], n: Nat) {
+    items.is_unique and set_list_pairwise_disjoint[K](items) and set_list_all_cardinality_is[K](items, n)
+    implies set_list_union[K](items).cardinality_is(n * items.length)
+}
+
+theorem set_list_union_cardinality_at_most_sum[K](items: List[Set[K]],
+    card: Set[K] -> Nat) {
+    set_list_all_cardinality_by[K](items, card)
+    implies set_list_union[K](items).cardinality_at_most(
+        set_list_cardinality_sum[K](items, card))
+}
+
+theorem set_list_union_cardinality_by_recursive[K](items: List[Set[K]], card: Set[K] -> Nat) {
+    set_list_all_cardinality_by[K](items, card) and
+    set_list_recursively_disjoint[K](items)
+    implies set_list_union[K](items).cardinality_is(set_list_cardinality_sum[K](items, card))
+}
+
+theorem set_list_union_cardinality_by_of_unique_pairwise[K](items: List[Set[K]],
+    card: Set[K] -> Nat) {
+    items.is_unique and set_list_pairwise_disjoint[K](items) and
+    set_list_all_cardinality_by[K](items, card)
+    implies set_list_union[K](items).cardinality_is(set_list_cardinality_sum[K](items, card))
+}
+
+theorem set_list_partition_cardinality_by[K](items: List[Set[K]], whole: Set[K],
+    card: Set[K] -> Nat) {
+    set_list_partition_of[K](items, whole) and set_list_all_cardinality_by[K](items, card)
+    implies whole.cardinality_is(set_list_cardinality_sum[K](items, card))
+}
+
+theorem set_list_partition_cardinality_is[K](items: List[Set[K]], whole: Set[K], n: Nat) {
+    set_list_partition_of[K](items, whole) and set_list_all_cardinality_is[K](items, n)
+    implies whole.cardinality_is(n * items.length)
+}
+
+theorem set_list_union_contains_eq_exists_member[K](items: List[Set[K]], x: K) {
+    set_list_union[K](items).contains(x) = exists(c: Set[K]) {
+        items.contains(c) and c.contains(x)
+    }
+}
+
+theorem set_list_union_contains_witness[K](items: List[Set[K]], x: K) {
+    set_list_union[K](items).contains(x) implies exists(c: Set[K]) {
+        items.contains(c) and c.contains(x)
+    }
+}
+
+theorem set_list_partition_member_subset[K](items: List[Set[K]], whole: Set[K], c: Set[K]) {
+    set_list_partition_of[K](items, whole) and items.contains(c) implies c.subset(whole)
+}
+
+theorem set_list_partition_contains_witness[K](items: List[Set[K]], whole: Set[K], x: K) {
+    set_list_partition_of[K](items, whole) and whole.contains(x) implies exists(c: Set[K]) {
+        items.contains(c) and c.contains(x)
+    }
+}
+
+theorem set_list_union_eq_list_indexed_union_self[K](items: List[Set[K]]) {
+    set_list_union[K](items) = list_indexed_union[K, Set[K]](items, function(s: Set[K]) { s })
+}
+
+theorem list_indexed_union_self_cardinality_is_of_unique_pairwise[K](items: List[Set[K]],
+    n: Nat) {
+    items.is_unique and set_list_pairwise_disjoint[K](items) and set_list_all_cardinality_is[K](items, n)
+    implies list_indexed_union[K, Set[K]](items, function(s: Set[K]) { s }).cardinality_is(n * items.length)
+}
+
+theorem list_indexed_union_self_cardinality_by_of_unique_pairwise[K](items: List[Set[K]],
+    card: Set[K] -> Nat) {
+    items.is_unique and set_list_pairwise_disjoint[K](items) and
+    set_list_all_cardinality_by[K](items, card)
+    implies list_indexed_union[K, Set[K]](items, function(s: Set[K]) { s }).cardinality_is(
+        set_list_cardinality_sum[K](items, card))
+}
+
+theorem set_list_union_map_eq_list_indexed_union[K, I](items: List[I], family: I -> Set[K]) {
+    set_list_union[K](map[I, Set[K]](items, family)) = list_indexed_union[K, I](items, family)
+}
+
+theorem set_list_all_cardinality_by_map[K, I](items: List[I], family: I -> Set[K],
+    card: Set[K] -> Nat) {
+    (forall(i: I) { items.contains(i) implies family(i).cardinality_is(card(family(i))) })
+    implies set_list_all_cardinality_by[K](map[I, Set[K]](items, family), card)
+}
+
+theorem set_list_all_cardinality_is_map[K, I](items: List[I], family: I -> Set[K],
+    n: Nat) {
+    (forall(i: I) { items.contains(i) implies family(i).cardinality_is(n) })
+    implies set_list_all_cardinality_is[K](map[I, Set[K]](items, family), n)
+}
+
+theorem list_indexed_union_cardinality_by_of_unique_pairwise_map[K, I](items: List[I],
+    family: I -> Set[K], card: Set[K] -> Nat) {
+    map[I, Set[K]](items, family).is_unique and
+    set_list_pairwise_disjoint[K](map[I, Set[K]](items, family)) and
+    (forall(i: I) { items.contains(i) implies family(i).cardinality_is(card(family(i))) })
+    implies list_indexed_union[K, I](items, family).cardinality_is(
+        set_list_cardinality_sum[K](map[I, Set[K]](items, family), card))
+}

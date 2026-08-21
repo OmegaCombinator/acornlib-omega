@@ -1,0 +1,82 @@
+/// Interface: sum_set.
+
+from set.set import Set, maps_into_set_image, set_ext, set_image,
+    set_image_contains_witness, subset_contains
+
+from sum_type import Sum, sum_map, sum_swap
+
+define sum_set_contains[T, U](left: Set[T], right: Set[U], s: Sum[T, U]) -> Bool {
+    match s {
+        Sum.inl(x) {
+            left.contains(x)
+        }
+        Sum.inr(y) {
+            right.contains(y)
+        }
+    }
+}
+
+define sum_set[T, U](left: Set[T], right: Set[U]) -> Set[Sum[T, U]] {
+    Set[Sum[T, U]].new(sum_set_contains(left, right))
+}
+
+theorem sum_set_contains_inl[T, U](left: Set[T], right: Set[U], x: T) {
+    sum_set(left, right).contains(Sum.inl[T, U](x)) = left.contains(x)
+}
+
+theorem sum_set_contains_inr[T, U](left: Set[T], right: Set[U], y: U) {
+    sum_set(left, right).contains(Sum.inr[T, U](y)) = right.contains(y)
+}
+
+theorem sum_set_contains_left_of_component[T, U](left: Set[T], right: Set[U], x: T) {
+    left.contains(x) implies sum_set(left, right).contains(Sum.inl[T, U](x))
+}
+
+theorem sum_set_contains_right_of_component[T, U](left: Set[T], right: Set[U], y: U) {
+    right.contains(y) implies sum_set(left, right).contains(Sum.inr[T, U](y))
+}
+
+theorem sum_set_contains_inl_imp_left[T, U](left: Set[T], right: Set[U], x: T) {
+    sum_set(left, right).contains(Sum.inl[T, U](x)) implies left.contains(x)
+}
+
+theorem sum_set_contains_inr_imp_right[T, U](left: Set[T], right: Set[U], y: U) {
+    sum_set(left, right).contains(Sum.inr[T, U](y)) implies right.contains(y)
+}
+
+theorem sum_map_preserves_sum_set[T, U, V, W](left: Set[T], right: Set[U],
+    left_target: Set[V], right_target: Set[W], f: T -> V, g: U -> W, s: Sum[T, U]) {
+    sum_set(left, right).contains(s) and
+    (forall(x: T) { left.contains(x) implies left_target.contains(f(x)) }) and
+    (forall(y: U) { right.contains(y) implies right_target.contains(g(y)) })
+    implies sum_set(left_target, right_target).contains(sum_map(s, f, g))
+}
+
+theorem sum_set_subset_left[T, U](left: Set[T], right: Set[U], left2: Set[T], right2: Set[U]) {
+    sum_set(left, right).subset(sum_set(left2, right2)) implies left.subset(left2)
+}
+
+theorem sum_set_subset_right[T, U](left: Set[T], right: Set[U], left2: Set[T], right2: Set[U]) {
+    sum_set(left, right).subset(sum_set(left2, right2)) implies right.subset(right2)
+}
+
+theorem sum_set_subset_of_components[T, U](left: Set[T], right: Set[U], left2: Set[T], right2: Set[U]) {
+    left.subset(left2) and right.subset(right2) implies sum_set(left, right).subset(sum_set(left2, right2))
+}
+
+theorem sum_set_subset_iff[T, U](left: Set[T], right: Set[U], left2: Set[T], right2: Set[U]) {
+    sum_set(left, right).subset(sum_set(left2, right2)) = (left.subset(left2) and right.subset(right2))
+}
+
+theorem sum_set_eq_iff[T, U](left: Set[T], right: Set[U], left2: Set[T], right2: Set[U]) {
+    (sum_set(left, right) = sum_set(left2, right2)) = (left = left2 and right = right2)
+}
+
+theorem sum_set_image_sum_map[T, U, V, W](left: Set[T], right: Set[U], f: T -> V, g: U -> W) {
+    set_image(sum_set(left, right), function(s: Sum[T, U]) { sum_map(s, f, g) }) =
+        sum_set(set_image(left, f), set_image(right, g))
+}
+
+theorem sum_set_image_swap[T, U](left: Set[T], right: Set[U]) {
+    set_image(sum_set(left, right), sum_swap[T, U]) = sum_set(right, left)
+}

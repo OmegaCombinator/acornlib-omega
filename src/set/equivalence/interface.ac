@@ -1,0 +1,860 @@
+/// Interface: equivalence.
+
+from basic.relation_basic import is_equivalence, is_reflexive,
+    is_symmetric, is_transitive
+
+from basic.relation_transport import respects_unary_op,
+    respects_binary_op, respects_unary_op_step, respects_binary_op_step,
+    respects_function, respects_predicate,
+    respects_predicate_eq_respects_function, is_unary_congruence,
+    is_binary_congruence
+
+from basic.functions import Inhabited, is_surjective_fn,
+    surjective_fn_has_preimage
+
+from set.set import Set, equivalence_class, equivalence_class_eq_of_equiv,
+    equivalence_of_equivalence_class_eq, set_ext, is_saturated_under
+
+define is_equivalence_class[T](r: (T, T) -> Bool, c: Set[T]) -> Bool {
+    exists(a: T) {
+        c = equivalence_class(r, a)
+    }
+}
+
+theorem equivalence_class_is_equivalence_class[T](r: (T, T) -> Bool, a: T) {
+    is_equivalence_class(r, equivalence_class(r, a))
+}
+
+theorem equivalence_class_has_representative[T](r: (T, T) -> Bool, c: Set[T]) {
+    is_equivalence_class(r, c) implies exists(a: T) {
+        c = equivalence_class(r, a)
+    }
+}
+
+theorem equivalence_class_eq_iff[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_equivalence(r) implies
+    equivalence_class(r, a) = equivalence_class(r, b) = r(a, b)
+}
+
+structure QuotientRelation[T] {
+    /// The relation whose equivalence classes form quotient elements.
+    rel: (T, T) -> Bool
+} constraint {
+    is_equivalence(rel)
+}
+
+theorem quotient_relation_new_round_trip[T](r: (T, T) -> Bool, qrel: QuotientRelation[T]) {
+    QuotientRelation[T].new(r) = Option.some(qrel) implies qrel.rel = r
+}
+
+theorem quotient_relation_new_self[T](qrel: QuotientRelation[T]) {
+    QuotientRelation[T].new(qrel.rel) = Option.some(qrel)
+}
+
+theorem quotient_relation_some_injective[T](qrel: QuotientRelation[T], srel: QuotientRelation[T]) {
+    Option.some(qrel) = Option.some(srel) implies qrel = srel
+}
+
+theorem quotient_relation_ext[T](qrel: QuotientRelation[T], srel: QuotientRelation[T]) {
+    qrel.rel = srel.rel implies qrel = srel
+}
+
+theorem quotient_relation_eq_rel[T](qrel: QuotientRelation[T], srel: QuotientRelation[T]) {
+    qrel = srel implies qrel.rel = srel.rel
+}
+
+theorem quotient_relation_eq_transport_predicate[T](
+    p: QuotientRelation[T] -> Bool,
+    qrel: QuotientRelation[T],
+    srel: QuotientRelation[T]
+) {
+    qrel = srel and p(qrel) implies p(srel)
+}
+
+theorem quotient_relation_eq_transport_predicate_rev[T](
+    p: QuotientRelation[T] -> Bool,
+    qrel: QuotientRelation[T],
+    srel: QuotientRelation[T]
+) {
+    qrel = srel and p(srel) implies p(qrel)
+}
+
+theorem quotient_relation_eq_of_rel_eq[T](qrel: QuotientRelation[T], srel: QuotientRelation[T]) {
+    qrel.rel = srel.rel implies qrel = srel
+}
+
+structure QuotientOver[T] {
+    /// The equivalence relation whose classes form this quotient element.
+    qrel: QuotientRelation[T]
+
+    /// The equivalence class represented by this quotient element.
+    carrier: Set[T]
+} constraint {
+    is_equivalence_class(qrel.rel, carrier)
+}
+
+let quotient_over_mk[T](qrel: QuotientRelation[T], a: T) -> result: QuotientOver[T] satisfy {
+    QuotientOver[T].new(qrel, equivalence_class(qrel.rel, a)) = Option.some(result)
+}
+
+theorem quotient_over_new_qrel[T](qrel: QuotientRelation[T], c: Set[T], q: QuotientOver[T]) {
+    QuotientOver[T].new(qrel, c) = Option.some(q) implies q.qrel = qrel
+}
+
+theorem quotient_over_new_carrier[T](qrel: QuotientRelation[T], c: Set[T], q: QuotientOver[T]) {
+    QuotientOver[T].new(qrel, c) = Option.some(q) implies q.carrier = c
+}
+
+theorem quotient_over_new_self[T](q: QuotientOver[T]) {
+    QuotientOver[T].new(q.qrel, q.carrier) = Option.some(q)
+}
+
+theorem quotient_over_some_injective[T](a: QuotientOver[T], b: QuotientOver[T]) {
+    Option.some(a) = Option.some(b) implies a = b
+}
+
+theorem quotient_over_ext[T](a: QuotientOver[T], b: QuotientOver[T]) {
+    a.qrel = b.qrel and a.carrier = b.carrier implies a = b
+}
+
+theorem quotient_over_eq_qrel[T](a: QuotientOver[T], b: QuotientOver[T]) {
+    a = b implies a.qrel = b.qrel
+}
+
+theorem quotient_over_eq_carrier[T](a: QuotientOver[T], b: QuotientOver[T]) {
+    a = b implies a.carrier = b.carrier
+}
+
+theorem quotient_over_eq_transport_predicate[T](
+    p: QuotientOver[T] -> Bool,
+    a: QuotientOver[T],
+    b: QuotientOver[T]
+) {
+    a = b and p(a) implies p(b)
+}
+
+theorem quotient_over_eq_transport_predicate_rev[T](
+    p: QuotientOver[T] -> Bool,
+    a: QuotientOver[T],
+    b: QuotientOver[T]
+) {
+    a = b and p(b) implies p(a)
+}
+
+theorem quotient_over_eq_of_fields_eq[T](a: QuotientOver[T], b: QuotientOver[T]) {
+    a.qrel = b.qrel and a.carrier = b.carrier implies a = b
+}
+
+theorem quotient_over_mk_fields[T](qrel: QuotientRelation[T], a: T) {
+    quotient_over_mk(qrel, a).qrel = qrel and
+    quotient_over_mk(qrel, a).carrier = equivalence_class(qrel.rel, a)
+}
+
+theorem quotient_over_eq_mk_of_carrier[T](qrel: QuotientRelation[T], q: QuotientOver[T], a: T) {
+    q.qrel = qrel and q.carrier = equivalence_class(qrel.rel, a) implies
+    quotient_over_mk(qrel, a) = q
+}
+
+theorem quotient_over_mk_surjective[T](q: QuotientOver[T]) {
+    exists(a: T) {
+        quotient_over_mk(q.qrel, a) = q
+    }
+}
+
+theorem quotient_over_mk_eq_of_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    qrel.rel(a, b) implies quotient_over_mk(qrel, a) = quotient_over_mk(qrel, b)
+}
+
+theorem rel_of_quotient_over_mk_eq[T](qrel: QuotientRelation[T], a: T, b: T) {
+    quotient_over_mk(qrel, a) = quotient_over_mk(qrel, b) implies qrel.rel(a, b)
+}
+
+theorem quotient_over_mk_eq_iff_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    (quotient_over_mk(qrel, a) = quotient_over_mk(qrel, b)) = qrel.rel(a, b)
+}
+
+define quotient_over_respects[T, U](
+    qrel: QuotientRelation[T],
+    srel: QuotientRelation[U],
+    f: T -> U
+) -> Bool {
+    forall(a: T, b: T) {
+        qrel.rel(a, b) implies srel.rel(f(a), f(b))
+    }
+}
+
+let quotient_over_lift_at[T, U](srel: QuotientRelation[U], f: T -> U, q: QuotientOver[T]) -> result: QuotientOver[U] satisfy {
+    exists(a: T) {
+        quotient_over_mk(q.qrel, a) = q and result = quotient_over_mk(srel, f(a))
+    }
+}
+
+theorem quotient_over_lift_at_has_representative[T, U](
+    srel: QuotientRelation[U],
+    f: T -> U,
+    q: QuotientOver[T]
+) {
+    exists(a: T) {
+        quotient_over_mk(q.qrel, a) = q and quotient_over_lift_at(srel, f, q) =
+            quotient_over_mk(srel, f(a))
+    }
+}
+
+theorem quotient_over_lift_at_projection[T, U](
+    qrel: QuotientRelation[T],
+    srel: QuotientRelation[U],
+    f: T -> U,
+    a: T
+) {
+    quotient_over_respects(qrel, srel, f) implies
+    quotient_over_lift_at(srel, f, quotient_over_mk(qrel, a)) = quotient_over_mk(srel, f(a))
+}
+
+define quotient_over_lift[T, U](srel: QuotientRelation[U], f: T -> U) -> QuotientOver[T] -> QuotientOver[U] {
+    function(q: QuotientOver[T]) {
+        quotient_over_lift_at(srel, f, q)
+    }
+}
+
+theorem quotient_over_lift_projection[T, U](
+    qrel: QuotientRelation[T],
+    srel: QuotientRelation[U],
+    f: T -> U,
+    a: T
+) {
+    quotient_over_respects(qrel, srel, f) implies
+    quotient_over_lift(srel, f, quotient_over_mk(qrel, a)) = quotient_over_mk(srel, f(a))
+}
+
+structure Quotient[T] {
+    /// The equivalence relation whose classes form this quotient.
+    rel: (T, T) -> Bool
+
+    /// The equivalence class represented by this quotient element.
+    carrier: Set[T]
+} constraint {
+    is_equivalence(rel) and is_equivalence_class(rel, carrier)
+}
+
+let quotient_mk[T](qrel: QuotientRelation[T], a: T) -> result: Quotient[T] satisfy {
+    Quotient[T].new(qrel.rel, equivalence_class(qrel.rel, a)) = Option.some(result)
+}
+
+theorem quotient_new_rel[T](r: (T, T) -> Bool, c: Set[T], q: Quotient[T]) {
+    Quotient[T].new(r, c) = Option.some(q) implies q.rel = r
+}
+
+theorem quotient_new_carrier[T](r: (T, T) -> Bool, c: Set[T], q: Quotient[T]) {
+    Quotient[T].new(r, c) = Option.some(q) implies q.carrier = c
+}
+
+theorem quotient_new_self[T](q: Quotient[T]) {
+    Quotient[T].new(q.rel, q.carrier) = Option.some(q)
+}
+
+theorem quotient_some_injective[T](a: Quotient[T], b: Quotient[T]) {
+    Option.some(a) = Option.some(b) implies a = b
+}
+
+theorem quotient_ext[T](a: Quotient[T], b: Quotient[T]) {
+    a.rel = b.rel and a.carrier = b.carrier implies a = b
+}
+
+theorem quotient_eq_rel[T](a: Quotient[T], b: Quotient[T]) {
+    a = b implies a.rel = b.rel
+}
+
+theorem quotient_eq_carrier[T](a: Quotient[T], b: Quotient[T]) {
+    a = b implies a.carrier = b.carrier
+}
+
+theorem quotient_eq_transport_predicate[T](p: Quotient[T] -> Bool, a: Quotient[T], b: Quotient[T]) {
+    a = b and p(a) implies p(b)
+}
+
+theorem quotient_eq_transport_predicate_rev[T](p: Quotient[T] -> Bool, a: Quotient[T], b: Quotient[T]) {
+    a = b and p(b) implies p(a)
+}
+
+theorem quotient_eq_of_fields_eq[T](a: Quotient[T], b: Quotient[T]) {
+    a.rel = b.rel and a.carrier = b.carrier implies a = b
+}
+
+let quotient_over_to_quotient[T](q: QuotientOver[T]) -> result: Quotient[T] satisfy {
+    Quotient[T].new(q.qrel.rel, q.carrier) = Option.some(result)
+}
+
+theorem quotient_over_to_quotient_rel[T](q: QuotientOver[T]) {
+    quotient_over_to_quotient(q).rel = q.qrel.rel
+}
+
+theorem quotient_over_to_quotient_carrier[T](q: QuotientOver[T]) {
+    quotient_over_to_quotient(q).carrier = q.carrier
+}
+
+theorem quotient_to_quotient_over_exists[T](qrel: QuotientRelation[T], q: Quotient[T]) {
+    q.rel = qrel.rel implies exists(qo: QuotientOver[T]) {
+        qo.qrel = qrel and qo.carrier = q.carrier
+    }
+}
+
+theorem quotient_mk_new_self[T](qrel: QuotientRelation[T], a: T) {
+    Quotient[T].new(qrel.rel, equivalence_class(qrel.rel, a)) = Option.some(quotient_mk(qrel, a))
+}
+
+theorem quotient_mk_fields[T](qrel: QuotientRelation[T], a: T) {
+    quotient_mk(qrel, a).rel = qrel.rel and
+    quotient_mk(qrel, a).carrier = equivalence_class(qrel.rel, a)
+}
+
+theorem quotient_eq_mk_of_carrier[T](qrel: QuotientRelation[T], q: Quotient[T], a: T) {
+    q.rel = qrel.rel and q.carrier = equivalence_class(qrel.rel, a) implies
+    quotient_mk(qrel, a) = q
+}
+
+theorem quotient_mk_surjective[T](qrel: QuotientRelation[T], q: Quotient[T]) {
+    q.rel = qrel.rel implies exists(a: T) {
+        quotient_mk(qrel, a) = q
+    }
+}
+
+theorem quotient_induction[T](qrel: QuotientRelation[T], p: Quotient[T] -> Bool, q: Quotient[T]) {
+    q.rel = qrel.rel and forall(a: T) {
+        p(quotient_mk(qrel, a))
+    } implies p(q)
+}
+
+theorem quotient_function_eq_at[T, U](
+    qrel: QuotientRelation[T],
+    f: Quotient[T] -> U,
+    g: Quotient[T] -> U,
+    q: Quotient[T]
+) {
+    q.rel = qrel.rel and
+    (forall(a: T) { f(quotient_mk(qrel, a)) = g(quotient_mk(qrel, a)) })
+    implies f(q) = g(q)
+}
+
+theorem quotient_mk_eq_of_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    qrel.rel(a, b) implies quotient_mk(qrel, a) = quotient_mk(qrel, b)
+}
+
+theorem rel_of_quotient_mk_eq[T](qrel: QuotientRelation[T], a: T, b: T) {
+    quotient_mk(qrel, a) = quotient_mk(qrel, b) implies qrel.rel(a, b)
+}
+
+theorem quotient_mk_eq_iff_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    (quotient_mk(qrel, a) = quotient_mk(qrel, b)) = qrel.rel(a, b)
+}
+
+theorem quotient_lift_well_defined[T, U](qrel: QuotientRelation[T], f: T -> U, a: T, b: T) {
+    (forall(x: T, y: T) { qrel.rel(x, y) implies f(x) = f(y) }) and
+    quotient_mk(qrel, a) = quotient_mk(qrel, b) implies f(a) = f(b)
+}
+
+theorem quotient_predicate_well_defined[T](qrel: QuotientRelation[T], p: T -> Bool, a: T, b: T) {
+    (forall(x: T, y: T) { qrel.rel(x, y) implies p(x) = p(y) }) and
+    quotient_mk(qrel, a) = quotient_mk(qrel, b) implies p(a) = p(b)
+}
+
+define quotient_projection[T](qrel: QuotientRelation[T], a: T) -> Quotient[T] {
+    quotient_mk(qrel, a)
+}
+
+theorem quotient_projection_eq_mk[T](qrel: QuotientRelation[T], a: T) {
+    quotient_projection(qrel, a) = quotient_mk(qrel, a)
+}
+
+theorem quotient_projection_eq_iff_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    (quotient_projection(qrel, a) = quotient_projection(qrel, b)) = qrel.rel(a, b)
+}
+
+theorem quotient_projection_eq_of_rel[T](qrel: QuotientRelation[T], a: T, b: T) {
+    qrel.rel(a, b) implies quotient_projection(qrel, a) = quotient_projection(qrel, b)
+}
+
+theorem rel_of_quotient_projection_eq[T](qrel: QuotientRelation[T], a: T, b: T) {
+    quotient_projection(qrel, a) = quotient_projection(qrel, b) implies qrel.rel(a, b)
+}
+
+theorem quotient_projection_surjective_on_relation[T](qrel: QuotientRelation[T], q: Quotient[T]) {
+    q.rel = qrel.rel implies exists(a: T) {
+        quotient_projection(qrel, a) = q
+    }
+}
+
+define quotient_respects[T, U](qrel: QuotientRelation[T], f: T -> U) -> Bool {
+    forall(a: T, b: T) {
+        qrel.rel(a, b) implies f(a) = f(b)
+    }
+}
+
+theorem quotient_respects_eq_respects_function[T, U](qrel: QuotientRelation[T], f: T -> U) {
+    quotient_respects(qrel, f) = respects_function(qrel.rel, f)
+}
+
+theorem quotient_respects_step[T, U](qrel: QuotientRelation[T], f: T -> U, a: T, b: T) {
+    quotient_respects(qrel, f) and qrel.rel(a, b) implies f(a) = f(b)
+}
+
+theorem quotient_predicate_respects_eq[T](qrel: QuotientRelation[T], p: T -> Bool) {
+    quotient_respects(qrel, p) = respects_predicate(qrel.rel, p)
+}
+
+theorem quotient_predicate_forward[T](qrel: QuotientRelation[T], p: T -> Bool, a: T, b: T) {
+    quotient_respects(qrel, p) and qrel.rel(a, b) and p(a) implies p(b)
+}
+
+theorem quotient_predicate_backward[T](qrel: QuotientRelation[T], p: T -> Bool, a: T, b: T) {
+    quotient_respects(qrel, p) and qrel.rel(a, b) and p(b) implies p(a)
+}
+
+define quotient_unary_respects[T](qrel: QuotientRelation[T], f: T -> T) -> Bool {
+    forall(a: T, b: T) {
+        qrel.rel(a, b) implies qrel.rel(f(a), f(b))
+    }
+}
+
+define quotient_binary_respects[T](qrel: QuotientRelation[T], op: (T, T) -> T) -> Bool {
+    forall(a1: T, a2: T, b1: T, b2: T) {
+        qrel.rel(a1, a2) and qrel.rel(b1, b2) implies
+        qrel.rel(op(a1, b1), op(a2, b2))
+    }
+}
+
+theorem quotient_unary_respects_eq_respects_unary_op[T](qrel: QuotientRelation[T], f: T -> T) {
+    quotient_unary_respects(qrel, f) = respects_unary_op(qrel.rel, f)
+}
+
+theorem quotient_binary_respects_eq_respects_binary_op[T](qrel: QuotientRelation[T], op: (T, T) -> T) {
+    quotient_binary_respects(qrel, op) = respects_binary_op(qrel.rel, op)
+}
+
+theorem quotient_unary_respects_is_unary_congruence[T](qrel: QuotientRelation[T], f: T -> T) {
+    quotient_unary_respects(qrel, f) implies is_unary_congruence(qrel.rel, f)
+}
+
+theorem quotient_binary_respects_is_binary_congruence[T](qrel: QuotientRelation[T], op: (T, T) -> T) {
+    quotient_binary_respects(qrel, op) implies is_binary_congruence(qrel.rel, op)
+}
+
+theorem quotient_unary_projection_compatible[T](qrel: QuotientRelation[T], f: T -> T, a: T, b: T) {
+    quotient_unary_respects(qrel, f) and qrel.rel(a, b) implies
+    quotient_projection(qrel, f(a)) = quotient_projection(qrel, f(b))
+}
+
+theorem quotient_binary_projection_compatible[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    a1: T,
+    a2: T,
+    b1: T,
+    b2: T
+) {
+    quotient_binary_respects(qrel, op) and qrel.rel(a1, a2) and qrel.rel(b1, b2) implies
+    quotient_projection(qrel, op(a1, b1)) = quotient_projection(qrel, op(a2, b2))
+}
+
+theorem quotient_binary_projection_compatible_left[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    a1: T,
+    a2: T,
+    b: T
+) {
+    quotient_binary_respects(qrel, op) and qrel.rel(a1, a2) implies
+    quotient_projection(qrel, op(a1, b)) = quotient_projection(qrel, op(a2, b))
+}
+
+theorem quotient_binary_projection_compatible_right[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    a: T,
+    b1: T,
+    b2: T
+) {
+    quotient_binary_respects(qrel, op) and qrel.rel(b1, b2) implies
+    quotient_projection(qrel, op(a, b1)) = quotient_projection(qrel, op(a, b2))
+}
+
+define quotient_over_unary_op[T](qrel: QuotientRelation[T], f: T -> T) -> QuotientOver[T] -> QuotientOver[T] {
+    function(q: QuotientOver[T]) {
+        quotient_over_lift(qrel, f, q)
+    }
+}
+
+define quotient_over_const[T](qrel: QuotientRelation[T], a: T) -> QuotientOver[T] {
+    quotient_over_mk(qrel, a)
+}
+
+theorem quotient_over_const_projection[T](qrel: QuotientRelation[T], a: T) {
+    quotient_over_const(qrel, a) = quotient_over_mk(qrel, a)
+}
+
+theorem quotient_over_unary_op_projection[T](qrel: QuotientRelation[T], f: T -> T, a: T) {
+    quotient_unary_respects(qrel, f) implies
+    quotient_over_unary_op(qrel, f, quotient_over_mk(qrel, a)) = quotient_over_mk(qrel, f(a))
+}
+
+theorem quotient_over_unary_op_projection_compatible[T](qrel: QuotientRelation[T], f: T -> T, a: T, b: T) {
+    quotient_unary_respects(qrel, f) and qrel.rel(a, b) implies
+    quotient_over_unary_op(qrel, f, quotient_over_mk(qrel, a)) =
+        quotient_over_unary_op(qrel, f, quotient_over_mk(qrel, b))
+}
+
+let quotient_over_binary_op_at[T](op: (T, T) -> T, p: QuotientOver[T], q: QuotientOver[T]) -> result: QuotientOver[T] satisfy {
+    exists(a: T, b: T) {
+        quotient_over_mk(p.qrel, a) = p and quotient_over_mk(q.qrel, b) = q and
+        result = quotient_over_mk(p.qrel, op(a, b))
+    }
+}
+
+theorem quotient_over_binary_op_at_has_representatives[T](
+    op: (T, T) -> T,
+    p: QuotientOver[T],
+    q: QuotientOver[T]
+) {
+    exists(a: T, b: T) {
+        quotient_over_mk(p.qrel, a) = p and quotient_over_mk(q.qrel, b) = q and
+        quotient_over_binary_op_at(op, p, q) = quotient_over_mk(p.qrel, op(a, b))
+    }
+}
+
+define quotient_over_binary_op[T](op: (T, T) -> T) -> (QuotientOver[T], QuotientOver[T]) -> QuotientOver[T] {
+    function(p: QuotientOver[T], q: QuotientOver[T]) {
+        quotient_over_binary_op_at(op, p, q)
+    }
+}
+
+theorem quotient_over_binary_op_projection[T](qrel: QuotientRelation[T], op: (T, T) -> T, a: T, b: T) {
+    quotient_binary_respects(qrel, op) implies
+    quotient_over_binary_op(op, quotient_over_mk(qrel, a), quotient_over_mk(qrel, b)) =
+        quotient_over_mk(qrel, op(a, b))
+}
+
+theorem quotient_over_binary_op_projection_left[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    a1: T,
+    a2: T,
+    b: T
+) {
+    quotient_binary_respects(qrel, op) and qrel.rel(a1, a2) implies
+    quotient_over_binary_op(op, quotient_over_mk(qrel, a1), quotient_over_mk(qrel, b)) =
+        quotient_over_binary_op(op, quotient_over_mk(qrel, a2), quotient_over_mk(qrel, b))
+}
+
+theorem quotient_over_binary_op_projection_right[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    a: T,
+    b1: T,
+    b2: T
+) {
+    quotient_binary_respects(qrel, op) and qrel.rel(b1, b2) implies
+    quotient_over_binary_op(op, quotient_over_mk(qrel, a), quotient_over_mk(qrel, b1)) =
+        quotient_over_binary_op(op, quotient_over_mk(qrel, a), quotient_over_mk(qrel, b2))
+}
+
+theorem quotient_over_binary_op_projection_identity_left[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    e: T,
+    a: T
+) {
+    quotient_binary_respects(qrel, op) and op(e, a) = a implies
+    quotient_over_binary_op(op, quotient_over_const(qrel, e), quotient_over_mk(qrel, a)) =
+        quotient_over_mk(qrel, a)
+}
+
+theorem quotient_over_binary_op_projection_identity_right[T](
+    qrel: QuotientRelation[T],
+    op: (T, T) -> T,
+    e: T,
+    a: T
+) {
+    quotient_binary_respects(qrel, op) and op(a, e) = a implies
+    quotient_over_binary_op(op, quotient_over_mk(qrel, a), quotient_over_const(qrel, e)) =
+        quotient_over_mk(qrel, a)
+}
+
+theorem quotient_respects_well_defined[T, U](qrel: QuotientRelation[T], f: T -> U, a: T, b: T) {
+    quotient_respects(qrel, f) and
+    quotient_projection(qrel, a) = quotient_projection(qrel, b) implies f(a) = f(b)
+}
+
+let quotient_over_lift_to_at[T, U](f: T -> U, q: QuotientOver[T]) -> result: U satisfy {
+    exists(a: T) {
+        quotient_over_mk(q.qrel, a) = q and result = f(a)
+    }
+}
+
+theorem quotient_over_lift_to_at_has_representative[T, U](
+    f: T -> U,
+    q: QuotientOver[T]
+) {
+    exists(a: T) {
+        quotient_over_mk(q.qrel, a) = q and quotient_over_lift_to_at(f, q) = f(a)
+    }
+}
+
+theorem quotient_over_lift_to_at_projection[T, U](
+    qrel: QuotientRelation[T],
+    f: T -> U,
+    a: T
+) {
+    quotient_respects(qrel, f) implies
+    quotient_over_lift_to_at(f, quotient_over_mk(qrel, a)) = f(a)
+}
+
+define quotient_over_lift_to[T, U](f: T -> U) -> QuotientOver[T] -> U {
+    function(q: QuotientOver[T]) {
+        quotient_over_lift_to_at(f, q)
+    }
+}
+
+theorem quotient_over_lift_to_projection[T, U](
+    qrel: QuotientRelation[T],
+    f: T -> U,
+    a: T
+) {
+    quotient_respects(qrel, f) implies
+    quotient_over_lift_to(f, quotient_over_mk(qrel, a)) = f(a)
+}
+
+let quotient_lift_at[T, U: Inhabited](qrel: QuotientRelation[T], f: T -> U, q: Quotient[T]) -> result: U satisfy {
+    q.rel = qrel.rel implies exists(a: T) {
+        quotient_projection(qrel, a) = q and result = f(a)
+    }
+}
+
+theorem quotient_lift_at_has_representative[T, U: Inhabited](
+    qrel: QuotientRelation[T],
+    f: T -> U,
+    q: Quotient[T]
+) {
+    q.rel = qrel.rel implies exists(a: T) {
+        quotient_projection(qrel, a) = q and quotient_lift_at(qrel, f, q) = f(a)
+    }
+}
+
+theorem quotient_lift_at_projection[T, U: Inhabited](qrel: QuotientRelation[T], f: T -> U, a: T) {
+    quotient_respects(qrel, f) implies
+    quotient_lift_at(qrel, f, quotient_projection(qrel, a)) = f(a)
+}
+
+define quotient_lift[T, U: Inhabited](qrel: QuotientRelation[T], f: T -> U) -> Quotient[T] -> U {
+    function(q: Quotient[T]) {
+        quotient_lift_at(qrel, f, q)
+    }
+}
+
+theorem quotient_lift_projection[T, U: Inhabited](qrel: QuotientRelation[T], f: T -> U, a: T) {
+    quotient_respects(qrel, f) implies quotient_lift(qrel, f, quotient_projection(qrel, a)) = f(a)
+}
+
+theorem quotient_function_eq_at_projection[T, U](
+    qrel: QuotientRelation[T],
+    f: Quotient[T] -> U,
+    g: Quotient[T] -> U,
+    q: Quotient[T]
+) {
+    q.rel = qrel.rel and
+    (forall(a: T) { f(quotient_projection(qrel, a)) = g(quotient_projection(qrel, a)) })
+    implies f(q) = g(q)
+}
+
+theorem quotient_function_eq_on_relation[T, U](
+    qrel: QuotientRelation[T],
+    f: Quotient[T] -> U,
+    g: Quotient[T] -> U
+) {
+    (forall(a: T) { f(quotient_projection(qrel, a)) = g(quotient_projection(qrel, a)) })
+    implies forall(q: Quotient[T]) {
+        q.rel = qrel.rel implies f(q) = g(q)
+    }
+}
+
+theorem quotient_lift_unique_at_projection[T, U: Inhabited](
+    qrel: QuotientRelation[T],
+    f: T -> U,
+    g: Quotient[T] -> U,
+    a: T
+) {
+    quotient_respects(qrel, f) and
+    (forall(x: T) { g(quotient_projection(qrel, x)) = f(x) }) implies
+    g(quotient_projection(qrel, a)) = quotient_lift(qrel, f, quotient_projection(qrel, a))
+}
+
+theorem quotient_lift_unique_on_relation[T, U: Inhabited](
+    qrel: QuotientRelation[T],
+    f: T -> U,
+    g: Quotient[T] -> U
+) {
+    quotient_respects(qrel, f) and
+    (forall(x: T) { g(quotient_projection(qrel, x)) = f(x) }) implies
+    forall(q: Quotient[T]) {
+        q.rel = qrel.rel implies g(q) = quotient_lift(qrel, f, q)
+    }
+}
+
+define quotient_image_set_pred[T](qrel: QuotientRelation[T], s: Set[T], q: Quotient[T]) -> Bool {
+    exists(a: T) {
+        s.contains(a) and quotient_projection(qrel, a) = q
+    }
+}
+
+define quotient_image_set[T](qrel: QuotientRelation[T], s: Set[T]) -> Set[Quotient[T]] {
+    Set[Quotient[T]].new(quotient_image_set_pred(qrel, s))
+}
+
+define quotient_preimage_set_pred[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]], a: T) -> Bool {
+    qs.contains(quotient_projection(qrel, a))
+}
+
+define quotient_preimage_set[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]]) -> Set[T] {
+    Set[T].new(quotient_preimage_set_pred(qrel, qs))
+}
+
+theorem quotient_image_set_contains_eq[T](qrel: QuotientRelation[T], s: Set[T], q: Quotient[T]) {
+    quotient_image_set(qrel, s).contains(q) = exists(a: T) {
+        s.contains(a) and quotient_projection(qrel, a) = q
+    }
+}
+
+theorem quotient_image_set_contains_projection[T](qrel: QuotientRelation[T], s: Set[T], a: T) {
+    s.contains(a) implies quotient_image_set(qrel, s).contains(quotient_projection(qrel, a))
+}
+
+theorem quotient_preimage_set_contains_eq[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]], a: T) {
+    quotient_preimage_set(qrel, qs).contains(a) = qs.contains(quotient_projection(qrel, a))
+}
+
+theorem quotient_preimage_set_is_saturated[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]]) {
+    is_saturated_under(quotient_preimage_set(qrel, qs), qrel.rel)
+}
+
+theorem saturated_step[T](s: Set[T], r: (T, T) -> Bool, x: T, y: T) {
+    is_saturated_under(s, r) and s.contains(x) and r(x, y) implies s.contains(y)
+}
+
+theorem saturated_contains_of_quotient_image_contains_projection[T](qrel: QuotientRelation[T], s: Set[T], a: T) {
+    is_saturated_under(s, qrel.rel) and quotient_image_set(qrel, s).contains(quotient_projection(qrel, a))
+    implies s.contains(a)
+}
+
+theorem saturated_quotient_image_projection_contains_iff[T](qrel: QuotientRelation[T], s: Set[T], a: T) {
+    is_saturated_under(s, qrel.rel) implies
+        quotient_image_set(qrel, s).contains(quotient_projection(qrel, a)) = s.contains(a)
+}
+
+theorem quotient_preimage_image_contains_eq[T](qrel: QuotientRelation[T], s: Set[T], x: T) {
+    quotient_preimage_set(qrel, quotient_image_set(qrel, s)).contains(x) = exists(a: T) {
+        s.contains(a) and quotient_projection(qrel, a) = quotient_projection(qrel, x)
+    }
+}
+
+theorem quotient_image_preimage_subset[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]]) {
+    forall(q: Quotient[T]) {
+        quotient_image_set(qrel, quotient_preimage_set(qrel, qs)).contains(q) implies qs.contains(q)
+    }
+}
+
+theorem quotient_subset_preimage_image[T](qrel: QuotientRelation[T], s: Set[T]) {
+    forall(x: T) {
+        s.contains(x) implies quotient_preimage_set(qrel, quotient_image_set(qrel, s)).contains(x)
+    }
+}
+
+theorem saturated_preimage_image_subset[T](qrel: QuotientRelation[T], s: Set[T]) {
+    is_saturated_under(s, qrel.rel) implies
+    forall(x: T) {
+        quotient_preimage_set(qrel, quotient_image_set(qrel, s)).contains(x) implies s.contains(x)
+    }
+}
+
+theorem saturated_preimage_image_iff[T](qrel: QuotientRelation[T], s: Set[T], x: T) {
+    is_saturated_under(s, qrel.rel) implies
+        quotient_preimage_set(qrel, quotient_image_set(qrel, s)).contains(x) = s.contains(x)
+}
+
+theorem quotient_preimage_image_of_saturated[T](qrel: QuotientRelation[T], s: Set[T]) {
+    is_saturated_under(s, qrel.rel) implies
+        quotient_preimage_set(qrel, quotient_image_set(qrel, s)) = s
+}
+
+theorem on_relation_subset_image_preimage[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]]) {
+    forall(q: Quotient[T]) {
+        qs.contains(q) and q.rel = qrel.rel implies
+            quotient_image_set(qrel, quotient_preimage_set(qrel, qs)).contains(q)
+    }
+}
+
+theorem on_relation_image_preimage_iff[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]], q: Quotient[T]) {
+    (qs.contains(q) implies q.rel = qrel.rel)
+    implies quotient_image_set(qrel, quotient_preimage_set(qrel, qs)).contains(q) = qs.contains(q)
+}
+
+theorem quotient_image_preimage_on_relation[T](qrel: QuotientRelation[T], qs: Set[Quotient[T]]) {
+    (forall(q: Quotient[T]) { qs.contains(q) implies q.rel = qrel.rel })
+    implies quotient_image_set(qrel, quotient_preimage_set(qrel, qs)) = qs
+}
+
+define kernel_relation[T, U](f: T -> U, x: T, y: T) -> Bool {
+    f(x) = f(y)
+}
+
+theorem kernel_relation_is_reflexive[T, U](f: T -> U) {
+    is_reflexive(kernel_relation(f))
+}
+
+theorem kernel_relation_is_symmetric[T, U](f: T -> U) {
+    is_symmetric(kernel_relation(f))
+}
+
+theorem kernel_relation_is_transitive[T, U](f: T -> U) {
+    is_transitive(kernel_relation(f))
+}
+
+theorem kernel_relation_is_equivalence[T, U](f: T -> U) {
+    is_equivalence(kernel_relation(f))
+}
+
+let kernel_quotient_relation[T, U](f: T -> U) -> result: QuotientRelation[T] satisfy {
+    QuotientRelation[T].new(kernel_relation(f)) = Option.some(result)
+}
+
+theorem kernel_quotient_relation_rel[T, U](f: T -> U) {
+    kernel_quotient_relation(f).rel = kernel_relation(f)
+}
+
+theorem kernel_relation_respects[T, U](f: T -> U) {
+    quotient_respects(kernel_quotient_relation(f), f)
+}
+
+define kernel_lift[T, U: Inhabited](f: T -> U) -> Quotient[T] -> U {
+    quotient_lift(kernel_quotient_relation(f), f)
+}
+
+theorem kernel_lift_projection[T, U: Inhabited](f: T -> U, a: T) {
+    kernel_lift(f, quotient_projection(kernel_quotient_relation(f), a)) = f(a)
+}
+
+theorem kernel_quotient_projection_eq_iff[T, U](f: T -> U, a: T, b: T) {
+    (quotient_projection(kernel_quotient_relation(f), a) = quotient_projection(kernel_quotient_relation(f), b))
+    = (f(a) = f(b))
+}
+
+theorem kernel_lift_eq_imp_quotient_eq[T, U: Inhabited](f: T -> U, q: Quotient[T], r: Quotient[T]) {
+    q.rel = kernel_quotient_relation(f).rel and
+    r.rel = kernel_quotient_relation(f).rel and
+    kernel_lift(f, q) = kernel_lift(f, r) implies q = r
+}
+
+theorem kernel_lift_surjective_of_surjective[T, U: Inhabited](f: T -> U) {
+    is_surjective_fn(f) implies forall(y: U) {
+        exists(q: Quotient[T]) {
+            q.rel = kernel_quotient_relation(f).rel and kernel_lift(f, q) = y
+        }
+    }
+}

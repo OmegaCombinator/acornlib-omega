@@ -1,0 +1,72 @@
+
+
+from set.set import Set
+
+/// Interface: option_set.
+
+define option_set_contains[T](s: Set[T], contains_none: Bool, opt: Option[T]) -> Bool {
+    match opt {
+        Option.none {
+            contains_none
+        }
+        Option.some(value) {
+            s.contains(value)
+        }
+    }
+}
+
+define option_set[T](s: Set[T], contains_none: Bool) -> Set[Option[T]] {
+    Set[Option[T]].new(option_set_contains(s, contains_none))
+}
+
+define option_some_set[T](s: Set[T]) -> Set[Option[T]] {
+    option_set(s, false)
+}
+
+define option_with_none_set[T](s: Set[T]) -> Set[Option[T]] {
+    option_set(s, true)
+}
+
+theorem option_set_contains_some[T](s: Set[T], contains_none: Bool, value: T) {
+    option_set(s, contains_none).contains(Option.some(value)) = s.contains(value)
+}
+
+theorem option_set_contains_none[T](s: Set[T], contains_none: Bool) {
+    option_set(s, contains_none).contains(Option.none[T]) = contains_none
+}
+
+theorem option_set_contains_some_of_contains[T](s: Set[T], contains_none: Bool, value: T) {
+    s.contains(value) implies option_set(s, contains_none).contains(Option.some(value))
+}
+
+theorem option_set_contains_imp_contains_some[T](s: Set[T], contains_none: Bool, value: T) {
+    option_set(s, contains_none).contains(Option.some(value)) implies s.contains(value)
+}
+
+theorem option_set_contains_none_iff[T](s: Set[T], contains_none: Bool) {
+    option_set(s, contains_none).contains(Option.none[T]) = contains_none
+}
+
+theorem option_some_set_contains_some[T](s: Set[T], value: T) {
+    option_some_set(s).contains(Option.some(value)) = s.contains(value)
+}
+
+theorem option_some_set_not_contains_none[T](s: Set[T]) {
+    not option_some_set(s).contains(Option.none[T])
+}
+
+theorem option_with_none_set_contains_some[T](s: Set[T], value: T) {
+    option_with_none_set(s).contains(Option.some(value)) = s.contains(value)
+}
+
+theorem option_with_none_set_contains_none[T](s: Set[T]) {
+    option_with_none_set(s).contains(Option.none[T])
+}
+
+theorem option_map_preserves_option_set[T, U](source: Set[T], target: Set[U],
+    contains_none: Bool, f: T -> U, opt: Option[T]) {
+    option_set(source, contains_none).contains(opt) and
+    forall(x: T) {
+        source.contains(x) implies target.contains(f(x))
+    } implies option_set(target, contains_none).contains(option_map(opt, f))
+}

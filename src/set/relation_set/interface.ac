@@ -1,0 +1,169 @@
+/// Interface: relation_set.
+
+from set.set import Set, set_ext, subset_contains, empty_set_contains_eq,
+    universal_set_contains_eq, intersection_contains_eq,
+    intersection_contains_intro
+
+from basic.relation_basic import eq_relation, relation_converse,
+    relation_compose, relation_subset, relation_subset_step,
+    relation_compose_intro, relation_compose_has_witness
+
+define relation_image_contains[A, B](r: (A, B) -> Bool, s: Set[A], y: B) -> Bool {
+    exists(x: A) {
+        s.contains(x) and r(x, y)
+    }
+}
+
+define relation_image[A, B](r: (A, B) -> Bool, s: Set[A]) -> Set[B] {
+    Set[B].new(relation_image_contains(r, s))
+}
+
+theorem relation_image_contains_eq[A, B](r: (A, B) -> Bool, s: Set[A], y: B) {
+    relation_image(r, s).contains(y) = relation_image_contains(r, s, y)
+}
+
+theorem relation_image_intro[A, B](r: (A, B) -> Bool, s: Set[A], x: A, y: B) {
+    s.contains(x) and r(x, y) implies relation_image(r, s).contains(y)
+}
+
+theorem relation_image_has_witness[A, B](r: (A, B) -> Bool, s: Set[A], y: B) {
+    relation_image(r, s).contains(y) implies exists(x: A) {
+        s.contains(x) and r(x, y)
+    }
+}
+
+define relation_preimage_contains[A, B](r: (A, B) -> Bool, t: Set[B], x: A) -> Bool {
+    exists(y: B) {
+        t.contains(y) and r(x, y)
+    }
+}
+
+define relation_preimage[A, B](r: (A, B) -> Bool, t: Set[B]) -> Set[A] {
+    Set[A].new(relation_preimage_contains(r, t))
+}
+
+theorem relation_preimage_contains_eq[A, B](r: (A, B) -> Bool, t: Set[B], x: A) {
+    relation_preimage(r, t).contains(x) = relation_preimage_contains(r, t, x)
+}
+
+theorem relation_preimage_intro[A, B](r: (A, B) -> Bool, t: Set[B], x: A, y: B) {
+    t.contains(y) and r(x, y) implies relation_preimage(r, t).contains(x)
+}
+
+theorem relation_preimage_has_witness[A, B](r: (A, B) -> Bool, t: Set[B], x: A) {
+    relation_preimage(r, t).contains(x) implies exists(y: B) {
+        t.contains(y) and r(x, y)
+    }
+}
+
+define relation_domain[A, B](r: (A, B) -> Bool) -> Set[A] {
+    relation_image(relation_converse(r), Set[B].universal_set)
+}
+
+define relation_range[A, B](r: (A, B) -> Bool) -> Set[B] {
+    relation_image(r, Set[A].universal_set)
+}
+
+define relation_restrict_source[A, B](r: (A, B) -> Bool, s: Set[A], x: A, y: B) -> Bool {
+    s.contains(x) and r(x, y)
+}
+
+define relation_corestrict_target[A, B](r: (A, B) -> Bool, t: Set[B], x: A, y: B) -> Bool {
+    r(x, y) and t.contains(y)
+}
+
+theorem relation_image_monotone_set[A, B](r: (A, B) -> Bool, s: Set[A], t: Set[A]) {
+    s.subset(t) implies relation_image(r, s).subset(relation_image(r, t))
+}
+
+theorem relation_preimage_monotone_set[A, B](r: (A, B) -> Bool, s: Set[B], t: Set[B]) {
+    s.subset(t) implies relation_preimage(r, s).subset(relation_preimage(r, t))
+}
+
+theorem relation_image_monotone_relation[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, a: Set[A]) {
+    relation_subset(r, s) implies relation_image(r, a).subset(relation_image(s, a))
+}
+
+theorem relation_preimage_monotone_relation[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, a: Set[B]) {
+    relation_subset(r, s) implies relation_preimage(r, a).subset(relation_preimage(s, a))
+}
+
+theorem relation_preimage_eq_image_converse[A, B](r: (A, B) -> Bool, t: Set[B]) {
+    relation_preimage(r, t) = relation_image(relation_converse(r), t)
+}
+
+theorem relation_image_eq_preimage_converse[A, B](r: (A, B) -> Bool, s: Set[A]) {
+    relation_image(r, s) = relation_preimage(relation_converse(r), s)
+}
+
+theorem relation_domain_contains_eq[A, B](r: (A, B) -> Bool, x: A) {
+    relation_domain(r).contains(x) = exists(y: B) {
+        r(x, y)
+    }
+}
+
+theorem relation_range_contains_eq[A, B](r: (A, B) -> Bool, y: B) {
+    relation_range(r).contains(y) = exists(x: A) {
+        r(x, y)
+    }
+}
+
+theorem relation_preimage_universal_eq_domain[A, B](r: (A, B) -> Bool) {
+    relation_preimage(r, Set[B].universal_set) = relation_domain(r)
+}
+
+theorem relation_image_empty[A, B](r: (A, B) -> Bool) {
+    relation_image(r, Set[A].empty_set) = Set[B].empty_set
+}
+
+theorem relation_preimage_empty[A, B](r: (A, B) -> Bool) {
+    relation_preimage(r, Set[B].empty_set) = Set[A].empty_set
+}
+
+theorem relation_image_subset_range[A, B](r: (A, B) -> Bool, s: Set[A]) {
+    relation_image(r, s).subset(relation_range(r))
+}
+
+theorem relation_preimage_subset_domain[A, B](r: (A, B) -> Bool, t: Set[B]) {
+    relation_preimage(r, t).subset(relation_domain(r))
+}
+
+theorem relation_image_eq_relation[A](s: Set[A]) {
+    relation_image(eq_relation[A], s) = s
+}
+
+theorem relation_preimage_eq_relation[A](s: Set[A]) {
+    relation_preimage(eq_relation[A], s) = s
+}
+
+theorem relation_image_compose[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool, a: Set[A]) {
+    relation_image(relation_compose(r, s), a) = relation_image(s, relation_image(r, a))
+}
+
+theorem relation_preimage_compose[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool, c: Set[C]) {
+    relation_preimage(relation_compose(r, s), c) = relation_preimage(r, relation_preimage(s, c))
+}
+
+theorem relation_restrict_source_subset[A, B](r: (A, B) -> Bool, s: Set[A]) {
+    relation_subset(relation_restrict_source(r, s), r)
+}
+
+theorem relation_corestrict_target_subset[A, B](r: (A, B) -> Bool, t: Set[B]) {
+    relation_subset(relation_corestrict_target(r, t), r)
+}
+
+theorem relation_image_restrict_source[A, B](r: (A, B) -> Bool, s: Set[A], t: Set[A]) {
+    relation_image(relation_restrict_source(r, s), t) = relation_image(r, s.intersection(t))
+}
+
+theorem relation_preimage_corestrict_target[A, B](r: (A, B) -> Bool, s: Set[B], t: Set[B]) {
+    relation_preimage(relation_corestrict_target(r, s), t) = relation_preimage(r, s.intersection(t))
+}
+
+theorem relation_image_corestrict_target_subset[A, B](r: (A, B) -> Bool, s: Set[A], t: Set[B]) {
+    relation_image(relation_corestrict_target(r, t), s).subset(t)
+}
+
+theorem relation_preimage_restrict_source_subset[A, B](r: (A, B) -> Bool, s: Set[A], t: Set[B]) {
+    relation_preimage(relation_restrict_source(r, s), t).subset(s)
+}
