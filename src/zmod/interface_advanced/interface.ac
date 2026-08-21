@@ -1,0 +1,205 @@
+/// Interface fragment: integer congruence.
+
+attributes Int {
+    /// True if this integer is congruent to b modulo n.
+    define congr_mod(self, b: Int, n: Nat) -> Bool {
+        Int.from_nat(n).divides(self - b)
+    }
+}
+
+theorem int_congr_mod_iff_int_mod_rel(a: Int, b: Int, n: Nat) {
+    a.congr_mod(b, n) = int_mod_rel(n, a, b)
+}
+
+theorem int_mod_rel_of_congr_mod(a: Int, b: Int, n: Nat) {
+    a.congr_mod(b, n) implies int_mod_rel(n, a, b)
+}
+
+theorem int_congr_mod_of_int_mod_rel(a: Int, b: Int, n: Nat) {
+    int_mod_rel(n, a, b) implies a.congr_mod(b, n)
+}
+
+theorem int_congr_mod_zero_eq(a: Int, b: Int) {
+    a.congr_mod(b, Nat.0) = (a = b)
+}
+
+theorem int_congr_mod_zero_iff_divides(a: Int, n: Nat) {
+    a.congr_mod(Int.0, n) = Int.from_nat(n).divides(a)
+}
+
+theorem int_congr_mod_refl(a: Int, n: Nat) {
+    a.congr_mod(a, n)
+}
+
+theorem int_congr_mod_symm(a: Int, b: Int, n: Nat) {
+    a.congr_mod(b, n) implies b.congr_mod(a, n)
+}
+
+theorem int_congr_mod_trans(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) and b.congr_mod(c, n) implies a.congr_mod(c, n)
+}
+
+theorem int_congr_mod_add(a: Int, b: Int, c: Int, d: Int, n: Nat) {
+    a.congr_mod(c, n) and b.congr_mod(d, n) implies (a + b).congr_mod(c + d, n)
+}
+
+theorem int_congr_mod_mul(a: Int, b: Int, c: Int, d: Int, n: Nat) {
+    a.congr_mod(c, n) and b.congr_mod(d, n) implies (a * b).congr_mod(c * d, n)
+}
+
+theorem int_congr_mod_neg(a: Int, b: Int, n: Nat) {
+    a.congr_mod(b, n) implies (-a).congr_mod(-b, n)
+}
+
+theorem int_congr_mod_add_left(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (a + c).congr_mod(b + c, n)
+}
+
+theorem int_congr_mod_add_right(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (c + a).congr_mod(c + b, n)
+}
+
+theorem int_congr_mod_mul_left(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (a * c).congr_mod(b * c, n)
+}
+
+theorem int_congr_mod_mul_right(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (c * a).congr_mod(c * b, n)
+}
+
+theorem int_congr_mod_sub(a: Int, b: Int, c: Int, d: Int, n: Nat) {
+    a.congr_mod(c, n) and b.congr_mod(d, n) implies (a - b).congr_mod(c - d, n)
+}
+
+theorem int_congr_mod_sub_left(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (a - c).congr_mod(b - c, n)
+}
+
+theorem int_congr_mod_sub_right(a: Int, b: Int, c: Int, n: Nat) {
+    a.congr_mod(b, n) implies (c - a).congr_mod(c - b, n)
+}
+
+theorem int_has_nat_residue(x: Int, n: Nat) {
+    n != Nat.0 implies exists(r: Nat) { int_mod_rel(n, x, Int.from_nat(r)) }
+}
+
+define int_read_digits_acc(digits: List[Int], acc: Int) -> Int {
+    match digits {
+        List.nil {
+            acc
+        }
+        List.cons(head, tail) {
+            int_read_digits_acc(tail, acc.read(head))
+        }
+    }
+}
+
+define int_read_digits(digits: List[Int]) -> Int {
+    int_read_digits_acc(digits, Int.0)
+}
+
+define int_digit_sum(digits: List[Int]) -> Int {
+    match digits {
+        List.nil {
+            Int.0
+        }
+        List.cons(head, tail) {
+            head + int_digit_sum(tail)
+        }
+    }
+}
+
+theorem int_read_digits_acc_nil(acc: Int) {
+    int_read_digits_acc(List.nil[Int], acc) = acc
+}
+
+theorem int_read_digits_acc_cons(head: Int, tail: List[Int], acc: Int) {
+    int_read_digits_acc(List.cons(head, tail), acc) = int_read_digits_acc(tail, acc.read(head))
+}
+
+theorem int_read_digits_eq_acc_zero(digits: List[Int]) {
+    int_read_digits(digits) = int_read_digits_acc(digits, Int.0)
+}
+
+theorem int_read_digits_nil {
+    int_read_digits(List.nil[Int]) = Int.0
+}
+
+theorem int_read_digits_cons(head: Int, tail: List[Int]) {
+    int_read_digits(List.cons(head, tail)) = int_read_digits_acc(tail, Int.0.read(head))
+}
+
+theorem int_read_digits_acc_single(acc: Int, digit: Int) {
+    int_read_digits_acc(List.cons(digit, List.nil[Int]), acc) = acc.read(digit)
+}
+
+theorem int_read_digits_single(digit: Int) {
+    int_read_digits(List.cons(digit, List.nil[Int])) = Int.0.read(digit)
+}
+
+theorem int_digit_sum_nil {
+    int_digit_sum(List.nil[Int]) = Int.0
+}
+
+theorem int_digit_sum_cons(head: Int, tail: List[Int]) {
+    int_digit_sum(List.cons(head, tail)) = head + int_digit_sum(tail)
+}
+
+theorem int_digit_sum_single(digit: Int) {
+    int_digit_sum(List.cons(digit, List.nil[Int])) = digit
+}
+
+theorem int_digit_sum_pair(a: Int, b: Int) {
+    int_digit_sum(List.cons(a, List.cons(b, List.nil[Int]))) = a + b
+}
+
+theorem int_read_digits_acc_mod3_compatible(digits: List[Int], x: Int, y: Int) {
+    int_mod_rel(Nat.3, x, y) implies
+    int_mod_rel(Nat.3, int_read_digits_acc(digits, x), int_read_digits_acc(digits, y))
+}
+
+theorem int_read_digits_acc_mod3_compatible_pair(digits: List[Int], x: Int, y: Int) {
+    int_mod_rel(Nat.3, x, y) implies
+    int_mod_rel(Nat.3, int_read_digits_acc(digits, x), int_read_digits_acc(digits, y))
+}
+
+theorem int_read_digits_acc_mod3_of_acc_zero(digits: List[Int], acc: Int) {
+    int_mod_rel(Nat.3, acc, Int.0) implies
+    int_mod_rel(Nat.3, int_read_digits_acc(digits, acc), int_read_digits(digits))
+}
+
+theorem int_read_digits_acc_mod3_digit_sum(digits: List[Int], acc: Int) {
+    int_mod_rel(Nat.3, int_read_digits_acc(digits, acc), acc + int_digit_sum(digits))
+}
+
+theorem int_read_digits_mod3_digit_sum(digits: List[Int]) {
+    int_mod_rel(Nat.3, int_read_digits(digits), int_digit_sum(digits))
+}
+
+theorem int_read_digits_divisible_by_3_eq_digit_sum(digits: List[Int]) {
+    Int.3.divides(int_read_digits(digits)) = Int.3.divides(int_digit_sum(digits))
+}
+
+theorem int_read_digits_divisible_by_3_imp_digit_sum(digits: List[Int]) {
+    Int.3.divides(int_read_digits(digits)) implies Int.3.divides(int_digit_sum(digits))
+}
+
+theorem int_digit_sum_divisible_by_3_imp_read_digits(digits: List[Int]) {
+    Int.3.divides(int_digit_sum(digits)) implies Int.3.divides(int_read_digits(digits))
+}
+
+theorem int_read_digits_acc_divisible_by_3_eq_acc_plus_digit_sum(digits: List[Int], acc: Int) {
+    Int.3.divides(int_read_digits_acc(digits, acc)) = Int.3.divides(acc + int_digit_sum(digits))
+}
+
+theorem int_read_digits_acc_zero_mod3_digit_sum(digits: List[Int]) {
+    int_mod_rel(Nat.3, int_read_digits_acc(digits, Int.0), int_digit_sum(digits))
+}
+
+theorem int_read_digits_acc_zero_divisible_by_3_eq_digit_sum(digits: List[Int]) {
+    Int.3.divides(int_read_digits_acc(digits, Int.0)) = Int.3.divides(int_digit_sum(digits))
+}
+
+theorem int_read_digits_divisible_by_3_eq_acc_zero(digits: List[Int]) {
+    Int.3.divides(int_read_digits(digits)) = Int.3.divides(int_read_digits_acc(digits, Int.0))
+}
