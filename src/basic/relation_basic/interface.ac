@@ -1,0 +1,683 @@
+/// Interface fragment: relation_basic.
+
+define is_reflexive[T](f: (T, T) -> Bool) -> Bool {
+    forall(t: T) {
+        f(t, t)
+    }
+}
+
+define is_symmetric[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T) {
+        f(x, y) implies f(y, x)
+    }
+}
+
+define is_transitive[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T, z: T) {
+        f(x, y) and f(y, z) implies f(x, z)
+    }
+}
+
+define is_antisymmetric[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T) {
+        f(x, y) and f(y, x) implies x = y
+    }
+}
+
+define is_irreflexive[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T) {
+        not f(x, x)
+    }
+}
+
+define is_asymmetric[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T) {
+        f(x, y) implies not f(y, x)
+    }
+}
+
+define is_total[T](f: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T) {
+        f(x, y) or f(y, x)
+    }
+}
+
+define is_equivalence[T](f: (T, T) -> Bool) -> Bool {
+    is_reflexive(f) and is_symmetric(f) and is_transitive(f)
+}
+
+define is_partial_equivalence[T](f: (T, T) -> Bool) -> Bool {
+    is_symmetric(f) and is_transitive(f)
+}
+
+define eq_relation[T](x: T, y: T) -> Bool {
+    x = y
+}
+
+define relation_compose[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool, x: A, z: C) -> Bool {
+    exists(y: B) {
+        r(x, y) and s(y, z)
+    }
+}
+
+define relation_intersection[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, x: A, y: B) -> Bool {
+    r(x, y) and s(x, y)
+}
+
+define relation_union[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, x: A, y: B) -> Bool {
+    r(x, y) or s(x, y)
+}
+
+define relation_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) -> Bool {
+    forall(x: A, y: B) {
+        r(x, y) implies s(x, y)
+    }
+}
+
+theorem relation_subset_step[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, x: A, y: B) {
+    relation_subset(r, s) and r(x, y) implies s(x, y)
+}
+
+theorem relation_subset_refl[A, B](r: (A, B) -> Bool) {
+    relation_subset(r, r)
+}
+
+theorem relation_subset_trans[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, t: (A, B) -> Bool) {
+    relation_subset(r, s) and relation_subset(s, t) implies relation_subset(r, t)
+}
+
+theorem relation_eq_iff_subset_both[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    r = s = (relation_subset(r, s) and relation_subset(s, r))
+}
+
+theorem relation_intersection_left_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(relation_intersection(r, s), r)
+}
+
+theorem relation_intersection_right_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(relation_intersection(r, s), s)
+}
+
+theorem relation_subset_intersection[A, B](t: (A, B) -> Bool, r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(t, r) and relation_subset(t, s) implies relation_subset(t, relation_intersection(r, s))
+}
+
+theorem relation_intersection_comm[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_intersection(r, s) = relation_intersection(s, r)
+}
+
+theorem relation_intersection_assoc[A, B](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (A, B) -> Bool
+) {
+    relation_intersection(r, relation_intersection(s, t)) =
+    relation_intersection(relation_intersection(r, s), t)
+}
+
+theorem relation_intersection_idempotent[A, B](r: (A, B) -> Bool) {
+    relation_intersection(r, r) = r
+}
+
+theorem relation_intersection_monotone[A, B](
+    r1: (A, B) -> Bool,
+    r2: (A, B) -> Bool,
+    s1: (A, B) -> Bool,
+    s2: (A, B) -> Bool
+) {
+    relation_subset(r1, r2) and relation_subset(s1, s2) implies
+    relation_subset(relation_intersection(r1, s1), relation_intersection(r2, s2))
+}
+
+theorem relation_intersection_subset_right_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(r, s) implies relation_intersection(r, s) = r
+}
+
+theorem relation_intersection_subset_left_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(r, s) implies relation_intersection(s, r) = r
+}
+
+theorem relation_union_left_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(r, relation_union(r, s))
+}
+
+theorem relation_union_right_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(s, relation_union(r, s))
+}
+
+theorem relation_union_subset[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, t: (A, B) -> Bool) {
+    relation_subset(r, t) and relation_subset(s, t) implies relation_subset(relation_union(r, s), t)
+}
+
+theorem relation_union_monotone[A, B](
+    r1: (A, B) -> Bool,
+    r2: (A, B) -> Bool,
+    s1: (A, B) -> Bool,
+    s2: (A, B) -> Bool
+) {
+    relation_subset(r1, r2) and relation_subset(s1, s2) implies
+    relation_subset(relation_union(r1, s1), relation_union(r2, s2))
+}
+
+theorem relation_union_comm[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_union(r, s) = relation_union(s, r)
+}
+
+theorem relation_union_assoc[A, B](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (A, B) -> Bool
+) {
+    relation_union(r, relation_union(s, t)) = relation_union(relation_union(r, s), t)
+}
+
+theorem relation_union_idempotent[A, B](r: (A, B) -> Bool) {
+    relation_union(r, r) = r
+}
+
+theorem relation_union_subset_right_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(s, r) implies relation_union(r, s) = r
+}
+
+theorem relation_union_subset_left_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_subset(s, r) implies relation_union(s, r) = r
+}
+
+theorem relation_intersection_union_absorb[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_intersection(r, relation_union(r, s)) = r
+}
+
+theorem relation_union_intersection_absorb[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_union(r, relation_intersection(r, s)) = r
+}
+
+theorem relation_intersection_union_distrib[A, B](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (A, B) -> Bool
+) {
+    relation_intersection(r, relation_union(s, t)) =
+    relation_union(relation_intersection(r, s), relation_intersection(r, t))
+}
+
+theorem relation_union_intersection_distrib[A, B](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (A, B) -> Bool
+) {
+    relation_union(r, relation_intersection(s, t)) =
+    relation_intersection(relation_union(r, s), relation_union(r, t))
+}
+
+theorem equivalence_is_reflexive[T](f: (T, T) -> Bool) {
+    is_equivalence(f) implies is_reflexive(f)
+}
+
+theorem relation_compose_intro[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool, x: A, y: B, z: C) {
+    r(x, y) and s(y, z) implies relation_compose(r, s, x, z)
+}
+
+theorem relation_compose_has_witness[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool, x: A, z: C) {
+    relation_compose(r, s, x, z) implies exists(y: B) {
+        r(x, y) and s(y, z)
+    }
+}
+
+theorem relation_compose_assoc[A, B, C, D](
+    r: (A, B) -> Bool,
+    s: (B, C) -> Bool,
+    t: (C, D) -> Bool
+) {
+    relation_compose(relation_compose(r, s), t) = relation_compose(r, relation_compose(s, t))
+}
+
+theorem relation_compose_eq_relation_left[A, B](r: (A, B) -> Bool) {
+    relation_compose(eq_relation[A], r) = r
+}
+
+theorem relation_compose_eq_relation_right[A, B](r: (A, B) -> Bool) {
+    relation_compose(r, eq_relation[B]) = r
+}
+
+theorem relation_compose_monotone[A, B, C](
+    r1: (A, B) -> Bool,
+    r2: (A, B) -> Bool,
+    s1: (B, C) -> Bool,
+    s2: (B, C) -> Bool
+) {
+    relation_subset(r1, r2) and relation_subset(s1, s2) implies
+    relation_subset(relation_compose(r1, s1), relation_compose(r2, s2))
+}
+
+theorem relation_compose_union_left[A, B, C](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (B, C) -> Bool
+) {
+    relation_compose(relation_union(r, s), t) =
+        relation_union(relation_compose(r, t), relation_compose(s, t))
+}
+
+theorem relation_compose_union_right[A, B, C](
+    r: (A, B) -> Bool,
+    s: (B, C) -> Bool,
+    t: (B, C) -> Bool
+) {
+    relation_compose(r, relation_union(s, t)) =
+        relation_union(relation_compose(r, s), relation_compose(r, t))
+}
+
+theorem relation_compose_intersection_left_subset[A, B, C](
+    r: (A, B) -> Bool,
+    s: (A, B) -> Bool,
+    t: (B, C) -> Bool
+) {
+    relation_subset(
+        relation_compose(relation_intersection(r, s), t),
+        relation_intersection(relation_compose(r, t), relation_compose(s, t))
+    )
+}
+
+theorem relation_compose_intersection_right_subset[A, B, C](
+    r: (A, B) -> Bool,
+    s: (B, C) -> Bool,
+    t: (B, C) -> Bool
+) {
+    relation_subset(
+        relation_compose(r, relation_intersection(s, t)),
+        relation_intersection(relation_compose(r, s), relation_compose(r, t))
+    )
+}
+
+define relation_converse[A, B](r: (A, B) -> Bool, y: B, x: A) -> Bool {
+    r(x, y)
+}
+
+theorem relation_converse_involutive[A, B](r: (A, B) -> Bool) {
+    relation_converse(relation_converse(r)) = r
+}
+
+theorem relation_converse_eq_relation[T] {
+    relation_converse(eq_relation[T]) = eq_relation[T]
+}
+
+theorem relation_converse_compose[A, B, C](r: (A, B) -> Bool, s: (B, C) -> Bool) {
+    relation_converse(relation_compose(r, s)) = relation_compose(relation_converse(s), relation_converse(r))
+}
+
+theorem relation_converse_monotone[A, B](r1: (A, B) -> Bool, r2: (A, B) -> Bool) {
+    relation_subset(r1, r2) implies relation_subset(relation_converse(r1), relation_converse(r2))
+}
+
+theorem asymmetric_imp_irreflexive[T](r: (T, T) -> Bool) {
+    is_asymmetric(r) implies is_irreflexive(r)
+}
+
+theorem asymmetric_imp_antisymmetric[T](r: (T, T) -> Bool) {
+    is_asymmetric(r) implies is_antisymmetric(r)
+}
+
+theorem relation_converse_is_irreflexive[T](r: (T, T) -> Bool) {
+    is_irreflexive(r) implies is_irreflexive(relation_converse(r))
+}
+
+theorem relation_converse_is_reflexive[T](r: (T, T) -> Bool) {
+    is_reflexive(r) implies is_reflexive(relation_converse(r))
+}
+
+theorem relation_converse_is_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies is_symmetric(relation_converse(r))
+}
+
+theorem relation_converse_is_transitive[T](r: (T, T) -> Bool) {
+    is_transitive(r) implies is_transitive(relation_converse(r))
+}
+
+theorem relation_converse_is_asymmetric[T](r: (T, T) -> Bool) {
+    is_asymmetric(r) implies is_asymmetric(relation_converse(r))
+}
+
+theorem relation_converse_is_total[T](r: (T, T) -> Bool) {
+    is_total(r) implies is_total(relation_converse(r))
+}
+
+theorem relation_converse_is_antisymmetric[T](r: (T, T) -> Bool) {
+    is_antisymmetric(r) implies is_antisymmetric(relation_converse(r))
+}
+
+theorem relation_converse_intersection[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_converse(relation_intersection(r, s)) =
+    relation_intersection(relation_converse(r), relation_converse(s))
+}
+
+theorem relation_converse_union[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    relation_converse(relation_union(r, s)) =
+    relation_union(relation_converse(r), relation_converse(s))
+}
+
+theorem relation_converse_subset_of_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies relation_subset(relation_converse(r), r)
+}
+
+theorem relation_subset_converse_of_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies relation_subset(r, relation_converse(r))
+}
+
+theorem symmetric_relation_converse_eq_at[T](r: (T, T) -> Bool, x: T, y: T) {
+    is_symmetric(r) implies relation_converse(r, x, y) = r(x, y)
+}
+
+theorem symmetric_imp_relation_converse_eq[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies relation_converse(r) = r
+}
+
+theorem relation_converse_eq_imp_symmetric[T](r: (T, T) -> Bool) {
+    relation_converse(r) = r implies is_symmetric(r)
+}
+
+define relation_reflexive_closure[T](r: (T, T) -> Bool, x: T, y: T) -> Bool {
+    eq_relation[T](x, y) or r(x, y)
+}
+
+theorem relation_subset_reflexive_closure[T](r: (T, T) -> Bool) {
+    relation_subset(r, relation_reflexive_closure(r))
+}
+
+theorem relation_reflexive_closure_is_reflexive[T](r: (T, T) -> Bool) {
+    is_reflexive(relation_reflexive_closure(r))
+}
+
+theorem relation_reflexive_closure_subset_of_reflexive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(s) and relation_subset(r, s) implies relation_subset(relation_reflexive_closure(r), s)
+}
+
+define relation_symmetric_closure[T](r: (T, T) -> Bool, x: T, y: T) -> Bool {
+    r(x, y) or relation_converse(r, x, y)
+}
+
+theorem relation_subset_symmetric_closure[T](r: (T, T) -> Bool) {
+    relation_subset(r, relation_symmetric_closure(r))
+}
+
+theorem relation_symmetric_closure_is_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(relation_symmetric_closure(r))
+}
+
+theorem relation_symmetric_closure_subset_of_symmetric[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_symmetric(s) and relation_subset(r, s) implies relation_subset(relation_symmetric_closure(r), s)
+}
+
+theorem relation_reflexive_closure_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    relation_subset(r, s) implies
+        relation_subset(relation_reflexive_closure(r), relation_reflexive_closure(s))
+}
+
+theorem relation_reflexive_closure_eq_self_of_reflexive[T](r: (T, T) -> Bool) {
+    is_reflexive(r) implies relation_reflexive_closure(r) = r
+}
+
+theorem relation_reflexive_closure_idempotent[T](r: (T, T) -> Bool) {
+    relation_reflexive_closure(relation_reflexive_closure(r)) = relation_reflexive_closure(r)
+}
+
+theorem relation_symmetric_closure_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    relation_subset(r, s) implies
+        relation_subset(relation_symmetric_closure(r), relation_symmetric_closure(s))
+}
+
+theorem relation_symmetric_closure_eq_self_of_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies relation_symmetric_closure(r) = r
+}
+
+theorem relation_symmetric_closure_idempotent[T](r: (T, T) -> Bool) {
+    relation_symmetric_closure(relation_symmetric_closure(r)) = relation_symmetric_closure(r)
+}
+
+theorem equivalence_is_symmetric[T](f: (T, T) -> Bool) {
+    is_equivalence(f) implies is_symmetric(f)
+}
+
+theorem partial_equivalence_is_symmetric[T](f: (T, T) -> Bool) {
+    is_partial_equivalence(f) implies is_symmetric(f)
+}
+
+theorem equivalence_imp_relation_converse_eq[T](r: (T, T) -> Bool) {
+    is_equivalence(r) implies relation_converse(r) = r
+}
+
+theorem partial_equivalence_imp_relation_converse_eq[T](r: (T, T) -> Bool) {
+    is_partial_equivalence(r) implies relation_converse(r) = r
+}
+
+theorem equivalence_is_transitive[T](f: (T, T) -> Bool) {
+    is_equivalence(f) implies is_transitive(f)
+}
+
+theorem partial_equivalence_is_transitive[T](f: (T, T) -> Bool) {
+    is_partial_equivalence(f) implies is_transitive(f)
+}
+
+theorem reflexive_self[T](f: (T, T) -> Bool, x: T) {
+    is_reflexive(f) implies f(x, x)
+}
+
+theorem symmetric_flip[T](f: (T, T) -> Bool, x: T, y: T) {
+    is_symmetric(f) and f(x, y) implies f(y, x)
+}
+
+theorem partial_equivalence_flip[T](f: (T, T) -> Bool, x: T, y: T) {
+    is_partial_equivalence(f) and f(x, y) implies f(y, x)
+}
+
+theorem transitive_step[T](f: (T, T) -> Bool, x: T, y: T, z: T) {
+    is_transitive(f) and f(x, y) and f(y, z) implies f(x, z)
+}
+
+theorem partial_equivalence_step[T](f: (T, T) -> Bool, x: T, y: T, z: T) {
+    is_partial_equivalence(f) and f(x, y) and f(y, z) implies f(x, z)
+}
+
+theorem antisymmetric_eq[T](f: (T, T) -> Bool, x: T, y: T) {
+    is_antisymmetric(f) and f(x, y) and f(y, x) implies x = y
+}
+
+theorem eq_relation_is_equivalence[T] {
+    is_equivalence(eq_relation[T])
+}
+
+theorem eq_relation_is_partial_equivalence[T] {
+    is_partial_equivalence(eq_relation[T])
+}
+
+theorem relation_eq_imp_reflexive[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_reflexive(f) implies is_reflexive(g)
+}
+
+theorem relation_eq_imp_reflexive_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_reflexive(g) implies is_reflexive(f)
+}
+
+theorem relation_eq_imp_symmetric[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_symmetric(f) implies is_symmetric(g)
+}
+
+theorem relation_eq_imp_symmetric_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_symmetric(g) implies is_symmetric(f)
+}
+
+theorem relation_eq_imp_transitive[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_transitive(f) implies is_transitive(g)
+}
+
+theorem relation_eq_imp_transitive_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_transitive(g) implies is_transitive(f)
+}
+
+theorem relation_eq_imp_antisymmetric[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_antisymmetric(f) implies is_antisymmetric(g)
+}
+
+theorem relation_eq_imp_antisymmetric_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_antisymmetric(g) implies is_antisymmetric(f)
+}
+
+theorem relation_eq_imp_irreflexive[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_irreflexive(f) implies is_irreflexive(g)
+}
+
+theorem relation_eq_imp_irreflexive_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_irreflexive(g) implies is_irreflexive(f)
+}
+
+theorem relation_eq_imp_asymmetric[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_asymmetric(f) implies is_asymmetric(g)
+}
+
+theorem relation_eq_imp_asymmetric_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_asymmetric(g) implies is_asymmetric(f)
+}
+
+theorem relation_eq_imp_total[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_total(f) implies is_total(g)
+}
+
+theorem relation_eq_imp_total_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_total(g) implies is_total(f)
+}
+
+theorem relation_eq_imp_equivalence[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_equivalence(f) implies is_equivalence(g)
+}
+
+theorem relation_eq_imp_equivalence_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_equivalence(g) implies is_equivalence(f)
+}
+
+theorem relation_eq_imp_partial_equivalence[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_partial_equivalence(f) implies is_partial_equivalence(g)
+}
+
+theorem relation_eq_imp_partial_equivalence_rev[T](f: (T, T) -> Bool, g: (T, T) -> Bool) {
+    f = g and is_partial_equivalence(g) implies is_partial_equivalence(f)
+}
+
+theorem relation_subset_eq_left[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, t: (A, B) -> Bool) {
+    r = s and relation_subset(r, t) implies relation_subset(s, t)
+}
+
+theorem relation_subset_eq_right[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, t: (A, B) -> Bool) {
+    s = t and relation_subset(r, s) implies relation_subset(r, t)
+}
+
+theorem relation_subset_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool, t: (A, B) -> Bool, u: (A, B) -> Bool) {
+    r = s and t = u and relation_subset(r, t) implies relation_subset(s, u)
+}
+
+theorem reflexive_symmetric_transitive_imp_equivalence[T](f: (T, T) -> Bool) {
+    is_reflexive(f) and is_symmetric(f) and is_transitive(f) implies is_equivalence(f)
+}
+
+theorem symmetric_transitive_imp_partial_equivalence[T](f: (T, T) -> Bool) {
+    is_symmetric(f) and is_transitive(f) implies is_partial_equivalence(f)
+}
+
+theorem equivalence_imp_partial_equivalence[T](f: (T, T) -> Bool) {
+    is_equivalence(f) implies is_partial_equivalence(f)
+}
+
+theorem equivalence_self[T](f: (T, T) -> Bool, x: T) {
+    is_equivalence(f) implies f(x, x)
+}
+
+theorem equivalence_flip[T](f: (T, T) -> Bool, x: T, y: T) {
+    is_equivalence(f) and f(x, y) implies f(y, x)
+}
+
+theorem equivalence_step[T](f: (T, T) -> Bool, x: T, y: T, z: T) {
+    is_equivalence(f) and f(x, y) and f(y, z) implies f(x, z)
+}
+
+theorem relation_intersection_is_reflexive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(r) and is_reflexive(s) implies is_reflexive(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_symmetric[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_symmetric(r) and is_symmetric(s) implies is_symmetric(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_transitive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_transitive(r) and is_transitive(s) implies is_transitive(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_equivalence[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_equivalence(r) and is_equivalence(s) implies is_equivalence(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_partial_equivalence[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_partial_equivalence(r) and is_partial_equivalence(s) implies
+    is_partial_equivalence(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_antisymmetric_left[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_antisymmetric(r) implies is_antisymmetric(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_antisymmetric_right[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_antisymmetric(s) implies is_antisymmetric(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_irreflexive_left[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_irreflexive(r) implies is_irreflexive(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_irreflexive_right[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_irreflexive(s) implies is_irreflexive(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_asymmetric_left[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_asymmetric(r) implies is_asymmetric(relation_intersection(r, s))
+}
+
+theorem relation_intersection_is_asymmetric_right[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_asymmetric(s) implies is_asymmetric(relation_intersection(r, s))
+}
+
+theorem relation_union_is_reflexive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(r) and is_reflexive(s) implies is_reflexive(relation_union(r, s))
+}
+
+theorem relation_union_is_irreflexive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_irreflexive(r) and is_irreflexive(s) implies is_irreflexive(relation_union(r, s))
+}
+
+theorem relation_union_is_symmetric[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_symmetric(r) and is_symmetric(s) implies is_symmetric(relation_union(r, s))
+}
+
+theorem relation_union_is_total[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_total(r) and is_total(s) implies is_total(relation_union(r, s))
+}
+
+theorem relation_union_is_reflexive_left[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(r) implies is_reflexive(relation_union(r, s))
+}
+
+theorem relation_union_is_reflexive_right[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(s) implies is_reflexive(relation_union(r, s))
+}
+
+theorem relation_union_is_total_left[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_total(r) implies is_total(relation_union(r, s))
+}
+
+theorem relation_union_is_total_right[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_total(s) implies is_total(relation_union(r, s))
+}
+
+theorem relation_converse_is_equivalence[T](r: (T, T) -> Bool) {
+    is_equivalence(r) implies is_equivalence(relation_converse(r))
+}
+
+theorem relation_converse_is_partial_equivalence[T](r: (T, T) -> Bool) {
+    is_partial_equivalence(r) implies is_partial_equivalence(relation_converse(r))
+}
