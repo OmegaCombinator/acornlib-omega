@@ -1,0 +1,90 @@
+theorem strictly_growing_upto_weaken[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat, m: Nat
+) {
+    strictly_growing_upto(g, s, b, n) and m <= n implies strictly_growing_upto(g, s, b, m)
+}
+
+theorem forcing_iterate_card_bound[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) and strictly_growing_upto(g, s, b, n)
+        implies fs_card(b) + n <= fs_card(forcing_iterate(g, s, b, n))
+}
+
+theorem forcing_iterate_becomes_stationary[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    b.subset_eq(s) implies not strictly_growing_upto(g, s, b, fs_card(s).suc)
+}
+
+theorem forcing_iterate_fixed_point_exists[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    b.subset_eq(s) implies exists(k: Nat) {
+        k <= fs_card(s) and forcing_iterate(g, s, b, k.suc) = forcing_iterate(g, s, b, k)
+    }
+}
+
+theorem complete_graph_can_force_last[V](
+    s: FiniteSet[V], v: V, u: V
+) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies can_force(complete_graph[V], s, fs_remove(s, v), u, v)
+}
+
+theorem complete_graph_derived_set_all[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies derived_set(complete_graph[V], s, fs_remove(s, v)) = s
+}
+
+theorem complete_graph_remove_is_zero_forcing[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and fs_remove(s, v).contains(u)
+        implies is_zero_forcing_set(complete_graph[V], s, fs_remove(s, v))
+}
+
+theorem complete_graph_zero_forcing_number_lt[V](s: FiniteSet[V], v: V, u: V) {
+    s.contains(v) and s.contains(u) and u != v
+        implies zero_forcing_number(complete_graph[V], s) < fs_card(s)
+}
+
+theorem complete_graph_two_white_blocks_forcing[V](
+    s: FiniteSet[V], b: FiniteSet[V], w1: V, w2: V
+) {
+    s.contains(w1) and not b.contains(w1) and s.contains(w2) and not b.contains(w2)
+        and w1 != w2
+        implies is_forcing_closed(complete_graph[V], s, b)
+}
+
+theorem complete_graph_zero_forcing_set_card[V](s: FiniteSet[V], b: FiniteSet[V]) {
+    b.subset_eq(s) and is_zero_forcing_set(complete_graph[V], s, b)
+        implies fs_card(fs_difference(s, b)) < Nat.2
+}
+
+theorem walk_concat[V](g: SimpleGraph[V], a: V, m: V, b: V, w1: List[V], w2: List[V]) {
+    simple_graph_walk(g, a, m, w1) and simple_graph_walk(g, m, b, w2)
+        implies simple_graph_walk(g, a, b, w1 + w2)
+}
+
+theorem walk_reverse[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps)
+        implies simple_graph_walk(g, b, a, rev_walk_targets(steps, a))
+}
+
+define graph_distance[V](g: SimpleGraph[V], x: V, y: V, n: Nat) -> Bool {
+    exists(steps: List[V]) {
+        simple_graph_walk(g, x, y, steps) and steps.length = n and
+            forall(shorter: List[V]) {
+                simple_graph_walk(g, x, y, shorter) implies n <= shorter.length
+            }
+    }
+}
+
+theorem graph_distance_adj[V](g: SimpleGraph[V], x: V, y: V) {
+    g.adj(x, y) implies graph_distance(g, x, y, Nat.1)
+}
+
+theorem walk_contains_path[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) implies exists(steps2: List[V]) {
+        simple_graph_path(g, a, b, steps2)
+    }
+}

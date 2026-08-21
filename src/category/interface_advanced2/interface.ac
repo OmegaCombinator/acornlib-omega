@@ -1,3 +1,442 @@
+theorem cone_apply_src[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M,
+    i: JO
+) {
+    is_cone(c, d, n, legs) implies c.src(legs(i)) = n
+}
+
+theorem cone_apply_dst[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M,
+    i: JO
+) {
+    is_cone(c, d, n, legs) implies c.dst(legs(i)) = d.obj_map(i)
+}
+
+theorem cone_apply_naturality[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M,
+    f: JM
+) {
+    is_cone(c, d, n, legs) implies
+        c.compose(d.mor_map(f), legs(d.src_cat.src(f))) = legs(d.src_cat.dst(f))
+}
+
+theorem cone_intro[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M
+) {
+    (forall(i: JO) { c.src(legs(i)) = n })
+    and (forall(i: JO) { c.dst(legs(i)) = d.obj_map(i) })
+    and (forall(f: JM) {
+        c.compose(d.mor_map(f), legs(d.src_cat.src(f))) = legs(d.src_cat.dst(f))
+    })
+    implies is_cone(c, d, n, legs)
+}
+
+define is_cone_map[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    m: O,
+    mlegs: JO -> M,
+    n: O,
+    legs: JO -> M,
+    f: M
+) -> Bool {
+    c.src(f) = m
+    and c.dst(f) = n
+    and forall(i: JO) { c.compose(legs(i), f) = mlegs(i) }
+}
+
+theorem cone_map_apply_src[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    m: O,
+    mlegs: JO -> M,
+    n: O,
+    legs: JO -> M,
+    f: M
+) {
+    is_cone_map(c, d, m, mlegs, n, legs, f) implies c.src(f) = m
+}
+
+theorem cone_map_apply_dst[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    m: O,
+    mlegs: JO -> M,
+    n: O,
+    legs: JO -> M,
+    f: M
+) {
+    is_cone_map(c, d, m, mlegs, n, legs, f) implies c.dst(f) = n
+}
+
+theorem cone_map_apply_legs[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    m: O,
+    mlegs: JO -> M,
+    n: O,
+    legs: JO -> M,
+    f: M,
+    i: JO
+) {
+    is_cone_map(c, d, m, mlegs, n, legs, f) implies c.compose(legs(i), f) = mlegs(i)
+}
+
+define is_limit[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M
+) -> Bool {
+    is_cone(c, d, n, legs)
+    and forall(m: O, mlegs: JO -> M) {
+        is_cone(c, d, m, mlegs) implies exists(f: M) {
+            is_cone_map(c, d, m, mlegs, n, legs, f)
+        }
+    }
+    and forall(m: O, mlegs: JO -> M, f: M, g: M) {
+        is_cone(c, d, m, mlegs)
+        and is_cone_map(c, d, m, mlegs, n, legs, f)
+        and is_cone_map(c, d, m, mlegs, n, legs, g)
+        implies f = g
+    }
+}
+
+theorem limit_is_cone[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M
+) {
+    is_limit(c, d, n, legs) implies is_cone(c, d, n, legs)
+}
+
+theorem is_limit_intro[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M
+) {
+    is_cone(c, d, n, legs)
+    and (forall(m: O, mlegs: JO -> M) {
+        is_cone(c, d, m, mlegs) implies exists(f: M) {
+            is_cone_map(c, d, m, mlegs, n, legs, f)
+        }
+    })
+    and (forall(m: O, mlegs: JO -> M, f: M, g: M) {
+        is_cone(c, d, m, mlegs)
+        and is_cone_map(c, d, m, mlegs, n, legs, f)
+        and is_cone_map(c, d, m, mlegs, n, legs, g)
+        implies f = g
+    })
+    implies is_limit(c, d, n, legs)
+}
+
+theorem limit_existence[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M,
+    m: O,
+    mlegs: JO -> M
+) {
+    is_limit(c, d, n, legs) and is_cone(c, d, m, mlegs) implies
+        exists(f: M) { is_cone_map(c, d, m, mlegs, n, legs, f) }
+}
+
+theorem limit_uniqueness[O, M, JO, JM](
+    c: Category[O, M],
+    d: Functor[JO, JM, O, M],
+    n: O,
+    legs: JO -> M,
+    m: O,
+    mlegs: JO -> M,
+    f: M,
+    g: M
+) {
+    is_limit(c, d, n, legs)
+    and is_cone(c, d, m, mlegs)
+    and is_cone_map(c, d, m, mlegs, n, legs, f)
+    and is_cone_map(c, d, m, mlegs, n, legs, g)
+    implies f = g
+}
+
+define is_terminal[O, M](c: Category[O, M], t: O) -> Bool {
+    forall(x: O) {
+        exists(f: M) {
+            c.src(f) = x
+            and c.dst(f) = t
+            and forall(g: M) {
+                c.src(g) = x and c.dst(g) = t implies g = f
+            }
+        }
+    }
+}
+
+theorem terminal_arrow_exists[O, M](c: Category[O, M], t: O, x: O) {
+    is_terminal(c, t) implies exists(f: M) { c.src(f) = x and c.dst(f) = t }
+}
+
+theorem terminal_arrow_unique[O, M](c: Category[O, M], t: O, f: M, g: M, x: O) {
+    is_terminal(c, t)
+    and c.src(f) = x and c.dst(f) = t
+    and c.src(g) = x and c.dst(g) = t
+    implies f = g
+}
+
+define is_initial[O, M](c: Category[O, M], i: O) -> Bool {
+    forall(x: O) {
+        exists(f: M) {
+            c.src(f) = i
+            and c.dst(f) = x
+            and forall(g: M) {
+                c.src(g) = i and c.dst(g) = x implies g = f
+            }
+        }
+    }
+}
+
+theorem initial_arrow_exists[O, M](c: Category[O, M], i: O, x: O) {
+    is_initial(c, i) implies exists(f: M) { c.src(f) = i and c.dst(f) = x }
+}
+
+theorem initial_arrow_unique[O, M](c: Category[O, M], i: O, f: M, g: M, x: O) {
+    is_initial(c, i)
+    and c.src(f) = i and c.dst(f) = x
+    and c.src(g) = i and c.dst(g) = x
+    implies f = g
+}
+
+theorem terminal_category_terminal {
+    is_terminal(terminal_category, UnitType.point)
+}
+
+theorem terminal_category_initial {
+    is_initial(terminal_category, UnitType.point)
+}
+
+theorem terminal_objects_iso[O, M](c: Category[O, M], t: O, s: O) {
+    is_terminal(c, t) and is_terminal(c, s) implies
+        exists(e: Iso[O, M]) {
+            e.cat = c and e.cat.src(e.hom) = s and e.cat.dst(e.hom) = t
+        }
+}
+
+define product_triangle[O, M](
+    c: Category[O, M],
+    a: O,
+    b: O,
+    p: O,
+    proj1: M,
+    proj2: M,
+    x: O,
+    f: M,
+    g: M,
+    h: M
+) -> Bool {
+    c.src(h) = x and c.dst(h) = p
+    and c.compose(proj1, h) = f
+    and c.compose(proj2, h) = g
+}
+
+define is_product[O, M](
+    c: Category[O, M],
+    a: O,
+    b: O,
+    p: O,
+    proj1: M,
+    proj2: M
+) -> Bool {
+    c.src(proj1) = p and c.dst(proj1) = a
+    and c.src(proj2) = p and c.dst(proj2) = b
+    and forall(x: O, f: M, g: M) {
+        c.src(f) = x and c.dst(f) = a and c.src(g) = x and c.dst(g) = b implies
+        exists(h: M) {
+            product_triangle(c, a, b, p, proj1, proj2, x, f, g, h)
+            and forall(k: M) {
+                product_triangle(c, a, b, p, proj1, proj2, x, f, g, k) implies k = h
+            }
+        }
+    }
+}
+
+theorem is_product_intro[O, M](
+    c: Category[O, M],
+    a: O,
+    b: O,
+    p: O,
+    proj1: M,
+    proj2: M
+) {
+    c.src(proj1) = p and c.dst(proj1) = a
+    and c.src(proj2) = p and c.dst(proj2) = b
+    and (forall(x: O, f: M, g: M) {
+        c.src(f) = x and c.dst(f) = a and c.src(g) = x and c.dst(g) = b implies
+        exists(h: M) {
+            product_triangle(c, a, b, p, proj1, proj2, x, f, g, h)
+            and forall(k: M) {
+                product_triangle(c, a, b, p, proj1, proj2, x, f, g, k) implies k = h
+            }
+        }
+    })
+    implies is_product(c, a, b, p, proj1, proj2)
+}
+
+theorem product_proj1_src[O, M](c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M) {
+    is_product(c, a, b, p, proj1, proj2) implies c.src(proj1) = p
+}
+
+theorem product_proj1_dst[O, M](c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M) {
+    is_product(c, a, b, p, proj1, proj2) implies c.dst(proj1) = a
+}
+
+theorem product_proj2_src[O, M](c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M) {
+    is_product(c, a, b, p, proj1, proj2) implies c.src(proj2) = p
+}
+
+theorem product_proj2_dst[O, M](c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M) {
+    is_product(c, a, b, p, proj1, proj2) implies c.dst(proj2) = b
+}
+
+theorem product_map_exists[O, M](
+    c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M, x: O, f: M, g: M
+) {
+    is_product(c, a, b, p, proj1, proj2)
+    and c.src(f) = x and c.dst(f) = a
+    and c.src(g) = x and c.dst(g) = b
+    implies exists(h: M) { product_triangle(c, a, b, p, proj1, proj2, x, f, g, h) }
+}
+
+theorem product_map_unique[O, M](
+    c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M,
+    x: O, f: M, g: M, h: M, k: M
+) {
+    is_product(c, a, b, p, proj1, proj2)
+    and product_triangle(c, a, b, p, proj1, proj2, x, f, g, h)
+    and product_triangle(c, a, b, p, proj1, proj2, x, f, g, k)
+    implies h = k
+}
+
+define pair_obj[O](a: O, b: O, x: Bool) -> O {
+    if x { a } else { b }
+}
+
+define pair_mor[O, M](c: Category[O, M], a: O, b: O, f: Bool) -> M {
+    c.identity(pair_obj(a, b, f))
+}
+
+theorem pair_obj_true[O](a: O, b: O) {
+    pair_obj(a, b, true) = a
+}
+
+theorem pair_obj_false[O](a: O, b: O) {
+    pair_obj(a, b, false) = b
+}
+
+theorem pair_is_functor[O, M](c: Category[O, M], a: O, b: O) {
+    is_functor(discrete_category[Bool](true), c,
+        function(x: Bool) { pair_obj(a, b, x) },
+        function(f: Bool) { pair_mor(c, a, b, f) })
+}
+
+let pair_diagram[O, M](c: Category[O, M], a: O, b: O) -> result: Functor[Bool, Bool, O, M] satisfy {
+    Functor[Bool, Bool, O, M].new(discrete_category[Bool](true), c,
+        function(x: Bool) { pair_obj(a, b, x) },
+        function(f: Bool) { pair_mor(c, a, b, f) }) = Option.some(result)
+}
+
+theorem pair_diagram_src_cat[O, M](c: Category[O, M], a: O, b: O) {
+    pair_diagram(c, a, b).src_cat = discrete_category[Bool](true)
+}
+
+theorem pair_diagram_obj_map[O, M](c: Category[O, M], a: O, b: O) {
+    pair_diagram(c, a, b).obj_map = function(x: Bool) { pair_obj(a, b, x) }
+}
+
+theorem pair_diagram_mor_map[O, M](c: Category[O, M], a: O, b: O) {
+    pair_diagram(c, a, b).mor_map = function(f: Bool) { pair_mor(c, a, b, f) }
+}
+
+theorem pair_diagram_obj_apply[O, M](c: Category[O, M], a: O, b: O, x: Bool) {
+    pair_diagram(c, a, b).obj_map(x) = pair_obj(a, b, x)
+}
+
+theorem pair_diagram_obj_true[O, M](c: Category[O, M], a: O, b: O) {
+    pair_diagram(c, a, b).obj_map(true) = a
+}
+
+theorem pair_diagram_obj_false[O, M](c: Category[O, M], a: O, b: O) {
+    pair_diagram(c, a, b).obj_map(false) = b
+}
+
+theorem pair_diagram_mor_apply[O, M](c: Category[O, M], a: O, b: O, f: Bool) {
+    pair_diagram(c, a, b).mor_map(f) = pair_mor(c, a, b, f)
+}
+
+define pair_legs[M](proj1: M, proj2: M, x: Bool) -> M {
+    if x { proj1 } else { proj2 }
+}
+
+theorem pair_legs_true[M](proj1: M, proj2: M) {
+    pair_legs(proj1, proj2, true) = proj1
+}
+
+theorem pair_legs_false[M](proj1: M, proj2: M) {
+    pair_legs(proj1, proj2, false) = proj2
+}
+
+theorem pair_legs_cone_gen[O, M](
+    c: Category[O, M], a: O, b: O, x: O, f: M, g: M,
+    d: Functor[Bool, Bool, O, M], legs: Bool -> M
+) {
+    d = pair_diagram(c, a, b)
+    and legs = pair_legs(f, g)
+    and c.src(f) = x and c.dst(f) = a and c.src(g) = x and c.dst(g) = b
+    and (forall(i: Bool) { c.src(legs(i)) = x })
+    and (forall(i: Bool) { c.dst(legs(i)) = d.obj_map(i) })
+    and (forall(m: Bool) {
+        c.compose(d.mor_map(m), legs(d.src_cat.src(m))) = legs(d.src_cat.dst(m))
+    })
+    implies is_cone(c, d, x, legs)
+}
+
+theorem product_triangle_cone_map_gen[O, M](
+    c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M,
+    m: O, mlegs: Bool -> M, h: M,
+    d: Functor[Bool, Bool, O, M], legs: Bool -> M
+) {
+    d = pair_diagram(c, a, b)
+    and legs = pair_legs(proj1, proj2)
+    and product_triangle(c, a, b, p, proj1, proj2, m, mlegs(true), mlegs(false), h)
+    implies is_cone_map(c, d, m, mlegs, p, legs, h)
+}
+
+theorem product_cone_map_unique_gen[O, M](
+    c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M,
+    m: O, mlegs: Bool -> M, f: M, g: M,
+    d: Functor[Bool, Bool, O, M], legs: Bool -> M
+) {
+    d = pair_diagram(c, a, b)
+    and legs = pair_legs(proj1, proj2)
+    and is_product(c, a, b, p, proj1, proj2)
+    and is_cone(c, d, m, mlegs)
+    and is_cone_map(c, d, m, mlegs, p, legs, f)
+    and is_cone_map(c, d, m, mlegs, p, legs, g)
+    implies f = g
+}
+
 theorem product_is_limit_gen[O, M](
     c: Category[O, M], a: O, b: O, p: O, proj1: M, proj2: M,
     d: Functor[Bool, Bool, O, M], legs: Bool -> M

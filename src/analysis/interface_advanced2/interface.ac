@@ -1,3 +1,227 @@
+theorem trace_borel_open_in_subspace_is_measurable[T: TopologicalSpace](
+        a: Set[T], u: Set[T]) {
+    is_open_in_subspace[T](a, u) implies
+        trace_sigma_algebra(borel_sigma_algebra[T], a).is_measurable(u)
+}
+
+theorem trace_borel_closed_in_subspace_is_measurable[T: TopologicalSpace](
+        a: Set[T], u: Set[T]) {
+    is_closed_in_subspace[T](a, u) implies
+        trace_sigma_algebra(borel_sigma_algebra[T], a).is_measurable(u)
+}
+
+define real_is_interior_point(s: Set[Real], x: Real) -> Bool {
+    s.contains(x) and exists(eps: Real) {
+        eps.is_positive and forall(y: Real) {
+            y.is_close(x, eps) implies s.contains(y)
+        }
+    }
+}
+
+define real_is_open(s: Set[Real]) -> Bool {
+    forall(x: Real) {
+        s.contains(x) implies real_is_interior_point(s, x)
+    }
+}
+
+theorem real_is_interior_point_intro(s: Set[Real], x: Real, eps: Real) {
+    s.contains(x) and eps.is_positive and forall(y: Real) {
+        y.is_close(x, eps) implies s.contains(y)
+    } implies real_is_interior_point(s, x)
+}
+
+theorem real_open_is_interior_point(s: Set[Real], x: Real) {
+    real_is_open(s) and s.contains(x) implies real_is_interior_point(s, x)
+}
+
+theorem real_open_empty {
+    real_is_open(Set[Real].empty_set)
+}
+
+theorem real_open_universal {
+    real_is_open(Set[Real].universal_set)
+}
+
+theorem real_smaller_ball_subset_left(s: Set[Real], x: Real, eps: Real, eps1: Real) {
+    eps <= eps1 and forall(y: Real) {
+        y.is_close(x, eps1) implies s.contains(y)
+    } implies forall(y: Real) {
+        y.is_close(x, eps) implies s.contains(y)
+    }
+}
+
+theorem real_is_interior_point_intersection(s: Set[Real], t: Set[Real], x: Real) {
+    real_is_interior_point(s, x) and real_is_interior_point(t, x) implies
+    real_is_interior_point(s.intersection(t), x)
+}
+
+theorem real_open_inter(s: Set[Real], t: Set[Real]) {
+    real_is_open(s) and real_is_open(t) implies real_is_open(s.intersection(t))
+}
+
+theorem real_open_big_union(c: Set[Real] -> Bool) {
+    (forall(s: Set[Real]) { c(s) implies real_is_open(s) })
+        implies real_is_open(big_union(c))
+}
+
+instance Real: TopologicalSpace {
+    let is_open: Set[Real] -> Bool = real_is_open
+}
+
+define is_borel_measurable_fn(f: Real -> Real) -> Bool {
+    is_measurable_fn(f, borel_sigma_algebra[Real], borel_sigma_algebra[Real])
+}
+
+theorem borel_measurable_fn_compose(f: Real -> Real, g: Real -> Real) {
+    is_borel_measurable_fn(g) and is_borel_measurable_fn(f)
+        implies is_borel_measurable_fn(compose(f, g))
+}
+
+theorem borel_measurable_fn_const(c: Real) {
+    is_borel_measurable_fn(function(x: Real) { c })
+}
+
+theorem borel_measurable_fn_identity {
+    is_borel_measurable_fn(identity_fn[Real])
+}
+
+theorem continuous_real_open_preimage(f: Real -> Real) {
+    continuous(f) implies forall(v: Set[Real]) {
+        real_is_open(v) implies real_is_open(set_preimage(f, v))
+    }
+}
+
+theorem continuous_imp_borel_measurable(f: Real -> Real) {
+    continuous(f) implies is_borel_measurable_fn(f)
+}
+
+define above_point(lower: Real, x: Real) -> Bool {
+    lower < x
+}
+
+define below_point(upper: Real, x: Real) -> Bool {
+    x < upper
+}
+
+define at_or_above_point(lower: Real, x: Real) -> Bool {
+    lower <= x
+}
+
+define at_or_below_point(upper: Real, x: Real) -> Bool {
+    x <= upper
+}
+
+define open_upper_ray_set(lower: Real) -> Set[Real] {
+    Set[Real].new(above_point(lower))
+}
+
+define open_lower_ray_set(upper: Real) -> Set[Real] {
+    Set[Real].new(below_point(upper))
+}
+
+define closed_upper_ray_set(lower: Real) -> Set[Real] {
+    Set[Real].new(at_or_above_point(lower))
+}
+
+define closed_lower_ray_set(upper: Real) -> Set[Real] {
+    Set[Real].new(at_or_below_point(upper))
+}
+
+theorem open_upper_ray_set_contains_eq(lower: Real, x: Real) {
+    open_upper_ray_set(lower).contains(x) = (lower < x)
+}
+
+theorem open_lower_ray_set_contains_eq(upper: Real, x: Real) {
+    open_lower_ray_set(upper).contains(x) = (x < upper)
+}
+
+theorem closed_upper_ray_set_contains_eq(lower: Real, x: Real) {
+    closed_upper_ray_set(lower).contains(x) = (lower <= x)
+}
+
+theorem closed_lower_ray_set_contains_eq(upper: Real, x: Real) {
+    closed_lower_ray_set(upper).contains(x) = (x <= upper)
+}
+
+theorem positive_half_lt_bound(eps: Real, bound: Real) {
+    eps.is_positive and eps + eps < bound implies eps < bound
+}
+
+theorem sub_lt_self_of_pos(a: Real, b: Real) {
+    b.is_positive implies a - b < a
+}
+
+theorem real_open_upper_ray_set(lower: Real) {
+    real_is_open(open_upper_ray_set(lower))
+}
+
+theorem real_open_lower_ray_set(upper: Real) {
+    real_is_open(open_lower_ray_set(upper))
+}
+
+theorem closed_upper_ray_set_eq_complement_open_lower_ray_set(lower: Real) {
+    closed_upper_ray_set(lower) = open_lower_ray_set(lower).c
+}
+
+theorem closed_lower_ray_set_eq_complement_open_upper_ray_set(upper: Real) {
+    closed_lower_ray_set(upper) = open_upper_ray_set(upper).c
+}
+
+theorem open_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    open_interval_set(lower, upper) = open_upper_ray_set(lower).intersection(open_lower_ray_set(upper))
+}
+
+theorem closed_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    closed_interval_set(lower, upper) = closed_upper_ray_set(lower).intersection(closed_lower_ray_set(upper))
+}
+
+theorem real_complement_of_open_is_closed(s: Set[Real]) {
+    Real.is_open(s) implies is_closed[Real](s.c)
+}
+
+theorem real_complement_of_closed_is_open(s: Set[Real]) {
+    is_closed[Real](s) implies Real.is_open(s.c)
+}
+
+theorem real_union_of_open_is_open(s: Set[Real], t: Set[Real]) {
+    Real.is_open(s) and Real.is_open(t) implies Real.is_open(s.union(t))
+}
+
+theorem real_intersection_of_closed_is_closed(s: Set[Real], t: Set[Real]) {
+    is_closed[Real](s) and is_closed[Real](t) implies is_closed[Real](s.intersection(t))
+}
+
+theorem real_big_union_of_open_is_open(c: Set[Real] -> Bool) {
+    (forall(s: Set[Real]) { c(s) implies Real.is_open(s) })
+        implies Real.is_open(big_union(c))
+}
+
+theorem real_closed_upper_ray_set(lower: Real) {
+    is_closed[Real](closed_upper_ray_set(lower))
+}
+
+theorem real_closed_lower_ray_set(upper: Real) {
+    is_closed[Real](closed_lower_ray_set(upper))
+}
+
+theorem open_interval_set_is_open(lower: Real, upper: Real) {
+    Real.is_open(open_interval_set(lower, upper))
+}
+
+theorem closed_interval_set_is_closed(lower: Real, upper: Real) {
+    is_closed[Real](closed_interval_set(lower, upper))
+}
+
+theorem nonempty_from_neq_empty(s: Set[Real]) {
+    s != Set[Real].empty_set implies exists(x: Real) { s.contains(x) }
+}
+
+theorem supremum_approximation(s: Set[Real], c: Real, eps: Real) {
+    is_set_supremum(s, c) and eps.is_positive implies exists(z: Real) {
+        s.contains(z) and c - eps < z
+    }
+}
+
 theorem no_disconnection_with_order(u: Set[Real], v: Set[Real], x: Real, y: Real) {
     not (real_is_open(u) and real_is_open(v) and u.is_disjoint(v)
         and u.union(v) = Set[Real].universal_set and u.contains(x) and v.contains(y) and x < y)
@@ -1458,6 +1682,7 @@ theorem babylonian_has_fixed_point(a: Real) {
 let quarter: Real = Real.one_half * Real.one_half
 
 /// Three quarters: 1 − 1/4 = 3/4.
+
 let three_quarters: Real = Real.1 - quarter
 
 /// The tent map: T(x) = 2x for x ≤ 1/2, and T(x) = 2(1 − x) for x > 1/2.
@@ -1916,425 +2141,4 @@ theorem sincos_continuous {
 
 define sin_sq_fn(x: Real) -> Real {
     x.sin * x.sin
-}
-
-define sincos_antiderivative(x: Real) -> Real {
-    Real.one_half * sin_sq_fn(x)
-}
-
-theorem sin_sq_derivative {
-    is_derivative_fn(sin_sq_fn, pointwise_mul(constant[Real, Real](two), sincos))
-}
-
-theorem sincos_antiderivative_derivative {
-    is_derivative_fn(sincos_antiderivative, sincos)
-}
-
-theorem sincos_antiderivative_continuous {
-    continuous(sincos_antiderivative)
-}
-
-theorem sincos_integrable_zero_two_pi {
-    is_integrable(sincos, Real.0, two * pi)
-}
-
-theorem integral_sincos_zero_two_pi {
-    integral(sincos, Real.0, two * pi) = Real.0
-}
-
-define cos_harmonic(x: Real, k: Nat) -> Real {
-    (from_nat[Real](k) * x).cos
-}
-
-define cos_harmonic_sum(x: Real, n: Nat) -> Real {
-    partial(compose(cos_harmonic(x), Nat.suc), n)
-}
-
-define half_angle_harmonic(x: Real, k: Nat) -> Real {
-    ((from_nat[Real](k) + Real.one_half) * x).sin
-}
-
-define half_angle_diff(x: Real, i: Nat) -> Real {
-    half_angle_harmonic(x, i.suc) - half_angle_harmonic(x, i)
-}
-
-theorem half_angle_diff_telescopes(x: Real, n: Nat) {
-    partial(half_angle_diff(x), n) = half_angle_harmonic(x, n) - half_angle_harmonic(x, Nat.0)
-}
-
-theorem half_angle_diff_expansion(x: Real, i: Nat) {
-    two * (x * Real.one_half).sin * cos_harmonic(x, i.suc) = half_angle_diff(x, i)
-}
-
-theorem dirichlet_kernel_identity(x: Real, n: Nat) {
-    two * (x * Real.one_half).sin * (Real.one_half + cos_harmonic_sum(x, n)) = half_angle_harmonic(x, n)
-}
-
-theorem sin_nt_zero_harmonic(x: Real) {
-    sin_nt(Nat.0, x) = Real.0
-}
-
-theorem cos_nt_zero_harmonic(x: Real) {
-    cos_nt(Nat.0, x) = Real.1
-}
-
-theorem sin_nt_at_zero(k: Nat) {
-    sin_nt(k, Real.0) = Real.0
-}
-
-theorem cos_nt_at_zero(k: Nat) {
-    cos_nt(k, Real.0) = Real.1
-}
-
-theorem sin_nt_suc_at_two_pi(k: Nat) {
-    sin_nt(k.suc, two_pi) = sin_nt(k, two_pi) * two_pi.cos + cos_nt(k, two_pi) * two_pi.sin
-}
-
-theorem sin_nt_two_pi_zero(k: Nat) {
-    sin_nt(k, two_pi) = Real.0
-}
-
-theorem cos_nt_suc_at_two_pi(k: Nat) {
-    cos_nt(k.suc, two_pi) = cos_nt(k, two_pi) * two_pi.cos - sin_nt(k, two_pi) * two_pi.sin
-}
-
-theorem cos_nt_two_pi_one(k: Nat) {
-    cos_nt(k, two_pi) = Real.1
-}
-
-theorem sin_nt_suc_decomp(k: Nat, x: Real) {
-    sin_nt(k.suc, x) = sin_nt(k, x) * x.cos + cos_nt(k, x) * x.sin
-}
-
-theorem cos_nt_suc_decomp(k: Nat, x: Real) {
-    cos_nt(k.suc, x) = cos_nt(k, x) * x.cos - sin_nt(k, x) * x.sin
-}
-
-theorem ring_deriv_sin_rearrange(a: Real, b: Real, c: Real, d: Real) {
-    -a + b + (c - d) = b - d + (c - a)
-}
-
-theorem sin_deriv_expr_eq(m: Nat, x: Real) {
-    (sin_nt(m, x) * -x.sin + x.cos * (from_nat[Real](m) * cos_nt(m, x))) +
-        (cos_nt(m, x) * x.cos + x.sin * -(from_nat[Real](m) * sin_nt(m, x))) = from_nat[Real](m.suc) * cos_nt(m.suc, x)
-}
-
-theorem ring_neg_sum(a: Real, b: Real) {
-    -a + -b = -(a + b)
-}
-
-theorem ring_cos_inside(k: Real, u: Real, v: Real) {
-    (v + k * u) + (u + k * v) = k * u + k * v + u + v
-}
-
-theorem ring_deriv_cos_rearrange(k: Real, u: Real, v: Real) {
-    (-v + -(k * u)) + -(u + k * v) = -(k * u + k * v + u + v)
-}
-
-theorem cos_deriv_expr_eq(m: Nat, x: Real) {
-    (cos_nt(m, x) * -x.sin + x.cos * -(from_nat[Real](m) * sin_nt(m, x))) +
-        -(sin_nt(m, x) * x.cos + x.sin * (from_nat[Real](m) * cos_nt(m, x))) = -(from_nat[Real](m.suc) * sin_nt(m.suc, x))
-}
-
-theorem sin_nt_continuous(k: Nat) {
-    continuous(sin_nt(k))
-}
-
-theorem cos_nt_continuous(k: Nat) {
-    continuous(cos_nt(k))
-}
-
-define sin_deriv_expr_fn(m: Nat) -> (Real -> Real) {
-    pointwise_add(pointwise_add(pointwise_mul(sin_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))), pointwise_add(pointwise_mul(cos_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))))
-
-
-
-}
-
-theorem sin_deriv_expr_fn_apply(m: Nat, x: Real) {
-    sin_deriv_expr_fn(m, x) = (sin_nt(m, x) * -x.sin + x.cos * (from_nat[Real](m) * cos_nt(m, x))) +
-
-        (cos_nt(m, x) * x.cos + x.sin * -(from_nat[Real](m) * sin_nt(m, x)))
-}
-
-define cos_deriv_expr_fn(m: Nat) -> (Real -> Real) {
-    pointwise_add(pointwise_add(pointwise_mul(cos_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))), pointwise_neg(pointwise_add(pointwise_mul(sin_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m))))))
-
-
-
-}
-
-theorem cos_deriv_expr_fn_apply(m: Nat, x: Real) {
-    cos_deriv_expr_fn(m, x) = (cos_nt(m, x) * -x.sin + x.cos * -(from_nat[Real](m) * sin_nt(m, x))) +
-
-        -(sin_nt(m, x) * x.cos + x.sin * (from_nat[Real](m) * cos_nt(m, x)))
-}
-
-theorem sin_deriv_expr_fn_eq(m: Nat) {
-    pointwise_add(pointwise_add(pointwise_mul(sin_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))), pointwise_add(pointwise_mul(cos_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m)))))) = pointwise_mul(constant[Real, Real](from_nat[Real](m.suc)), cos_nt(m.suc))
-}
-
-theorem cos_deriv_expr_fn_eq(m: Nat) {
-    pointwise_add(pointwise_add(pointwise_mul(cos_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))), pointwise_neg(pointwise_add(pointwise_mul(sin_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))))) = pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m.suc)), sin_nt(m.suc)))
-}
-
-theorem sin_nt_derivative(k: Nat) {
-    is_derivative_fn(sin_nt(k), pointwise_mul(constant[Real, Real](from_nat[Real](k)), cos_nt(k)))
-}
-
-theorem cos_nt_derivative(k: Nat) {
-    is_derivative_fn(cos_nt(k), pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](k)), sin_nt(k))))
-}
-
-theorem from_nat_nonneg_real(k: Nat) {
-    Real.0 <= from_nat[Real](k)
-}
-
-theorem from_nat_abs(k: Nat) {
-    (from_nat[Real](k)).abs = from_nat[Real](k)
-}
-
-theorem sin_nt_lipschitz(k: Nat, u: Real, v: Real) {
-    (sin_nt(k, u) - sin_nt(k, v)).abs <= from_nat[Real](k) * (u - v).abs
-}
-
-theorem cos_nt_lipschitz(k: Nat, u: Real, v: Real) {
-    (cos_nt(k, u) - cos_nt(k, v)).abs <= from_nat[Real](k) * (u - v).abs
-}
-
-theorem sin_nt_abs_le_one(k: Nat, x: Real) {
-    (sin_nt(k, x)).abs <= Real.1
-}
-
-theorem cos_nt_abs_le_one(k: Nat, x: Real) {
-    (cos_nt(k, x)).abs <= Real.1
-}
-
-define g_sin_nt(k: Nat) -> (Real -> Real) {
-    pointwise_neg(pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](k)), cos_nt(k)))
-}
-
-define g_cos_nt(k: Nat) -> (Real -> Real) {
-    pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](k)), sin_nt(k))
-}
-
-theorem from_nat_suc_ne_zero_from_pos(k: Nat) {
-    Nat.0 < k implies from_nat[Real](k) != Real.0
-}
-
-theorem g_cos_nt_has_derivative(k: Nat) {
-    Nat.0 < k implies is_derivative_fn(g_cos_nt(k), cos_nt(k))
-}
-
-theorem g_sin_nt_has_derivative(k: Nat) {
-    Nat.0 < k implies is_derivative_fn(g_sin_nt(k), sin_nt(k))
-}
-
-theorem g_cos_nt_continuous(k: Nat) {
-    continuous(g_cos_nt(k))
-}
-
-theorem g_sin_nt_continuous(k: Nat) {
-    continuous(g_sin_nt(k))
-}
-
-theorem sin_nt_integrable(k: Nat) {
-    is_integrable(sin_nt(k.suc), Real.0, two_pi)
-}
-
-theorem integral_sin_nt_zero(k: Nat) {
-    integral(sin_nt(k.suc), Real.0, two_pi) = Real.0
-}
-
-theorem cos_nt_integrable(k: Nat) {
-    is_integrable(cos_nt(k.suc), Real.0, two_pi)
-}
-
-theorem integral_cos_nt_zero(k: Nat) {
-    integral(cos_nt(k.suc), Real.0, two_pi) = Real.0
-}
-
-theorem integral_one_zero_two_pi {
-    integral(constant[Real, Real](Real.1), Real.0, two_pi) = two_pi
-}
-
-define dirichlet_kernel(t: Real, n: Nat) -> Real {
-    Real.1 + two * cos_harmonic_sum(t, n)
-}
-
-theorem dirichlet_kernel_scaled(t: Real, n: Nat) {
-    (t * Real.one_half).sin * dirichlet_kernel(t, n) = half_angle_harmonic(t, n)
-}
-
-theorem dirichlet_kernel_closed_form(t: Real, n: Nat) {
-    (t * Real.one_half).sin != Real.0
-    implies dirichlet_kernel(t, n) = half_angle_harmonic(t, n) / (t * Real.one_half).sin
-}
-
-define seq_apply(seq: Nat -> (Real -> Real), x: Real, i: Nat) -> Real {
-    seq(i, x)
-}
-
-define fn_partial_seq(seq: Nat -> (Real -> Real), n: Nat, x: Real) -> Real {
-    partial(seq_apply(seq, x), n)
-}
-
-define seq_abs(a: Nat -> Real, i: Nat) -> Real {
-    (a(i)).abs
-}
-
-theorem partial_triangle_abs(a: Nat -> Real, n: Nat) {
-    partial(a, n).abs <= partial(seq_abs(a), n)
-}
-
-theorem derivative_fn_fn_partial_seq(seq: Nat -> (Real -> Real), dseq: Nat -> (Real -> Real), n: Nat) {
-    (forall(i: Nat) { i < n implies is_derivative_fn(seq(i), dseq(i)) })
-    implies is_derivative_fn(fn_partial_seq(seq, n), fn_partial_seq(dseq, n))
-}
-
-define seq_cos(i: Nat) -> (Real -> Real) {
-    cos_nt(i.suc)
-}
-
-define seq_sin_over_k(i: Nat) -> (Real -> Real) {
-    pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](i.suc)), sin_nt(i.suc))
-}
-
-theorem seq_sin_over_k_derivative(i: Nat) {
-    is_derivative_fn(seq_sin_over_k(i), cos_nt(i.suc))
-}
-
-define dirichlet_deriv_fn(n: Nat) -> (Real -> Real) {
-    pointwise_add(constant[Real, Real](Real.1), pointwise_mul(constant[Real, Real](two), fn_partial_seq(seq_cos, n)))
-
-}
-
-define dirichlet_kernel_fn(n: Nat, t: Real) -> Real {
-    dirichlet_kernel(t, n)
-}
-
-theorem fn_partial_seq_cos_eq_sum(t: Real, n: Nat) {
-    fn_partial_seq(seq_cos, n, t) = cos_harmonic_sum(t, n)
-}
-
-theorem dirichlet_deriv_fn_eq_kernel(n: Nat) {
-    dirichlet_deriv_fn(n) = dirichlet_kernel_fn(n)
-}
-
-define g_dirichlet(n: Nat) -> (Real -> Real) {
-    pointwise_add(identity_fn[Real], pointwise_mul(constant[Real, Real](two), fn_partial_seq(seq_sin_over_k, n)))
-
-}
-
-theorem g_dirichlet_has_derivative(n: Nat) {
-    is_derivative_fn(g_dirichlet(n), dirichlet_kernel_fn(n))
-}
-
-theorem partial_const_seq(f: Nat -> Real, n: Nat, c: Real) {
-    (forall(i: Nat) { i < n implies f(i) = c }) implies partial(f, n) = from_nat[Real](n) * c
-}
-
-theorem partial_lte_self(f: Nat -> Real, g: Nat -> Real, n: Nat) {
-    (forall(i: Nat) { i < n implies f(i) <= g(i) }) implies partial(f, n) <= partial(g, n)
-}
-
-define seq_neg(a: Nat -> Real, i: Nat) -> Real {
-    -(a(i))
-}
-
-define seq_diff(a: Nat -> Real, b: Nat -> Real, i: Nat) -> Real {
-    a(i) - b(i)
-}
-
-define seq_one(i: Nat) -> Real {
-    Real.1
-}
-
-define seq_k(i: Nat) -> Real {
-    from_nat[Real](i.suc)
-}
-
-theorem partial_neg_seq(a: Nat -> Real, n: Nat) {
-    partial(seq_neg(a), n) = -(partial(a, n))
-}
-
-theorem partial_diff_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) {
-    partial(a, n) - partial(b, n) = partial(seq_diff(a, b), n)
-}
-
-theorem partial_seq_one(n: Nat) {
-    partial(seq_one, n) = from_nat[Real](n)
-}
-
-theorem partial_seq_zero(a: Nat -> Real, n: Nat) {
-    (forall(i: Nat) { i < n implies a(i) = Real.0 }) implies partial(a, n) = Real.0
-}
-
-define seq_diff_cos(u: Real, v: Real, i: Nat) -> Real {
-    cos_nt(i.suc, u) - cos_nt(i.suc, v)
-}
-
-define seq_k_absdiff(u: Real, v: Real, i: Nat) -> Real {
-    from_nat[Real](i.suc) * (u - v).abs
-}
-
-theorem dirichlet_kernel_fn_lipschitz(n: Nat, u: Real, v: Real) {
-    (dirichlet_kernel_fn(n, u) - dirichlet_kernel_fn(n, v)).abs <= (two * partial(seq_k, n)) * (u - v).abs
-}
-
-theorem dirichlet_kernel_fn_abs_le(n: Nat, t: Real) {
-    (dirichlet_kernel_fn(n, t)).abs <= Real.1 + two * from_nat[Real](n)
-}
-
-theorem continuous_fn_partial_seq(seq: Nat -> (Real -> Real), n: Nat) {
-    (forall(i: Nat) { i < n implies continuous(seq(i)) })
-    implies continuous(fn_partial_seq(seq, n))
-}
-
-theorem seq_sin_over_k_continuous(i: Nat) {
-    continuous(seq_sin_over_k(i))
-}
-
-theorem g_dirichlet_continuous(n: Nat) {
-    continuous(g_dirichlet(n))
-}
-
-theorem partial_seq_k_nonneg(n: Nat) {
-    Real.0 <= partial(seq_k, n)
-}
-
-theorem dirichlet_kernel_fn_integrable(n: Nat) {
-    is_integrable(dirichlet_kernel_fn(n), Real.0, two_pi)
-}
-
-theorem partial_seq_sin_over_k_at_two_pi(n: Nat) {
-    partial(seq_apply(seq_sin_over_k, two_pi), n) = Real.0
-}
-
-theorem partial_seq_sin_over_k_at_zero(n: Nat) {
-    partial(seq_apply(seq_sin_over_k, Real.0), n) = Real.0
-}
-
-theorem integral_dirichlet_kernel_two_pi(n: Nat) {
-    integral(dirichlet_kernel_fn(n), Real.0, two_pi) = two_pi
-}
-
-define mean_integral(f: Real -> Real) -> Real {
-    integral(f, Real.0, two_pi) / two_pi
-}
-
-theorem dirichlet_kernel_mean_one(n: Nat) {
-    mean_integral(dirichlet_kernel_fn(n)) = Real.1
-}
-
-theorem integral_sin_zero_period {
-    integral(Real.sin, Real.0, two_pi) = Real.0
-}
-
-theorem integral_cos_zero_period {
-    integral(Real.cos, Real.0, two_pi) = Real.0
-}
-
-theorem fourier_cos_coeff_sin_zero {
-    fourier_cos_coeff(Real.sin, Nat.0) = Real.0
 }

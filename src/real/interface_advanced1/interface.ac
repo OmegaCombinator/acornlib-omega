@@ -87,6 +87,14 @@ attributes Real {
     }
 }
 
+instance Real: LTE {
+    define lte(self, other: Real) -> Bool {
+        forall(r: Rat) {
+            self.gt_rat(r) implies other.gt_rat(r)
+        }
+    }
+}
+
 theorem lte_self(r: Real) {
     r <= r
 }
@@ -121,6 +129,14 @@ theorem real_is_transitive {
 
 theorem real_is_antisymmetric {
     is_antisymmetric(Real.lte)
+}
+
+instance Real: PartialOrder
+
+instance Real: LinearOrder
+
+theorem gt_imp_from_rat_gt(r1: Rat, r2: Rat) {
+    r1 > r2 implies Real.from_rat(r1).gt_rat(r2)
 }
 
 theorem from_rat_gt_imp_gt(r1: Rat, r2: Rat) {
@@ -203,6 +219,10 @@ theorem add_gt_is_dedekind_cut(z1: Real, z2: Real) {
 
 let add(a: Real, b: Real) -> c: Real satisfy {
     Real.new(add_gt(a, b)) = Option.some(c)
+}
+
+instance Real: Add {
+    let add = add
 }
 
 theorem add_gt_rat(z1: Real, z2: Real, r1: Rat, r2: Rat) {
@@ -401,6 +421,10 @@ let floor(a: Real) -> n: Int satisfy {
     Real.from_int(n) <= a and a < Real.from_int(n + Int.1)
 }
 
+instance Real: One {
+    let 1: Real = Real.from_rat(Rat.1)
+}
+
 attributes Real {
     /// One half (1/2).
     let one_half: Real = Real.from_rat(Rat.2.inverse)
@@ -494,6 +518,10 @@ let neg(a: Real) -> b: Real satisfy {
     Real.new(neg_gt((a))) = Option.some(b)
 }
 
+instance Real: Neg {
+    let neg = neg
+}
+
 theorem lt_rat_neg(a: Real, r: Rat) {
     a < Real.from_rat(-r) implies -a > Real.from_rat(r)
 }
@@ -572,6 +600,42 @@ theorem neg_distrib(a: Real, b: Real) {
     -(a + b) = -a + -b
 }
 
+instance Real: AddSemigroup
+
+instance Real: AddCommSemigroup
+
+instance Real: AddMonoid
+
+instance Real: AddCommMonoid
+
+instance Real: AddGroup
+
+instance Real: AddCommGroup
+
+instance Real: AddLeftOrderedGroup
+
+instance Real: AddOrderedGroup
+
+attributes Real {
+    /// The absolute value of this real number.
+    define abs(self) -> Real {
+        if self.is_negative {
+            -self
+        } else {
+            self
+        }
+    }
+
+    /// The sign of this real number as a unit value (`-1` for negative, `1` for non-negative).
+    define unit_sign(self) -> Real {
+        if self.is_negative {
+            -Real.1
+        } else {
+            Real.1
+        }
+    }
+}
+
 theorem pos_imp_eq_abs(a: Real) {
     a.is_positive implies a = a.abs
 }
@@ -648,6 +712,18 @@ theorem gt_max_imp_gt_right(a: Real, b: Real, c: Real) {
     a > b.max(c) implies a > c
 }
 
+instance Real: Meet {
+    define meet(self, other: Real) -> Real {
+        self.min(other)
+    }
+}
+
+instance Real: Join {
+    define join(self, other: Real) -> Real {
+        self.max(other)
+    }
+}
+
 theorem real_meet_lte_left(a: Real, b: Real) {
     a.meet(b) <= a
 }
@@ -660,6 +736,12 @@ theorem real_lte_meet_of_bounds(c: Real, a: Real, b: Real) {
     c <= a and c <= b implies c <= a.meet(b)
 }
 
+instance Real: MeetSemilattice
+
+theorem real_lte_join_left(a: Real, b: Real) {
+    a <= a.join(b)
+}
+
 theorem real_lte_join_right(a: Real, b: Real) {
     b <= a.join(b)
 }
@@ -668,8 +750,24 @@ theorem real_join_lte_of_bounds(a: Real, b: Real, c: Real) {
     a <= c and b <= c implies a.join(b) <= c
 }
 
+instance Real: JoinSemilattice
+
+instance Real: Lattice
+
+theorem real_meet_join_distrib_left(a: Real, b: Real, c: Real) {
+    a.meet(b.join(c)) = a.meet(b).join(a.meet(c))
+}
+
 theorem real_join_meet_distrib_left(a: Real, b: Real, c: Real) {
     a.join(b.meet(c)) = a.join(b).meet(a.join(c))
+}
+
+instance Real: DistribLattice
+
+theorem rat_dual_upper_bound(a: Real, b: Real) {
+    exists(r: Rat) {
+        a < Real.from_rat(r) and b < Real.from_rat(r)
+    }
 }
 
 theorem abs_gte_zero(a: Real) {
@@ -1381,6 +1479,12 @@ theorem mul_rat_eq_seq(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat, d: Nat -> Ra
     eq_seq(mul_rat_seq(a, b), mul_rat_seq(c, d))
 }
 
+instance Real: Mul {
+    define mul(self, other: Real) -> Real {
+        limit_rat(mul_rat_seq(rat_seq(self), rat_seq(other)))
+    }
+}
+
 theorem real_mul_comm(x: Real, y: Real) {
     x * y = y * x
 }
@@ -1610,6 +1714,26 @@ theorem mul_abs(a: Real, b: Real) {
 
 theorem square_zero_imp_zero(a: Real) {
     a * a = Real.0 implies a = Real.0
+}
+
+instance Real: Semigroup
+
+instance Real: Monoid
+
+instance Real: Semiring
+
+instance Real: Ring
+
+instance Real: CommSemigroup
+
+instance Real: CommMonoid
+
+instance Real: CommRing
+
+// Relationship between from_nat and from_rat
+
+theorem rat_from_nat_add(m: Nat, n: Nat) {
+    Rat.from_nat(m + n) = Rat.from_nat(m) + Rat.from_nat(n)
 }
 
 theorem from_nat_is_from_rat(n: Nat) {
@@ -2011,364 +2135,4 @@ theorem neg_seq_cancels(a: Nat -> Real, b: Nat -> Real) {
 
 theorem neg_seq_converges_to(a: Nat -> Real) {
     converges(a) implies converges_to(neg_seq(a), -limit(a))
-}
-
-theorem neg_seq_converges_converse(a: Nat -> Real) {
-    converges(neg_seq(a)) implies converges(a)
-}
-
-define is_decreasing_seq(a: Nat -> Real) -> Bool {
-    forall(n: Nat) {
-        a(n.suc) <= a(n)
-    }
-}
-
-theorem decreasing_neg_increasing(a: Nat -> Real) {
-    is_decreasing_seq(a) implies is_increasing(neg_seq(a))
-}
-
-theorem distant_decreasing(a: Nat -> Real, m: Nat, n: Nat) {
-    is_decreasing_seq(a) and m <= n implies a(n) <= a(m)
-}
-
-theorem antitone_is_decreasing(a: Nat -> Real) {
-    is_antitone(a) implies is_decreasing_seq(a)
-}
-
-theorem decreasing_is_antitone(a: Nat -> Real) {
-    is_decreasing_seq(a) implies is_antitone(a)
-}
-
-theorem decreasing_iff_antitone(a: Nat -> Real) {
-    is_decreasing_seq(a) = is_antitone(a)
-}
-
-theorem distant_antitone(a: Nat -> Real, m: Nat, n: Nat) {
-    is_antitone(a) and m <= n implies a(n) <= a(m)
-}
-
-theorem increasing_lower_bound_first(a: Nat -> Real) {
-    is_increasing(a) implies is_lower_bound(a, a(Nat.0))
-}
-
-theorem monotone_lower_bound_first(a: Nat -> Real) {
-    is_monotone(a) implies is_lower_bound(a, a(Nat.0))
-}
-
-theorem decreasing_upper_bound_first(a: Nat -> Real) {
-    is_decreasing_seq(a) implies is_upper_bound(a, a(Nat.0))
-}
-
-theorem antitone_upper_bound_first(a: Nat -> Real) {
-    is_antitone(a) implies is_upper_bound(a, a(Nat.0))
-}
-
-theorem increasing_neg_decreasing(a: Nat -> Real) {
-    is_increasing(a) implies is_decreasing_seq(neg_seq(a))
-}
-
-theorem lower_bound_neg_upper_bound(a: Nat -> Real, lb: Real) {
-    is_lower_bound(a, lb) implies is_upper_bound(neg_seq(a), -lb)
-}
-
-theorem upper_bound_neg_lower_bound(a: Nat -> Real, ub: Real) {
-    is_upper_bound(a, ub) implies is_lower_bound(neg_seq(a), -ub)
-}
-
-theorem decreasing_bounded_below_converges(a: Nat -> Real, lb: Real) {
-    is_decreasing_seq(a) and is_lower_bound(a, lb) implies converges(a)
-}
-
-theorem decreasing_has_lower_bound_converges(a: Nat -> Real) {
-    is_decreasing_seq(a) and has_lower_bound_seq(a) implies converges(a)
-}
-
-theorem antitone_bounded_below_converges(a: Nat -> Real, lb: Real) {
-    is_antitone(a) and is_lower_bound(a, lb) implies converges(a)
-}
-
-theorem antitone_has_lower_bound_converges(a: Nat -> Real) {
-    is_antitone(a) and has_lower_bound_seq(a) implies converges(a)
-}
-
-theorem limit_neg_seq(a: Nat -> Real) {
-    converges(a) implies limit(neg_seq(a)) = -limit(a)
-}
-
-theorem decreasing_convergent_bounded_by_limit(a: Nat -> Real) {
-    is_decreasing_seq(a) and converges(a)
-    implies is_lower_bound(a, limit(a))
-}
-
-theorem antitone_convergent_bounded_by_limit(a: Nat -> Real) {
-    is_antitone(a) and converges(a) implies is_lower_bound(a, limit(a))
-}
-
-theorem conv_add_imp_conv_right(a: Nat -> Real, b: Nat -> Real) {
-    converges(add_seq(a, b)) and converges(a) implies converges(b)
-}
-
-theorem conv_add_imp_conv_left(a: Nat -> Real, b: Nat -> Real) {
-    converges(add_seq(a, b)) and converges(b) implies converges(a)
-}
-
-theorem partial_tail_conv_imp_partial_conv(a: Nat -> Real, n: Nat) {
-    converges(partial(tail(a, n))) implies converges(partial(a))
-}
-
-theorem triangle_ineq(a: Real, b: Real) {
-    (a + b).abs <= a.abs + b.abs
-}
-
-theorem sum_abs_le_abs_sum(items: List[Real]) {
-    sum(items).abs <= sum(map(items, Real.abs))
-}
-
-theorem diff_partial(a: Nat -> Real, m: Nat, n: Nat) {
-    m <= n implies
-    partial(a, n) - partial(a, m) = sum(map(m.until(n), a))
-}
-
-theorem abs_conv_imp_conv(a: Nat -> Real) {
-    converges(partial(compose(Real.abs, a)))
-    implies
-    converges(partial(a))
-}
-
-theorem series_conv_imp_term_vanishes(a: Nat -> Real) {
-    converges(partial(a)) implies converges_to(a, Real.0)
-}
-
-theorem pow_nonneg(r: Real, n: Nat) {
-    0 <= r implies 0 <= r.pow(n)
-}
-
-theorem pos_geom_indirect_upper_bound(r: Real, n: Nat) {
-    0 <= r and r < 1 implies
-    partial(r.pow, n) * (1 - r) <= 1
-}
-
-theorem pos_mul_eq_pos(a: Real, b: Real) {
-    a.is_positive and (a * b).is_positive implies b.is_positive
-}
-
-theorem exists_large_mul(a: Real, b: Real) {
-    a.is_positive and b.is_positive implies exists(c: Real) {
-        a < b * c
-    }
-}
-
-define nonneg_seq(a: Nat -> Real) -> Bool {
-    forall(n: Nat) {
-        not a(n).is_negative
-    }
-}
-
-theorem nonneg_imp_partial_increasing(a: Nat -> Real) {
-    nonneg_seq(a) implies is_increasing(partial(a))
-}
-
-theorem increasing_from_nonneg_start(a: Nat -> Real) {
-    not a(Nat.0).is_negative and is_increasing(a) implies nonneg_seq(a)
-}
-
-theorem nonneg_partial_nonneg(a: Nat -> Real) {
-    nonneg_seq(a) implies
-    nonneg_seq(partial(a))
-}
-
-theorem partial_nonneg(f: Nat -> Real, n: Nat) {
-    is_lower_bound(f, Real.0) implies partial(f, n) >= Real.0
-}
-
-theorem nonneg_pow(r: Real) {
-    0 <= r implies nonneg_seq(r.pow)
-}
-
-theorem pos_geom_has_upper_bound(r: Real) {
-    0 <= r and r < 1 implies
-    exists(ub: Real) {
-        is_upper_bound(partial(r.pow), ub)
-    }
-}
-
-theorem pos_geom_converges(r: Real) {
-    0 <= r and r < 1 implies converges(partial(r.pow))
-}
-
-theorem abs_pow(r: Real, n: Nat) {
-    r.abs.pow(n) = r.pow(n).abs
-}
-
-theorem abs_geom_comm(r: Real) {
-    compose(Real.abs, r.pow) = r.abs.pow
-}
-
-theorem geom_converges(r: Real) {
-    r.abs < 1 implies converges(partial(r.pow))
-}
-
-theorem partial_tail_decomp(a: Nat -> Real, m: Nat) {
-    converges(partial(a)) implies
-    limit(partial(a)) = partial(a, m) + limit(partial(tail(a, m)))
-}
-
-theorem pow_tail(r: Real) {
-    tail(r.pow, Nat.1) = mul_seq(r, r.pow)
-}
-
-theorem partial_one(a: Nat -> Real) {
-    partial(a, Nat.1) = a(Nat.0)
-}
-
-theorem geom_series_no_div(r: Real) {
-    r.abs < 1 implies
-    1 + r * limit(partial(r.pow)) = limit(partial(r.pow))
-}
-
-define delta(v: Real, a: Nat, k: Nat) -> Real {
-    if k = a {
-        v
-    } else {
-        Real.0
-    }
-}
-
-theorem delta_before(v: Real, a: Nat, k: Nat) {
-    k < a implies delta(v, a, k) = Real.0
-}
-
-theorem delta_at(v: Real, a: Nat) {
-    delta(v, a, a) = v
-}
-
-theorem delta_after(v: Real, a: Nat, k: Nat) {
-    k > a implies delta(v, a, k) = Real.0
-}
-
-define delta_seq(v: Real, a: Nat) -> (Nat -> Real) {
-    function(k: Nat) {
-        delta(v, a, k)
-    }
-}
-
-theorem partial_delta_before(v: Real, a: Nat, n: Nat) {
-    n <= a implies partial(delta_seq(v, a), n) = Real.0
-}
-
-theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
-    a < n implies partial(delta_seq(v, a), n) = v
-}
-
-theorem delta_partial_converges(v: Real, a: Nat) {
-    converges_to(partial(delta_seq(v, a)), v)
-}
-
-theorem delta_abs_commute(v: Real, a: Nat, k: Nat) {
-    delta(v, a, k).abs = delta(v.abs, a, k)
-}
-
-theorem delta_absolutely_converges(v: Real, a: Nat) {
-    converges(partial(compose(Real.abs, delta_seq(v, a))))
-}
-
-theorem partial_sum_split_tail(a: Nat -> Real, m: Nat, n: Nat) {
-    partial(a, m + n) = partial(a, m) + partial(tail(a, m), n)
-}
-
-theorem tail_partial_sum_sub(a: Nat -> Real, m: Nat, n: Nat) {
-    partial(tail(a, m), n) = partial(a, m + n) - partial(a, m)
-}
-
-theorem partial_sums_seq_lte(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(a, b) implies seq_lte(partial(a), partial(b))
-}
-
-theorem series_comparison_converges(a: Nat -> Real, b: Nat -> Real) {
-    is_lower_bound(a, Real.0)
-    and seq_lte(a, b)
-    and converges(partial(b))
-    implies converges(partial(a))
-}
-
-theorem nonnegative_series_partials_monotone(a: Nat -> Real) {
-    is_lower_bound(a, Real.0) implies is_monotone(partial(a))
-}
-
-theorem series_limit_split_tail(a: Nat -> Real, m: Nat) {
-    converges(partial(a)) implies
-    limit(partial(a)) = partial(a, m) + limit(partial(tail(a, m)))
-}
-
-define prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
-    a(n) * b(n)
-}
-
-theorem abs_le_abs_add_eps(x: Real, y: Real, eps: Real) {
-    x.is_close(y, eps) implies x.abs <= y.abs + eps
-}
-
-theorem mul_le_lt_of_nonneg_pos(a: Real, b: Real, c: Real, d: Real) {
-    a <= b and c < d
-    and not a.is_negative and not c.is_negative
-    and b.is_positive and d.is_positive
-    implies
-    a * c < b * d
-}
-
-theorem mul_close_from_close(a1: Real, a2: Real, b1: Real, b2: Real,
-                              a_eps: Real, b_eps: Real,
-                              a_bound: Real, b_bound: Real) {
-    a1.is_close(a2, a_eps) and b1.is_close(b2, b_eps)
-    and a1.abs <= a_bound and b2.abs <= b_bound
-    and a_bound.is_positive and b_bound.is_positive
-    and a_eps.is_positive and b_eps.is_positive
-    implies
-    (a1 * b1).is_close(a2 * b2, a_bound * b_eps + a_eps * b_bound)
-}
-
-theorem limit_prod_seq(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    converges_to(prod_seq(a, b), limit(a) * limit(b))
-}
-
-theorem prod_seq_converges(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    converges(prod_seq(a, b))
-}
-
-theorem limit_of_prod(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    limit(prod_seq(a, b)) = limit(a) * limit(b)
-}
-
-define same_limit(a: Nat -> Real, b: Nat -> Real) -> Bool {
-    converges(a) and converges(b) and limit(a) = limit(b)
-}
-
-define vanishes(a: Nat -> Real) -> Bool {
-    converges(a) and limit(a) = Real.0
-}
-
-define abs_seq(a: Nat -> Real, n: Nat) -> Real {
-    a(n).abs
-}
-
-theorem same_limit_refl(a: Nat -> Real) {
-    converges(a) implies same_limit(a, a)
-}
-
-theorem same_limit_symm(a: Nat -> Real, b: Nat -> Real) {
-    same_limit(a, b) implies same_limit(b, a)
-}
-
-theorem same_limit_trans(a: Nat -> Real, b: Nat -> Real, c: Nat -> Real) {
-    same_limit(a, b) and same_limit(b, c) implies same_limit(a, c)
-}
-
-theorem abs_abs_sub_le_abs_sub(a: Real, b: Real) {
-    (a.abs - b.abs).abs <= (a - b).abs
 }

@@ -1,2221 +1,2099 @@
-theorem happy_sum_49 {
-    happy_sum(Nat.10, Nat.49) = Nat.97
+theorem falling_product_central_binom_carrywise_bound_of_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_central_binom_carrywise_bound(n, k)
 }
 
-theorem happy_sum_58 {
-    happy_sum(Nat.10, Nat.58) = Nat.89
+theorem falling_product_interval_central_binom_carrywise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_carrywise_bound(n, k) =
+        falling_product_central_binom_carrywise_bound(n, k)
+    )
 }
 
-theorem happy_sum_89 {
-    happy_sum(Nat.10, Nat.89) = Nat.145
+theorem falling_product_interval_central_binom_carry_bound_of_interval_carrywise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_interval_central_binom_carry_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
 }
 
-theorem happy_sum_97 {
-    happy_sum(Nat.10, Nat.97) = Nat.130
+theorem falling_product_interval_central_binom_carrywise_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product_interval_central_binom_carrywise_bound(n, k)
 }
 
-theorem happy_sum_130 {
-    happy_sum(Nat.10, Nat.130) = Nat.10
+theorem falling_product_interval_central_binom_primewise_bound_of_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
 }
 
-theorem happy_sum_145 {
-    happy_sum(Nat.10, Nat.145) = Nat.42
+theorem falling_product_interval_central_binom_primewise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_primewise_bound(n, k) =
+        falling_product_interval_central_binom_carrywise_bound(n, k)
+    )
 }
 
-define happy_iter(p: Nat, n: Nat, k: Nat) -> Nat {
-    match k {
+theorem falling_product_divides_central_binom_of_interval_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_carrywise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_interval_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_divides_central_binom_iff_interval_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_interval_central_binom_primewise_bound(n, k)
+    )
+}
+
+theorem falling_product_divides_central_binom_iff_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_interval_central_binom_carrywise_bound(n, k)
+    )
+}
+
+define mediant(p: Pair[Nat, Nat], q: Pair[Nat, Nat]) -> Pair[Nat, Nat] {
+    Pair.new(p.first + q.first, p.second + q.second)
+}
+
+define det(p: Pair[Nat, Nat], q: Pair[Nat, Nat]) -> Nat {
+    p.second * q.first - p.first * q.second
+}
+
+define insert_mediants(n: Nat, l: List[Pair[Nat, Nat]]) -> List[Pair[Nat, Nat]] {
+    match l {
+        List.nil {
+            List.nil[Pair[Nat, Nat]]
+        }
+        List.cons(h, t) {
+            match t {
+                List.nil {
+                    List.cons(h, List.nil[Pair[Nat, Nat]])
+                }
+                List.cons(h2, t2) {
+                    if h.second + h2.second = n {
+                        List.cons(h, List.cons(mediant(h, h2), insert_mediants(n, t)))
+                    } else {
+                        List.cons(h, insert_mediants(n, t))
+                    }
+                }
+            }
+        }
+    }
+}
+
+define farey(n: Nat) -> List[Pair[Nat, Nat]] {
+    match n {
         Nat.zero {
-            n
+            List.cons(Pair.new(Nat.0, Nat.1), List.cons(Pair.new(Nat.1, Nat.1), List.nil[Pair[Nat, Nat]]))
         }
         Nat.suc(m) {
-            happy_iter(p, happy_sum(p, n), m)
+            insert_mediants(n, farey(m))
         }
     }
 }
 
-define is_happy(p: Nat, n: Nat) -> Bool {
-    exists(k: Nat) {
-        happy_iter(p, n, k) = Nat.1
-    }
-}
-
-theorem happy_iter_1 {
-    happy_iter(Nat.10, Nat.1, Nat.0) = Nat.1
-}
-
-theorem happy_iter_7_reaches_1 {
-    happy_iter(Nat.10, Nat.7, Nat.5) = Nat.1
-}
-
-theorem happy_iter_4_cycle {
-    happy_iter(Nat.10, Nat.4, Nat.8) = Nat.4
-}
-
-theorem happy_iter_step_one_fix(p: Nat, j: Nat) {
-    happy_sum(p, Nat.1) = Nat.1 implies
-        happy_iter(p, Nat.1, j.suc) = happy_iter(p, Nat.1, j)
-}
-
-theorem happy_iter_one_stays(p: Nat, k: Nat) {
-    happy_sum(p, Nat.1) = Nat.1 implies happy_iter(p, Nat.1, k) = Nat.1
-}
-
-theorem happy_iter_ten_one_stays(k: Nat) {
-    happy_iter(Nat.10, Nat.1, k) = Nat.1
-}
-
-theorem is_happy_1 {
-    is_happy(Nat.10, Nat.1)
-}
-
-theorem is_happy_7 {
-    is_happy(Nat.10, Nat.7)
-}
-
-theorem happy_sum_single_digit_at_most_81(n: Nat) {
-    n < Nat.10 implies happy_sum(Nat.10, n) <= Nat.81
-}
-
-theorem division_algorithm(a: Nat, q: Nat, r: Nat, m: Nat) {
-    a = q * m + r and r < m implies a.div(m) = q and a.mod(m) = r
-}
-
-theorem divides_iff_mod_zero(a: Nat, m: Nat) {
-    m.divides(a) = (a.mod(m) = Nat.0)
-}
-
-theorem divisibility_trans(a: Nat, b: Nat, c: Nat) {
-    a.divides(b) and b.divides(c) implies a.divides(c)
-}
-
-theorem mod_mul_components(a: Nat, b: Nat, m: Nat) {
-    (a * b).mod(m) = (a.mod(m) * b.mod(m)).mod(m)
-}
-
-theorem div_add_ge_left(a: Nat, b: Nat, m: Nat) {
-    m != Nat.0 implies a.div(m) <= (a + b).div(m)
-}
-
-theorem irrationality_deep_sqrt_two_irrational(p: Nat, q: Nat) {
-    p * p = Nat.2 * (q * q) implies q = Nat.0
-}
-
-theorem irrationality_deep_sqrt_two_no_positive_rational(p: Nat, q: Nat) {
-    Nat.0 < q implies p * p != Nat.2 * (q * q)
-}
-
-theorem irrationality_deep_sqrt_three_irrational(p: Nat, q: Nat) {
-    p * p = Nat.3 * (q * q) implies q = Nat.0
-}
-
-theorem irrationality_deep_sqrt_three_no_positive_rational(p: Nat, q: Nat) {
-    Nat.0 < q implies p * p != Nat.3 * (q * q)
-}
-
-theorem sq_eq_six_sq_descent(x: Nat, y: Nat) {
-    x != Nat.0 and x * x = Nat.6 * (y * y) implies
-        exists(a: Nat, b: Nat) {
-            a < x and Nat.2 * a = x and a * a = Nat.6 * (b * b)
+define is_consecutive(l: List[Pair[Nat, Nat]], x: Pair[Nat, Nat], y: Pair[Nat, Nat]) -> Bool {
+    match l {
+        List.nil {
+            false
         }
-}
-
-theorem sq_eq_six_sq_zero(x: Nat) {
-    forall(y: Nat) { x * x = Nat.6 * (y * y) implies x = Nat.0 }
-}
-
-theorem no_nontrivial_sq_eq_six_sq(x: Nat, y: Nat) {
-    x * x = Nat.6 * (y * y) implies x = Nat.0 and y = Nat.0
-}
-
-theorem irrationality_deep_sqrt_six_irrational(p: Nat, q: Nat) {
-    p * p = Nat.6 * (q * q) implies q = Nat.0
-}
-
-theorem irrationality_deep_sqrt_six_no_positive_rational(p: Nat, q: Nat) {
-    Nat.0 < q implies p * p != Nat.6 * (q * q)
-}
-
-theorem irrationality_deep_sqrt_n_concrete_cases(n: Nat, p: Nat, q: Nat) {
-    (n = Nat.2 or n = Nat.3 or n = Nat.6) and p * p = n * (q * q) implies q = Nat.0
-}
-
-let real_two: Real = Real.1 + Real.1
-
-/// The real number three, 1 + 1 + 1 (the digit `Real.3` is not defined in
-/// the library).
-let real_three: Real = Real.1 + Real.1 + Real.1
-
-/// The real number five, 1 + 1 + 1 + 1 + 1 (the digit `Real.5` is not
-/// defined in the library).
-let real_five: Real = Real.1 + Real.1 + Real.1 + Real.1 + Real.1
-
-/// Two plus three is five, as reals.
-theorem irrationality_deep_real_two_add_three {
-    real_two + real_three = real_five
-}
-
-theorem irrationality_deep_real_two_add_x6_three(x6: Real) {
-    real_two + x6 + (x6 + real_three) = real_five + real_two * x6
-}
-
-theorem irrationality_deep_sqrt_two_add_sqrt_three_square(x2: Real, x3: Real, x6: Real) {
-    x2 * x2 = real_two and x3 * x3 = real_three and x6 = x2 * x3 implies
-        (x2 + x3) * (x2 + x3) = real_five + real_two * x6
-}
-
-theorem irrationality_deep_square_double_square(q: Nat) {
-    (Nat.2 * q * q) * (Nat.2 * q * q) = Nat.4 * q * q * q * q
-}
-
-theorem irrationality_deep_six_square_double_square(q: Nat) {
-    Nat.6 * ((Nat.2 * q * q) * (Nat.2 * q * q)) = Nat.24 * q * q * q * q
-}
-
-theorem irrationality_deep_sqrt_two_add_sqrt_three_irrational(p: Nat, q: Nat) {
-    Nat.0 < q implies
-        (p * p - Nat.5 * q * q) * (p * p - Nat.5 * q * q) != Nat.24 * q * q * q * q
-}
-
-theorem zero_lte(a: Nat) {
-    Nat.0 <= a
-}
-
-theorem lt_imp_lte(a: Nat, b: Nat) {
-    a < b implies a <= b
-}
-
-theorem lt_suc_iff_lte(a: Nat, b: Nat) {
-    (a < b.suc) = (a <= b)
-}
-
-theorem square_mono(a: Nat, b: Nat) {
-    a <= b implies a * a <= b * b
-}
-
-theorem square_le_cancel(a: Nat, b: Nat) {
-    a * a <= b * b implies a <= b
-}
-
-theorem add_lte_imp_left_lte(a: Nat, b: Nat, n: Nat) {
-    a + b <= n implies a <= n
-}
-
-theorem add_lte_imp_right_lte(a: Nat, b: Nat, n: Nat) {
-    a + b <= n implies b <= n
-}
-
-theorem sum_sq_le_imp_first_lte(x: Nat, y: Nat, n: Nat) {
-    x * x + y * y <= n * n implies x <= n
-}
-
-theorem sum_sq_le_imp_second_lte(x: Nat, y: Nat, n: Nat) {
-    x * x + y * y <= n * n implies y <= n
-}
-
-theorem sum_sq_eq_imp_first_lte(x: Nat, y: Nat, n: Nat) {
-    x * x + y * y = n * n implies x <= n
-}
-
-theorem sum_sq_eq_imp_second_lte(x: Nat, y: Nat, n: Nat) {
-    x * x + y * y = n * n implies y <= n
-}
-
-define rectangle_points(m: Nat, n: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_product(range_set(m.suc), range_set(n.suc))
-}
-
-theorem rectangle_points_contains_eq(m: Nat, n: Nat, x: Nat, y: Nat) {
-    rectangle_points(m, n).contains(Pair.new(x, y)) = (x <= m and y <= n)
-}
-
-theorem rectangle_points_card(m: Nat, n: Nat) {
-    fs_card(rectangle_points(m, n)) = (m + Nat.1) * (n + Nat.1)
-}
-
-theorem lte_zero_imp_zero(a: Nat) {
-    a <= Nat.0 implies a = Nat.0
-}
-
-theorem sq_le_imp_le(x: Nat, n: Nat) {
-    x * x <= n implies x <= n
-}
-
-theorem add_eq_imp_left_lte(a: Nat, b: Nat, n: Nat) {
-    a + b = n implies a <= n
-}
-
-theorem add_eq_imp_right_lte(a: Nat, b: Nat, n: Nat) {
-    a + b = n implies b <= n
-}
-
-theorem lte_suc_or_eq(a: Nat, b: Nat) {
-    (a <= b.suc) = (a <= b or a = b.suc)
-}
-
-define circle_pred(r: Nat, p: Pair[Nat, Nat]) -> Bool {
-    p.first * p.first + p.second * p.second = r * r
-}
-
-define circle_on_points(r: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_filter(finite_set_product(range_set(r.suc), range_set(r.suc)), circle_pred(r))
-}
-
-theorem circle_on_points_contains_eq(r: Nat, x: Nat, y: Nat) {
-    circle_on_points(r).contains(Pair.new(x, y)) = (x * x + y * y = r * r)
-}
-
-define square_sum_eq_pred(n: Nat, p: Pair[Nat, Nat]) -> Bool {
-    p.first * p.first + p.second * p.second = n
-}
-
-define two_square_repr(n: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_filter(finite_set_product(range_set(n.suc), range_set(n.suc)), square_sum_eq_pred(n))
-}
-
-theorem two_square_repr_contains_eq(n: Nat, x: Nat, y: Nat) {
-    two_square_repr(n).contains(Pair.new(x, y)) = (x * x + y * y = n)
-}
-
-theorem circle_on_points_eq_two_square_repr_sq(r: Nat) {
-    circle_on_points(r) = two_square_repr(r * r)
-}
-
-theorem circle_on_points_card_eq_two_square_repr(r: Nat) {
-    fs_card(circle_on_points(r)) = fs_card(two_square_repr(r * r))
-}
-
-theorem circle_on_points_nonempty(r: Nat) {
-    exists(x: Nat, y: Nat) {
-        circle_on_points(r).contains(Pair.new(x, y))
-    }
-}
-
-theorem prime_circle_has_lattice_point(p: Nat) {
-    p.is_prime and p.mod(Nat.4) = Nat.1 implies exists(x: Nat, y: Nat) {
-        x * x + y * y = p
-    }
-}
-
-define disk_pred(r: Nat, p: Pair[Nat, Nat]) -> Bool {
-    p.first * p.first + p.second * p.second <= r * r
-}
-
-define circle_disk_points(r: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_filter(finite_set_product(range_set(r.suc), range_set(r.suc)), disk_pred(r))
-}
-
-theorem circle_disk_points_contains_eq(r: Nat, x: Nat, y: Nat) {
-    circle_disk_points(r).contains(Pair.new(x, y)) = (x * x + y * y <= r * r)
-}
-
-theorem double_half_sq_le(n: Nat) {
-    Nat.2 * (n.div(Nat.2) * n.div(Nat.2)) <= n * n
-}
-
-theorem circle_disk_points_at_most_square(r: Nat) {
-    fs_card(circle_disk_points(r)) <= (r + Nat.1) * (r + Nat.1)
-}
-
-theorem circle_disk_points_at_least_quarter_square(r: Nat) {
-    (r.div(Nat.2) + Nat.1) * (r.div(Nat.2) + Nat.1) <= fs_card(circle_disk_points(r))
-}
-
-define triangle_pred(n: Nat, p: Pair[Nat, Nat]) -> Bool {
-    p.first + p.second <= n
-}
-
-define diagonal_pred(n: Nat, p: Pair[Nat, Nat]) -> Bool {
-    p.first + p.second = n
-}
-
-define triangle_points(n: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_filter(finite_set_product(range_set(n.suc), range_set(n.suc)), triangle_pred(n))
-}
-
-define diagonal_points(n: Nat) -> FiniteSet[Pair[Nat, Nat]] {
-    finite_set_filter(finite_set_product(range_set(n.suc), range_set(n.suc)), diagonal_pred(n))
-}
-
-theorem triangle_points_contains_eq(n: Nat, x: Nat, y: Nat) {
-    triangle_points(n).contains(Pair.new(x, y)) = (x + y <= n)
-}
-
-theorem diagonal_points_contains_eq(n: Nat, x: Nat, y: Nat) {
-    diagonal_points(n).contains(Pair.new(x, y)) = (x + y = n)
-}
-
-define diagonal_fn(n: Nat, x: Nat) -> Pair[Nat, Nat] {
-    Pair.new(x, n - x)
-}
-
-define diagonal_list(n: Nat) -> List[Pair[Nat, Nat]] {
-    map[Nat, Pair[Nat, Nat]](n.suc.range, diagonal_fn(n))
-}
-
-theorem diagonal_list_length(n: Nat) {
-    diagonal_list(n).length = n.suc
-}
-
-theorem diagonal_fn_injective(n: Nat) {
-    is_injective_fn(diagonal_fn(n))
-}
-
-theorem diagonal_list_unique(n: Nat) {
-    diagonal_list(n).is_unique
-}
-
-theorem diagonal_list_membership(n: Nat, x: Nat, y: Nat) {
-    diagonal_list(n).contains(Pair.new(x, y)) = (x + y = n)
-}
-
-theorem diagonal_points_eq_fs_from_list(n: Nat) {
-    diagonal_points(n) = fs_from_list(diagonal_list(n))
-}
-
-theorem diagonal_points_card(n: Nat) {
-    fs_card(diagonal_points(n)) = n + Nat.1
-}
-
-theorem pair_new_zero_eq_iff_components(x: Nat, y: Nat) {
-    (Pair.new(x, y) = Pair.new(Nat.0, Nat.0)) = (x = Nat.0 and y = Nat.0)
-}
-
-theorem triangle_points_zero_eq_singleton {
-    triangle_points(Nat.0) = fs_insert(FiniteSet.empty[Pair[Nat, Nat]], Pair.new(Nat.0, Nat.0))
-}
-
-theorem triangle_suc_union(n: Nat) {
-    triangle_points(n.suc) = fs_union(triangle_points(n), diagonal_points(n.suc))
-}
-
-theorem triangle_diagonal_disjoint(n: Nat) {
-    triangle_points(n).is_disjoint(diagonal_points(n.suc))
-}
-
-theorem triangle_points_card_eq_triangular(n: Nat) {
-    fs_card(triangle_points(n)) = triangular(n.suc)
-}
-
-theorem triangle_points_card(n: Nat) {
-    Nat.2 * fs_card(triangle_points(n)) = (n + Nat.1) * (n + Nat.2)
-}
-
-theorem triangle_points_card_half(n: Nat) {
-    fs_card(triangle_points(n)) = ((n + Nat.1) * (n + Nat.2)).div(Nat.2)
-}
-
-define int_index(m: Nat, i: Nat) -> Int {
-    sub_nat(i, m)
-}
-
-define int_range(m: Nat) -> List[Int] {
-    map[Nat, Int]((Nat.2 * m + Nat.1).range, int_index(m))
-}
-
-theorem int_range_length(m: Nat) {
-    int_range(m).length = Nat.2 * m + Nat.1
-}
-
-theorem int_index_injective(m: Nat) {
-    is_injective_fn(int_index(m))
-}
-
-theorem int_range_unique(m: Nat) {
-    int_range(m).is_unique
-}
-
-define signed_range(m: Nat) -> FiniteSet[Int] {
-    fs_from_list(int_range(m))
-}
-
-theorem signed_range_card(m: Nat) {
-    fs_card(signed_range(m)) = Nat.2 * m + Nat.1
-}
-
-define signed_rectangle(m: Nat, n: Nat) -> FiniteSet[Pair[Int, Int]] {
-    finite_set_product(signed_range(m), signed_range(n))
-}
-
-theorem signed_rectangle_card(m: Nat, n: Nat) {
-    fs_card(signed_rectangle(m, n)) = (Nat.2 * m + Nat.1) * (Nat.2 * n + Nat.1)
-}
-
-theorem sub_le(a: Nat, b: Nat) {
-    a - b <= a
-}
-
-theorem sub_lt_self(a: Nat, b: Nat) {
-    b <= a and b != Nat.0 implies a - b < a
-}
-
-theorem sub_sub(a: Nat, b: Nat) {
-    b <= a implies a - (a - b) = b
-}
-
-theorem lte_sub_right(a: Nat, b: Nat, c: Nat) {
-    a <= b implies a - c <= b - c
-}
-
-theorem signed_range_contains_imp_abs(m: Nat, z: Int) {
-    signed_range(m).contains(z) implies abs(z) <= m
-}
-
-theorem signed_range_abs_imp_contains(m: Nat, z: Int) {
-    abs(z) <= m implies signed_range(m).contains(z)
-}
-
-theorem signed_range_contains_abs(m: Nat, z: Int) {
-    signed_range(m).contains(z) = (abs(z) <= m)
-}
-
-theorem signed_rectangle_contains_abs(m: Nat, n: Nat, x: Int, y: Int) {
-    signed_rectangle(m, n).contains(Pair.new(x, y)) = (abs(x) <= m and abs(y) <= n)
-}
-
-theorem lcm_gcd_product(a: Nat, b: Nat) {
-    a.gcd(b) * a.lcm(b) = a * b
-}
-
-theorem lcm_common_multiple_left(a: Nat, b: Nat) {
-    a.divides(a.lcm(b))
-}
-
-theorem lcm_common_multiple_right(a: Nat, b: Nat) {
-    b.divides(a.lcm(b))
-}
-
-theorem lcm_divides_common_multiple(a: Nat, b: Nat, c: Nat) {
-    a.divides(c) and b.divides(c) implies a.lcm(b).divides(c)
-}
-
-theorem lcm_eq_mul_of_gcd_one(a: Nat, b: Nat) {
-    a.gcd(b) = Nat.1 implies a.lcm(b) = a * b
-}
-
-theorem gcd_one_of_lcm_eq_mul(a: Nat, b: Nat) {
-    a != Nat.0 and b != Nat.0 and a.lcm(b) = a * b implies a.gcd(b) = Nat.1
-}
-
-theorem lcm_eq_mul_iff_gcd_one(a: Nat, b: Nat) {
-    a != Nat.0 and b != Nat.0 implies ((a.gcd(b) = Nat.1) = (a.lcm(b) = a * b))
-}
-
-theorem gcd_lcm_distrib_left(a: Nat, b: Nat, c: Nat) {
-    (a.gcd(b)).lcm(a.gcd(c)).divides(a.gcd(b.lcm(c)))
-}
-
-theorem prod_divides(a1: Nat, a2: Nat, b1: Nat, b2: Nat) {
-    a1.divides(b1) and a2.divides(b2) implies (a1 * a2).divides(b1 * b2)
-}
-
-theorem coprime_mul_divides(p: Nat, q: Nat, m: Nat) {
-    p.coprime(q) and p.divides(m) and q.divides(m) implies (p * q).divides(m)
-}
-
-theorem div_of_divides_mul(d: Nat, x: Nat, y: Nat) {
-    d != Nat.0 and d.divides(x * y) implies (d.div(d.gcd(x))).divides(y)
-}
-
-theorem gcd_coprime_factor(a: Nat, g: Nat, t: Nat) {
-    a.coprime(g) implies a.gcd(g * t) = a.gcd(t)
-}
-
-theorem gcd_mul_coprime(a: Nat, x: Nat, y: Nat) {
-    x.coprime(y) implies a.gcd(x * y) = a.gcd(x) * a.gcd(y)
-}
-
-theorem gcd_assoc(a: Nat, x: Nat, y: Nat) {
-    (a.gcd(x)).gcd(a.gcd(y)) = a.gcd(x.gcd(y))
-}
-
-theorem lcm_cofactor(x: Nat, y: Nat, xp: Nat, yp: Nat) {
-    x.gcd(y) != Nat.0 and x.gcd(y) * xp = x and x.gcd(y) * yp = y implies
-        x.gcd(y) * xp * yp = x.lcm(y)
-}
-
-theorem gcd_lcm_identity(a: Nat, x: Nat, y: Nat) {
-    a.gcd(x) * a.gcd(y) = a.gcd(x.gcd(y)) * a.gcd(x.lcm(y))
-}
-
-theorem gcd_lcm_distrib_right(a: Nat, b: Nat, c: Nat) {
-    a.gcd(b.lcm(c)).divides((a.gcd(b)).lcm(a.gcd(c)))
-}
-
-theorem gcd_lcm_distrib(a: Nat, b: Nat, c: Nat) {
-    a.gcd(b.lcm(c)) = (a.gcd(b)).lcm(a.gcd(c))
-}
-
-define square_suc_mod(p: Nat, x: Nat) -> Nat {
-    (x.suc * x.suc).mod(p)
-}
-
-define is_unit_qr_at(p: Nat, a: Nat) -> Bool {
-    is_unit_quadratic_residue_mod(a, p)
-}
-
-define is_unit_nonqr_at(p: Nat, a: Nat) -> Bool {
-    is_unit_quadratic_nonresidue_mod(a, p)
-}
-
-define legendre_at(p: Nat, a: Nat) -> Int {
-    legendre_symbol(a, p)
-}
-
-define positive_residues(p: Nat) -> List[Nat] {
-    map((p - Nat.1).range, Nat.suc)
-}
-
-define half_square_residues(p: Nat, h: Nat) -> List[Nat] {
-    map(h.range, square_suc_mod(p))
-}
-
-define unit_qr_positive_list(p: Nat) -> List[Nat] {
-    positive_residues(p).filter(is_unit_qr_at(p))
-}
-
-define unit_nonqr_positive_list(p: Nat) -> List[Nat] {
-    positive_residues(p).filter(is_unit_nonqr_at(p))
-}
-
-define legendre_symbol_sum_positive(p: Nat) -> Int {
-    sum(map(positive_residues(p), legendre_at(p)))
-}
-
-define int_one_summand(a: Nat) -> Int {
-    Int.1
-}
-
-define int_neg_one_summand(a: Nat) -> Int {
-    -Int.1
-}
-
-theorem int_sum_const_one(l: List[Nat]) {
-    sum(map(l, int_one_summand)) = Int.from_nat(l.length)
-}
-
-theorem int_sum_const_neg_one(l: List[Nat]) {
-    sum(map(l, int_neg_one_summand)) = -(Int.from_nat(l.length))
-}
-
-theorem nat_sq_diff(a: Nat, b: Nat) {
-    b <= a implies (a - b) * (a + b) = a * a - b * b
-}
-
-theorem sub_le_self(a: Nat, b: Nat) {
-    a - b <= a
-}
-
-theorem congr_le_imp_divides_diff(a: Nat, b: Nat, n: Nat) {
-    n != Nat.0 and b <= a and a.congr_mod(b, n) implies n.divides(a - b)
-}
-
-theorem divides_diff_imp_congr(a: Nat, b: Nat, n: Nat) {
-    n != Nat.0 and b <= a and n.divides(a - b) implies a.congr_mod(b, n)
-}
-
-theorem square_half_injective(p: Nat, h: Nat, x: Nat, y: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 and Nat.0 < x and x <= h and Nat.0 < y and y <= h
-        and (x * x).mod(p) = (y * y).mod(p)
-        implies x = y
-}
-
-theorem map_range_injective_is_unique(n: Nat, f: Nat -> Nat) {
-    (forall(x: Nat, y: Nat) { x < n and y < n and f(x) = f(y) implies x = y })
-        implies map(n.range, f).is_unique
-}
-
-theorem half_square_residues_unique(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies half_square_residues(p, h).is_unique
-}
-
-theorem half_square_residues_member_unit_qr(p: Nat, h: Nat, v: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 and half_square_residues(p, h).contains(v)
-        implies is_unit_quadratic_residue_mod(v, p)
-}
-
-theorem half_square_residues_member_below_prime(p: Nat, h: Nat, v: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 and half_square_residues(p, h).contains(v)
-        implies Nat.0 < v and v < p
-}
-
-theorem square_residues_cover_unit_qr(p: Nat, h: Nat, a: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 and Nat.0 < a and a < p
-        and is_unit_quadratic_residue_mod(a, p)
-        implies exists(i: Nat) { i < h and square_suc_mod(p, i) = a }
-}
-
-theorem positive_residues_unique(p: Nat) {
-    positive_residues(p).is_unique
-}
-
-theorem positive_residues_contains_iff(p: Nat, a: Nat) {
-    positive_residues(p).contains(a) = (Nat.0 < a and a < p)
-}
-
-theorem unit_qr_positive_membership_iff_half_square(p: Nat, h: Nat, v: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies (unit_qr_positive_list(p).contains(v) = half_square_residues(p, h).contains(v))
-}
-
-theorem unit_qr_positive_permutation_half_squares(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1
-        implies is_permutation(unit_qr_positive_list(p), half_square_residues(p, h))
-}
-
-theorem unit_quadratic_residue_count(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies unit_qr_positive_list(p).length = h
-}
-
-theorem unit_nonqr_iff_not_unit_qr_coprime(p: Nat, x: Nat) {
-    x.coprime(p) implies is_unit_quadratic_nonresidue_mod(x, p) = not is_unit_quadratic_residue_mod(x, p)
-}
-
-theorem unit_nonqr_complement_on_positive(p: Nat, x: Nat) {
-    p.is_prime and positive_residues(p).contains(x) implies is_unit_quadratic_nonresidue_mod(x, p) = not is_unit_quadratic_residue_mod(x, p)
-}
-
-theorem sum_map_split_unit_qr_nonqr(p: Nat, f: Nat -> Int) {
-    p.is_prime implies
-    sum(map(positive_residues(p), f)) =
-        sum(map(unit_qr_positive_list(p), f)) +
-            sum(map(unit_nonqr_positive_list(p), f))
-}
-
-theorem unit_qr_nonqr_length_pair(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies unit_qr_positive_list(p).length + unit_nonqr_positive_list(p).length =
-            positive_residues(p).length
-}
-
-theorem unit_quadratic_residue_count_half(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies
-        unit_qr_positive_list(p).length = (p - Nat.1).div(Nat.2)
-}
-
-theorem unit_quadratic_nonresidue_count(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies unit_nonqr_positive_list(p).length = h
-}
-
-theorem legendre_symbol_one_of_unit_qr(p: Nat, a: Nat) {
-    p.is_prime and is_unit_quadratic_residue_mod(a, p)
-        implies legendre_symbol(a, p) = Int.1
-}
-
-theorem legendre_symbol_neg_one_of_unit_nonqr(p: Nat, a: Nat) {
-    p.is_prime and is_unit_quadratic_nonresidue_mod(a, p)
-        implies legendre_symbol(a, p) = -Int.1
-}
-
-theorem legendre_symbol_sum_positive_zero(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies legendre_symbol_sum_positive(p) = Int.0
-}
-
-theorem legendre_symbol_neg_one_by_half_parity(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 implies legendre_symbol(p - Nat.1, p) =
-            if Nat.2.divides(h) { Int.1 } else { -Int.1 }
-}
-
-theorem legendre_symbol_two_by_mod_eight(p: Nat, h: Nat) {
-    p.is_prime and p = Nat.2 * h + Nat.1 and
-        (exists(g: Nat) { is_order_double_unit_generator_mod(g, p, h) })
-    implies legendre_symbol(Nat.2, p) =
-        if p.congr_mod(Nat.1, Nat.8) or p.congr_mod(Nat.7, Nat.8) {
-            Int.1
-        } else {
-            -Int.1
-        }
-}
-
-theorem quadratic_residue_product_is_residue(a: Nat, b: Nat, p: Nat) {
-    is_quadratic_residue_mod(a, p) and is_quadratic_residue_mod(b, p)
-        implies is_quadratic_residue_mod(a * b, p)
-}
-
-theorem unit_quadratic_residue_product_is_residue(a: Nat, b: Nat, p: Nat) {
-    is_unit_quadratic_residue_mod(a, p) and is_unit_quadratic_residue_mod(b, p)
-        implies is_unit_quadratic_residue_mod(a * b, p)
-}
-
-theorem nat_liouville_zero {
-    nat_liouville(Nat.0) = Int.1
-}
-
-theorem nat_liouville_prime(p: Nat) {
-    p.is_prime implies nat_liouville(p) = -Int.1
-}
-
-theorem nat_liouville_pow(p: Nat, k: Nat) {
-    p.is_prime implies nat_liouville(p.pow(k)) = (-Int.1).pow(k)
-}
-
-theorem nat_liouville_mul_fails_at_zero {
-    not (nat_liouville(Nat.0 * Nat.2) = nat_liouville(Nat.0) * nat_liouville(Nat.2))
-}
-
-theorem nat_alternating_sign_odd_neg_one(k: Nat) {
-    not (Nat.2.divides(k)) implies alternating_sign[Int](k) = -Int.1
-}
-
-theorem nat_alternating_sign_even_one(k: Nat) {
-    Nat.2.divides(k) implies alternating_sign[Int](k) = Int.1
-}
-
-theorem nat_liouville_one_iff_omega_even(n: Nat) {
-    (nat_liouville(n) = Int.1) = (Nat.2.divides(nat_prime_omega(n)))
-}
-
-theorem nat_liouville_four_omega_even {
-    (nat_liouville(Nat.4) = Int.1) and Nat.2.divides(nat_prime_omega(Nat.4))
-}
-
-theorem abs_nat_liouville_one(n: Nat) {
-    abs(nat_liouville(n)) = Nat.1
-}
-
-theorem nat_mobius_eq_liouville_factorisation_unique(n: Nat) {
-    n != Nat.0 and prime_factorisation(n).is_unique implies nat_mobius(n) = nat_liouville(n)
-}
-
-theorem nat_mobius_eq_liouville_squarefree(n: Nat) {
-    is_squarefree(n) implies nat_mobius(n) = nat_liouville(n)
-}
-
-theorem nat_mobius_eq_liouville_mul_abs(n: Nat) {
-    nat_mobius(n) = nat_liouville(n) * Int.from_nat(abs(nat_mobius(n)))
-}
-
-theorem nat_mobius_six {
-    nat_mobius(Nat.6) = Int.1
-}
-
-theorem nat_mobius_liouville_six {
-    nat_mobius(Nat.6) = Int.1 and nat_liouville(Nat.6) = Int.1
-}
-
-theorem nat_zero_lte(n: Nat) {
-    Nat.0 <= n
-}
-
-theorem nat_one_lt_add_two(n: Nat) {
-    Nat.1 < n + Nat.2
-}
-
-theorem nat_add_two_sub_one(n: Nat) {
-    n + Nat.2 - Nat.1 = n + Nat.1
-}
-
-theorem frac_nonneg(x: Real) {
-    Real.0 <= frac(x)
-}
-
-theorem frac_lt_one(x: Real) {
-    frac(x) < Real.1
-}
-
-theorem frac_of_frac(x: Real) {
-    frac(frac(x)) = frac(x)
-}
-
-theorem circular_distance_of_frac(x: Real) {
-    circular_distance(x) = circular_distance(frac(x))
-}
-
-theorem cd_iff_frac_interval(x: Real, b: Real) {
-    b <= circular_distance(x) = (b <= frac(x) and frac(x) <= Real.1 - b)
-}
-
-theorem lonely_runner_two_frac_view(t: Real) {
-    (Real.1 / from_nat[Real](Nat.3) <= circular_distance(Real.1 * t)
-        = (Real.1 / from_nat[Real](Nat.3) <= frac(Real.1 * t)
-            and frac(Real.1 * t) <= from_nat[Real](Nat.2) / from_nat[Real](Nat.3)))
-}
-
-theorem lonely_runner_three_frac_view_one(t: Real) {
-    (Real.1 / from_nat[Real](Nat.4) <= circular_distance(Real.1 * t)
-        = (Real.1 / from_nat[Real](Nat.4) <= frac(Real.1 * t)
-            and frac(Real.1 * t) <= from_nat[Real](Nat.3) / from_nat[Real](Nat.4)))
-}
-
-theorem lonely_runner_three_frac_view_two(t: Real) {
-    (Real.1 / from_nat[Real](Nat.4) <= circular_distance(from_nat[Real](Nat.2) * t)
-        = (Real.1 / from_nat[Real](Nat.4) <= frac(from_nat[Real](Nat.2) * t)
-            and frac(from_nat[Real](Nat.2) * t) <= from_nat[Real](Nat.3) / from_nat[Real](Nat.4)))
-}
-
-theorem lonely_runner_two_speeds_01 {
-    exists(t: Real) {
-        Real.1 / from_nat[Real](Nat.3) <= circular_distance(Real.1 * t)
-    }
-}
-
-theorem lonely_runner_two_restated {
-    exists(t: Real) {
-        Real.1 / from_nat[Real](Nat.3) <= circular_distance(Real.1 * t)
-    }
-}
-
-theorem lonely_runner_two_frac_witness {
-    exists(t: Real) {
-        Real.1 / from_nat[Real](Nat.3) <= frac(Real.1 * t)
-            and frac(Real.1 * t) <= from_nat[Real](Nat.2) / from_nat[Real](Nat.3)
-    }
-}
-
-theorem lonely_runner_three_speeds_012 {
-    exists(t: Real) {
-        Real.1 / from_nat[Real](Nat.4) <= circular_distance(Real.1 * t)
-            and Real.1 / from_nat[Real](Nat.4) <= circular_distance(from_nat[Real](Nat.2) * t)
-    }
-}
-
-theorem lonely_runner_three_frac_witness {
-    exists(t: Real) {
-        Real.1 / from_nat[Real](Nat.4) <= frac(Real.1 * t)
-            and frac(Real.1 * t) <= from_nat[Real](Nat.3) / from_nat[Real](Nat.4)
-            and Real.1 / from_nat[Real](Nat.4) <= frac(from_nat[Real](Nat.2) * t)
-            and frac(from_nat[Real](Nat.2) * t) <= from_nat[Real](Nat.3) / from_nat[Real](Nat.4)
-    }
-}
-
-theorem lonely_runner_equispaced(n: Nat) {
-    exists(t: Real) {
-        forall(i: Nat) {
-            Nat.1 <= i and i <= n implies
-                Real.1 / from_nat[Real](n + Nat.2) <= circular_distance(from_nat[Real](i) * t)
+        List.cons(h, t) {
+            match t {
+                List.nil {
+                    false
+                }
+                List.cons(h2, t2) {
+                    if h = x {
+                        if h2 = y {
+                            true
+                        } else {
+                            is_consecutive(t, x, y)
+                        }
+                    } else {
+                        is_consecutive(t, x, y)
+                    }
+                }
+            }
         }
     }
 }
 
-theorem lonely_runner_equispaced_frac_view(n: Nat) {
-    exists(t: Real) {
-        forall(i: Nat) {
-            Nat.1 <= i and i <= n implies
-                Real.1 / from_nat[Real](n + Nat.2) <= frac(from_nat[Real](i) * t)
-                and frac(from_nat[Real](i) * t)
-                    <= from_nat[Real](n + Nat.1) / from_nat[Real](n + Nat.2)
+theorem insert_mediants_split(n: Nat, h: Pair[Nat, Nat], h2: Pair[Nat, Nat], t: List[Pair[Nat, Nat]]) {
+    h.second + h2.second = n implies insert_mediants(n, List.cons(h, List.cons(h2, t))) = List.cons(h, List.cons(mediant(h, h2), insert_mediants(n, List.cons(h2, t))))
+}
+
+theorem insert_mediants_keep(n: Nat, h: Pair[Nat, Nat], h2: Pair[Nat, Nat], t: List[Pair[Nat, Nat]]) {
+    h.second + h2.second != n implies insert_mediants(n, List.cons(h, List.cons(h2, t))) = List.cons(h, insert_mediants(n, List.cons(h2, t)))
+}
+
+theorem sub_cancel_add(a: Nat, b: Nat, c: Nat) {
+    (a + b) - (a + c) = b - c
+}
+
+theorem sub_cancel_add_right(a: Nat, b: Nat, c: Nat) {
+    (b + a) - (c + a) = b - c
+}
+
+theorem det_mediant_left(p: Pair[Nat, Nat], q: Pair[Nat, Nat]) {
+    det(p, mediant(p, q)) = det(p, q)
+}
+
+theorem det_mediant_right(p: Pair[Nat, Nat], q: Pair[Nat, Nat]) {
+    det(mediant(p, q), q) = det(p, q)
+}
+
+theorem farey_one {
+    farey(Nat.1) = List.cons(Pair.new(Nat.0, Nat.1), List.cons(Pair.new(Nat.1, Nat.1), List.nil[Pair[Nat, Nat]]))
+}
+
+theorem farey_two {
+    farey(Nat.2) = List.cons(Pair.new(Nat.0, Nat.1), List.cons(Pair.new(Nat.1, Nat.2), List.cons(Pair.new(Nat.1, Nat.1), List.nil[Pair[Nat, Nat]])))
+}
+
+theorem det_zero_one_one_two {
+    det(Pair.new(Nat.0, Nat.1), Pair.new(Nat.1, Nat.2)) = Nat.1
+}
+
+theorem det_one_two_one_one {
+    det(Pair.new(Nat.1, Nat.2), Pair.new(Nat.1, Nat.1)) = Nat.1
+}
+
+define unmediant_left(x: Pair[Nat, Nat], y: Pair[Nat, Nat]) -> Pair[Nat, Nat] {
+    Pair.new(y.first - x.first, y.second - x.second)
+}
+
+define unmediant_right(x: Pair[Nat, Nat], y: Pair[Nat, Nat]) -> Pair[Nat, Nat] {
+    Pair.new(x.first - y.first, x.second - y.second)
+}
+
+define cons_pair_farey(n: Nat, x: Pair[Nat, Nat], y: Pair[Nat, Nat]) -> Bool {
+    match n {
+        Nat.zero {
+            x = Pair.new(Nat.0, Nat.1) and y = Pair.new(Nat.1, Nat.1)
+        }
+        Nat.suc(m) {
+            (cons_pair_farey(m, x, y) and x.second + y.second != Nat.suc(m)) or
+            ((cons_pair_farey(m, x, unmediant_left(x, y)) and y = mediant(x, unmediant_left(x, y)) and x.second + unmediant_left(x, y).second = Nat.suc(m)) or
+             (cons_pair_farey(m, unmediant_right(x, y), y) and x = mediant(unmediant_right(x, y), y) and unmediant_right(x, y).second + y.second = Nat.suc(m)))
         }
     }
 }
 
-theorem mertens_eq_range_sum_mobius(x: Nat) {
-    mertens(x) = range_sum(nat_mobius, x.suc)
+theorem fermat_test(n: Nat, a: Nat) {
+    n.is_prime and a.coprime(n) implies a.pow(n - Nat.1).congr_mod(Nat.1, n)
 }
 
-theorem mertens_zero_restated {
-    mertens(Nat.0) = Int.0
+theorem fermat_test_gcd(n: Nat, a: Nat) {
+    n.is_prime and a.gcd(n) = Nat.1 implies a.pow(n - Nat.1).congr_mod(Nat.1, n)
 }
 
-theorem mertens_one_restated {
-    mertens(Nat.1) = Int.1
+theorem eleven_lt_thirty_one {
+    Nat.11 < Nat.31
 }
 
-theorem euler_theorem_general(n: Nat, a: Nat) {
-    n != Nat.0 and a.coprime(n) implies a.pow(n.totient).congr_mod(Nat.1, n)
+theorem two_lt_thirty_one {
+    Nat.2 < Nat.31
 }
 
-theorem wilsons_theorem(p: Nat) {
-    p.is_prime implies (p - Nat.1).factorial.congr_mod(p - Nat.1, p)
-}
-
-theorem order_divides_totient(a: Nat, n: Nat) {
-    n != Nat.0 and a.coprime(n)
-        implies multiplicative_order_mod(a, n).divides(n.totient)
-}
-
-theorem fermats_little_all_a(p: Nat, a: Nat) {
-    p.is_prime implies a.pow(p).congr_mod(a, p)
-}
-
-theorem fermat_base_two(p: Nat) {
-    p.is_prime and Nat.2 < p implies Nat.2.pow(p - Nat.1).congr_mod(Nat.1, p)
-}
-
-theorem binom_central_max_left(n: Nat, k: Nat) {
-    k <= n implies (n + n).binom(k) <= (n + n).binom(n)
-}
-
-theorem binom_central_max_right(n: Nat, k: Nat) {
-    n <= k and k <= n + n implies (n + n).binom(k) <= (n + n).binom(n)
-}
-
-theorem binom_le_central(n: Nat, k: Nat) {
-    k <= n + n implies (n + n).binom(k) <= (n + n).binom(n)
-}
-
-theorem central_binom_lower_bound(n: Nat) {
-    Nat.4.pow(n) <= (n + n + Nat.1) * central_binom(n)
-}
-
-theorem not_divides_between_p_and_2p(p: Nat, k: Nat) {
-    p.is_prime and p < k and k < p + p implies not p.divides(k)
-}
-
-theorem not_divides_between_2p_and_3p(p: Nat, k: Nat) {
-    p.is_prime and p + p < k and k < Nat.3 * p implies not p.divides(k)
-}
-
-theorem suc_of_sub_suc(a: Nat, b: Nat) {
-    b < a implies (a - b.suc).suc = a - b
-}
-
-theorem sub_sub_cancel(a: Nat, b: Nat, c: Nat) {
-    b <= c and c <= a implies (a - b) - (c - b) = a - c
-}
-
-theorem sub_lt_sub(a: Nat, b: Nat, c: Nat) {
-    a <= b and b < c implies b - a < c - a
-}
-
-theorem sub_lte_sub(a: Nat, b: Nat, c: Nat) {
-    c <= b and b <= a implies a - b <= a - c
-}
-
-theorem sub_sub_assoc(a: Nat, b: Nat, c: Nat) {
-    b + c <= a implies (a - b) - c = a - (b + c)
-}
-
-theorem add_sub_comm(a: Nat, b: Nat, c: Nat) {
-    b <= a implies (a - b) + c = (a + c) - b
-}
-
-theorem suc_sub_suc_eq(a: Nat, b: Nat) {
-    a < b implies b.suc - a.suc = b - a
-}
-
-theorem falling_product_split(n: Nat, k: Nat, a: Nat) {
-    a < k and k < n implies falling_product(n, k) = falling_product(n, a) * falling_product(n - a.suc, k - a.suc)
-}
-
-theorem prime_lt_n_two_thirds_not_divides(p: Nat, n: Nat) {
-    p.is_prime and Nat.2 < p and p < n and Nat.2 * n < Nat.3 * p
-        implies not p.divides(central_binom(n))
-}
-
-theorem prime_eq_n_two_thirds_not_divides(p: Nat, n: Nat) {
-    p.is_prime and Nat.2 < p and p = n and Nat.2 * n < Nat.3 * p
-        implies not p.divides(central_binom(n))
-}
-
-theorem prime_above_two_thirds_not_divides(p: Nat, n: Nat) {
-    p.is_prime and Nat.2 < p and p <= n and Nat.2 * n < Nat.3 * p
-        implies not p.divides(central_binom(n))
-}
-
-theorem prime_factor_of_central_binom_at_most_2n(p: Nat, n: Nat) {
-    p.is_prime and p.divides(central_binom(n)) implies p <= n + n
-}
-
-theorem prime_factor_of_central_binom_at_most_n(p: Nat, n: Nat) {
-    p.is_prime and p.divides(central_binom(n))
-        and (forall(q: Nat) {
-            q.is_prime and n < q and q <= n + n implies not q.divides(central_binom(n))
-        }) implies p <= n
-}
-
-theorem prime_factor_of_central_binom_two_thirds(p: Nat, n: Nat) {
-    Nat.2 < n and p.is_prime and p.divides(central_binom(n))
-        and (forall(q: Nat) {
-            q.is_prime and n < q and q <= n + n implies not q.divides(central_binom(n))
-        }) implies Nat.3 * p <= n + n
-}
-
-theorem binom_next_to_central_lte(n: Nat) {
-    (n + n).binom(n.suc) <= (n + n).binom(n)
-}
-
-theorem central_binom_suc_lte(n: Nat) {
-    central_binom(n.suc) <= Nat.4 * central_binom(n)
-}
-
-theorem central_binom_lte_four_pow(n: Nat) {
-    central_binom(n) <= Nat.4.pow(n)
-}
-
-theorem prime_above_not_divides(p: Nat, m: Nat) {
-    m != Nat.0 and m < p implies not p.divides(m)
-}
-
-theorem count_prime_factor_zero_of_lt(p: Nat, m: Nat) {
-    p.is_prime and m != Nat.0 and m < p implies count_prime_factor(p, m) = Nat.0
-}
-
-theorem prime_factor_count_upto_zero_of_lt(p: Nat, n: Nat) {
-    p.is_prime and n < p implies prime_factor_count_upto(p, n) = Nat.0
-}
-
-theorem prime_factor_count_upto_ne_zero(p: Nat, n: Nat) {
-    p.is_prime and p <= n implies prime_factor_count_upto(p, n) != Nat.0
-}
-
-theorem prime_in_interval_divides_central_binom(n: Nat, p: Nat) {
-    p.is_prime and n < p and p <= n + n implies p.divides(central_binom(n))
-}
-
-theorem primes_in_interval_divide_central_binom(n: Nat) {
-    forall(p: Nat) {
-        (p.is_prime and n < p and p <= n + n implies p.divides(central_binom(n)))
-    }
-}
-
-theorem congruence_class_contains_imp_in_residue_class(cl: Pair[Nat, Nat], k: Nat) {
-    cl.second < cl.first and congruence_class_contains(cl, Int.from_nat(k))
-        implies in_residue_class(cl.first, cl.second)(k)
-}
-
-theorem covers_int_imp_covers_nat(system: List[Pair[Nat, Nat]], k: Nat) {
-    system_reduced(system) and covers_int(system, Int.from_nat(k))
-        implies covers_nat(system)(k)
-}
-
-theorem covering_system_covers_nat(system: List[Pair[Nat, Nat]], k: Nat) {
-    system_reduced(system) and is_covering_system(system)
-        implies covers_nat(system)(k)
-}
-
-theorem count_upto_of_all(q: Nat -> Bool, n: Nat) {
-    (forall(i: Nat) { q(i) }) implies count_upto(q, n) = n
-}
-
-theorem covering_system_density_ge_one(system: List[Pair[Nat, Nat]]) {
-    system_reduced(system) and is_covering_system(system)
-        implies Real.1 <= system_density_real(system)
-}
-
-define is_prime_factor(n: Nat, p: Nat) -> Bool {
-    p.is_prime and p.divides(n)
-}
-
-theorem is_prime_factor_apply(n: Nat, p: Nat) {
-    is_prime_factor(n)(p) implies p.is_prime and p.divides(n)
-}
-
-theorem is_prime_factor_intro(n: Nat, p: Nat) {
-    p.is_prime and p.divides(n) implies is_prime_factor(n)(p)
-}
-
-theorem prime_factors_bounded(n: Nat) {
-    n != Nat.0 implies is_upper_bound_of(is_prime_factor(n), n)
-}
-
-define is_greatest_prime_factor(n: Nat, p: Nat) -> Bool {
-    is_max(is_prime_factor(n), p)
-}
-
-theorem is_greatest_prime_factor_apply(n: Nat, p: Nat) {
-    is_greatest_prime_factor(n, p) implies p.is_prime and p.divides(n)
-}
-
-theorem is_greatest_prime_factor_is_greatest(n: Nat, p: Nat, q: Nat) {
-    is_greatest_prime_factor(n, p) and q.is_prime and q.divides(n) implies q <= p
-}
-
-theorem greatest_prime_factor_exists(n: Nat) {
-    Nat.1 < n implies exists(p: Nat) { is_greatest_prime_factor(n, p) }
-}
-
-theorem greatest_prime_factor_unique(n: Nat, p: Nat, q: Nat) {
-    is_greatest_prime_factor(n, p) and is_greatest_prime_factor(n, q) implies p = q
-}
-
-theorem greatest_prime_factor_le(n: Nat, p: Nat) {
-    n != Nat.0 and is_greatest_prime_factor(n, p) implies p <= n
-}
-
-theorem prime_factor_of_product(m: Nat, n: Nat, p: Nat) {
-    is_prime_factor(m * n)(p) implies is_prime_factor(m)(p) or is_prime_factor(n)(p)
-}
-
-theorem all_prime_factors_in_mul(m: Nat, n: Nat, lo: Nat, hi: Nat) {
-    all_prime_factors_in(m, lo, hi) and all_prime_factors_in(n, lo, hi)
-        implies all_prime_factors_in(m * n, lo, hi)
-}
-
-define divides_or_zero(n: Nat, m: Nat) -> Bool {
-    m = Nat.0 or m.divides(n)
-}
-
-theorem divides_or_zero_eq(n: Nat, m: Nat) {
-    divides_or_zero(n)(m) = (m = Nat.0 or m.divides(n))
-}
-
-define is_least_non_divisor(n: Nat, m: Nat) -> Bool {
-    is_least_failure(divides_or_zero(n), m)
-}
-
-theorem least_non_divisor_not_divides(n: Nat, m: Nat) {
-    is_least_non_divisor(n, m) implies not m.divides(n)
-}
-
-theorem least_non_divisor_divides_below(n: Nat, m: Nat, k: Nat) {
-    is_least_non_divisor(n, m) and k < m and k != Nat.0 implies k.divides(n)
-}
-
-theorem least_non_divisor_exists(n: Nat) {
-    n != Nat.0 implies exists(m: Nat) { is_least_non_divisor(n, m) }
-}
-
-theorem least_non_divisor_at_least_two(n: Nat, m: Nat) {
-    is_least_non_divisor(n, m) implies Nat.2 <= m
-}
-
-theorem least_non_divisor_unique(n: Nat, m: Nat, m2: Nat) {
-    is_least_non_divisor(n, m) and is_least_non_divisor(n, m2) implies m = m2
-}
-
-theorem lt_mul_of_one_lt_right(a: Nat, b: Nat) {
-    Nat.0 < a and Nat.1 < b implies a < a * b
-}
-
-theorem coprime_divisors_product_divides(a: Nat, b: Nat, n: Nat) {
-    a.divides(n) and b.divides(n) and a.coprime(b) implies (a * b).divides(n)
-}
-
-theorem least_non_divisor_factors_not_coprime(n: Nat, m: Nat, a: Nat, b: Nat) {
-    is_least_non_divisor(n, m) and m = a * b and Nat.1 < a and Nat.1 < b
-        implies not a.coprime(b)
-}
-
-theorem least_non_divisor_proper_divisor_divides(n: Nat, m: Nat, d: Nat) {
-    is_least_non_divisor(n, m) and d.divides(m) and d != m and d != Nat.0
-        implies d.divides(n)
-}
-
-theorem prime_in_interval_divides_odd_binom(p: Nat, m: Nat) {
-    p.is_prime and m.suc < p and p <= m + m.suc
-        implies p.divides((m + m.suc).binom(m))
-}
-
-theorem odd_binom_prime_interval_product_divides(m: Nat) {
-    range_prod(interval_prime_fn(m.suc.suc), m).divides((m + m.suc).binom(m))
-}
-
-theorem odd_prime_interval_product_lte(m: Nat) {
-    range_prod(interval_prime_fn(m.suc.suc), m) <= Nat.4.pow(m)
-}
-
-define all_divide(list: List[Nat], n: Nat) -> Bool {
-    forall(d: Nat) {
-        list.contains(d) implies d.divides(n)
-    }
-}
-
-theorem all_divide_cons_imp(head: Nat, tail: List[Nat], n: Nat) {
-    all_divide(List.cons(head, tail), n) implies head.divides(n) and all_divide(tail, n)
-}
-
-theorem pairwise_coprime_product_divides(list: List[Nat], n: Nat) {
-    pairwise_coprime(list) and all_divide(list, n) implies product[Nat](list).divides(n)
-}
-
-define range_pairwise_coprime(f: Nat -> Nat, n: Nat) -> Bool {
-    forall(i: Nat, j: Nat) {
-        i < n and j < n and i != j implies f(i).coprime(f(j))
-    }
-}
-
-theorem coprime_range_prod(f: Nat -> Nat, a: Nat, n: Nat) {
-    (forall(i: Nat) { i < n implies a.coprime(f(i)) })
-        implies a.coprime(range_prod(f, n))
-}
-
-theorem range_pairwise_coprime_product_divides(f: Nat -> Nat, n: Nat, x: Nat) {
-    range_pairwise_coprime(f, n) and (forall(i: Nat) { i < n implies f(i).divides(x) })
-        implies range_prod(f, n).divides(x)
-}
-
-theorem prime_divides_factorial_imp_lte(p: Nat, n: Nat) {
-    p.is_prime and p.divides(n.factorial) implies p <= n
-}
-
-define is_reduced_power_of_mod(a: Nat, g: Nat, n: Nat, k: Nat, ord: Nat) -> Bool {
-    k < ord and a.congr_mod(g.pow(k), n)
-}
-
-theorem reduced_power_index_lt(a: Nat, g: Nat, n: Nat, k: Nat, ord: Nat) {
-    is_reduced_power_of_mod(a, g, n, k, ord) implies k < ord
-}
-
-theorem reduced_power_congr(a: Nat, g: Nat, n: Nat, k: Nat, ord: Nat) {
-    is_reduced_power_of_mod(a, g, n, k, ord) implies a.congr_mod(g.pow(k), n)
-}
-
-theorem power_congr_reduced_mod_order(g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and a.congr_mod(g.pow(k), n)
-        implies a.congr_mod(g.pow(k.mod(ord)), n)
-}
-
-theorem power_reduced_index_lt_order(g: Nat, n: Nat, ord: Nat, k: Nat) {
-    is_multiplicative_order_mod(g, n, ord) implies k.mod(ord) < ord
-}
-
-theorem reduced_power_of_power_mod_order(g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and a.congr_mod(g.pow(k), n)
-        implies is_reduced_power_of_mod(a, g, n, k.mod(ord), ord)
-}
-
-theorem reduced_power_of_below_order_congr(a: Nat, g: Nat, n: Nat, k: Nat, ord: Nat) {
-    k < ord and a.congr_mod(g.pow(k), n)
-        implies is_reduced_power_of_mod(a, g, n, k, ord)
-}
-
-theorem reduced_power_exists_of_power(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies exists(k: Nat) { is_reduced_power_of_mod(a, g, n, k, ord) }
-}
-
-theorem reduced_power_exists_of_unit_coverage(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies exists(k: Nat) { is_reduced_power_of_mod(a, g, n, k, ord) }
-}
-
-theorem powers_congr_of_common_representative(g: Nat, n: Nat, a: Nat, i: Nat, j: Nat) {
-    a.congr_mod(g.pow(i), n) and a.congr_mod(g.pow(j), n)
-        implies g.pow(i).congr_mod(g.pow(j), n)
-}
-
-theorem reduced_power_representatives_unique(
-    g: Nat, n: Nat, ord: Nat, a: Nat, i: Nat, j: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        and is_reduced_power_of_mod(a, g, n, i, ord)
-        and is_reduced_power_of_mod(a, g, n, j, ord)
-        implies i = j
-}
-
-let discrete_log_mod_with_order(g: Nat, n: Nat, ord: Nat, a: Nat) -> k: Nat satisfy {
-    (is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        and is_reduced_power_of_mod(a, g, n, k, ord))
-    or ((not is_multiplicative_order_mod(g, n, ord) or not is_power_of_mod(a, g, n))
-        and k = Nat.0)
-}
-
-theorem discrete_log_mod_with_order_total_spec(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    (is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        and is_reduced_power_of_mod(a, g, n, discrete_log_mod_with_order(g, n, ord, a), ord))
-    or ((not is_multiplicative_order_mod(g, n, ord) or not is_power_of_mod(a, g, n))
-        and discrete_log_mod_with_order(g, n, ord, a) = Nat.0)
-}
-
-define discrete_log_mod_with_order_mul_index(
-    g: Nat, n: Nat, ord: Nat, a: Nat, b: Nat
-) -> Nat {
-    (discrete_log_mod_with_order(g, n, ord, a) +
-        discrete_log_mod_with_order(g, n, ord, b)).mod(ord)
-}
-
-define discrete_log_mod_with_order_power_index(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) -> Nat {
-    (discrete_log_mod_with_order(g, n, ord, a) * m).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_is_reduced(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies is_reduced_power_of_mod(a, g, n, discrete_log_mod_with_order(g, n, ord, a), ord)
-}
-
-theorem discrete_log_mod_with_order_lt_order(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a) < ord
-}
-
-theorem discrete_log_mod_with_order_congr(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies a.congr_mod(g.pow(discrete_log_mod_with_order(g, n, ord, a)), n)
-}
-
-theorem unit_discrete_log_mod_with_order_is_reduced(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies is_reduced_power_of_mod(a, g, n, discrete_log_mod_with_order(g, n, ord, a), ord)
-}
-
-theorem unit_discrete_log_mod_with_order_lt_order(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies discrete_log_mod_with_order(g, n, ord, a) < ord
-}
-
-theorem unit_discrete_log_mod_with_order_congr(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies a.congr_mod(g.pow(discrete_log_mod_with_order(g, n, ord, a)), n)
-}
-
-theorem discrete_log_mod_with_order_unique(g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        and is_reduced_power_of_mod(a, g, n, k, ord)
-        implies k = discrete_log_mod_with_order(g, n, ord, a)
-}
-
-theorem discrete_log_mod_with_order_pow_congr(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies g.pow(discrete_log_mod_with_order(g, n, ord, a)).congr_mod(a, n)
-}
-
-theorem unit_discrete_log_mod_with_order_pow_congr(g: Nat, n: Nat, ord: Nat, a: Nat) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies g.pow(discrete_log_mod_with_order(g, n, ord, a)).congr_mod(a, n)
-}
-
-theorem discrete_log_mod_with_order_of_reduced_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        and is_reduced_power_of_mod(a, g, n, k, ord)
-        implies discrete_log_mod_with_order(g, n, ord, a) = k
-}
-
-theorem discrete_log_mod_with_order_of_power(g: Nat, n: Nat, ord: Nat, k: Nat) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k)) = k.mod(ord)
-}
-
-theorem reduced_power_of_discrete_log_mul(
-    g: Nat, n: Nat, ord: Nat, a: Nat, b: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        and is_power_of_mod(a, g, n) and is_power_of_mod(b, g, n)
-        implies is_reduced_power_of_mod(a * b, g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, a, b), ord)
-}
-
-theorem reduced_power_of_discrete_log_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies is_reduced_power_of_mod(a * g.pow(k), g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, a, g.pow(k)), ord)
-}
-
-theorem reduced_power_of_discrete_log_generator_power_mul(
-    g: Nat, n: Nat, ord: Nat, k: Nat, a: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies is_reduced_power_of_mod(g.pow(k) * a, g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, g.pow(k), a), ord)
-}
-
-theorem unit_reduced_power_of_discrete_log_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies is_reduced_power_of_mod(a * g.pow(k), g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, a, g.pow(k)), ord)
-}
-
-theorem unit_reduced_power_of_discrete_log_generator_power_mul(
-    g: Nat, n: Nat, ord: Nat, k: Nat, a: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies is_reduced_power_of_mod(g.pow(k) * a, g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, g.pow(k), a), ord)
-}
-
-theorem discrete_log_mod_with_order_mul_index_eq(
-    g: Nat, n: Nat, ord: Nat, a: Nat, b: Nat
-) {
-    discrete_log_mod_with_order_mul_index(g, n, ord, a, b) =
-        (discrete_log_mod_with_order(g, n, ord, a) +
-            discrete_log_mod_with_order(g, n, ord, b)).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_mul_indexed(
-    g: Nat, n: Nat, ord: Nat, a: Nat, b: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        and is_power_of_mod(a, g, n) and is_power_of_mod(b, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a * b) =
-            discrete_log_mod_with_order_mul_index(g, n, ord, a, b)
-}
-
-theorem discrete_log_mod_with_order_mul_generator_power_indexed(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a * g.pow(k)) =
-            discrete_log_mod_with_order_mul_index(g, n, ord, a, g.pow(k))
-}
-
-theorem discrete_log_mod_with_order_generator_power_mul_indexed(
-    g: Nat, n: Nat, ord: Nat, k: Nat, a: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k) * a) =
-            discrete_log_mod_with_order_mul_index(g, n, ord, g.pow(k), a)
-}
-
-theorem reduced_power_of_discrete_log_generator_power_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, i: Nat, j: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies is_reduced_power_of_mod(g.pow(i) * g.pow(j), g, n,
-            discrete_log_mod_with_order_mul_index(g, n, ord, g.pow(i), g.pow(j)), ord)
-}
-
-theorem discrete_log_mod_with_order_generator_power_mul_generator_power_indexed(
-    g: Nat, n: Nat, ord: Nat, i: Nat, j: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(i) * g.pow(j)) =
-            discrete_log_mod_with_order_mul_index(g, n, ord, g.pow(i), g.pow(j))
-}
-
-theorem discrete_log_mod_with_order_mul(
-    g: Nat, n: Nat, ord: Nat, a: Nat, b: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        and is_power_of_mod(a, g, n) and is_power_of_mod(b, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a * b) =
-            (discrete_log_mod_with_order(g, n, ord, a) +
-                discrete_log_mod_with_order(g, n, ord, b)).mod(ord)
-}
-
-theorem reduced_power_of_discrete_log_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies is_reduced_power_of_mod(a.pow(m), g, n,
-            discrete_log_mod_with_order_power_index(g, n, ord, a, m), ord)
-}
-
-theorem discrete_log_mod_with_order_power_index_eq(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) {
-    discrete_log_mod_with_order_power_index(g, n, ord, a, m) =
-        (discrete_log_mod_with_order(g, n, ord, a) * m).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_power_indexed(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a.pow(m)) =
-            discrete_log_mod_with_order_power_index(g, n, ord, a, m)
-}
-
-theorem reduced_power_of_discrete_log_generator_power_power(
-    g: Nat, n: Nat, ord: Nat, k: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies is_reduced_power_of_mod(g.pow(k).pow(m), g, n,
-            discrete_log_mod_with_order_power_index(g, n, ord, g.pow(k), m), ord)
-}
-
-theorem discrete_log_mod_with_order_generator_power_power_indexed(
-    g: Nat, n: Nat, ord: Nat, k: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k).pow(m)) =
-            discrete_log_mod_with_order_power_index(g, n, ord, g.pow(k), m)
-}
-
-theorem discrete_log_mod_with_order_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a.pow(m)) =
-            (discrete_log_mod_with_order(g, n, ord, a) * m).mod(ord)
-}
-
-theorem unit_discrete_log_mod_with_order_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies discrete_log_mod_with_order(g, n, ord, a.pow(m)) =
-            (discrete_log_mod_with_order(g, n, ord, a) * m).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, a * g.pow(k)) =
-            (discrete_log_mod_with_order(g, n, ord, a) + k.mod(ord)).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_generator_power_mul(
-    g: Nat, n: Nat, ord: Nat, k: Nat, a: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and is_power_of_mod(a, g, n)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k) * a) =
-            (k.mod(ord) + discrete_log_mod_with_order(g, n, ord, a)).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_generator_power_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, i: Nat, j: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(i) * g.pow(j)) =
-            (i.mod(ord) + j.mod(ord)).mod(ord)
-}
-
-theorem discrete_log_mod_with_order_generator_power_power(
-    g: Nat, n: Nat, ord: Nat, k: Nat, m: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k).pow(m)) =
-            (k.mod(ord) * m).mod(ord)
-}
-
-theorem unit_discrete_log_mod_with_order_mul_generator_power(
-    g: Nat, n: Nat, ord: Nat, a: Nat, k: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies discrete_log_mod_with_order(g, n, ord, a * g.pow(k)) =
-            (discrete_log_mod_with_order(g, n, ord, a) + k.mod(ord)).mod(ord)
-}
-
-theorem unit_discrete_log_mod_with_order_generator_power_mul(
-    g: Nat, n: Nat, ord: Nat, k: Nat, a: Nat
-) {
-    is_multiplicative_order_mod(g, n, ord) and powers_cover_units_mod(g, n)
-        and a.coprime(n)
-        implies discrete_log_mod_with_order(g, n, ord, g.pow(k) * a) =
-            (k.mod(ord) + discrete_log_mod_with_order(g, n, ord, a)).mod(ord)
-}
-
-define is_primitive_root_mod(g: Nat, p: Nat) -> Bool {
-    p.is_prime and g.coprime(p) and multiplicative_order_mod(g, p) = p - Nat.1
-}
-
-theorem primitive_root_powers_distinct_mod(p: Nat, g: Nat, i: Nat, j: Nat) {
-    p.is_prime and g.coprime(p) and multiplicative_order_mod(g, p) = p - Nat.1
-        and i < p - Nat.1 and j < p - Nat.1 and g.pow(i).congr_mod(g.pow(j), p)
-        implies i = j
-}
-
-theorem one_plus_two { Nat.1 + Nat.2 = Nat.3 }
-
-theorem one_plus_three { Nat.1 + Nat.3 = Nat.4 }
-
-theorem one_plus_four { Nat.1 + Nat.4 = Nat.5 }
-
-theorem one_plus_five { Nat.1 + Nat.5 = Nat.6 }
-
-theorem one_plus_eight { Nat.1 + Nat.8 = Nat.9 }
-
-theorem one_plus_nine { Nat.1 + Nat.9 = Nat.10 }
-
-theorem one_plus_ten { Nat.1 + Nat.10 = Nat.11 }
-
-theorem two_plus_one { Nat.2 + Nat.1 = Nat.3 }
-
-theorem two_plus_two { Nat.2 + Nat.2 = Nat.4 }
-
-theorem two_plus_three { Nat.2 + Nat.3 = Nat.5 }
-
-theorem two_plus_eight { Nat.2 + Nat.8 = Nat.10 }
-
-theorem two_plus_nine { Nat.2 + Nat.9 = Nat.11 }
-
-theorem three_plus_two { Nat.3 + Nat.2 = Nat.5 }
-
-theorem three_plus_three { Nat.3 + Nat.3 = Nat.6 }
-
-theorem three_plus_four { Nat.3 + Nat.4 = Nat.7 }
-
-theorem three_plus_eight { Nat.3 + Nat.8 = Nat.11 }
-
-theorem three_plus_ten { Nat.3 + Nat.10 = Nat.13 }
-
-theorem four_plus_one { Nat.4 + Nat.1 = Nat.5 }
-
-theorem four_plus_seven { Nat.4 + Nat.7 = Nat.11 }
-
-theorem five_plus_one { Nat.5 + Nat.1 = Nat.6 }
-
-theorem five_plus_six {
-    Nat.5 + Nat.6 = Nat.11
-}
-
-theorem ten_plus_one { Nat.10 + Nat.1 = Nat.11 }
-
-theorem ten_plus_two { Nat.10 + Nat.2 = Nat.12 }
-
-theorem ten_plus_four { Nat.10 + Nat.4 = Nat.14 }
-
-theorem three_plus_seven {
-    Nat.3 + Nat.7 = Nat.10
-}
-
-theorem seven_plus_five {
-    Nat.7 + Nat.5 = Nat.12
-}
-
-theorem eight_plus_four {
-    Nat.8 + Nat.4 = Nat.12
-}
-
-theorem nine_plus_three {
-    Nat.9 + Nat.3 = Nat.12
-}
-
-theorem four_plus_six {
-    Nat.4 + Nat.6 = Nat.10
-}
-
-theorem four_plus_nine {
-    Nat.4 + Nat.9 = Nat.13
-}
-
-theorem five_plus_eight {
-    Nat.5 + Nat.8 = Nat.13
-}
-
-theorem five_plus_nine {
-    Nat.5 + Nat.9 = Nat.14
-}
-
-theorem six_plus_seven {
-    Nat.6 + Nat.7 = Nat.13
-}
-
-theorem eleven_plus_one { Nat.11 + Nat.1 = Nat.12 }
-
-theorem one_lt_eleven {
-    Nat.1 < Nat.11
-}
-
-theorem two_lt_eleven {
-    Nat.2 < Nat.11
-}
-
-theorem four_lt_eleven {
-    Nat.4 < Nat.11
-}
-
-theorem ten_lt_eleven {
-    Nat.10 < Nat.11
-}
-
-theorem lt_zero_four {
-    Nat.0 < Nat.4
-}
-
-theorem lt_zero_five {
-    Nat.0 < Nat.5
-}
-
-theorem lt_zero_ten {
-    Nat.0 < Nat.10
-}
-
-theorem lt_five_six {
-    Nat.5 < Nat.6
-}
-
-theorem lt_four_seven {
-    Nat.4 < Nat.7
-}
-
-theorem lt_two_nine {
-    Nat.2 < Nat.9
-}
-
-theorem lt_two_four {
-    Nat.2 < Nat.4
-}
-
-theorem lt_four_six {
-    Nat.4 < Nat.6
-}
-
-theorem lt_two_eight {
-    Nat.2 < Nat.8
-}
-
-theorem five_ne_one {
-    Nat.5 != Nat.1
-}
-
-theorem ten_ne_one {
-    Nat.10 != Nat.1
-}
-
-theorem nine_ne_one {
-    Nat.9 != Nat.1
-}
-
-theorem sub_eleven_nine {
-    Nat.11 - Nat.9 = Nat.2
-}
-
-theorem sub_eleven_eight {
-    Nat.11 - Nat.8 = Nat.3
-}
-
-theorem sub_eleven_six {
-    Nat.11 - Nat.6 = Nat.5
-}
-
-theorem sub_eleven_seven {
-    Nat.11 - Nat.7 = Nat.4
-}
-
-theorem sub_eleven_ten {
-    Nat.11 - Nat.10 = Nat.1
-}
-
-theorem sub_eleven_one {
-    Nat.11 - Nat.1 = Nat.10
-}
-
-theorem sub_ten_nine {
-    Nat.10 - Nat.9 = Nat.1
-}
-
-theorem sub_ten_eight {
-    Nat.10 - Nat.8 = Nat.2
-}
-
-theorem sub_ten_six {
-    Nat.10 - Nat.6 = Nat.4
-}
-
-theorem sub_ten_seven {
-    Nat.10 - Nat.7 = Nat.3
-}
-
-theorem two_divides_ten {
-    Nat.2.divides(Nat.10)
-}
-
-theorem three_divides_nine {
-    Nat.3.divides(Nat.9)
-}
-
-theorem four_divides_eight {
-    Nat.4.divides(Nat.8)
-}
-
-theorem five_divides_ten {
-    Nat.5.divides(Nat.10)
-}
-
-theorem not_four_divides_eleven {
-    not Nat.4.divides(Nat.11)
-}
-
-theorem not_five_divides_eleven {
-    not Nat.5.divides(Nat.11)
-}
-
-theorem not_six_divides_eleven {
-    not Nat.6.divides(Nat.11)
-}
-
-theorem not_seven_divides_eleven {
-    not Nat.7.divides(Nat.11)
-}
-
-theorem not_eight_divides_eleven {
-    not Nat.8.divides(Nat.11)
-}
-
-theorem not_nine_divides_eleven {
-    not Nat.9.divides(Nat.11)
-}
-
-theorem not_ten_divides_eleven {
-    not Nat.10.divides(Nat.11)
-}
-
-theorem k_range_two_3(k: Nat) {
-    Nat.1 < k and k < Nat.4 implies (k = Nat.2 or k = Nat.3)
-}
-
-theorem k_range_two_4(k: Nat) {
-    Nat.1 < k and k < Nat.5 implies (k = Nat.2 or k = Nat.3 or k = Nat.4)
-}
-
-theorem k_range_two_5(k: Nat) {
-    Nat.1 < k and k < Nat.6 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5)
-}
-
-theorem k_range_two_6(k: Nat) {
-    Nat.1 < k and k < Nat.7 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6)
-}
-
-theorem k_range_two_7(k: Nat) {
-    Nat.1 < k and k < Nat.8 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7)
-}
-
-theorem k_range_two_8(k: Nat) {
-    Nat.1 < k and k < Nat.9 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8)
-}
-
-theorem k_range_two_9(k: Nat) {
-    Nat.1 < k and k < Nat.10 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9)
-}
-
-theorem k_range_two_ten(k: Nat) {
-    Nat.1 < k and k < Nat.11 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9 or k = Nat.10)
-}
-
-theorem eleven_not_divides_by_case(k: Nat) {
-    Nat.1 < k and k < Nat.11 and (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or
-        k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9 or k = Nat.10)
-        implies not k.divides(Nat.11)
-}
-
-theorem eleven_no_proper_divisor(k: Nat) {
-    Nat.1 < k and k < Nat.11 implies not k.divides(Nat.11)
-}
-
-theorem two_coprime_mod_eleven {
+theorem two_coprime_eleven {
     Nat.2.coprime(Nat.11)
 }
 
-theorem mod_one_mod_eleven {
-    Nat.1.mod(Nat.11) = Nat.1
+theorem two_coprime_thirty_one {
+    Nat.2.coprime(Nat.31)
 }
 
-theorem mod_two_mod_eleven {
-    Nat.2.mod(Nat.11) = Nat.2
+theorem eleven_coprime_thirty_one {
+    Nat.11.coprime(Nat.31)
 }
 
-theorem mod_four_mod_eleven {
-    Nat.4.mod(Nat.11) = Nat.4
+theorem nat_mul_11_31 {
+    Nat.11 * Nat.31 = Nat.341
 }
 
-theorem pow_two_one {
-    Nat.2.pow(Nat.1) = Nat.2
+theorem two_pow_ten_congr_one_mod_eleven {
+    Nat.2.pow(Nat.10).congr_mod(Nat.1, Nat.11)
 }
 
-theorem pow_two_two {
+theorem two_pow_thirty_congr_one_mod_thirty_one {
+    Nat.2.pow(Nat.30).congr_mod(Nat.1, Nat.31)
+}
+
+theorem two_pow_five_congr_one_mod_thirty_one {
+    Nat.2.pow(Nat.5).congr_mod(Nat.1, Nat.31)
+}
+
+theorem two_pow_ten_congr_one_mod_thirty_one {
+    Nat.2.pow(Nat.10).congr_mod(Nat.1, Nat.31)
+}
+
+theorem two_pow_340_congr_one_mod_eleven {
+    Nat.2.pow(Nat.340).congr_mod(Nat.1, Nat.11)
+}
+
+theorem two_pow_340_congr_one_mod_thirty_one {
+    Nat.2.pow(Nat.340).congr_mod(Nat.1, Nat.31)
+}
+
+theorem two_pow_340_congr_one_mod_341 {
+    Nat.2.pow(Nat.340).congr_mod(Nat.1, Nat.341)
+}
+
+theorem composite_341 {
+    Nat.341.is_composite
+}
+
+theorem not_prime_341 {
+    not Nat.341.is_prime
+}
+
+define is_fermat_pseudoprime(a: Nat, n: Nat) -> Bool {
+    n.is_composite and a.pow(n - Nat.1).congr_mod(Nat.1, n)
+}
+
+theorem is_fermat_pseudoprime_apply(a: Nat, n: Nat) {
+    is_fermat_pseudoprime(a, n) =
+        (n.is_composite and a.pow(n - Nat.1).congr_mod(Nat.1, n))
+}
+
+theorem fermat_pseudoprime_341 {
+    is_fermat_pseudoprime(Nat.2, Nat.341)
+}
+
+theorem base_two_fermat_test_insufficient {
+    exists(n: Nat) {
+        n.is_composite and Nat.2.pow(n - Nat.1).congr_mod(Nat.1, n)
+    }
+}
+
+theorem carmichael_561 {
+    is_carmichael_number(Nat.561)
+}
+
+theorem composite_561_restated {
+    Nat.561.is_composite
+}
+
+theorem carmichael_561_units(a: Nat) {
+    a.coprime(Nat.561) implies a.pow(Nat.560).congr_mod(Nat.1, Nat.561)
+}
+
+theorem carmichael_561_composite_and_units {
+    Nat.561.is_composite and forall(a: Nat) {
+        a.coprime(Nat.561) implies a.pow(Nat.560).congr_mod(Nat.1, Nat.561)
+    }
+}
+
+theorem not_prime_561 {
+    not Nat.561.is_prime
+}
+
+theorem fermat_unconditional(p: Nat, a: Nat) {
+    p.is_prime implies a.pow(p).congr_mod(a, p)
+}
+
+theorem fermat_unconditional_by_cases(p: Nat, a: Nat) {
+    p.is_prime implies a.pow(p).congr_mod(a, p)
+}
+
+theorem fermat_base_two_odd_prime(p: Nat) {
+    p.is_prime and Nat.2 < p implies Nat.2.pow(p - Nat.1).congr_mod(Nat.1, p)
+}
+
+define fermat_test_passes(p: Nat) -> Bool {
+    forall(a: Nat) { Nat.1 <= a and a < p implies a.pow(p - Nat.1).congr_mod(Nat.1, p) }
+}
+
+theorem fermat_test_passes_apply(p: Nat, a: Nat) {
+    fermat_test_passes(p) and Nat.1 <= a and a < p
+        implies a.pow(p - Nat.1).congr_mod(Nat.1, p)
+}
+
+theorem fermat_test_passes_intro(p: Nat) {
+    (forall(a: Nat) { Nat.1 <= a and a < p implies a.pow(p - Nat.1).congr_mod(Nat.1, p) })
+        implies fermat_test_passes(p)
+}
+
+theorem divides_pow_self(b: Nat, k: Nat) {
+    Nat.1 <= k implies b.divides(b.pow(k))
+}
+
+theorem composite_not_fermat_test(p: Nat) {
+    p.is_composite implies not fermat_test_passes(p)
+}
+
+theorem fermat_test_converse(p: Nat) {
+    Nat.1 < p and fermat_test_passes(p) implies p.is_prime
+}
+
+theorem order_mod_prime_divides_pred(p: Nat, a: Nat) {
+    p.is_prime and a.coprime(p) implies multiplicative_order_mod(a, p).divides(p - Nat.1)
+}
+
+theorem order_mod_prime_le_pred(p: Nat, a: Nat) {
+    p.is_prime and a.coprime(p) implies multiplicative_order_mod(a, p) <= p - Nat.1
+}
+
+theorem wilsons_factorial_congr_prime(p: Nat) {
+    p.is_prime implies (p - Nat.1).factorial.congr_mod(p - Nat.1, p)
+}
+
+theorem wilson_iff_prime(p: Nat) {
+    p.is_prime = (p != Nat.1 and (p - Nat.1).factorial.congr_mod(p - Nat.1, p))
+}
+
+define power_summand(p: Nat, k: Nat) -> Rat {
+    Rat.from_nat(k.pow(p))
+}
+
+define power_sum(p: Nat, n: Nat) -> Rat {
+    range_sum(power_summand(p), n.suc)
+}
+
+theorem six_neq_zero {
+    Rat.6 != Rat.0
+}
+
+theorem four_neq_zero {
+    Rat.4 != Rat.0
+}
+
+define closed_first(n: Nat) -> Rat {
+    Rat.from_nat(n) * (Rat.from_nat(n) + Rat.1) / Rat.2
+}
+
+define closed_squares(n: Nat) -> Rat {
+    Rat.from_nat(n) * (Rat.from_nat(n) + Rat.1) *
+        (Rat.from_nat(Nat.2 * n) + Rat.1) / Rat.6
+}
+
+define closed_cubes(n: Nat) -> Rat {
+    (Rat.from_nat(n) * (Rat.from_nat(n) + Rat.1) / Rat.2).pow(Nat.2)
+}
+
+theorem from_nat_suc(x: Nat) {
+    Rat.from_nat(x.suc) = Rat.from_nat(x) + Rat.1
+}
+
+theorem rat_two_mul_two {
+    Rat.2 * Rat.2 = Rat.4
+}
+
+theorem rat_two_mul_three {
+    Rat.2 * Rat.3 = Rat.6
+}
+
+theorem rat_double_double(x: Rat) {
+    Rat.2 * (Rat.2 * x) = Rat.4 * x
+}
+
+theorem rat_one_add_six {
+    Rat.1 + Rat.6 = Rat.7
+}
+
+theorem rat_four_add_three {
+    Rat.4 + Rat.3 = Rat.7
+}
+
+theorem closed_first_step(x: Rat) {
+    (x + Rat.1) * (x + Rat.2) / Rat.2 =
+        x * (x + Rat.1) / Rat.2 + (x + Rat.1)
+}
+
+theorem closed_first_suc(k: Nat) {
+    closed_first(k.suc) = closed_first(k) + Rat.from_nat(k.suc)
+}
+
+theorem sum_of_first(n: Nat) {
+    power_sum(Nat.1, n) = closed_first(n)
+}
+
+theorem closed_squares_inner(x: Rat) {
+    x * (Rat.2 * x + Rat.1) + Rat.6 * (x + Rat.1) = (x + Rat.2) * (Rat.2 * x + Rat.3)
+}
+
+theorem closed_squares_expand(x: Rat) {
+    x * (x + Rat.1) * (Rat.2 * x + Rat.1) + Rat.6 * (x + Rat.1) * (x + Rat.1) =
+        (x + Rat.1) * (x + Rat.2) * (Rat.2 * x + Rat.3)
+}
+
+theorem closed_squares_step(x: Rat) {
+    (x + Rat.1) * (x + Rat.2) * (Rat.2 * x + Rat.3) / Rat.6 =
+        x * (x + Rat.1) * (Rat.2 * x + Rat.1) / Rat.6 +
+            (x + Rat.1) * (x + Rat.1)
+}
+
+theorem closed_squares_suc(k: Nat) {
+    closed_squares(k.suc) = closed_squares(k) + Rat.from_nat(k.suc.pow(Nat.2))
+}
+
+theorem sum_of_squares(n: Nat) {
+    power_sum(Nat.2, n) = closed_squares(n)
+}
+
+theorem rat_two_add_two {
+    Rat.2 + Rat.2 = Rat.4
+}
+
+theorem closed_cubes_inner(x: Rat) {
+    (x + Rat.2) * (x + Rat.2) = x * x + Rat.4 * (x + Rat.1)
+}
+
+theorem closed_cubes_expand(x: Rat) {
+    (x + Rat.1) * (x + Rat.1) * (x + Rat.2) * (x + Rat.2) =
+        x * x * (x + Rat.1) * (x + Rat.1) +
+            Rat.4 * (x + Rat.1) * (x + Rat.1) * (x + Rat.1)
+}
+
+theorem closed_cubes_step(x: Rat) {
+    (x + Rat.1) * (x + Rat.1) * (x + Rat.2) * (x + Rat.2) / Rat.4 =
+        x * x * (x + Rat.1) * (x + Rat.1) / Rat.4 +
+            (x + Rat.1) * (x + Rat.1) * (x + Rat.1)
+}
+
+theorem square_div_two(x: Rat) {
+    (x / Rat.2).pow(Nat.2) = x * x / Rat.4
+}
+
+theorem square_product_rearrange(a: Rat, b: Rat) {
+    (a * b) * (a * b) = a * a * b * b
+}
+
+theorem closed_cubes_suc(k: Nat) {
+    closed_cubes(k.suc) = closed_cubes(k) + Rat.from_nat(k.suc.pow(Nat.3))
+}
+
+theorem sum_of_cubes(n: Nat) {
+    power_sum(Nat.3, n) = closed_cubes(n)
+}
+
+theorem sum_of_cubes_square(n: Nat) {
+    power_sum(Nat.3, n) = power_sum(Nat.1, n).pow(Nat.2)
+}
+
+define faulhaber_term(p: Nat, n: Nat, j: Nat) -> Rat {
+    alternating_sign[Rat](j) * Rat.from_nat(p.suc.binom(j)) * bernoulli(j) *
+        Rat.from_nat(n).pow(p.suc - j)
+}
+
+define faulhaber_form(p: Nat, n: Nat) -> Rat {
+    Rat.from_nat(p.suc).inverse * range_sum(faulhaber_term(p, n), p.suc)
+}
+
+theorem faulhaber_one(n: Nat) {
+    faulhaber_form(Nat.1, n) = closed_first(n)
+}
+
+theorem seq_triangular_sum(n: Nat) {
+    power_sum(Nat.1, n) = closed_first(n)
+}
+
+theorem seq_sum_of_squares(n: Nat) {
+    power_sum(Nat.2, n) = closed_squares(n)
+}
+
+theorem seq_sum_of_cubes(n: Nat) {
+    power_sum(Nat.3, n) = closed_cubes(n)
+}
+
+theorem seq_sum_of_cubes_square(n: Nat) {
+    power_sum(Nat.3, n) = power_sum(Nat.1, n).pow(Nat.2)
+}
+
+define seq_fib_pair(n: Nat) -> Pair[Nat, Nat] {
+    match n {
+        Nat.zero {
+            Pair.new(Nat.0, Nat.1)
+        }
+        Nat.suc(k) {
+            let p: Pair[Nat, Nat] = seq_fib_pair(k)
+            Pair.new(p.second, p.first + p.second)
+        }
+    }
+}
+
+define seq_fib(n: Nat) -> Nat {
+    seq_fib_pair(n).first
+}
+
+theorem seq_fib_pair_suc(k: Nat) {
+    seq_fib_pair(k.suc) =
+        Pair.new(seq_fib_pair(k).second, seq_fib_pair(k).first + seq_fib_pair(k).second)
+}
+
+theorem seq_fib_pair_zero {
+    seq_fib_pair(Nat.0) = Pair.new(Nat.0, Nat.1)
+}
+
+theorem seq_fib_pair_second_suc(k: Nat) {
+    seq_fib_pair(k).second = seq_fib(k.suc)
+}
+
+theorem seq_fib_zero {
+    seq_fib(Nat.0) = Nat.0
+}
+
+theorem seq_fib_one {
+    seq_fib(Nat.1) = Nat.1
+}
+
+theorem seq_fib_suc_suc(j: Nat) {
+    seq_fib(j.suc.suc) = seq_fib(j.suc) + seq_fib(j)
+}
+
+theorem seq_fib_two {
+    seq_fib(Nat.2) = Nat.1
+}
+
+theorem seq_fib_sum_suc(n: Nat) {
+    range_sum(seq_fib, n.suc) + Nat.1 = seq_fib(n.suc.suc)
+}
+
+theorem seq_fib_sum(n: Nat) {
+    range_sum(seq_fib, n.suc) = seq_fib(n.suc.suc) - Nat.1
+}
+
+theorem seq_geom_pow2_partial(n: Nat) {
+    partial(Nat.2.pow, n.suc) = Nat.2.pow(n.suc) - Nat.1
+}
+
+theorem seq_sum_pow2(n: Nat) {
+    range_sum(Nat.2.pow, n.suc) = Nat.2.pow(n.suc) - Nat.1
+}
+
+theorem seq_fib_cassini_flip_a(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.1) =
+        seq_fib(Nat.2 * k) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+    implies
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.3) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_cassini_flip_b(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.3) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+    implies
+    seq_fib(Nat.2 * k.suc + Nat.1) * seq_fib(Nat.2 * k.suc + Nat.1) =
+        seq_fib(Nat.2 * k.suc) * seq_fib(Nat.2 * k.suc + Nat.2) + Nat.1
+}
+
+theorem seq_fib_cassini_square(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.1) =
+        seq_fib(Nat.2 * k) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_cassini_product(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.3) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_square_diff_even(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.1) =
+        seq_fib(Nat.2 * k) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_square_diff_odd(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.3) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_cassini_odd(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.1) * seq_fib(Nat.2 * k + Nat.1) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k) + Nat.1
+}
+
+theorem seq_fib_cassini_even(k: Nat) {
+    seq_fib(Nat.2 * k + Nat.3) * seq_fib(Nat.2 * k + Nat.1) =
+        seq_fib(Nat.2 * k + Nat.2) * seq_fib(Nat.2 * k + Nat.2) + Nat.1
+}
+
+theorem seq_fib_add(m: Nat, n: Nat) {
+    seq_fib(m.suc + n) = seq_fib(m.suc) * seq_fib(n.suc) + seq_fib(m) * seq_fib(n)
+}
+
+theorem seq_fib_three_value {
+    seq_fib(Nat.3) = Nat.2
+}
+
+theorem seq_fib_four_value {
+    seq_fib(Nat.4) = Nat.3
+}
+
+theorem seq_fib_five_value {
+    seq_fib(Nat.5) = Nat.5
+}
+
+theorem seq_fib_six_value {
+    seq_fib(Nat.6) = Nat.8
+}
+
+theorem seq_fib_zero_even {
+    Nat.2.divides(seq_fib(Nat.0))
+}
+
+theorem seq_fib_one_odd {
+    not Nat.2.divides(seq_fib(Nat.1))
+}
+
+theorem seq_fib_two_odd {
+    not Nat.2.divides(seq_fib(Nat.2))
+}
+
+theorem seq_fib_three_even {
+    Nat.2.divides(seq_fib(Nat.3))
+}
+
+theorem seq_fib_four_odd {
+    not Nat.2.divides(seq_fib(Nat.4))
+}
+
+theorem seq_fib_five_odd {
+    not Nat.2.divides(seq_fib(Nat.5))
+}
+
+theorem seq_fib_six_even {
+    Nat.2.divides(seq_fib(Nat.6))
+}
+
+theorem three_divides_zero {
+    Nat.3.divides(Nat.0)
+}
+
+theorem three_divides_three {
+    Nat.3.divides(Nat.3)
+}
+
+theorem three_divides_six {
+    Nat.3.divides(Nat.6)
+}
+
+theorem three_not_divides_one {
+    not Nat.3.divides(Nat.1)
+}
+
+theorem three_not_divides_two {
+    not Nat.3.divides(Nat.2)
+}
+
+theorem three_not_divides_five {
+    not Nat.3.divides(Nat.5)
+}
+
+define figurate_triangular(n: Nat) -> Nat {
+    (n * (n + Nat.1)).div(Nat.2)
+}
+
+define figurate_square(n: Nat) -> Nat {
+    n * n
+}
+
+define figurate_pentagonal(n: Nat) -> Nat {
+    (n * (Nat.3 * n - Nat.1)).div(Nat.2)
+}
+
+define figurate_pentagonal_doubled(n: Nat) -> Nat {
+    n * (Nat.3 * n - Nat.1)
+}
+
+define figurate_octagonal(n: Nat) -> Nat {
+    n * (Nat.3 * n - Nat.2)
+}
+
+theorem figurate_triangular_closed(n: Nat) {
+    figurate_triangular(n) = triangular(n)
+}
+
+theorem figurate_triangular_one {
+    figurate_triangular(Nat.1) = Nat.1
+}
+
+theorem figurate_triangular_two {
+    figurate_triangular(Nat.2) = Nat.3
+}
+
+theorem figurate_triangular_three {
+    figurate_triangular(Nat.3) = Nat.6
+}
+
+theorem figurate_triangular_four {
+    figurate_triangular(Nat.4) = Nat.10
+}
+
+theorem figurate_square_one {
+    figurate_square(Nat.1) = Nat.1
+}
+
+theorem figurate_square_two {
+    figurate_square(Nat.2) = Nat.4
+}
+
+theorem figurate_square_three {
+    figurate_square(Nat.3) = Nat.9
+}
+
+theorem figurate_square_four {
+    figurate_square(Nat.4) = Nat.16
+}
+
+theorem figurate_triangular_pair_sum(n: Nat) {
+    triangular(n) + triangular(n - Nat.1) = n * n
+}
+
+theorem figurate_square_triangular(n: Nat) {
+    figurate_triangular(n) + figurate_triangular(n - Nat.1) = figurate_square(n)
+}
+
+theorem figurate_pentagonal_one {
+    figurate_pentagonal(Nat.1) = Nat.1
+}
+
+theorem figurate_pentagonal_two {
+    figurate_pentagonal(Nat.2) = Nat.5
+}
+
+theorem figurate_pentagonal_three {
+    figurate_pentagonal(Nat.3) = Nat.12
+}
+
+theorem figurate_pentagonal_four {
+    figurate_pentagonal(Nat.4) = Nat.22
+}
+
+define figurate_triangular_sum(n: Nat) -> Nat {
+    range_sum(triangular, n.suc)
+}
+
+theorem figurate_triangular_six(n: Nat) {
+    Nat.6 * triangular(n) = Nat.3 * (n * (n + Nat.1))
+}
+
+theorem figurate_triangular_sum_closed(n: Nat) {
+    Nat.6 * range_sum(triangular, n.suc) = n * (n + Nat.1) * (n + Nat.2)
+}
+
+theorem figurate_triangular_sum_figurate(n: Nat) {
+    Nat.6 * figurate_triangular_sum(n) = n * (n + Nat.1) * (n + Nat.2)
+}
+
+theorem figurate_octagonal_one {
+    figurate_octagonal(Nat.1) = Nat.1
+}
+
+theorem figurate_octagonal_two {
+    figurate_octagonal(Nat.2) = Nat.8
+}
+
+theorem figurate_octagonal_three {
+    figurate_octagonal(Nat.3) = Nat.21
+}
+
+theorem zmod_prime_mul_inverse_exists(p: Nat, a: Nat) {
+    p.is_prime and a.coprime(p) implies exists(b: Nat) { (a * b).congr_mod(Nat.1, p) }
+}
+
+theorem zmod_prime_coprime_iff_not_divides(p: Nat, a: Nat) {
+    p.is_prime implies (a.coprime(p) = not p.divides(a))
+}
+
+theorem zmod_prime_field_mul_inverse(p: Nat, a: Nat) {
+    p.is_prime and Nat.0 < a and a < p implies exists(b: Nat) { (a * b).congr_mod(Nat.1, p) }
+}
+
+theorem zmod_prime_mod_inv_correct(p: Nat, a: Nat) {
+    p.is_prime and a.coprime(p) implies (a * mod_inv(a, p)).congr_mod(Nat.1, p)
+}
+
+theorem zmod_prime_zero_ne_one(p: Nat) {
+    p.is_prime implies not (Nat.0.congr_mod(Nat.1, p))
+}
+
+define is_primitive_root_mod_prime(g: Nat, p: Nat) -> Bool {
+    p.is_prime and g.coprime(p) and multiplicative_order_mod(g, p) = p - Nat.1
+}
+
+theorem fermat_little_field_form(p: Nat, a: Nat) {
+    p.is_prime and a.coprime(p) implies a.pow(p - Nat.1).congr_mod(Nat.1, p)
+}
+
+theorem fermat_little_field_nonzero_residue(p: Nat, a: Nat) {
+    p.is_prime and Nat.0 < a and a < p implies a.pow(p - Nat.1).congr_mod(Nat.1, p)
+}
+
+define count_nonzero_residues(k: Nat) -> Nat {
+    match k {
+        Nat.zero {
+            Nat.0
+        }
+        Nat.suc(j) {
+            match j {
+                Nat.zero {
+                    Nat.0
+                }
+                Nat.suc(jj) {
+                    count_nonzero_residues(j) + Nat.1
+                }
+            }
+        }
+    }
+}
+
+theorem count_nonzero_residues_suc_zero {
+    count_nonzero_residues(Nat.0.suc) = Nat.0
+}
+
+theorem count_nonzero_residues_suc_eq(j: Nat) {
+    count_nonzero_residues(j.suc) = j
+}
+
+theorem count_nonzero_residues_eq_pred(k: Nat) {
+    k != Nat.0 implies count_nonzero_residues(k) = k - Nat.1
+}
+
+theorem zmod_prime_nonzero_count(p: Nat) {
+    p.is_prime implies count_nonzero_residues(p) = p - Nat.1
+}
+
+theorem wilson_prime_field_form(p: Nat) {
+    p.is_prime implies (p - Nat.1).factorial.congr_mod(p - Nat.1, p)
+}
+
+define fs4[R: CommRing](a: R, b: R, c: R, d: R) -> R {
+    a * a + b * b + c * c + d * d
+}
+
+define qp1[R: CommRing](a: R, b: R, c: R, d: R, e: R, f: R, g: R, h: R) -> R {
+    a * e - b * f - c * g - d * h
+}
+
+define qp2[R: CommRing](a: R, b: R, c: R, d: R, e: R, f: R, g: R, h: R) -> R {
+    a * f + b * e + c * h - d * g
+}
+
+define qp3[R: CommRing](a: R, b: R, c: R, d: R, e: R, f: R, g: R, h: R) -> R {
+    a * g - b * h + c * e + d * f
+}
+
+define qp4[R: CommRing](a: R, b: R, c: R, d: R, e: R, f: R, g: R, h: R) -> R {
+    a * h + b * g - c * f + d * e
+}
+
+theorem sq_add2[R: CommRing](u: R, v: R) {
+    (u + v) * (u + v) = u * u + v * u + (u * v + v * v)
+}
+
+theorem sq_sub2[R: CommRing](u: R, v: R) {
+    (u - v) * (u - v) = u * u - u * v - v * u + v * v
+}
+
+theorem prod22[R: CommRing](u: R, v: R, w: R, t: R) {
+    (u - v) * (w + t) = u * w - v * w + u * t - v * t
+}
+
+theorem prod22_swap[R: CommRing](u: R, v: R, w: R, t: R) {
+    (u + v) * (w - t) = u * w + v * w - u * t - v * t
+}
+
+theorem four_sub_nest[R: CommRing](u: R, v: R, w: R, t: R) {
+    u - v - w - t = (u - v) - (w + t)
+}
+
+theorem four_add_nest[R: CommRing](u: R, v: R, w: R, t: R) {
+    u + v + w + t = (u + v) + (w + t)
+}
+
+theorem swap_pair[R: CommRing](x: R, p: R, q: R, y: R) {
+    x + p + q + y = x + q + p + y
+}
+
+theorem absorb_pair[R: CommRing](x: R, m: R, n: R, y: R) {
+    m = n implies x + m + -n + y = x + y
+}
+
+theorem absorb_pair_mid[R: CommRing](x: R, m: R, n: R, p: R, y: R) {
+    m = n implies x + m + p + -n + y = x + p + y
+}
+
+theorem abs_mid_inner[R: CommRing](m: R, n: R, p: R) {
+    m = n implies m + p + -n = p
+}
+
+theorem absorb_pair_2_mid[R: CommRing](x: R, m: R, n: R, p: R, y: R) {
+    m = n implies x + m + m + p + -n + -n + y = x + p + y
+}
+
+theorem sq4_minus_raw[R: CommRing](u: R, v: R, w: R, t: R) {
+    (u - v - w - t) * (u - v - w - t) =
+        u * u - u * v - u * w - u * t - u * v + v * v + v * w + v * t -
+        u * w + v * w + w * w + w * t - u * t + v * t + w * t + t * t
+}
+
+define norm2(z: Complex, w: Complex) -> Real {
+    z.abs_squared + w.abs_squared
+}
+
+define qmul_z(z1: Complex, w1: Complex, z2: Complex, w2: Complex) -> Complex {
+    z1 * z2 - w1 * w2.conj
+}
+
+define qmul_w(z1: Complex, w1: Complex, z2: Complex, w2: Complex) -> Complex {
+    z1 * w2 + w1 * z2.conj
+}
+
+theorem abs_sq_sub(a: Complex, b: Complex) {
+    (a - b).abs_squared =
+        a.abs_squared + b.abs_squared +
+        ((a * (-b).conj).re + (a * (-b).conj).re)
+}
+
+theorem conj_neg2(b: Complex) {
+    (-b).conj = -(b.conj)
+}
+
+theorem conj_mul2(a: Complex, b: Complex) {
+    (a * b).conj = a.conj * b.conj
+}
+
+theorem re_neg2(x: Complex) {
+    (-x).re = -(x.re)
+}
+
+theorem abs_sq_mul(a: Complex, b: Complex) {
+    (a * b).abs_squared = a.abs_squared * b.abs_squared
+}
+
+theorem cross1_norm(z1: Complex, w1: Complex, z2: Complex, w2: Complex) {
+    (z1 * z2 * (-(w1 * w2.conj)).conj).re = -((z1 * z2 * (w1.conj * w2)).re)
+}
+
+theorem cross2_norm(z1: Complex, w1: Complex, z2: Complex, w2: Complex) {
+    (z1 * w2 * (w1 * z2.conj).conj).re = (z1 * w2 * (w1.conj * z2)).re
+}
+
+theorem cross_eq(z1: Complex, w1: Complex, z2: Complex, w2: Complex) {
+    (z1 * z2 * (w1.conj * w2)).re = (z1 * w2 * (w1.conj * z2)).re
+}
+
+theorem cancel_cross_pair[R: CommRing](x: R, t: R, tp: R, p: R, y: R) {
+    t = tp implies x + -t + -t + p + tp + tp + y = x + p + y
+}
+
+theorem reorder4[R: CommRing](a: R, b: R, c: R, d: R) {
+    a + b + c + d = a + c + d + b
+}
+
+theorem reorder4_swap[R: CommRing](a: R, b: R, c: R, d: R) {
+    a + b + c + d = a + c + b + d
+}
+
+theorem norm2_mul(z1: Complex, w1: Complex, z2: Complex, w2: Complex) {
+    norm2(z1, w1) * norm2(z2, w2) =
+        norm2(qmul_z(z1, w1, z2, w2), qmul_w(z1, w1, z2, w2))
+}
+
+theorem re_xy(x: Real, y: Real) {
+    (Complex.from_real(x) + Complex.from_real(y) * Complex.i).re = x
+}
+
+theorem im_xy(x: Real, y: Real) {
+    (Complex.from_real(x) + Complex.from_real(y) * Complex.i).im = y
+}
+
+theorem abs_sq_re_im(x: Real, y: Real) {
+    (Complex.from_real(x) + Complex.from_real(y) * Complex.i).abs_squared =
+        x * x + y * y
+}
+
+theorem z_mul_coords(x: Real, y: Real, u: Real, v: Real) {
+    (Complex.from_real(x) + Complex.from_real(y) * Complex.i) *
+    (Complex.from_real(u) + Complex.from_real(v) * Complex.i) =
+        Complex.from_real(x * u - y * v) +
+        Complex.from_real(x * v + y * u) * Complex.i
+}
+
+theorem conj_xy(x: Real, y: Real) {
+    (Complex.from_real(x) + Complex.from_real(y) * Complex.i).conj =
+        Complex.from_real(x) + Complex.from_real(-y) * Complex.i
+}
+
+theorem qmul_z_coords(a: Real, b: Real, c: Real, d: Real, e: Real, f: Real, g: Real, h: Real) {
+    qmul_z(Complex.from_real(a) + Complex.from_real(b) * Complex.i,
+        Complex.from_real(c) + Complex.from_real(d) * Complex.i,
+        Complex.from_real(e) + Complex.from_real(f) * Complex.i,
+        Complex.from_real(g) + Complex.from_real(h) * Complex.i) =
+        Complex.from_real(a * e - b * f - c * g - d * h) +
+        Complex.from_real(a * f + b * e + c * h - d * g) * Complex.i
+}
+
+theorem qmul_w_coords(a: Real, b: Real, c: Real, d: Real, e: Real, f: Real, g: Real, h: Real) {
+    qmul_w(Complex.from_real(a) + Complex.from_real(b) * Complex.i,
+        Complex.from_real(c) + Complex.from_real(d) * Complex.i,
+        Complex.from_real(e) + Complex.from_real(f) * Complex.i,
+        Complex.from_real(g) + Complex.from_real(h) * Complex.i) =
+        Complex.from_real(a * g - b * h + c * e + d * f) +
+        Complex.from_real(a * h + b * g - c * f + d * e) * Complex.i
+}
+
+theorem fs4_norm(a: Real, b: Real, c: Real, d: Real) {
+    fs4(a, b, c, d) =
+        norm2(Complex.from_real(a) + Complex.from_real(b) * Complex.i,
+            Complex.from_real(c) + Complex.from_real(d) * Complex.i)
+}
+
+theorem four_squares_identity(a: Real, b: Real, c: Real, d: Real, e: Real, f: Real, g: Real, h: Real) {
+    fs4(a, b, c, d) * fs4(e, f, g, h) =
+        fs4(qp1(a, b, c, d, e, f, g, h), qp2(a, b, c, d, e, f, g, h),
+            qp3(a, b, c, d, e, f, g, h), qp4(a, b, c, d, e, f, g, h))
+}
+
+theorem one_mod_three {
+    Nat.1.mod(Nat.3) = Nat.1
+}
+
+theorem two_mod_three {
+    Nat.2.mod(Nat.3) = Nat.2
+}
+
+theorem square_mod_three_case(a: Nat) {
+    (a * a).mod(Nat.3) = Nat.0 or (a * a).mod(Nat.3) = Nat.1
+}
+
+theorem mod_three_sum_pair_zero_imp_u_zero(u: Nat, v: Nat) {
+    (u + v).mod(Nat.3) = Nat.0 and (u = Nat.0 or u = Nat.1) and (v = Nat.0 or v = Nat.1)
+        implies u = Nat.0
+}
+
+theorem mod_three_sum_pair_zero_imp_v_zero(u: Nat, v: Nat) {
+    (u + v).mod(Nat.3) = Nat.0 and (u = Nat.0 or u = Nat.1) and (v = Nat.0 or v = Nat.1)
+        implies v = Nat.0
+}
+
+theorem three_divides_sum_two_squares(x: Nat, y: Nat) {
+    Nat.3.divides(x * x + y * y) implies Nat.3.divides(x) and Nat.3.divides(y)
+}
+
+theorem sq_sum_three_sq_descent(x: Nat, y: Nat, z: Nat) {
+    z != Nat.0 and x * x + y * y = Nat.3 * (z * z) implies
+        exists(a: Nat, b: Nat, c: Nat) {
+            c < z and Nat.3 * c = z and a * a + b * b = Nat.3 * (c * c)
+        }
+}
+
+theorem sq_sum_three_sq_zero(z: Nat) {
+    forall(x: Nat, y: Nat) { x * x + y * y = Nat.3 * (z * z) implies z = Nat.0 }
+}
+
+theorem no_nontrivial_sq_sum_three_sq(x: Nat, y: Nat, z: Nat) {
+    x * x + y * y = Nat.3 * (z * z) implies x = Nat.0 and y = Nat.0 and z = Nat.0
+}
+
+theorem sqrt_two_irrational(p: Nat, q: Nat) {
+    p * p = Nat.2 * (q * q) implies q = Nat.0
+}
+
+theorem sqrt_three_irrational(p: Nat, q: Nat) {
+    p * p = Nat.3 * (q * q) implies q = Nat.0
+}
+
+theorem congr_three_mod_four_imp_half_decomp(p: Nat) {
+    p.congr_mod(Nat.3, Nat.4) implies
+        exists(q: Nat) { p = Nat.2 * (Nat.2 * q + Nat.1) + Nat.1 }
+}
+
+theorem congr_three_mod_four_imp_not_congr_one_mod_four(p: Nat) {
+    p.congr_mod(Nat.3, Nat.4) implies not p.congr_mod(Nat.1, Nat.4)
+}
+
+theorem two_squares_descent_inverse_step(p: Nat, x: Nat, y: Nat, b: Nat) {
+    p.is_prime and p.divides(x * x + y * y) and (y * b).congr_mod(Nat.1, p)
+        implies ((x * b) * (x * b)).congr_mod(p - Nat.1, p)
+}
+
+theorem two_squares_descent_imp_divides_y(p: Nat, x: Nat, y: Nat) {
+    p.is_prime and p.congr_mod(Nat.3, Nat.4) and p.divides(x * x + y * y)
+        implies p.divides(y)
+}
+
+theorem two_squares_descent(p: Nat, x: Nat, y: Nat) {
+    p.is_prime and p.congr_mod(Nat.3, Nat.4) and p.divides(x * x + y * y)
+        implies p.divides(x) and p.divides(y)
+}
+
+structure GaussInt {
+    /// The real part of the Gaussian integer.
+    re: Int
+    /// The imaginary part of the Gaussian integer.
+    im: Int
+}
+
+instance GaussInt: Zero {
+    let 0: GaussInt = GaussInt.new(Int.0, Int.0)
+}
+
+instance GaussInt: One {
+    let 1: GaussInt = GaussInt.new(Int.1, Int.0)
+}
+
+instance GaussInt: Add {
+    define add(self, other: GaussInt) -> GaussInt {
+        GaussInt.new(self.re + other.re, self.im + other.im)
+    }
+}
+
+instance GaussInt: Neg {
+    define neg(self) -> GaussInt {
+        GaussInt.new(-self.re, -self.im)
+    }
+}
+
+instance GaussInt: Mul {
+    define mul(self, other: GaussInt) -> GaussInt {
+        GaussInt.new(
+            self.re * other.re - self.im * other.im,
+            self.re * other.im + self.im * other.re
+        )
+    }
+}
+
+attributes GaussInt {
+    /// The imaginary unit i = 0 + 1i, satisfying i² = -1.
+    let i: GaussInt = GaussInt.new(Int.0, Int.1)
+
+    /// The complex conjugate, which negates the imaginary part.
+    define conj(self) -> GaussInt {
+        GaussInt.new(self.re, -self.im)
+    }
+
+    /// The norm N(a + bi) = a² + b², an integer (always nonnegative in
+    /// practice).  The norm is multiplicative and controls divisibility.
+    define norm(self) -> Int {
+        self.re * self.re + self.im * self.im
+    }
+
+    /// The norm expressed as a natural number, N(a + bi) = |a|² + |b|².
+    define norm_nat(self) -> Nat {
+        abs(self.re) * abs(self.re) + abs(self.im) * abs(self.im)
+    }
+
+    /// True when the Gaussian integer divides another: z | w when w = z·k
+    /// for some Gaussian integer k.
+    define divides(self, other: GaussInt) -> Bool {
+        exists(k: GaussInt) { self * k = other }
+    }
+
+    /// True when the Gaussian integer is a unit, i.e. has a multiplicative
+    /// inverse.  The units of the Gaussian integers are ±1 and ±i.
+    define is_unit(self) -> Bool {
+        exists(k: GaussInt) { self * k = GaussInt.1 }
+    }
+}
+
+theorem int_sub_sum(x: Int, y: Int, z: Int) {
+    x - (y + z) = x - y - z
+}
+
+theorem int_sub_chain_swap(x: Int, p: Int, q: Int, r: Int) {
+    x - p - q - r = x - q - r - p
+}
+
+theorem int_add_sub_reorder(x: Int, y: Int, z: Int, w: Int) {
+    x - w + y + z = x + y + z - w
+}
+
+theorem int_sub_sub_reorder(x: Int, y: Int, z: Int, w: Int) {
+    x - y + z - w = x + z - y - w
+}
+
+theorem int_add_sub_assoc_right(x: Int, y: Int, z: Int, w: Int) {
+    x + y + (z - w) = x + y + z - w
+}
+
+theorem gauss_add_comm(a: GaussInt, b: GaussInt) {
+    a + b = b + a
+}
+
+theorem gauss_add_assoc(a: GaussInt, b: GaussInt, c: GaussInt) {
+    (a + b) + c = a + (b + c)
+}
+
+theorem gauss_add_zero_left(a: GaussInt) {
+    GaussInt.0 + a = a
+}
+
+theorem gauss_add_zero_right(a: GaussInt) {
+    a + GaussInt.0 = a
+}
+
+theorem gauss_add_neg(a: GaussInt) {
+    a + -a = GaussInt.0
+}
+
+theorem gauss_mul_comm(a: GaussInt, b: GaussInt) {
+    a * b = b * a
+}
+
+theorem gauss_mul_assoc(a: GaussInt, b: GaussInt, c: GaussInt) {
+    (a * b) * c = a * (b * c)
+}
+
+theorem gauss_mul_distrib(a: GaussInt, b: GaussInt, c: GaussInt) {
+    a * (b + c) = a * b + a * c
+}
+
+theorem gauss_mul_distrib_right(a: GaussInt, b: GaussInt, c: GaussInt) {
+    (a + b) * c = a * c + b * c
+}
+
+theorem gauss_mul_one_left(a: GaussInt) {
+    GaussInt.1 * a = a
+}
+
+theorem gauss_mul_one_right(a: GaussInt) {
+    a * GaussInt.1 = a
+}
+
+theorem gauss_mul_zero_right(a: GaussInt) {
+    a * GaussInt.0 = GaussInt.0
+}
+
+theorem gauss_mul_zero_left(a: GaussInt) {
+    GaussInt.0 * a = GaussInt.0
+}
+
+theorem gauss_conj_add(a: GaussInt, b: GaussInt) {
+    (a + b).conj = a.conj + b.conj
+}
+
+theorem gauss_conj_mul(a: GaussInt, b: GaussInt) {
+    (a * b).conj = a.conj * b.conj
+}
+
+theorem gauss_conj_conj(a: GaussInt) {
+    a.conj.conj = a
+}
+
+theorem int_from_nat_inj(m: Nat, n: Nat) {
+    Int.from_nat(m) = Int.from_nat(n) implies m = n
+}
+
+theorem nat_sq_zero(x: Nat) {
+    x * x = Nat.0 implies x = Nat.0
+}
+
+theorem nat_sq_sum_zero(x: Nat, y: Nat) {
+    x * x + y * y = Nat.0 implies x = Nat.0 and y = Nat.0
+}
+
+theorem nat_sq_sum_one_cases(x: Nat, y: Nat) {
+    x * x + y * y = Nat.1 implies
+        (x = Nat.0 and y = Nat.1) or (x = Nat.1 and y = Nat.0)
+}
+
+theorem int_add_four_last_next_to_first(a: Int, b: Int, c: Int, d: Int) {
+    a + b + c + d = (a + d) + (b + c)
+}
+
+theorem int_add_pair_rearrange(a: Int, b: Int, c: Int, d: Int) {
+    (a + b) + (c + d) = (a + c) + (b + d)
+}
+
+theorem int_square_sub(x: Int, y: Int) {
+    (x - y) * (x - y) = x * x - x * y - y * x + y * y
+}
+
+theorem int_square_add(x: Int, y: Int) {
+    (x + y) * (x + y) = x * x + y * x + (x * y + y * y)
+}
+
+theorem int_minus_to_add(x: Int, m: Int, n: Int, y: Int) {
+    x - m - n + y = x + -m + -n + y
+}
+
+theorem int_add_to_minus(x: Int, m: Int, n: Int, y: Int) {
+    x + -m + -n + y = (x - m) + (y - n)
+}
+
+theorem int_cancel_sub_add(x: Int, m: Int, z: Int) {
+    x - m + (m + z) = x + z
+}
+
+theorem int_cancel_swap_add(x: Int, m: Int, z: Int) {
+    x - m + (z + m) = x + z
+}
+
+theorem int_cancel_middle(x: Int, y: Int, z: Int, w: Int, m: Int, n: Int) {
+    (x - m - n + y) + (z + m + n + w) = x + y + z + w
+}
+
+theorem int_pure_reassemble(a: Int, b: Int, c: Int, d: Int) {
+    a * c * a * c + b * d * b * d + a * d * a * d + b * c * b * c =
+        a * a * c * c + a * a * d * d + b * b * c * c + b * b * d * d
+}
+
+theorem int_lhs_expand(a: Int, b: Int, c: Int, d: Int) {
+    (a * a + b * b) * (c * c + d * d) =
+        a * a * c * c + a * a * d * d + b * b * c * c + b * b * d * d
+}
+
+theorem int_two_square_identity(a: Int, b: Int, c: Int, d: Int) {
+    (a * a + b * b) * (c * c + d * d) =
+        (a * c - b * d) * (a * c - b * d) + (a * d + b * c) * (a * d + b * c)
+}
+
+theorem gauss_norm_i {
+    GaussInt.i.norm = Int.1
+}
+
+theorem gauss_norm_one {
+    GaussInt.1.norm = Int.1
+}
+
+theorem gauss_norm_zero {
+    GaussInt.0.norm = Int.0
+}
+
+theorem gauss_norm_nat_i {
+    GaussInt.i.norm_nat = Nat.1
+}
+
+theorem gauss_norm_nat_one {
+    GaussInt.1.norm_nat = Nat.1
+}
+
+theorem gauss_norm_nat_zero {
+    GaussInt.0.norm_nat = Nat.0
+}
+
+theorem int_sq_eq_from_nat_abs(a: Int) {
+    a * a = Int.from_nat(abs(a) * abs(a))
+}
+
+theorem int_sq_sum_eq_from_nat_abs(a: Int, b: Int) {
+    a * a + b * b = Int.from_nat(abs(a) * abs(a) + abs(b) * abs(b))
+}
+
+theorem int_abs_sq_sum(a: Int, b: Int) {
+    abs(a * a + b * b) = abs(a) * abs(a) + abs(b) * abs(b)
+}
+
+theorem gauss_norm_eq_from_nat_norm_nat(a: GaussInt) {
+    a.norm = Int.from_nat(a.norm_nat)
+}
+
+theorem gauss_norm_nat_mul(a: GaussInt, b: GaussInt) {
+    (a * b).norm_nat = a.norm_nat * b.norm_nat
+}
+
+theorem gauss_norm_mul(a: GaussInt, b: GaussInt) {
+    (a * b).norm = a.norm * b.norm
+}
+
+theorem gauss_norm_conj(a: GaussInt) {
+    a.conj.norm = a.norm
+}
+
+theorem gauss_norm_nat_conj(a: GaussInt) {
+    a.conj.norm_nat = a.norm_nat
+}
+
+theorem gauss_mul_conj(a: GaussInt) {
+    a * a.conj = GaussInt.new(a.norm, Int.0)
+}
+
+theorem gauss_norm_nat_zero_iff_zero(a: GaussInt) {
+    a.norm_nat = Nat.0 implies a = GaussInt.0
+}
+
+theorem gauss_norm_nat_pos(a: GaussInt) {
+    a != GaussInt.0 implies Nat.0 < a.norm_nat
+}
+
+theorem int_divides_add(a: Int, b: Int, c: Int) {
+    a.divides(b) and a.divides(c) implies a.divides(b + c)
+}
+
+theorem int_divides_mul(a: Int, b: Int, c: Int) {
+    a.divides(b) implies a.divides(b * c)
+}
+
+theorem int_divides_neg(a: Int, b: Int) {
+    a.divides(b) implies a.divides(-b)
+}
+
+theorem nat_prime_imp_int_prime(p: Nat) {
+    p.is_prime implies is_prime(Int.from_nat(p))
+}
+
+define gauss_of_nat(n: Nat) -> GaussInt {
+    GaussInt.new(Int.from_nat(n), Int.0)
+}
+
+theorem gauss_of_nat_mul(n: Nat, z: GaussInt) {
+    gauss_of_nat(n) * z = GaussInt.new(Int.from_nat(n) * z.re, Int.from_nat(n) * z.im)
+}
+
+theorem gauss_of_nat_divides_imp_components(p: Nat, z: GaussInt) {
+    gauss_of_nat(p).divides(z) implies
+        (Int.from_nat(p).divides(z.re) and Int.from_nat(p).divides(z.im))
+}
+
+theorem gauss_of_nat_components_imp_divides(p: Nat, z: GaussInt) {
+    (Int.from_nat(p).divides(z.re) and Int.from_nat(p).divides(z.im)) implies
+        gauss_of_nat(p).divides(z)
+}
+
+theorem gauss_of_nat_divides_iff_components(p: Nat, z: GaussInt) {
+    (gauss_of_nat(p).divides(z) =
+        (Int.from_nat(p).divides(z.re) and Int.from_nat(p).divides(z.im)))
+}
+
+theorem gauss_unit_of_norm_nat_one(a: GaussInt) {
+    a.norm_nat = Nat.1 implies a.is_unit
+}
+
+theorem gauss_unit_norm_nat_one(a: GaussInt) {
+    a.is_unit implies a.norm_nat = Nat.1
+}
+
+theorem gauss_unit_iff_norm_nat_one(a: GaussInt) {
+    (a.is_unit = (a.norm_nat = Nat.1))
+}
+
+theorem gauss_unit_iff_norm_one(a: GaussInt) {
+    (a.is_unit = (a.norm = Int.1))
+}
+
+theorem gauss_neg_new(a: Int, b: Int) {
+    -(GaussInt.new(a, b)) = GaussInt.new(-a, -b)
+}
+
+theorem gauss_norm_nat_one_cases(a: GaussInt) {
+    a.norm_nat = Nat.1 implies
+        a = GaussInt.1 or a = -GaussInt.1 or a = GaussInt.i or a = -GaussInt.i
+}
+
+theorem gauss_unit_cases(a: GaussInt) {
+    a.is_unit implies a = GaussInt.1 or a = -GaussInt.1 or a = GaussInt.i or a = -GaussInt.i
+}
+
+theorem gauss_i_mul_neg_i {
+    GaussInt.i * -GaussInt.i = GaussInt.1
+}
+
+theorem gauss_neg_one_mul_neg_one {
+    -GaussInt.1 * -GaussInt.1 = GaussInt.1
+}
+
+theorem gauss_prime_three_mod_four_inert(p: Nat, x: GaussInt, y: GaussInt) {
+    p.is_prime and p.congr_mod(Nat.3, Nat.4) and gauss_of_nat(p).divides(x * y)
+        implies gauss_of_nat(p).divides(x) or gauss_of_nat(p).divides(y)
+}
+
+theorem gauss_prime_three_mod_four_not_norm(p: Nat, z: GaussInt) {
+    p.is_prime and p.congr_mod(Nat.3, Nat.4) implies z.norm_nat != p
+}
+
+theorem gauss_prime_one_mod_four_splits(p: Nat) {
+    p.is_prime and p.mod(Nat.4) = Nat.1 implies exists(z: GaussInt) {
+        z.norm_nat = p and z.norm = Int.from_nat(p)
+    }
+}
+
+theorem nat_prime_ne_zero(p: Nat) {
+    p.is_prime implies p != Nat.0
+}
+
+theorem nat_prime_product_factor_one(p: Nat, a: Nat, b: Nat) {
+    p.is_prime and p = a * b implies a = Nat.1 or b = Nat.1
+}
+
+theorem gauss_prime_norm_irreducible(z: GaussInt) {
+    z.norm_nat.is_prime implies forall(x: GaussInt, y: GaussInt) {
+        z = x * y implies x.is_unit or y.is_unit
+    }
+}
+
+theorem int_pos_eq_from_nat_abs(a: Int) {
+    a.is_positive implies a = Int.from_nat(abs(a))
+}
+
+theorem int_nonneg_eq_from_nat_abs(a: Int) {
+    Int.0 <= a implies a = Int.from_nat(abs(a))
+}
+
+theorem nat_not_lte_imp_gt(a: Nat, b: Nat) {
+    not (a <= b) implies b < a
+}
+
+theorem int_lt_from_nat_converse(s: Nat, m: Nat) {
+    Int.from_nat(s) < Int.from_nat(m) implies s < m
+}
+
+theorem nat_lte_cancel_add(a: Nat, b: Nat, c: Nat) {
+    a + b <= a + c implies b <= c
+}
+
+theorem nat_sub_distrib_left(a: Nat, b: Nat, c: Nat) {
+    a * (b - c) = a * b - a * c
+}
+
+theorem nat_two_mul_sub_le(m: Nat, s: Nat) {
+    s < m and m < Nat.2 * s implies Nat.2 * (m - s) <= m
+}
+
+theorem nat_twice_le_lt(m: Nat, n: Nat) {
+    Nat.2 * n <= m and m != Nat.0 implies n < m
+}
+
+theorem int_from_nat_sub(a: Nat, b: Nat) {
+    b <= a implies Int.from_nat(a) - Int.from_nat(b) = Int.from_nat(a - b)
+}
+
+theorem int_least_remainder(a: Int, m: Nat) {
+    m != Nat.0 implies exists(q: Int, r: Int) {
+        a = q * Int.from_nat(m) + r and Nat.2 * abs(r) <= m
+    }
+}
+
+theorem gauss_mul_neg_left(a: GaussInt, b: GaussInt) {
+    (-a) * b = -(a * b)
+}
+
+theorem gauss_add_new(a: Int, b: Int, x: Int, y: Int) {
+    GaussInt.new(a, b) + GaussInt.new(x, y) = GaussInt.new(a + x, b + y)
+}
+
+theorem int_eq_add_imp_sub(a: Int, b: Int, c: Int) {
+    a = b + c implies a + -b = c
+}
+
+theorem nat_four_sq_le(m: Nat, x: Nat) {
+    Nat.2 * x <= m implies Nat.4 * (x * x) <= m * m
+}
+
+theorem nat_mul_lte_cancel(a: Nat, b: Nat, c: Nat) {
+    a != Nat.0 and a * b <= a * c implies b <= c
+}
+
+theorem gauss_mul_conj_of_nat(a: GaussInt) {
+    a * a.conj = gauss_of_nat(a.norm_nat)
+}
+
+theorem gauss_division(z: GaussInt, w: GaussInt) {
+    w != GaussInt.0 implies exists(q: GaussInt, r: GaussInt) {
+        z = q * w + r and r.norm_nat < w.norm_nat
+    }
+}
+
+define iter_nat(f: Nat -> Nat, b: Nat, start: Nat) -> Nat {
+    match b {
+        Nat.zero {
+            start
+        }
+        Nat.suc(m) {
+            iter_nat(f, m, f(start))
+        }
+    }
+}
+
+theorem iter_nat_zero(f: Nat -> Nat, s: Nat) {
+    iter_nat(f, Nat.0, s) = s
+}
+
+theorem iter_nat_suc_step(f: Nat -> Nat, b: Nat, s: Nat) {
+    iter_nat(f, b.suc, s) = iter_nat(f, b, f(s))
+}
+
+theorem iter_nat_commute(f: Nat -> Nat, b: Nat, x: Nat) {
+    iter_nat(f, b, f(x)) = f(iter_nat(f, b, x))
+}
+
+define up_arrow(a: Nat, n: Nat, b: Nat) -> Nat {
+    match n {
+        Nat.zero {
+            a.pow(b)
+        }
+        Nat.suc(k) {
+            iter_nat(function(x: Nat) { up_arrow(a, k, x) }, b, Nat.1)
+        }
+    }
+}
+
+theorem up_arrow_beta(a: Nat, k: Nat, x: Nat) {
+    (function(y: Nat) { up_arrow(a, k, y) })(x) = up_arrow(a, k, x)
+}
+
+theorem up_arrow_exp(a: Nat, b: Nat) {
+    up_arrow(a, Nat.0, b) = a.pow(b)
+}
+
+theorem up_arrow_zero(a: Nat, n: Nat) {
+    up_arrow(a, n.suc, Nat.0) = Nat.1
+}
+
+theorem up_arrow_suc(a: Nat, k: Nat, m: Nat) {
+    up_arrow(a, k.suc, m.suc) = up_arrow(a, k, up_arrow(a, k.suc, m))
+}
+
+define tetration(a: Nat, b: Nat) -> Nat {
+    match b {
+        Nat.zero {
+            Nat.1
+        }
+        Nat.suc(m) {
+            a.pow(tetration(a, m))
+        }
+    }
+}
+
+theorem tetration_zero(a: Nat) {
+    tetration(a, Nat.0) = Nat.1
+}
+
+theorem tetration_suc(a: Nat, m: Nat) {
+    tetration(a, m.suc) = a.pow(tetration(a, m))
+}
+
+theorem up_arrow_bridge_one(a: Nat, b: Nat) {
+    up_arrow(a, Nat.1, b) = tetration(a, b)
+}
+
+define up_arrow3(a: Nat, b: Nat) -> Nat {
+    match b {
+        Nat.zero {
+            Nat.1
+        }
+        Nat.suc(m) {
+            tetration(a, up_arrow3(a, m))
+        }
+    }
+}
+
+theorem up_arrow3_zero(a: Nat) {
+    up_arrow3(a, Nat.0) = Nat.1
+}
+
+theorem up_arrow3_suc(a: Nat, m: Nat) {
+    up_arrow3(a, m.suc) = tetration(a, up_arrow3(a, m))
+}
+
+theorem up_arrow_bridge_two(a: Nat, b: Nat) {
+    up_arrow(a, Nat.2, b) = up_arrow3(a, b)
+}
+
+theorem pow_3_3_value {
+    Nat.3.pow(Nat.3) = Nat.27
+}
+
+theorem pow_2_2_value {
     Nat.2.pow(Nat.2) = Nat.4
 }
 
-theorem pow_two_three {
-    Nat.2.pow(Nat.3) = Nat.8
-}
-
-theorem pow_two_five {
-    Nat.2.pow(Nat.5) = Nat.32
-}
-
-theorem nat_add_22_10 {
-    Nat.22 + Nat.10 = Nat.32
-}
-
-theorem congr_thirty_two_mod_eleven {
-    Nat.32.congr_mod(Nat.10, Nat.11)
-}
-
-theorem congr_two_pow_five_mod_eleven {
-    Nat.2.pow(Nat.5).congr_mod(Nat.10, Nat.11)
-}
-
-theorem not_congr_ten_mod_eleven {
-    not Nat.10.congr_mod(Nat.1, Nat.11)
-}
-
-theorem not_congr_two_pow_one_mod_eleven {
-    not Nat.2.pow(Nat.1).congr_mod(Nat.1, Nat.11)
-}
-
-theorem not_congr_two_pow_two_mod_eleven {
-    not Nat.2.pow(Nat.2).congr_mod(Nat.1, Nat.11)
-}
-
-theorem not_congr_two_pow_five_mod_eleven {
-    not Nat.2.pow(Nat.5).congr_mod(Nat.1, Nat.11)
-}
-
-theorem not_three_divides_ten {
-    not Nat.3.divides(Nat.10)
-}
-
-theorem not_four_divides_ten {
-    not Nat.4.divides(Nat.10)
-}
-
-theorem not_six_divides_ten {
-    not Nat.6.divides(Nat.10)
-}
-
-theorem not_seven_divides_ten {
-    not Nat.7.divides(Nat.10)
-}
-
-theorem not_eight_divides_ten {
-    not Nat.8.divides(Nat.10)
-}
-
-theorem not_nine_divides_ten {
-    not Nat.9.divides(Nat.10)
-}
-
-theorem order_two_mod_eleven {
-    multiplicative_order_mod(Nat.2, Nat.11) = Nat.10
-}
-
-theorem two_is_primitive_root_mod_eleven {
-    is_primitive_root_mod(Nat.2, Nat.11)
-}
-
-theorem one_lt_thirteen {
-    Nat.1 < Nat.13
-}
-
-theorem two_lt_thirteen {
-    Nat.2 < Nat.13
-}
-
-theorem three_lt_thirteen {
-    Nat.3 < Nat.13
-}
-
-theorem eight_lt_thirteen {
-    Nat.8 < Nat.13
-}
-
-theorem twelve_lt_thirteen {
-    Nat.12 < Nat.13
-}
-
-theorem lt_zero_six {
-    Nat.0 < Nat.6
-}
-
-theorem lt_zero_twelve {
-    Nat.0 < Nat.12
-}
-
-theorem lt_six_seven {
-    Nat.6 < Nat.7
-}
-
-theorem lt_five_eight {
-    Nat.5 < Nat.8
-}
-
-theorem lt_four_nine {
-    Nat.4 < Nat.9
-}
-
-theorem lt_three_ten {
-    Nat.3 < Nat.10
-}
-
-theorem lt_two_eleven {
-    Nat.2 < Nat.11
-}
-
-theorem lt_five_seven {
-    Nat.5 < Nat.7
-}
-
-theorem lt_four_eight {
-    Nat.4 < Nat.8
-}
-
-theorem lt_three_nine {
-    Nat.3 < Nat.9
-}
-
-theorem lt_two_ten {
-    Nat.2 < Nat.10
-}
-
-theorem one_plus_eleven {
-    Nat.1 + Nat.11 = Nat.12
-}
-
-theorem twelve_plus_one {
-    Nat.12 + Nat.1 = Nat.13
-}
-
-theorem eleven_ne_one {
-    Nat.11 != Nat.1
-}
-
-theorem twelve_ne_one {
-    Nat.12 != Nat.1
-}
-
-theorem sub_thirteen_ten {
-    Nat.13 - Nat.10 = Nat.3
-}
-
-theorem sub_thirteen_seven {
-    Nat.13 - Nat.7 = Nat.6
-}
-
-theorem sub_thirteen_eight {
-    Nat.13 - Nat.8 = Nat.5
-}
-
-theorem sub_thirteen_nine {
-    Nat.13 - Nat.9 = Nat.4
-}
-
-theorem sub_thirteen_eleven {
-    Nat.13 - Nat.11 = Nat.2
-}
-
-theorem sub_thirteen_one {
-    Nat.13 - Nat.1 = Nat.12
-}
-
-theorem sub_twelve_ten {
-    Nat.12 - Nat.10 = Nat.2
-}
-
-theorem sub_twelve_seven {
-    Nat.12 - Nat.7 = Nat.5
-}
-
-theorem sub_twelve_eight {
-    Nat.12 - Nat.8 = Nat.4
-}
-
-theorem sub_twelve_nine {
-    Nat.12 - Nat.9 = Nat.3
-}
-
-theorem sub_twelve_eleven {
-    Nat.12 - Nat.11 = Nat.1
-}
-
-theorem two_divides_twelve {
-    Nat.2.divides(Nat.12)
-}
-
-theorem three_divides_twelve {
-    Nat.3.divides(Nat.12)
-}
-
-theorem four_divides_twelve {
-    Nat.4.divides(Nat.12)
-}
-
-theorem six_divides_twelve {
-    Nat.6.divides(Nat.12)
-}
-
-theorem twelve_divides_twelve {
-    Nat.12.divides(Nat.12)
-}
-
-theorem not_two_divides_thirteen {
-    not Nat.2.divides(Nat.13)
-}
-
-theorem not_three_divides_thirteen {
-    not Nat.3.divides(Nat.13)
-}
-
-theorem not_four_divides_thirteen {
-    not Nat.4.divides(Nat.13)
-}
-
-theorem not_six_divides_thirteen {
-    not Nat.6.divides(Nat.13)
-}
-
-theorem not_five_divides_thirteen {
-    not Nat.5.divides(Nat.13)
-}
-
-theorem not_seven_divides_thirteen {
-    not Nat.7.divides(Nat.13)
-}
-
-theorem not_eight_divides_thirteen {
-    not Nat.8.divides(Nat.13)
-}
-
-theorem not_nine_divides_thirteen {
-    not Nat.9.divides(Nat.13)
-}
-
-theorem not_ten_divides_thirteen {
-    not Nat.10.divides(Nat.13)
-}
-
-theorem not_eleven_divides_thirteen {
-    not Nat.11.divides(Nat.13)
-}
-
-theorem not_twelve_divides_thirteen {
-    not Nat.12.divides(Nat.13)
-}
-
-theorem not_five_divides_twelve {
-    not Nat.5.divides(Nat.12)
-}
-
-theorem not_seven_divides_twelve {
-    not Nat.7.divides(Nat.12)
-}
-
-theorem not_eight_divides_twelve {
-    not Nat.8.divides(Nat.12)
-}
-
-theorem not_nine_divides_twelve {
-    not Nat.9.divides(Nat.12)
-}
-
-theorem not_ten_divides_twelve {
-    not Nat.10.divides(Nat.12)
-}
-
-theorem not_eleven_divides_twelve {
-    not Nat.11.divides(Nat.12)
-}
-
-theorem k_range_two_11(k: Nat) {
-    Nat.1 < k and k < Nat.12 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9 or k = Nat.10 or k = Nat.11)
-}
-
-theorem k_range_two_12(k: Nat) {
-    Nat.1 < k and k < Nat.13 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9 or k = Nat.10 or k = Nat.11 or k = Nat.12)
-}
-
-theorem thirteen_not_divides_by_case(k: Nat) {
-    Nat.1 < k and k < Nat.13 and (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6 or k = Nat.7 or k = Nat.8 or k = Nat.9 or k = Nat.10 or k = Nat.11 or k = Nat.12)
-        implies not k.divides(Nat.13)
-}
-
-theorem thirteen_no_proper_divisor(k: Nat) {
-    Nat.1 < k and k < Nat.13 implies not k.divides(Nat.13)
-}
-
-theorem thirteen_is_prime {
-    Nat.13.is_prime
-}
-
-theorem two_coprime_mod_thirteen {
-    Nat.2.coprime(Nat.13)
-}
-
-theorem pow_two_four {
+theorem pow_2_4_value {
     Nat.2.pow(Nat.4) = Nat.16
 }
 
-theorem nat_add_13_3 {
-    Nat.13 + Nat.3 = Nat.16
+theorem pow_2_5_value {
+    Nat.2.pow(Nat.5) = Nat.32
 }
 
-theorem congr_sixteen_mod_thirteen {
-    Nat.16.congr_mod(Nat.3, Nat.13)
+theorem nat_mul_2_32 {
+    Nat.2 * Nat.32 = Nat.64
 }
 
-theorem congr_two_pow_four_mod_thirteen {
-    Nat.2.pow(Nat.4).congr_mod(Nat.3, Nat.13)
+theorem nat_mul_2_64 {
+    Nat.2 * Nat.64 = Nat.128
 }
 
-theorem mod_one_mod_thirteen {
-    Nat.1.mod(Nat.13) = Nat.1
+theorem nat_mul_2_128 {
+    Nat.2 * Nat.128 = Nat.256
 }
 
-theorem mod_two_mod_thirteen {
-    Nat.2.mod(Nat.13) = Nat.2
+theorem nat_mul_2_256 {
+    Nat.2 * Nat.256 = Nat.512
+}
+
+theorem nat_mul_25_5 {
+    Nat.25 * Nat.5 = Nat.125
+}
+
+theorem nat_add_125_3 {
+    Nat.125 + Nat.3 = Nat.128
+}
+
+theorem nat_mul_5_256 {
+    Nat.5 * Nat.256 = Nat.1280
+}
+
+theorem nat_add_512_128 {
+    Nat.512 + Nat.128 = Nat.640
+}
+
+theorem nat_mul_25_256 {
+    Nat.25 * Nat.256 = Nat.6400
+}
+
+theorem nat_mul_6_256 {
+    Nat.6 * Nat.256 = Nat.1536
+}
+
+theorem nat_add_6400_153 {
+    Nat.6400 + Nat.153 = Nat.6553
+}
+
+theorem nat_mul_256_256 {
+    Nat.256 * Nat.256 = Nat.65536
+}
+
+theorem two_pow_8_value {
+    Nat.2.pow(Nat.8) = Nat.256
+}
+
+theorem two_pow_16_value {
+    Nat.2.pow(Nat.16) = Nat.65536
+}
+
+theorem tetration_three_one {
+    tetration(Nat.3, Nat.1) = Nat.3
+}
+
+theorem tetration_three_two {
+    tetration(Nat.3, Nat.2) = Nat.27
+}
+
+theorem tetration_three_three_tower {
+    tetration(Nat.3, Nat.3) = Nat.3.pow(Nat.3.pow(Nat.3))
+}
+
+theorem tetration_three_three {
+    tetration(Nat.3, Nat.3) = Nat.3.pow(Nat.27)
+}
+
+theorem up_arrow_three_two {
+    up_arrow(Nat.3, Nat.1, Nat.2) = Nat.27
+}
+
+theorem tetration_two_one {
+    tetration(Nat.2, Nat.1) = Nat.2
+}
+
+theorem tetration_two_two {
+    tetration(Nat.2, Nat.2) = Nat.4
+}
+
+theorem tetration_two_three {
+    tetration(Nat.2, Nat.3) = Nat.16
+}
+
+theorem tetration_two_four_tower {
+    tetration(Nat.2, Nat.4) = Nat.2.pow(Nat.2.pow(Nat.2.pow(Nat.2)))
+}
+
+theorem tetration_two_four {
+    tetration(Nat.2, Nat.4) = Nat.65536
+}
+
+theorem up_arrow_two_four {
+    up_arrow(Nat.2, Nat.1, Nat.4) = Nat.65536
+}
+
+theorem up_arrow3_three_one {
+    up_arrow3(Nat.3, Nat.1) = Nat.3
+}
+
+theorem up_arrow3_three_two {
+    up_arrow3(Nat.3, Nat.2) = tetration(Nat.3, Nat.3)
+}
+
+theorem up_arrow3_three_two_value {
+    up_arrow3(Nat.3, Nat.2) = Nat.3.pow(Nat.27)
+}
+
+theorem up_arrow3_two_law(a: Nat) {
+    up_arrow3(a, Nat.2) = tetration(a, a)
+}
+
+theorem up_arrow_three_triple_two {
+    up_arrow(Nat.3, Nat.2, Nat.2) = tetration(Nat.3, Nat.3)
+}
+
+theorem tetration_two_five {
+    tetration(Nat.2, Nat.5) = Nat.2.pow(Nat.65536)
+}
+
+define graham_g(k: Nat) -> Nat {
+    match k {
+        Nat.zero {
+            up_arrow(Nat.3, Nat.4, Nat.3)
+        }
+        Nat.suc(m) {
+            up_arrow(Nat.3, graham_g(m), Nat.3)
+        }
+    }
+}
+
+theorem graham_g_base {
+    graham_g(Nat.0) = up_arrow(Nat.3, Nat.4, Nat.3)
+}
+
+theorem graham_g_suc(k: Nat) {
+    graham_g(k.suc) = up_arrow(Nat.3, graham_g(k), Nat.3)
+}
+
+let graham_number: Nat = graham_g(Nat.63)
+
+/// Graham's number is the sixty-fourth term: `G = g_64`.
+theorem graham_number_eq {
+    graham_number = graham_g(Nat.63)
+}
+
+theorem mod_base_mul_add_digit(p: Nat, n: Nat, d: Nat) {
+    d < p implies (p * n + d).mod(p) = d
+}
+
+theorem div_base_mul_add_digit(p: Nat, n: Nat, d: Nat) {
+    d < p implies (p * n + d).div(p) = n
+}
+
+theorem nat_add_to_zero(a: Nat, b: Nat) {
+    a + b = Nat.0 implies a = Nat.0 and b = Nat.0
+}
+
+theorem digit_zero_lt_ten {
+    Nat.0 < Nat.10
+}
+
+theorem digit_one_lt_ten {
+    Nat.1 < Nat.10
+}
+
+theorem digit_two_lt_ten {
+    Nat.2 < Nat.10
+}
+
+theorem digit_three_lt_ten {
+    Nat.3 < Nat.10
+}
+
+theorem digit_four_lt_ten {
+    Nat.4 < Nat.10
+}
+
+theorem digit_five_lt_ten {
+    Nat.5 < Nat.10
+}
+
+theorem digit_six_lt_ten {
+    Nat.6 < Nat.10
+}
+
+theorem digit_seven_lt_ten {
+    Nat.7 < Nat.10
+}
+
+theorem digit_eight_lt_ten {
+    Nat.8 < Nat.10
+}
+
+theorem digit_nine_lt_ten {
+    Nat.9 < Nat.10
+}
+
+theorem nat_add_8_4 {
+    Nat.8 + Nat.4 = Nat.12
+}
+
+theorem nat_add_5_7 {
+    Nat.5 + Nat.7 = Nat.12
+}
+
+theorem nat_add_7_5 {
+    Nat.7 + Nat.5 = Nat.12
+}
+
+theorem nat_add_6_8 {
+    Nat.6 + Nat.8 = Nat.14
+}
+
+theorem nat_add_81_64 {
+    Nat.81 + Nat.64 = Nat.145
+}
+
+theorem nat_add_81_49 {
+    Nat.81 + Nat.49 = Nat.130
+}
+
+theorem nat_add_9_49 {
+    Nat.9 + Nat.49 = Nat.58
+}
+
+theorem nat_add_25_64 {
+    Nat.25 + Nat.64 = Nat.89
+}
+
+theorem nat_add_17_25 {
+    Nat.17 + Nat.25 = Nat.42
+}
+
+theorem nat_add_16_4 {
+    Nat.16 + Nat.4 = Nat.20
+}
+
+define happy_fuel(p: Nat, n: Nat, fuel: Nat) -> Nat {
+    match fuel {
+        Nat.zero {
+            Nat.0
+        }
+        Nat.suc(k) {
+            if n = Nat.0 {
+                Nat.0
+            } else {
+                n.mod(p) * n.mod(p) + happy_fuel(p, n.div(p), k)
+            }
+        }
+    }
+}
+
+define happy_sum(p: Nat, n: Nat) -> Nat {
+    happy_fuel(p, n, n)
+}
+
+define happy_fuel_large_case(p: Nat, n: Nat, fuel: Nat) -> Bool {
+    Nat.1 < p and n <= fuel implies happy_fuel(p, n, fuel) = happy_sum(p, n)
+}
+
+theorem happy_fuel_at_zero(p: Nat, fuel: Nat) {
+    happy_fuel(p, Nat.0, fuel) = Nat.0
+}
+
+theorem happy_fuel_step(p: Nat, n: Nat, k: Nat) {
+    n != Nat.0 implies
+        happy_fuel(p, n, k.suc) = n.mod(p) * n.mod(p) + happy_fuel(p, n.div(p), k)
+}
+
+theorem happy_sum_step(p: Nat, n: Nat) {
+    n != Nat.0 implies
+        happy_sum(p, n) =
+            n.mod(p) * n.mod(p) + happy_fuel(p, n.div(p), n - Nat.1)
+}
+
+theorem happy_fuel_large(p: Nat, n: Nat, fuel: Nat) {
+    Nat.1 < p and n <= fuel implies happy_fuel(p, n, fuel) = happy_sum(p, n)
+}
+
+theorem happy_sum_recurrence(p: Nat, n: Nat) {
+    Nat.1 < p and n != Nat.0 implies
+        happy_sum(p, n) = n.mod(p) * n.mod(p) + happy_sum(p, n.div(p))
+}
+
+theorem happy_sum_zero(p: Nat) {
+    happy_sum(p, Nat.0) = Nat.0
+}
+
+theorem happy_sum_small(p: Nat, n: Nat) {
+    Nat.1 < p and n < p implies happy_sum(p, n) = n * n
+}
+
+theorem happy_sum_base_mul_add_digit(p: Nat, n: Nat, d: Nat) {
+    d < p and Nat.1 < p implies
+        happy_sum(p, p * n + d) = happy_sum(p, n) + d * d
+}
+
+theorem happy_sum_1 {
+    happy_sum(Nat.10, Nat.1) = Nat.1
+}
+
+theorem happy_sum_2 {
+    happy_sum(Nat.10, Nat.2) = Nat.4
+}
+
+theorem happy_sum_3 {
+    happy_sum(Nat.10, Nat.3) = Nat.9
+}
+
+theorem happy_sum_4 {
+    happy_sum(Nat.10, Nat.4) = Nat.16
+}
+
+theorem happy_sum_7 {
+    happy_sum(Nat.10, Nat.7) = Nat.49
+}
+
+theorem happy_sum_9 {
+    happy_sum(Nat.10, Nat.9) = Nat.81
+}
+
+theorem happy_sum_10 {
+    happy_sum(Nat.10, Nat.10) = Nat.1
+}
+
+theorem happy_sum_13 {
+    happy_sum(Nat.10, Nat.13) = Nat.10
+}
+
+theorem happy_sum_5 {
+    happy_sum(Nat.10, Nat.5) = Nat.25
+}
+
+theorem happy_sum_8 {
+    happy_sum(Nat.10, Nat.8) = Nat.64
+}
+
+theorem happy_sum_14 {
+    happy_sum(Nat.10, Nat.14) = Nat.17
+}
+
+theorem happy_sum_16 {
+    happy_sum(Nat.10, Nat.16) = Nat.37
+}
+
+theorem happy_sum_20 {
+    happy_sum(Nat.10, Nat.20) = Nat.4
+}
+
+theorem happy_sum_37 {
+    happy_sum(Nat.10, Nat.37) = Nat.58
+}
+
+theorem happy_sum_42 {
+    happy_sum(Nat.10, Nat.42) = Nat.20
 }

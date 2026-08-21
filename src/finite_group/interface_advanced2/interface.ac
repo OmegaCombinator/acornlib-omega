@@ -1,243 +1,483 @@
-let product_action_first_projection_hom[G: Group, X, Y](a: MulAction[G, X], b: MulAction[G, Y]) -> result: ActionHom[G, Pair[X, Y], X] satisfy {
-    ActionHom[G, Pair[X, Y], X].new(product_action(a, b), a, product_first_projection[X, Y]) =
-        Option.some(result)
+instance Multiplicative[A: AddGroup]: One {
+    let 1 = Multiplicative[A].one
 }
 
-theorem product_action_first_projection_hom_src[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y]) {
-    product_action_first_projection_hom(a, b).src = product_action(a, b)
+theorem additive_val_add[M: Group](x: Additive[M], y: Additive[M]) {
+    (x + y).val = x.val * y.val
 }
 
-theorem product_action_first_projection_hom_dst[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y]) {
-    product_action_first_projection_hom(a, b).dst = a
+theorem additive_val_zero[M: Group] {
+    Zero.0[Additive[M]].val = M.1
 }
 
-let product_action_second_projection_hom[G: Group, X, Y](a: MulAction[G, X], b: MulAction[G, Y]) -> result: ActionHom[G, Pair[X, Y], Y] satisfy {
-    ActionHom[G, Pair[X, Y], Y].new(product_action(a, b), b, product_second_projection[X, Y]) =
-        Option.some(result)
+theorem additive_val_neg[M: Group](x: Additive[M]) {
+    (-x).val = x.val.inverse
 }
 
-theorem product_action_second_projection_hom_src[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y]) {
-    product_action_second_projection_hom(a, b).src = product_action(a, b)
+theorem additive_of_mul_mul[M: Group](x: M, y: M) {
+    additive_of_mul(x * y) = additive_of_mul(x) + additive_of_mul(y)
 }
 
-theorem product_action_second_projection_hom_dst[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y]) {
-    product_action_second_projection_hom(a, b).dst = b
+theorem additive_of_mul_one[M: Group] {
+    additive_of_mul(M.1) = Zero.0[Additive[M]]
 }
 
-theorem product_action_orbit_projects[G: Group, X, Y](a: MulAction[G, X], b: MulAction[G, Y],
-    p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies
-        orbit(a, p.first).contains(q.first) and orbit(b, p.second).contains(q.second)
+theorem additive_of_mul_inverse[M: Group](x: M) {
+    additive_of_mul(x.inverse) = -additive_of_mul(x)
 }
 
-theorem product_action_orbit_contains_of_same_witness[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y], g: G) {
-    q.first = a.act(g, p.first) and q.second = b.act(g, p.second) implies
-        orbit(product_action(a, b), p).contains(q)
+theorem additive_add_assoc[M: Group](x: Additive[M], y: Additive[M], z: Additive[M]) {
+    x + (y + z) = (x + y) + z
 }
 
-theorem product_action_orbit_eq_of_contains[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies
-        orbit(product_action(a, b), p) = orbit(product_action(a, b), q)
+theorem additive_add_semigroup_instance_law[M: Group](x: Additive[M], y: Additive[M], z: Additive[M]) {
+    Add.add(x, Add.add(y, z)) = Add.add(Add.add(x, y), z)
 }
 
-theorem product_action_first_orbit_eq_of_contains[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies orbit(a, p.first) = orbit(a, q.first)
+instance Additive[M: Group]: AddSemigroup
+
+/// Additive zero is a right identity.
+theorem additive_add_zero_right[M: Group](x: Additive[M]) {
+    x + Zero.0[Additive[M]] = x
 }
 
-theorem product_action_second_orbit_eq_of_contains[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies orbit(b, p.second) = orbit(b, q.second)
+theorem additive_add_zero_left[M: Group](x: Additive[M]) {
+    Zero.0[Additive[M]] + x = x
 }
 
-theorem product_action_stabilizer_fixes_first[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(product_action(a, b), p).contains(g) implies a.act(g, p.first) = p.first
+theorem additive_add_monoid_right_law[M: Group] {
+    forall(x: Additive[M]) {
+        Add.add(x, Zero.0[Additive[M]]) = x
+    }
 }
 
-theorem product_action_stabilizer_fixes_second[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(product_action(a, b), p).contains(g) implies b.act(g, p.second) = p.second
+theorem additive_add_monoid_left_law[M: Group] {
+    forall(x: Additive[M]) {
+        Add.add(Zero.0[Additive[M]], x) = x
+    }
 }
 
-theorem product_action_stabilizer_subset_first[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(product_action(a, b), p).contains(g) implies stabilizer(a, p.first).contains(g)
+instance Additive[M: Group]: AddMonoid
+
+/// Additive negation is a right inverse.
+theorem additive_add_neg_right[M: Group](x: Additive[M]) {
+    x + -x = Zero.0[Additive[M]]
 }
 
-theorem product_action_stabilizer_subset_second[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(product_action(a, b), p).contains(g) implies stabilizer(b, p.second).contains(g)
+theorem additive_add_group_inverse_law[M: Group](x: Additive[M]) {
+    Add.add(x, Neg.neg(x)) = Zero.0[Additive[M]]
 }
 
-theorem product_action_stabilizer_contains_of_coordinates[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(a, p.first).contains(g) and stabilizer(b, p.second).contains(g) implies
-        stabilizer(product_action(a, b), p).contains(g)
+instance Additive[M: Group]: AddGroup
+
+/// Addition in an additive tag is commutative when the original group is commutative.
+theorem additive_add_comm[M: CommGroup](x: Additive[M], y: Additive[M]) {
+    x + y = y + x
 }
 
-theorem product_action_stabilizer_eq_intersection[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    stabilizer(product_action(a, b), p).contains(g) =
-        stabilizer(a, p.first).intersection(stabilizer(b, p.second)).contains(g)
+theorem additive_add_comm_semigroup_instance_law[M: CommGroup](x: Additive[M], y: Additive[M]) {
+    Add.add(x, y) = Add.add(y, x)
 }
 
-theorem product_action_stabilizer_subgroup_eq_intersection[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y]) {
-    stabilizer(product_action(a, b), p) =
-        stabilizer(a, p.first).intersection(stabilizer(b, p.second))
+instance Additive[M: CommGroup]: AddCommSemigroup
+
+/// Additive tags over a commutative group form an additive commutative monoid.
+
+instance Additive[M: CommGroup]: AddCommMonoid
+
+/// Additive tags over a commutative group form an additive commutative group.
+
+instance Additive[M: CommGroup]: AddCommGroup
+
+/// The underlying value of a product in a multiplicative tag is the sum of values.
+theorem multiplicative_val_mul[A: AddGroup](x: Multiplicative[A], y: Multiplicative[A]) {
+    (x * y).val = x.val + y.val
 }
 
-define product_action_pair_map[X, Y, Z](f: X -> Y, h: X -> Z, x: X) -> Pair[Y, Z] {
-    Pair.new(f(x), h(x))
+theorem multiplicative_val_one[A: AddGroup] {
+    One.1[Multiplicative[A]].val = A.0
 }
 
-theorem product_action_pair_map_first[X, Y, Z](f: X -> Y, h: X -> Z, x: X) {
-    product_action_pair_map(f, h, x).first = f(x)
+theorem multiplicative_val_inverse[A: AddGroup](x: Multiplicative[A]) {
+    x.inverse.val = -x.val
 }
 
-theorem product_action_pair_map_second[X, Y, Z](f: X -> Y, h: X -> Z, x: X) {
-    product_action_pair_map(f, h, x).second = h(x)
+theorem multiplicative_of_add_add[A: AddGroup](x: A, y: A) {
+    multiplicative_of_add(x + y) = multiplicative_of_add(x) * multiplicative_of_add(y)
 }
 
-theorem product_action_pair_map_is_equivariant[G: Group, X, Y, Z](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    c: MulAction[G, Z],
-    f: X -> Y,
-    h: X -> Z
-) {
-    is_equivariant_map(a, b, f) and is_equivariant_map(a, c, h) implies
-        is_equivariant_map(a, product_action(b, c), product_action_pair_map(f, h))
+theorem multiplicative_of_add_zero[A: AddGroup] {
+    multiplicative_of_add(A.0) = One.1[Multiplicative[A]]
 }
 
-theorem product_action_orbit_contains_action_pair[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], g: G) {
-    orbit(product_action(a, b), p).contains(Pair.new(a.act(g, p.first), b.act(g, p.second)))
+theorem multiplicative_of_add_neg[A: AddGroup](x: A) {
+    multiplicative_of_add(-x) = multiplicative_of_add(x).inverse
 }
 
-theorem product_action_orbit_contains_pair_new[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], x: X, y: Y, g: G) {
-    orbit(product_action(a, b), Pair.new(x, y)).contains(Pair.new(a.act(g, x), b.act(g, y)))
+theorem multiplicative_mul_assoc[A: AddGroup](x: Multiplicative[A], y: Multiplicative[A], z: Multiplicative[A]) {
+    x * (y * z) = (x * y) * z
 }
 
-theorem product_action_orbit_projects_first[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies orbit(a, p.first).contains(q.first)
+theorem multiplicative_semigroup_instance_law[A: AddGroup](x: Multiplicative[A], y: Multiplicative[A], z: Multiplicative[A]) {
+    Mul.mul(x, Mul.mul(y, z)) = Mul.mul(Mul.mul(x, y), z)
 }
 
-theorem product_action_orbit_projects_second[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], p: Pair[X, Y], q: Pair[X, Y]) {
-    orbit(product_action(a, b), p).contains(q) implies orbit(b, p.second).contains(q.second)
+instance Multiplicative[A: AddGroup]: Semigroup
+
+/// Multiplicative one is a right identity.
+theorem multiplicative_mul_one_right[A: AddGroup](x: Multiplicative[A]) {
+    x * One.1[Multiplicative[A]] = x
 }
 
-theorem product_action_pair_action_hom_maps_are_equivariant[G: Group, X, Y, Z](
-    f: ActionHom[G, X, Y],
-    h: ActionHom[G, X, Z]
-) {
-    f.src = h.src implies
-        is_equivariant_map(f.src, product_action(f.dst, h.dst), product_action_pair_map(f.map, h.map))
+theorem multiplicative_mul_one_left[A: AddGroup](x: Multiplicative[A]) {
+    One.1[Multiplicative[A]] * x = x
 }
 
-theorem product_action_pair_map_first_projection[X, Y, Z](f: X -> Y, h: X -> Z, x: X) {
-    product_first_projection[Y, Z](product_action_pair_map(f, h, x)) = f(x)
+theorem multiplicative_monoid_right_law[A: AddGroup] {
+    forall(x: Multiplicative[A]) {
+        Mul.mul(x, One.1[Multiplicative[A]]) = x
+    }
 }
 
-theorem product_action_pair_map_second_projection[X, Y, Z](f: X -> Y, h: X -> Z, x: X) {
-    product_second_projection[Y, Z](product_action_pair_map(f, h, x)) = h(x)
+theorem multiplicative_monoid_left_law[A: AddGroup] {
+    forall(x: Multiplicative[A]) {
+        Mul.mul(One.1[Multiplicative[A]], x) = x
+    }
 }
 
-theorem product_action_pair_map_maps_orbit_contains[G: Group, X, Y, Z](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    c: MulAction[G, Z],
-    f: X -> Y,
-    h: X -> Z,
-    x: X,
-    y: X
-) {
-    is_equivariant_map(a, b, f) and is_equivariant_map(a, c, h) and orbit(a, x).contains(y) implies
-        orbit(product_action(b, c), product_action_pair_map(f, h, x)).contains(
-            product_action_pair_map(f, h, y))
+instance Multiplicative[A: AddGroup]: Monoid
+
+/// Multiplicative inversion is a right inverse.
+theorem multiplicative_inverse_right[A: AddGroup](x: Multiplicative[A]) {
+    x * x.inverse = One.1[Multiplicative[A]]
 }
 
-theorem product_action_pair_map_maps_stabilizer_contains[G: Group, X, Y, Z](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    c: MulAction[G, Z],
-    f: X -> Y,
-    h: X -> Z,
-    x: X,
-    g: G
-) {
-    is_equivariant_map(a, b, f) and is_equivariant_map(a, c, h) and stabilizer(a, x).contains(g) implies
-        stabilizer(product_action(b, c), product_action_pair_map(f, h, x)).contains(g)
+theorem multiplicative_group_inverse_law[A: AddGroup] {
+    forall(x: Multiplicative[A]) {
+        Mul.mul(x, x.inverse) = One.1[Multiplicative[A]]
+    }
 }
 
-theorem product_action_transitive_implies_first_transitive[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], y0: Y) {
-    is_transitive_action(product_action(a, b)) implies is_transitive_action(a)
+instance Multiplicative[A: AddGroup]: Group {
+    let inverse = Multiplicative[A].inverse
 }
 
-theorem product_action_transitive_implies_second_transitive[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], x0: X) {
-    is_transitive_action(product_action(a, b)) implies is_transitive_action(b)
+theorem multiplicative_mul_comm[A: AddCommGroup](x: Multiplicative[A], y: Multiplicative[A]) {
+    x * y = y * x
 }
 
-theorem product_action_faithful_of_first[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], y0: Y) {
-    is_faithful_action(a) implies is_faithful_action(product_action(a, b))
+theorem multiplicative_comm_semigroup_instance_law[A: AddCommGroup](x: Multiplicative[A], y: Multiplicative[A]) {
+    Mul.mul(x, y) = Mul.mul(y, x)
 }
 
-theorem product_action_faithful_of_second[G: Group, X, Y](
-    a: MulAction[G, X], b: MulAction[G, Y], x0: X) {
-    is_faithful_action(b) implies is_faithful_action(product_action(a, b))
+instance Multiplicative[A: AddCommGroup]: CommSemigroup
+
+/// Multiplicative tags over an additive commutative group form a commutative monoid.
+
+instance Multiplicative[A: AddCommGroup]: CommMonoid
+
+/// Multiplicative tags over an additive commutative group form a commutative group.
+
+instance Multiplicative[A: AddCommGroup]: CommGroup
+
+/// True if additive zero acts trivially.
+define add_action_identity_constraint[A: AddGroup, X](act: (A, X) -> X) -> Bool {
+    forall(x: X) {
+        act(A.0, x) = x
+    }
 }
 
-theorem product_action_fixed_points_first[G: Group, X, Y](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    g: G,
-    p: Pair[X, Y]
-) {
-    fixed_points(product_action(a, b), g).contains(p) implies
-        fixed_points(a, g).contains(p.first)
+define add_action_add_constraint[A: AddGroup, X](act: (A, X) -> X) -> Bool {
+    forall(a: A, b: A, x: X) {
+        act(a + b, x) = act(a, act(b, x))
+    }
 }
 
-theorem product_action_fixed_points_second[G: Group, X, Y](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    g: G,
-    p: Pair[X, Y]
-) {
-    fixed_points(product_action(a, b), g).contains(p) implies
-        fixed_points(b, g).contains(p.second)
+define is_add_action[A: AddGroup, X](act: (A, X) -> X) -> Bool {
+    add_action_add_constraint(act) and add_action_identity_constraint(act)
 }
 
-theorem product_action_fixed_points_of_coordinates[G: Group, X, Y](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    g: G,
-    p: Pair[X, Y]
-) {
-    fixed_points(a, g).contains(p.first) and fixed_points(b, g).contains(p.second) implies
-        fixed_points(product_action(a, b), g).contains(p)
+structure AddAction[A: AddGroup, X] {
+    /// The action map.
+    act: (A, X) -> X
+} constraint {
+    is_add_action(act)
 }
 
-theorem product_action_fixed_points_contains_eq_coordinates[G: Group, X, Y](
-    a: MulAction[G, X],
-    b: MulAction[G, Y],
-    g: G,
-    p: Pair[X, Y]
-) {
-    fixed_points(product_action(a, b), g).contains(p) =
-        (fixed_points(a, g).contains(p.first) and fixed_points(b, g).contains(p.second))
+theorem add_action_zero[A: AddGroup, X](a: AddAction[A, X], x: X) {
+    a.act(A.0, x) = x
+}
+
+theorem add_action_add[A: AddGroup, X](a: AddAction[A, X], r: A, s: A, x: X) {
+    a.act(r + s, x) = a.act(r, a.act(s, x))
+}
+
+define additive_act_from_mul[G: Group, X](a: MulAction[G, X], g: Additive[G], x: X) -> X {
+    a.act(g.val, x)
+}
+
+theorem additive_act_from_mul_apply[G: Group, X](a: MulAction[G, X], g: Additive[G], x: X) {
+    additive_act_from_mul(a, g, x) = a.act(g.val, x)
+}
+
+theorem additive_act_from_mul_of_mul[G: Group, X](a: MulAction[G, X], g: G, x: X) {
+    additive_act_from_mul(a, additive_of_mul(g), x) = a.act(g, x)
+}
+
+theorem additive_act_from_mul_is_add_action[G: Group, X](a: MulAction[G, X]) {
+    is_add_action(additive_act_from_mul(a))
+}
+
+let additive_action_from_mul[G: Group, X](a: MulAction[G, X]) -> result: AddAction[Additive[G], X] satisfy {
+    AddAction[Additive[G], X].new(additive_act_from_mul(a)) = Option.some(result)
+}
+
+theorem additive_action_from_mul_act[G: Group, X](a: MulAction[G, X]) {
+    additive_action_from_mul(a).act = additive_act_from_mul(a)
+}
+
+theorem additive_action_from_mul_apply[G: Group, X](a: MulAction[G, X], g: Additive[G], x: X) {
+    additive_action_from_mul(a).act(g, x) = a.act(g.val, x)
+}
+
+define multiplicative_act_from_add[A: AddGroup, X](a: AddAction[A, X], g: Multiplicative[A], x: X) -> X {
+    a.act(g.val, x)
+}
+
+theorem multiplicative_act_from_add_apply[A: AddGroup, X](a: AddAction[A, X], g: Multiplicative[A], x: X) {
+    multiplicative_act_from_add(a, g, x) = a.act(g.val, x)
+}
+
+theorem multiplicative_act_from_add_of_add[A: AddGroup, X](a: AddAction[A, X], r: A, x: X) {
+    multiplicative_act_from_add(a, multiplicative_of_add(r), x) = a.act(r, x)
+}
+
+theorem multiplicative_act_from_add_is_mul_action[A: AddGroup, X](a: AddAction[A, X]) {
+    is_mul_action(multiplicative_act_from_add(a))
+}
+
+let multiplicative_action_from_add[A: AddGroup, X](a: AddAction[A, X]) -> result: MulAction[Multiplicative[A], X] satisfy {
+    MulAction[Multiplicative[A], X].new(multiplicative_act_from_add(a)) = Option.some(result)
+}
+
+theorem multiplicative_action_from_add_act[A: AddGroup, X](a: AddAction[A, X]) {
+    multiplicative_action_from_add(a).act = multiplicative_act_from_add(a)
+}
+
+theorem multiplicative_action_from_add_apply[A: AddGroup, X](a: AddAction[A, X], g: Multiplicative[A], x: X) {
+    multiplicative_action_from_add(a).act(g, x) = a.act(g.val, x)
+}
+
+define conjugates_of[G: Group](x: G) -> Set[G] {
+    orbit(conjugation_action[G], x)
+}
+
+theorem conjugates_of_contains_iff[G: Group](x: G, y: G) {
+    conjugates_of(x).contains(y) iff exists(g: G) {
+        g * x * g.inverse = y
+    }
+}
+
+theorem conjugates_of_contains_self[G: Group](x: G) {
+    conjugates_of(x).contains(x)
+}
+
+theorem conjugates_of_is_finite[G: FiniteGroup](x: G) {
+    conjugates_of(x).is_finite
+}
+
+structure ConjClasses[G: Group] {
+    /// The underlying conjugacy class.
+    carrier: Set[G]
+} constraint {
+    exists(x: G) {
+        carrier = conjugates_of(x)
+    }
+}
+
+let conj_class[G: Group](x: G) -> result: ConjClasses[G] satisfy {
+    ConjClasses[G].new(conjugates_of(x)) = Option.some(result)
+}
+
+theorem conj_class_carrier[G: Group](x: G) {
+    conj_class(x).carrier = conjugates_of(x)
+}
+
+theorem conj_class_contains_iff[G: Group](x: G, y: G) {
+    conj_class(x).carrier.contains(y) iff exists(g: G) {
+        g * x * g.inverse = y
+    }
+}
+
+theorem conj_class_contains_self[G: Group](x: G) {
+    conj_class(x).carrier.contains(x)
+}
+
+theorem conj_class_rep_carrier_is_finite[G: FiniteGroup](x: G) {
+    conj_class(x).carrier.is_finite
+}
+
+theorem conj_class_carrier_is_finite[G: FiniteGroup](c: ConjClasses[G]) {
+    c.carrier.is_finite
+}
+
+let finite_conj_classes_list[G: FiniteGroup]: List[ConjClasses[G]] =
+    map[G, ConjClasses[G]](G.elements, conj_class[G]).unique
+
+/// The finite set of conjugacy-class quotient wrappers of a finite group.
+
+let finite_conj_classes[G: FiniteGroup]: Set[ConjClasses[G]] =
+    list_set(finite_conj_classes_list[G])
+
+/// A represented conjugacy class is listed in the finite conjugacy-class list.
+theorem finite_conj_classes_list_contains_conj_class[G: FiniteGroup](x: G) {
+    finite_conj_classes_list[G].contains(conj_class(x))
+}
+
+theorem finite_conj_classes_contains_conj_class[G: FiniteGroup](x: G) {
+    finite_conj_classes[G].contains(conj_class(x))
+}
+
+theorem finite_conj_classes_is_finite[G: FiniteGroup] {
+    finite_conj_classes[G].is_finite
+}
+
+theorem lagrange_theorem[G: FiniteGroup](s: FiniteSubgroup[G]) {
+    s.order.divides(G.order)
+}
+
+theorem element_order_divides_group_order[G: FiniteGroup](g: G) {
+    cyclic_subgroup_of(g).order.divides(G.order)
+}
+
+theorem element_order_divides_group_order_of_lagrange[G: FiniteGroup](g: G) {
+    cyclic_subgroup_of(g).order.divides(G.order)
+}
+
+define is_generator[G: FiniteGroup](g: G) -> Bool {
+    cyclic_subgroup_of(g).order = G.order
+}
+
+let is_cyclic[G: FiniteGroup] = exists(g: G) {
+    cyclic_subgroup_of(g).order = G.order
+}
+
+theorem universal_set_eq_singleton_of_all_identity[G: FiniteGroup] {
+    (forall(g: G) { g = G.1 }) implies Set[G].universal_set = Set[G].singleton(G.1)
+}
+
+theorem exists_non_identity_of_order_gt_one[G: FiniteGroup] {
+    G.order > Nat.1 implies exists(g: G) { g != G.1 }
+}
+
+theorem divides_gcd_self(a: Nat, b: Nat) {
+    a.divides(b) implies a.gcd(b) = a
+}
+
+theorem prime_divisor_gt_one_eq_self(p: Nat, d: Nat) {
+    p.is_prime and d.divides(p) and d > Nat.1 implies d = p
+}
+
+theorem cyclic_subgroup_order_gt_one_of_non_identity[G: FiniteGroup](g: G) {
+    g != G.1 implies cyclic_subgroup_of(g).order > Nat.1
+}
+
+theorem prime_order_group_is_cyclic[G: FiniteGroup] {
+    G.order.is_prime implies exists(g: G) {
+        cyclic_subgroup_of(g).order = G.order
+    }
+}
+
+theorem cyclic_subgroup_contains_iff_power_lt_order[G: FiniteGroup](g: G, x: G) {
+    cyclic_subgroup_of(g).contains(x) iff exists(k: Nat) {
+        k < cyclic_subgroup_of(g).order and x = g.pow(k)
+    }
+}
+
+define c4_elem[G: Group](g: G, x: G) -> Bool {
+    x = G.1 or x = g or x = g.pow(2) or x = g.pow(3)
+}
+
+theorem c4_elem_eq_disjunction[G: Group](g: G, x: G) {
+    c4_elem(g, x) = (x = G.1 or x = g or x = g.pow(2) or x = g.pow(3))
+}
+
+theorem c4_or_intro_0[G: Group](g: G, x: G) {
+    x = G.1 implies c4_elem(g, x)
+}
+
+theorem c4_or_intro_1[G: Group](g: G, x: G) {
+    x = g implies c4_elem(g, x)
+}
+
+theorem c4_or_intro_2[G: Group](g: G, x: G) {
+    x = g.pow(2) implies c4_elem(g, x)
+}
+
+theorem c4_or_intro_3[G: Group](g: G, x: G) {
+    x = g.pow(3) implies c4_elem(g, x)
+}
+
+theorem lt_four_cases(k: Nat) {
+    k < 4 implies (k = Nat.0 or k = Nat.1 or k = Nat.2 or k = Nat.3)
+}
+
+theorem c4_forward[G: FiniteGroup](g: G, x: G) {
+    cyclic_subgroup_of(g).order = 4 and cyclic_subgroup_of(g).contains(x) implies c4_elem(g, x)
+}
+
+theorem c4_backward[G: FiniteGroup](g: G, x: G) {
+    cyclic_subgroup_of(g).order = 4 and c4_elem(g, x) implies cyclic_subgroup_of(g).contains(x)
+}
+
+theorem c4_membership[G: FiniteGroup](g: G, x: G) {
+    cyclic_subgroup_of(g).order = 4 implies (cyclic_subgroup_of(g).contains(x) = c4_elem(g, x))
+}
+
+theorem c4_as_set[G: FiniteGroup](g: G) {
+    cyclic_subgroup_of(g).order = 4 implies
+        cyclic_subgroup_of(g).as_set = Set[G].new(c4_elem[G](g))
+}
+
+theorem c4_generator_pow_four[G: FiniteGroup](g: G) {
+    cyclic_subgroup_of(g).order = 4 implies g.pow(4) = G.1
+}
+
+theorem c4_elements_are_members[G: FiniteGroup](g: G) {
+    cyclic_subgroup_of(g).order = 4 implies
+        cyclic_subgroup_of(g).contains(G.1) and
+        cyclic_subgroup_of(g).contains(g) and
+        cyclic_subgroup_of(g).contains(g.pow(2)) and
+        cyclic_subgroup_of(g).contains(g.pow(3))
+}
+
+theorem center_contains_identity[G: Group] {
+    is_central_element[G](G.1)
+}
+
+theorem center_closed_under_mul[G: Group](x: G, y: G) {
+    is_central_element(x) and is_central_element(y) implies is_central_element(x * y)
+}
+
+theorem center_closed_under_inverse[G: Group](x: G) {
+    is_central_element(x) implies is_central_element(x.inverse)
+}
+
+theorem center_is_subgroup[G: Group] {
+    subgroup_constraint(is_central_element[G])
+}
+
+theorem finite_orbit_list_length_divides_group_order[G: FiniteGroup, X](a: MulAction[G, X], x: X) {
+    finite_orbit_list[G, X](a, x).length.divides(G.order)
+}
+
+theorem finite_stabilizer_order_divides_group_order_from_action[G: FiniteGroup, X](a: MulAction[G, X], x: X) {
+    finite_stabilizer[G, X](a, x).order.divides(G.order)
+}
+
+theorem finite_orbit_stabilizer_divides_pair[G: FiniteGroup, X](a: MulAction[G, X], x: X) {
+    finite_orbit_list[G, X](a, x).length.divides(G.order) and
+    finite_stabilizer[G, X](a, x).order.divides(G.order)
 }
 
 define left_regular_act[G: Group](g: G, x: G) -> G {

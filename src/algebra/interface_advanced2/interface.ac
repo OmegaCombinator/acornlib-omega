@@ -1,3 +1,258 @@
+theorem add_subgroup_eq_transport_predicate_rev[G: AddGroup](
+    p: AddSubgroup[G] -> Bool,
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    a = b and p(b) implies p(a)
+}
+
+theorem add_subgroup_eq_of_contains_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a.contains = b.contains implies a = b
+}
+
+theorem add_subgroup_eq_of_contains_at_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    (forall(x: G) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem add_subgroup_contains_zero[G: AddGroup](h: AddSubgroup[G]) {
+    h.contains(G.0)
+}
+
+theorem add_subgroup_contains_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(a + b)
+}
+
+theorem add_subgroup_contains_neg[G: AddGroup](h: AddSubgroup[G], a: G) {
+    h.contains(a) implies h.contains(-a)
+}
+
+theorem add_subgroup_contains_neg_iff[G: AddGroup](h: AddSubgroup[G], a: G) {
+    h.contains(-a) = h.contains(a)
+}
+
+theorem add_subgroup_contains_sub[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(a - b)
+}
+
+theorem add_subgroup_contains_add_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G, c: G) {
+    h.contains(a) and h.contains(b) and h.contains(c) implies h.contains(a + b + c)
+}
+
+theorem add_subgroup_contains_neg_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(-a + b)
+}
+
+define add_subgroup_intersection_contains[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G],
+    x: G) -> Bool {
+    a.contains(x) and b.contains(x)
+}
+
+theorem add_subgroup_intersection_zero_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_zero_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_closure_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_closure_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_neg_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    neg_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+let add_subgroup_intersection[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) -> result: AddSubgroup[G] satisfy {
+    AddSubgroup.new(add_subgroup_intersection_contains(a, b)) = Option.some(result)
+}
+
+attributes AddSubgroup[G: AddGroup] {
+    /// Additive subgroup extensionality from pointwise equality of membership.
+    let ext = add_subgroup_ext[G]
+
+    /// The subset of additive group elements belonging to this additive subgroup.
+    define as_set(self) -> Set[G] {
+        Set[G].new(self.contains)
+    }
+
+    /// The common part of two additive subgroups.
+    let intersection: (AddSubgroup[G], AddSubgroup[G]) -> AddSubgroup[G] = add_subgroup_intersection
+}
+
+theorem add_subgroup_as_set_contains_eq[G: AddGroup](s: AddSubgroup[G], x: G) {
+    s.as_set.contains(x) = s.contains(x)
+}
+
+theorem add_subgroup_contains_as_set_eq[G: AddGroup](s: AddSubgroup[G], x: G) {
+    s.contains(x) = s.as_set.contains(x)
+}
+
+theorem add_subgroup_eq_as_set[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a = b implies a.as_set = b.as_set
+}
+
+theorem add_subgroup_intersection_contains_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G],
+    x: G) {
+    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
+}
+
+theorem add_subgroup_intersection_subset_left[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G],
+    x: G) {
+    a.intersection(b).contains(x) implies a.contains(x)
+}
+
+theorem add_subgroup_intersection_subset_right[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G],
+    x: G) {
+    a.intersection(b).contains(x) implies b.contains(x)
+}
+
+theorem add_subgroup_intersection_comm[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a.intersection(b) = b.intersection(a)
+}
+
+theorem add_subgroup_intersection_assoc[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G],
+    c: AddSubgroup[G]
+) {
+    a.intersection(b).intersection(c) = a.intersection(b.intersection(c))
+}
+
+theorem add_subgroup_intersection_idempotent[G: AddGroup](a: AddSubgroup[G]) {
+    a.intersection(a) = a
+}
+
+define add_subgroup_subset[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) -> Bool {
+    forall(x: G) {
+        a.contains(x) implies b.contains(x)
+    }
+}
+
+theorem add_subgroup_subset_as_set_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_subset(a, b) = a.as_set.subset(b.as_set)
+}
+
+theorem add_subgroup_as_set_subset_of_subset[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_subset(a, b) implies a.as_set.subset(b.as_set)
+}
+
+theorem add_subgroup_subset_of_as_set_subset[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a.as_set.subset(b.as_set) implies add_subgroup_subset(a, b)
+}
+
+theorem add_subgroup_subset_refl[G: AddGroup](a: AddSubgroup[G]) {
+    add_subgroup_subset(a, a)
+}
+
+theorem add_subgroup_subset_trans[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G],
+    c: AddSubgroup[G]
+) {
+    add_subgroup_subset(a, b) and add_subgroup_subset(b, c) implies add_subgroup_subset(a, c)
+}
+
+theorem add_subgroup_intersection_subset_left_relation[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(a.intersection(b), a)
+}
+
+theorem add_subgroup_intersection_subset_right_relation[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(a.intersection(b), b)
+}
+
+theorem add_subgroup_subset_intersection_of_subset_left_right[G: AddGroup](
+    c: AddSubgroup[G],
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(c, a) and add_subgroup_subset(c, b) implies add_subgroup_subset(c, a.intersection(b))
+}
+
+theorem add_subgroup_subset_intersection_iff[G: AddGroup](
+    c: AddSubgroup[G],
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(c, a.intersection(b)) = (add_subgroup_subset(c, a) and add_subgroup_subset(c, b))
+}
+
+define is_add_identity[G: AddGroup](g: G) -> Bool {
+    g = G.0
+}
+
+theorem zero_add_subgroup_constraint[G: AddGroup] {
+    add_subgroup_constraint(is_add_identity[G])
+}
+
+let zero_add_subgroup[G: AddGroup]: AddSubgroup[G] satisfy {
+    AddSubgroup.new(is_add_identity[G]) = Option.some(zero_add_subgroup)
+}
+
+theorem zero_add_subgroup_only_has_zero[G: AddGroup](g: G) {
+    zero_add_subgroup[G].contains(g) implies g = G.0
+}
+
+theorem zero_add_subgroup_contains_eq[G: AddGroup](g: G) {
+    zero_add_subgroup[G].contains(g) = (g = G.0)
+}
+
+theorem zero_add_subgroup_subset[G: AddGroup](s: AddSubgroup[G]) {
+    add_subgroup_subset(zero_add_subgroup[G], s)
+}
+
+define full_add_group_contains[G: AddGroup](a: G) -> Bool {
+    true
+}
+
+theorem full_add_subgroup_constraint[G: AddGroup] {
+    add_subgroup_constraint(full_add_group_contains[G])
+}
+
+let full_add_subgroup[G: AddGroup]: AddSubgroup[G] satisfy {
+    AddSubgroup.new(full_add_group_contains[G]) = Option.some(full_add_subgroup)
+}
+
+theorem full_add_subgroup_contains_everything[G: AddGroup](g: G) {
+    full_add_subgroup[G].contains(g)
+}
+
+theorem full_add_subgroup_contains_eq[G: AddGroup](g: G) {
+    full_add_subgroup[G].contains(g) = true
+}
+
+theorem add_subgroup_subset_full[G: AddGroup](s: AddSubgroup[G]) {
+    add_subgroup_subset(s, full_add_subgroup[G])
+}
+
+theorem add_subgroup_subset_antisymm[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_subset(a, b) and add_subgroup_subset(b, a) implies a = b
+}
+
+theorem add_subgroup_eq_iff_subset_both[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a = b = (add_subgroup_subset(a, b) and add_subgroup_subset(b, a))
+}
+
+theorem add_subgroup_intersection_eq_left_of_subset[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(a, b) implies a.intersection(b) = a
+}
+
+theorem add_subgroup_intersection_eq_right_of_subset[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    add_subgroup_subset(b, a) implies a.intersection(b) = b
+}
+
 theorem zero_add_subgroup_intersection_left[G: AddGroup](s: AddSubgroup[G]) {
     zero_add_subgroup[G].intersection(s) = zero_add_subgroup[G]
 }
@@ -2202,606 +2457,4 @@ theorem submodule_is_finitely_generated_witness[R: Ring, M: AddCommGroup](
     submodule_is_finitely_generated(s) implies exists(a: Set[M]) {
         a.is_finite and submodule_closure(s.carrier, a) = s
     }
-}
-
-theorem submodule_is_finitely_generated_of_closure_eq[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: Set[M], s: Submodule[R, M]
-) {
-    a.is_finite and s.carrier = carrier and submodule_closure(carrier, a) = s
-        implies submodule_is_finitely_generated(s)
-}
-
-theorem submodule_is_finitely_generated_of_eq[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], t: Submodule[R, M]
-) {
-    submodule_is_finitely_generated(s) and s = t implies submodule_is_finitely_generated(t)
-}
-
-theorem submodule_closure_is_finitely_generated[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: Set[M]
-) {
-    a.is_finite implies submodule_is_finitely_generated(submodule_closure(carrier, a))
-}
-
-theorem submodule_is_finitely_generated_of_as_set_finite[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M]
-) {
-    s.as_set.is_finite implies submodule_is_finitely_generated(s)
-}
-
-theorem submodule_closure_singleton_is_finitely_generated[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: M
-) {
-    submodule_is_finitely_generated(submodule_closure(carrier, Set[M].singleton(a)))
-}
-
-theorem submodule_closure_singleton_contains[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: M
-) {
-    submodule_closure(carrier, Set[M].singleton(a)).contains(a)
-}
-
-theorem zero_submodule_is_finitely_generated[R: Ring, M: AddCommGroup](carrier: Module[R, M]) {
-    submodule_is_finitely_generated(zero_submodule(carrier))
-}
-
-theorem submodule_add_subgroup_constraint[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    add_subgroup_constraint(s.contains)
-}
-
-let submodule_to_add_subgroup[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> result: AddSubgroup[M] satisfy {
-    AddSubgroup.new(s.contains) = Option.some(result)
-}
-
-theorem submodule_to_add_subgroup_contains[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_to_add_subgroup(s).contains = s.contains
-}
-
-theorem submodule_to_add_subgroup_contains_eq[R: Ring, M: AddCommGroup](s: Submodule[R, M], x: M) {
-    submodule_to_add_subgroup(s).contains(x) = s.contains(x)
-}
-
-theorem submodule_contains_to_add_subgroup_eq[R: Ring, M: AddCommGroup](s: Submodule[R, M], x: M) {
-    s.contains(x) = submodule_to_add_subgroup(s).contains(x)
-}
-
-theorem submodule_to_add_subgroup_as_set[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_to_add_subgroup(s).as_set = s.as_set
-}
-
-theorem submodule_add_submonoid_constraint[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    add_submonoid_constraint(s.contains)
-}
-
-let submodule_to_add_submonoid[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> result: AddSubmonoid[M] satisfy {
-    AddSubmonoid.new(s.contains) = Option.some(result)
-}
-
-theorem submodule_to_add_submonoid_contains[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_to_add_submonoid(s).contains = s.contains
-}
-
-theorem submodule_to_add_submonoid_contains_eq[R: Ring, M: AddCommGroup](s: Submodule[R, M], x: M) {
-    submodule_to_add_submonoid(s).contains(x) = s.contains(x)
-}
-
-theorem submodule_contains_to_add_submonoid_eq[R: Ring, M: AddCommGroup](s: Submodule[R, M], x: M) {
-    s.contains(x) = submodule_to_add_submonoid(s).contains(x)
-}
-
-theorem submodule_to_add_submonoid_as_set[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_to_add_submonoid(s).as_set = s.as_set
-}
-
-define linear_map_kernel[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    f: M -> N, x: M
-) -> Bool {
-    f(x) = N.0
-}
-
-theorem linear_map_zero_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies f(M.0) = N.0
-}
-
-theorem linear_map_neg_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) implies f(-x) = -f(x)
-}
-
-theorem linear_map_kernel_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_zero_constraint(src, linear_map_kernel[R, M, N](f))
-}
-
-theorem linear_map_kernel_add_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_add_constraint(src, linear_map_kernel[R, M, N](f))
-}
-
-theorem linear_map_kernel_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_neg_constraint(src, linear_map_kernel[R, M, N](f))
-}
-
-theorem linear_map_kernel_smul_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_smul_constraint(src, linear_map_kernel[R, M, N](f))
-}
-
-define linear_map_kernel_submodule_contains[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) -> Bool {
-    if is_linear_map(src, dst, f) {
-        linear_map_kernel[R, M, N](f, x)
-    } else {
-        full_submodule_contains[M](x)
-    }
-}
-
-theorem linear_map_kernel_submodule_contains_eq_of_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) implies
-        linear_map_kernel_submodule_contains(src, dst, f, x) = linear_map_kernel[R, M, N](f, x)
-}
-
-theorem linear_map_kernel_submodule_contains_eq_full_of_not_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    not(is_linear_map(src, dst, f)) implies
-        linear_map_kernel_submodule_contains(src, dst, f, x) = full_submodule_contains[M](x)
-}
-
-theorem linear_map_kernel_submodule_is_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_submodule(src, linear_map_kernel_submodule_contains(src, dst, f))
-}
-
-let linear_map_kernel_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](src: Module[R, M], dst: Module[R, N], f: M -> N) -> result: Submodule[R, M] satisfy {
-    Submodule.new(src, linear_map_kernel_submodule_contains(src, dst, f)) = Option.some(result)
-}
-
-theorem linear_map_kernel_submodule_carrier_eq[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    linear_map_kernel_submodule(src, dst, f).carrier = src
-}
-
-theorem linear_map_kernel_submodule_contains_eq[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) implies
-        linear_map_kernel_submodule(src, dst, f).contains(x) = (f(x) = N.0)
-}
-
-theorem linear_map_kernel_submodule_contains_of_map_eq_zero[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) and f(x) = N.0
-    implies linear_map_kernel_submodule(src, dst, f).contains(x)
-}
-
-theorem linear_map_kernel_submodule_map_eq_zero_of_contains[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) and linear_map_kernel_submodule(src, dst, f).contains(x)
-    implies f(x) = N.0
-}
-
-theorem linear_map_kernel_submodule_subset_iff[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, s: Submodule[R, M]
-) {
-    is_linear_map(src, dst, f) implies
-        (submodule_subset(s, linear_map_kernel_submodule(src, dst, f)) =
-            forall(x: M) { s.contains(x) implies f(x) = N.0 })
-}
-
-define linear_map_image[M: AddCommGroup, N: AddCommGroup](f: M -> N, y: N) -> Bool {
-    exists(x: M) {
-        f(x) = y
-    }
-}
-
-theorem linear_map_image_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_zero_constraint(dst, linear_map_image[M, N](f))
-}
-
-theorem linear_map_image_add_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_add_constraint(dst, linear_map_image[M, N](f))
-}
-
-theorem linear_map_image_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_neg_constraint(dst, linear_map_image[M, N](f))
-}
-
-theorem linear_map_image_smul_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) implies submodule_smul_constraint(dst, linear_map_image[M, N](f))
-}
-
-define linear_map_image_submodule_contains[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) -> Bool {
-    if is_linear_map(src, dst, f) {
-        linear_map_image[M, N](f, y)
-    } else {
-        full_submodule_contains[N](y)
-    }
-}
-
-theorem linear_map_image_submodule_contains_eq_of_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) {
-    is_linear_map(src, dst, f) implies
-        linear_map_image_submodule_contains(src, dst, f, y) = linear_map_image[M, N](f, y)
-}
-
-theorem linear_map_image_submodule_contains_eq_full_of_not_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) {
-    not(is_linear_map(src, dst, f)) implies
-        linear_map_image_submodule_contains(src, dst, f, y) = full_submodule_contains[N](y)
-}
-
-theorem linear_map_image_submodule_is_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_submodule(dst, linear_map_image_submodule_contains(src, dst, f))
-}
-
-let linear_map_image_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](src: Module[R, M], dst: Module[R, N], f: M -> N) -> result: Submodule[R, N] satisfy {
-    Submodule.new(dst, linear_map_image_submodule_contains(src, dst, f)) = Option.some(result)
-}
-
-theorem linear_map_image_submodule_carrier_eq[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    linear_map_image_submodule(src, dst, f).carrier = dst
-}
-
-theorem linear_map_image_submodule_contains_eq[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) {
-    is_linear_map(src, dst, f) implies
-        linear_map_image_submodule(src, dst, f).contains(y) = linear_map_image[M, N](f, y)
-}
-
-theorem linear_map_image_submodule_contains_apply[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) implies linear_map_image_submodule(src, dst, f).contains(f(x))
-}
-
-theorem linear_map_image_of_submodule_contains[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) {
-    is_linear_map(src, dst, f) and linear_map_image_submodule(src, dst, f).contains(y)
-    implies linear_map_image[M, N](f, y)
-}
-
-theorem linear_map_image_submodule_subset_iff[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, s: Submodule[R, N]
-) {
-    is_linear_map(src, dst, f) implies
-        (submodule_subset(linear_map_image_submodule(src, dst, f), s) =
-            forall(x: M) { s.contains(f(x)) })
-}
-
-define is_kernel_trivial[R: Ring, M: AddCommGroup, N: AddCommGroup](f: M -> N) -> Bool {
-    forall(x: M) {
-        linear_map_kernel[R, M, N](f, x) implies x = M.0
-    }
-}
-
-theorem linear_map_kernel_trivial_of_injective[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) and is_injective_fn(f) implies is_kernel_trivial[R, M, N](f)
-}
-
-theorem linear_map_injective_of_kernel_trivial[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) and is_kernel_trivial[R, M, N](f) implies is_injective_fn(f)
-}
-
-theorem linear_map_kernel_submodule_contains_eq_zero_of_trivial[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, dst, f) and is_kernel_trivial[R, M, N](f) implies
-        linear_map_kernel_submodule(src, dst, f).contains(x) = zero_submodule(src).contains(x)
-}
-
-theorem linear_map_kernel_submodule_subset_zero_of_trivial[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) and is_kernel_trivial[R, M, N](f)
-    implies submodule_subset(linear_map_kernel_submodule(src, dst, f), zero_submodule(src))
-}
-
-theorem linear_map_kernel_trivial_of_kernel_submodule_eq_zero[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) and linear_map_kernel_submodule(src, dst, f) = zero_submodule(src)
-        implies is_kernel_trivial[R, M, N](f)
-}
-
-theorem full_submodule_subset_linear_map_image_submodule_of_surjective[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N
-) {
-    is_linear_map(src, dst, f) and is_surjective_fn(f)
-    implies submodule_subset(full_submodule(dst), linear_map_image_submodule(src, dst, f))
-}
-
-theorem linear_map_image_of_image_submodule_eq_full[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], dst: Module[R, N], f: M -> N, y: N
-) {
-    is_linear_map(src, dst, f) and linear_map_image_submodule(src, dst, f) = full_submodule(dst)
-    implies linear_map_image[M, N](f, y)
-}
-
-define submodule_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) -> Bool {
-    s.contains(a - b)
-}
-
-theorem submodule_rel_eq_add_subgroup_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) {
-    submodule_rel(s, a, b) = add_subgroup_rel(submodule_to_add_subgroup(s), a, b)
-}
-
-theorem submodule_rel_eq_add_subgroup_rel_fn[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_rel(s) = add_subgroup_rel(submodule_to_add_subgroup(s))
-}
-
-let submodule_quotient_relation[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> result: QuotientRelation[M] satisfy {
-    result = add_subgroup_quotient_relation(submodule_to_add_subgroup(s))
-}
-
-theorem submodule_quotient_relation_rel[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_quotient_relation(s).rel = submodule_rel(s)
-}
-
-theorem module_smul_sub[R: Ring, M: AddCommGroup](m: Module[R, M], r: R, x: M, y: M) {
-    m.smul(r, x - y) = m.smul(r, x) - m.smul(r, y)
-}
-
-theorem submodule_rel_smul_step[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
-    submodule_rel(s, a, b) implies submodule_rel(s, s.carrier.smul(r, a), s.carrier.smul(r, b))
-}
-
-define submodule_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) -> M -> M {
-    function(x: M) {
-        s.carrier.smul(r, x)
-    }
-}
-
-theorem submodule_rel_respects_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) {
-    respects_unary_op(submodule_rel(s), submodule_smul_by(s, r))
-}
-
-theorem submodule_quotient_relation_respects_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) {
-    quotient_unary_respects(submodule_quotient_relation(s), submodule_smul_by(s, r))
-}
-
-define submodule_quotient_smul_by[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R) ->
-    QuotientOver[M] -> QuotientOver[M] {
-    quotient_over_unary_op(submodule_quotient_relation(s), submodule_smul_by(s, r))
-}
-
-theorem submodule_quotient_smul_by_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M) {
-    submodule_quotient_smul_by(s, r,
-        quotient_over_mk(submodule_quotient_relation(s), a)
-    ) = quotient_over_mk(submodule_quotient_relation(s), s.carrier.smul(r, a))
-}
-
-theorem submodule_quotient_smul_by_projection_compatible[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
-    submodule_rel(s, a, b) implies
-    submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)) =
-        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), b))
-}
-
-define submodule_quotient_add[R: Ring, M: AddCommGroup](s: Submodule[R, M]) ->
-    (QuotientOver[M], QuotientOver[M]) -> QuotientOver[M] {
-    add_subgroup_quotient_add(submodule_to_add_subgroup(s))
-}
-
-define submodule_quotient_neg[R: Ring, M: AddCommGroup](s: Submodule[R, M]) ->
-    QuotientOver[M] -> QuotientOver[M] {
-    add_subgroup_quotient_neg(submodule_to_add_subgroup(s))
-}
-
-define submodule_quotient_zero[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> QuotientOver[M] {
-    add_subgroup_quotient_zero(submodule_to_add_subgroup(s))
-}
-
-theorem submodule_quotient_add_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M, b: M) {
-    submodule_quotient_add(s,
-        quotient_over_mk(submodule_quotient_relation(s), a),
-        quotient_over_mk(submodule_quotient_relation(s), b)
-    ) = quotient_over_mk(submodule_quotient_relation(s), a + b)
-}
-
-theorem submodule_quotient_neg_projection[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
-    submodule_quotient_neg(s,
-        quotient_over_mk(submodule_quotient_relation(s), a)
-    ) = quotient_over_mk(submodule_quotient_relation(s), -a)
-}
-
-theorem submodule_quotient_smul_add_left[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, t: R, a: M) {
-    submodule_quotient_smul_by(s, r + t,
-        quotient_over_mk(submodule_quotient_relation(s), a)) =
-    submodule_quotient_add(s,
-        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)),
-        submodule_quotient_smul_by(s, t, quotient_over_mk(submodule_quotient_relation(s), a)))
-}
-
-theorem submodule_quotient_smul_add_right[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, a: M, b: M) {
-    submodule_quotient_smul_by(s, r,
-        submodule_quotient_add(s,
-            quotient_over_mk(submodule_quotient_relation(s), a),
-            quotient_over_mk(submodule_quotient_relation(s), b))) =
-    submodule_quotient_add(s,
-        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), a)),
-        submodule_quotient_smul_by(s, r, quotient_over_mk(submodule_quotient_relation(s), b)))
-}
-
-theorem submodule_quotient_smul_assoc[R: Ring, M: AddCommGroup](s: Submodule[R, M], r: R, t: R, a: M) {
-    submodule_quotient_smul_by(s, r * t,
-        quotient_over_mk(submodule_quotient_relation(s), a)) =
-    submodule_quotient_smul_by(s, r,
-        submodule_quotient_smul_by(s, t, quotient_over_mk(submodule_quotient_relation(s), a)))
-}
-
-theorem submodule_quotient_smul_one[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
-    submodule_quotient_smul_by(s, R.1,
-        quotient_over_mk(submodule_quotient_relation(s), a)) =
-        quotient_over_mk(submodule_quotient_relation(s), a)
-}
-
-define submodule_quotient_mk[R: Ring, M: AddCommGroup](s: Submodule[R, M]) -> M -> QuotientOver[M] {
-    function(a: M) {
-        quotient_over_mk(submodule_quotient_relation(s), a)
-    }
-}
-
-theorem submodule_quotient_mk_def[R: Ring, M: AddCommGroup](s: Submodule[R, M], a: M) {
-    submodule_quotient_mk(s)(a) = quotient_over_mk(submodule_quotient_relation(s), a)
-}
-
-theorem submodule_quotient_mk_eq_iff_in_submodule[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M, b: M
-) {
-    (submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b)) = s.contains(a - b)
-}
-
-theorem submodule_quotient_mk_zero[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
-    submodule_quotient_mk(s)(M.0) = submodule_quotient_zero(s)
-}
-
-theorem submodule_quotient_mk_eq_zero_iff_in_submodule[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M
-) {
-    (submodule_quotient_mk(s)(a) = submodule_quotient_zero(s)) = s.contains(a)
-}
-
-theorem submodule_quotient_mk_add[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M, b: M
-) {
-    submodule_quotient_mk(s)(a + b) =
-        submodule_quotient_add(s, submodule_quotient_mk(s)(a), submodule_quotient_mk(s)(b))
-}
-
-theorem submodule_quotient_mk_neg[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M
-) {
-    submodule_quotient_mk(s)(-a) = submodule_quotient_neg(s, submodule_quotient_mk(s)(a))
-}
-
-theorem submodule_quotient_mk_smul[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], r: R, a: M
-) {
-    submodule_quotient_mk(s)(s.carrier.smul(r, a)) =
-        submodule_quotient_smul_by(s, r, submodule_quotient_mk(s)(a))
-}
-
-theorem submodule_quotient_mk_eq_of_diff_in_submodule[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M, b: M
-) {
-    s.contains(a - b) implies submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b)
-}
-
-theorem submodule_diff_in_submodule_of_quotient_mk_eq[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], a: M, b: M
-) {
-    submodule_quotient_mk(s)(a) = submodule_quotient_mk(s)(b) implies s.contains(a - b)
-}
-
-define linear_map_preimage[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    t: Submodule[R, N], f: M -> N, x: M
-) -> Bool {
-    t.contains(f(x))
-}
-
-theorem linear_map_preimage_zero_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N
-) {
-    is_linear_map(src, t.carrier, f) implies
-        submodule_zero_constraint(src, linear_map_preimage[R, M, N](t, f))
-}
-
-theorem linear_map_preimage_add_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N
-) {
-    is_linear_map(src, t.carrier, f) implies
-        submodule_add_constraint(src, linear_map_preimage[R, M, N](t, f))
-}
-
-theorem linear_map_preimage_neg_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N
-) {
-    is_linear_map(src, t.carrier, f) implies
-        submodule_neg_constraint(src, linear_map_preimage[R, M, N](t, f))
-}
-
-theorem linear_map_preimage_smul_constraint[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N
-) {
-    is_linear_map(src, t.carrier, f) implies
-        submodule_smul_constraint(src, linear_map_preimage[R, M, N](t, f))
-}
-
-theorem linear_map_preimage_zero_submodule_eq_kernel[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    dst: Module[R, N], f: M -> N, x: M
-) {
-    linear_map_preimage[R, M, N](zero_submodule(dst), f, x) = linear_map_kernel[R, M, N](f, x)
-}
-
-theorem linear_map_preimage_full_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    dst: Module[R, N], f: M -> N, x: M
-) {
-    linear_map_preimage[R, M, N](full_submodule(dst), f, x)
-}
-
-define linear_map_preimage_submodule_contains[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N, x: M
-) -> Bool {
-    if is_linear_map(src, t.carrier, f) {
-        linear_map_preimage[R, M, N](t, f, x)
-    } else {
-        full_submodule_contains[M](x)
-    }
-}
-
-theorem linear_map_preimage_submodule_contains_eq_of_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N, x: M
-) {
-    is_linear_map(src, t.carrier, f) implies
-        linear_map_preimage_submodule_contains(src, t, f, x) = linear_map_preimage[R, M, N](t, f, x)
-}
-
-theorem linear_map_preimage_submodule_contains_eq_full_of_not_linear[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N, x: M
-) {
-    not(is_linear_map(src, t.carrier, f)) implies
-        linear_map_preimage_submodule_contains(src, t, f, x) = full_submodule_contains[M](x)
-}
-
-theorem linear_map_preimage_submodule_is_submodule[R: Ring, M: AddCommGroup, N: AddCommGroup](
-    src: Module[R, M], t: Submodule[R, N], f: M -> N
-) {
-    is_submodule(src, linear_map_preimage_submodule_contains(src, t, f))
 }

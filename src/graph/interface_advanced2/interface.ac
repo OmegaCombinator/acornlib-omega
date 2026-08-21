@@ -1,3 +1,260 @@
+define walk_in_set[V](s: FiniteSet[V], steps: List[V]) -> Bool {
+    match steps {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            s.contains(head) and walk_in_set(s, tail)
+        }
+    }
+}
+
+theorem walk_in_set_cons_head[V](s: FiniteSet[V], h: V, t: List[V]) {
+    walk_in_set(s, List.cons(h, t)) implies s.contains(h)
+}
+
+theorem walk_in_set_cons_tail[V](s: FiniteSet[V], h: V, t: List[V]) {
+    walk_in_set(s, List.cons(h, t)) implies walk_in_set(s, t)
+}
+
+theorem walk_in_set_cons[V](s: FiniteSet[V], h: V, t: List[V]) {
+    walk_in_set(s, List.cons(h, t)) = (s.contains(h) and walk_in_set(s, t))
+}
+
+theorem walk_in_set_nil[V](s: FiniteSet[V]) {
+    walk_in_set(s, List.nil[V])
+}
+
+theorem walk_in_set_singleton[V](s: FiniteSet[V], y: V) {
+    s.contains(y) implies walk_in_set(s, List.singleton(y))
+}
+
+theorem bool_ne_false(p: Bool) {
+    (p != false) = p
+}
+
+theorem bool_ne_not(p: Bool, q: Bool) {
+    not (p != q) = (p != not q)
+}
+
+theorem nat_odd_add(a: Nat, b: Nat) {
+    nat_odd(a + b) = (nat_odd(a) != nat_odd(b))
+}
+
+theorem simple_graph_walk_concat[V](
+    g: SimpleGraph[V], a: V, m: V, b: V, w1: List[V], w2: List[V]
+) {
+    simple_graph_walk(g, a, m, w1) and simple_graph_walk(g, m, b, w2)
+        implies simple_graph_walk(g, a, b, w1 + w2)
+}
+
+theorem simple_graph_walk_concat_split[V](g: SimpleGraph[V], a: V, b: V, w1: List[V], w2: List[V]) {
+    simple_graph_walk(g, a, b, w1 + w2) implies exists(m: V) {
+        simple_graph_walk(g, a, m, w1) and simple_graph_walk(g, m, b, w2)
+    }
+}
+
+theorem walk_in_set_left[V](s: FiniteSet[V], w1: List[V], w2: List[V]) {
+    walk_in_set(s, w1 + w2) implies walk_in_set(s, w1)
+}
+
+theorem walk_in_set_right[V](s: FiniteSet[V], w1: List[V], w2: List[V]) {
+    walk_in_set(s, w1 + w2) implies walk_in_set(s, w2)
+}
+
+theorem walk_in_set_concat[V](s: FiniteSet[V], w1: List[V], w2: List[V]) {
+    walk_in_set(s, w1) and walk_in_set(s, w2) implies walk_in_set(s, w1 + w2)
+}
+
+theorem bool_ne_eq_trans[V](part: V -> Bool, a: V, b: V, next: V, tail: List[V]) {
+    part(a) != part(next) and (part(next) = part(b)) = not nat_odd(tail.length) and
+        nat_odd(List.cons(next, tail).length) = not nat_odd(tail.length)
+        implies (part(a) = part(b)) = not nat_odd(List.cons(next, tail).length)
+}
+
+theorem bipartition_walk_color_flip[V](
+    g: SimpleGraph[V], s: FiniteSet[V], part: V -> Bool, x: V, y: V, steps: List[V]
+) {
+    is_bipartition(g, s, part) and simple_graph_walk(g, x, y, steps) and s.contains(x) and
+        walk_in_set(s, steps)
+        implies (part(x) = part(y)) = not nat_odd(steps.length)
+}
+
+theorem is_bipartition_no_odd_closed_walk[V](
+    g: SimpleGraph[V], s: FiniteSet[V], part: V -> Bool, x: V, steps: List[V]
+) {
+    is_bipartition(g, s, part) and simple_graph_closed_walk(g, x, steps) and s.contains(x) and
+        walk_in_set(s, steps)
+        implies not nat_odd(steps.length)
+}
+
+define has_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    exists(start: V, steps: List[V]) {
+        s.contains(start) and simple_graph_cycle(g, start, steps) and nat_odd(steps.length) and
+            walk_in_set(s, steps)
+    }
+}
+
+theorem is_bipartite_no_odd_cycle[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_bipartite(g, s) implies not has_odd_cycle(g, s)
+}
+
+define rev_walk_targets[V](steps: List[V], start: V) -> List[V] {
+    match steps {
+        List.nil {
+            List.nil[V]
+        }
+        List.cons(head, tail) {
+            rev_walk_targets(tail, head) + List.cons(start, List.nil[V])
+        }
+    }
+}
+
+theorem simple_graph_walk_reverse[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
+    simple_graph_walk(g, a, b, steps) implies simple_graph_walk(g, b, a, rev_walk_targets(steps, a))
+}
+
+theorem rev_walk_targets_in_set[V](s: FiniteSet[V], steps: List[V], start: V) {
+    walk_in_set(s, steps) and s.contains(start) implies walk_in_set(s, rev_walk_targets(steps, start))
+}
+
+theorem nat_odd_ne_zero(n: Nat) {
+    nat_odd(n) implies n != Nat.0
+}
+
+theorem bool_ne_of_not_and(a: Bool, b: Bool) {
+    not a and b implies a != b
+}
+
+define has_odd_closed_walk[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    exists(x: V, steps: List[V]) {
+        simple_graph_closed_walk(g, x, steps) and nat_odd(steps.length) and
+            walk_in_set(s, steps)
+    }
+}
+
+theorem rev_walk_targets_length[V](steps: List[V], start: V) {
+    rev_walk_targets(steps, start).length = steps.length
+}
+
+theorem bool_ne_of_and_not(a: Bool, b: Bool) {
+    a and not b implies a != b
+}
+
+define odd_walk_from[V](g: SimpleGraph[V], s: FiniteSet[V], r: V, x: V) -> Bool {
+    exists(steps: List[V]) {
+        simple_graph_walk(g, r, x, steps) and walk_in_set(s, steps) and nat_odd(steps.length)
+    }
+}
+
+define walk_reachable_from[V](g: SimpleGraph[V], s: FiniteSet[V], r: V) -> Bool {
+    forall(x: V) {
+        s.contains(x) implies exists(steps: List[V]) {
+            simple_graph_walk(g, r, x, steps) and walk_in_set(s, steps)
+        }
+    }
+}
+
+theorem odd_walk_unique[V](
+    g: SimpleGraph[V], s: FiniteSet[V], r: V, x: V, even_steps: List[V], odd_steps: List[V]
+) {
+    s.contains(r) and
+    simple_graph_walk(g, r, x, even_steps) and walk_in_set(s, even_steps) and
+        not nat_odd(even_steps.length) and
+    simple_graph_walk(g, r, x, odd_steps) and walk_in_set(s, odd_steps) and
+        nat_odd(odd_steps.length)
+        implies has_odd_closed_walk(g, s)
+}
+
+theorem is_bipartition_of_parity_coloring[V](g: SimpleGraph[V], s: FiniteSet[V], r: V) {
+    s.contains(r) and walk_reachable_from(g, s, r) and not has_odd_closed_walk(g, s) implies
+        is_bipartition(g, s, odd_walk_from(g, s, r))
+}
+
+theorem is_bipartite_of_no_odd_closed_walk[V](g: SimpleGraph[V], s: FiniteSet[V], r: V) {
+    s.contains(r) and walk_reachable_from(g, s, r) and not has_odd_closed_walk(g, s)
+        implies is_bipartite(g, s)
+}
+
+define simple_graph_coloring[V, C](g: SimpleGraph[V], color: V -> C) -> Bool {
+    forall(x: V, y: V) {
+        g.adj(x, y) implies color(x) != color(y)
+    }
+}
+
+theorem simple_graph_coloring_adj_ne[V, C](g: SimpleGraph[V], color: V -> C, x: V, y: V) {
+    simple_graph_coloring(g, color) and g.adj(x, y) implies color(x) != color(y)
+}
+
+theorem empty_graph_coloring[V, C](color: V -> C) {
+    simple_graph_coloring(empty_graph[V], color)
+}
+
+theorem simple_graph_hom_pullback_coloring[V, W, C](f: SimpleGraphHom[V, W], color: W -> C) {
+    simple_graph_coloring(f.dst, color) implies simple_graph_coloring(f.src, compose(color, f.map))
+}
+
+theorem complete_graph_coloring_imp_injective[V, C](color: V -> C) {
+    simple_graph_coloring(complete_graph[V], color) implies is_injective_fn(color)
+}
+
+theorem injective_imp_complete_graph_coloring[V, C](color: V -> C) {
+    is_injective_fn(color) implies simple_graph_coloring(complete_graph[V], color)
+}
+
+theorem simple_graph_coloring_eq_graph_hom_to_complete[V, C](g: SimpleGraph[V], color: V -> C) {
+    simple_graph_coloring(g, color) = is_graph_hom(g, complete_graph[C], color)
+}
+
+define cycle_adj(n: Nat, x: Nat, y: Nat) -> Bool {
+    x != y and (x.suc.mod(n) = y or y.suc.mod(n) = x)
+}
+
+theorem cycle_adj_is_symmetric(n: Nat) {
+    is_symmetric(cycle_adj(n))
+}
+
+theorem cycle_adj_is_irreflexive(n: Nat) {
+    is_irreflexive(cycle_adj(n))
+}
+
+theorem cycle_adj_constraint(n: Nat) {
+    is_symmetric(cycle_adj(n)) and is_irreflexive(cycle_adj(n))
+}
+
+let cycle_graph(n: Nat) -> result: SimpleGraph[Nat] satisfy {
+    SimpleGraph.new(cycle_adj(n)) = Option.some(result)
+}
+
+theorem cycle_graph_adj_iff(n: Nat, x: Nat, y: Nat) {
+    cycle_graph(n).adj(x, y) = (x != y and (x.suc.mod(n) = y or y.suc.mod(n) = x))
+}
+
+theorem cycle_graph_adj_suc(n: Nat, x: Nat) {
+    x.suc < n implies cycle_graph(n).adj(x, x.suc)
+}
+
+theorem cycle_graph_adj_wrap(x: Nat) {
+    Nat.2 <= x implies cycle_graph(x.suc).adj(x, Nat.0)
+}
+
+theorem cycle_graph_adj_ne(n: Nat, x: Nat, y: Nat) {
+    cycle_graph(n).adj(x, y) implies x != y
+}
+
+define is_proper_coloring_on[V, C](g: SimpleGraph[V], s: FiniteSet[V], color: V -> C) -> Bool {
+    forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y) implies color(x) != color(y)
+    }
+}
+
+theorem is_proper_coloring_on_apply[V, C](
+    g: SimpleGraph[V], s: FiniteSet[V], color: V -> C, x: V, y: V
+) {
+    is_proper_coloring_on(g, s, color) and s.contains(x) and s.contains(y) and g.adj(x, y)
+        implies color(x) != color(y)
+}
+
 theorem is_proper_coloring_on_intro[V, C](g: SimpleGraph[V], s: FiniteSet[V], color: V -> C) {
     (forall(x: V, y: V) {
         s.contains(x) and s.contains(y) and g.adj(x, y) implies color(x) != color(y)
@@ -1886,501 +2143,4 @@ theorem blue_pairwise_three_list[V](color: (V, V) -> Bool, x: V, y: V, z: V, u: 
     List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(u) and
     List.cons(x, List.cons(y, List.cons(z, List.nil[V]))).contains(v)
     implies (u = v or not color(u, v))
-}
-
-theorem red_triangle_to_clique3[V](color: (V, V) -> Bool, s: FiniteSet[V]) {
-    is_edge_2_coloring(complete_graph[V], color) and has_red_triangle(color, s)
-    implies has_red_clique(color, s, Nat.3)
-}
-
-theorem blue_triangle_to_clique3[V](color: (V, V) -> Bool, s: FiniteSet[V]) {
-    is_edge_2_coloring(complete_graph[V], color) and has_blue_triangle(color, s)
-    implies has_blue_clique(color, s, Nat.3)
-}
-
-theorem ramsey_r33_upper_number {
-    ramsey_number_upper(Nat.3, Nat.3, Nat.6)
-}
-
-theorem ramsey_r33_upper_restated(color: (Nat, Nat) -> Bool) {
-    is_edge_2_coloring(complete_graph[Nat], color)
-    implies has_mono_triangle(color, six_vertices)
-}
-
-define lt_at(xs: List[Nat], i: Nat, j: Nat) -> Bool {
-    exists(x: Nat, y: Nat) {
-        value_at(xs, i, x) and value_at(xs, j, y) and x < y
-    }
-}
-
-define gt_at(xs: List[Nat], i: Nat, j: Nat) -> Bool {
-    lt_at(xs, j, i)
-}
-
-define esz_inc3(xs: List[Nat]) -> Bool {
-    exists(i: Nat, j: Nat, k: Nat) {
-        i < j and j < k and k < xs.length and lt_at(xs, i, j) and lt_at(xs, j, k) and lt_at(xs, i, k)
-    }
-}
-
-define esz_dec3(xs: List[Nat]) -> Bool {
-    exists(i: Nat, j: Nat, k: Nat) {
-        i < j and j < k and k < xs.length and gt_at(xs, i, j) and gt_at(xs, j, k) and gt_at(xs, i, k)
-    }
-}
-
-define esz_up(xs: List[Nat], i: Nat) -> Bool {
-    exists(j: Nat) {
-        i < j and j < xs.length and lt_at(xs, i, j)
-    }
-}
-
-define esz_dn(xs: List[Nat], i: Nat) -> Bool {
-    exists(j: Nat) {
-        i < j and j < xs.length and gt_at(xs, i, j)
-    }
-}
-
-define esz_tag(xs: List[Nat], i: Nat) -> Pair[Bool, Bool] {
-    Pair.new(esz_up(xs, i), esz_dn(xs, i))
-}
-
-define esz_tag_fn(xs: List[Nat], i: Nat) -> Pair[Bool, Bool] {
-    esz_tag(xs, i)
-}
-
-theorem value_at_det(xs: List[Nat], i: Nat, x: Nat, y: Nat) {
-    value_at(xs, i, x) and value_at(xs, i, y) implies x = y
-}
-
-theorem lt_at_of_values(xs: List[Nat], i: Nat, j: Nat, x: Nat, y: Nat) {
-    value_at(xs, i, x) and value_at(xs, j, y) and x < y implies lt_at(xs, i, j)
-}
-
-theorem lt_at_trans(xs: List[Nat], i: Nat, j: Nat, m: Nat) {
-    lt_at(xs, i, j) and lt_at(xs, j, m) implies lt_at(xs, i, m)
-}
-
-theorem get_idx_some_of_lt(xs: List[Nat], i: Nat) {
-    i < xs.length implies exists(x: Nat) {
-        xs.get_idx(i) = Option.some(x)
-    }
-}
-
-theorem value_at_imp_contains(xs: List[Nat], i: Nat, x: Nat) {
-    value_at(xs, i, x) implies xs.contains(x)
-}
-
-theorem count_ge_one_of_value_at(xs: List[Nat], i: Nat, x: Nat) {
-    value_at(xs, i, x) implies xs.count(x) >= Nat.1
-}
-
-theorem count_ge_two_of_two_positions(xs: List[Nat], i: Nat, j: Nat, x: Nat) {
-    value_at(xs, i, x) and value_at(xs, j, x) and i != j implies xs.count(x) >= Nat.2
-}
-
-theorem is_unique_distinct_values(xs: List[Nat], i: Nat, j: Nat) {
-    xs.is_unique and i < xs.length and j < xs.length and i != j implies
-    not exists(x: Nat) { value_at(xs, i, x) and value_at(xs, j, x) }
-}
-
-theorem lt_at_total(xs: List[Nat], i: Nat, j: Nat) {
-    xs.is_unique and i < j and j < xs.length implies lt_at(xs, i, j) or lt_at(xs, j, i)
-}
-
-let esz_bool_pairs: List[Pair[Bool, Bool]] = List.cons(Pair.new(true, true),
-    List.cons(Pair.new(true, false), List.cons(Pair.new(false, true),
-        List.cons(Pair.new(false, false), List.nil[Pair[Bool, Bool]]))))
-
-/// The head of the tag list contains the first tag.
-theorem esz_bool_pairs_contains_head {
-    esz_bool_pairs.contains(Pair.new(true, true))
-}
-
-theorem esz_bool_pairs_contains_second {
-    esz_bool_pairs.contains(Pair.new(true, false))
-}
-
-theorem esz_bool_pairs_contains_third {
-    esz_bool_pairs.contains(Pair.new(false, true))
-}
-
-theorem esz_bool_pairs_contains_fourth {
-    esz_bool_pairs.contains(Pair.new(false, false))
-}
-
-theorem esz_bool_false_eq(b: Bool) {
-    not b implies b = false
-}
-
-theorem esz_pair_eq_tt(p: Pair[Bool, Bool]) {
-    p.first and p.second implies Pair.new(true, true) = p
-}
-
-theorem esz_pair_eq_tf(p: Pair[Bool, Bool]) {
-    p.first and not p.second implies Pair.new(true, false) = p
-}
-
-theorem esz_pair_eq_ft(p: Pair[Bool, Bool]) {
-    not p.first and p.second implies Pair.new(false, true) = p
-}
-
-theorem esz_pair_eq_ff(p: Pair[Bool, Bool]) {
-    not p.first and not p.second implies Pair.new(false, false) = p
-}
-
-theorem esz_bool_pairs_contains(p: Pair[Bool, Bool]) {
-    esz_bool_pairs.contains(p)
-}
-
-theorem cons_length_generic[T](head: T, tail: List[T]) {
-    List.cons(head, tail).length = tail.length.suc
-}
-
-theorem esz_bool_pairs_length {
-    esz_bool_pairs.length = Nat.4
-}
-
-theorem esz33_collision(xs: List[Nat]) {
-    xs.is_unique and xs.length = Nat.5 implies
-    exists(i: Nat, j: Nat) {
-        i < j and j < xs.length and esz_tag(xs, i) = esz_tag(xs, j)
-    }
-}
-
-theorem esz_up_of_lt(xs: List[Nat], i: Nat, j: Nat) {
-    i < j and j < xs.length and lt_at(xs, i, j) implies esz_up(xs, i)
-}
-
-theorem esz_dn_of_gt(xs: List[Nat], i: Nat, j: Nat) {
-    i < j and j < xs.length and gt_at(xs, i, j) implies esz_dn(xs, i)
-}
-
-theorem esz_inc3_of_lt_pair(xs: List[Nat], i: Nat, j: Nat, k: Nat) {
-    i < j and j < k and k < xs.length and lt_at(xs, i, j) and lt_at(xs, j, k)
-    implies esz_inc3(xs)
-}
-
-theorem esz_dec3_of_gt_pair(xs: List[Nat], i: Nat, j: Nat, k: Nat) {
-    i < j and j < k and k < xs.length and gt_at(xs, i, j) and gt_at(xs, j, k)
-    implies esz_dec3(xs)
-}
-
-theorem esz_no_inc3_not_up(xs: List[Nat], i: Nat, j: Nat) {
-    not esz_inc3(xs) and i < j and j < xs.length and lt_at(xs, i, j) implies not esz_up(xs, j)
-}
-
-theorem esz_no_dec3_not_dn(xs: List[Nat], i: Nat, j: Nat) {
-    not esz_dec3(xs) and i < j and j < xs.length and gt_at(xs, i, j) implies not esz_dn(xs, j)
-}
-
-theorem erdos_szekeres_three_three(xs: List[Nat]) {
-    xs.is_unique and xs.length = Nat.5 implies esz_inc3(xs) or esz_dec3(xs)
-}
-
-theorem two_list_length[T](x: T, y: T) {
-    List.cons(x, List.cons(y, List.nil[T])).length = Nat.2
-}
-
-theorem two_list_unique[T](x: T, y: T) {
-    x != y implies List.cons(x, List.cons(y, List.nil[T])).is_unique
-}
-
-theorem two_list_contains_cases[T](x: T, y: T, a: T) {
-    List.cons(x, List.cons(y, List.nil[T])).contains(a)
-        implies a = x or a = y
-}
-
-theorem red_pairwise_two[V](color: (V, V) -> Bool, x: V, y: V, a: V, b: V) {
-    is_edge_2_coloring(complete_graph[V], color) and color(x, y) and
-    (a = x or a = y) and (b = x or b = y)
-    implies (a = b or color(a, b))
-}
-
-theorem red_clique2_of_edge[V](color: (V, V) -> Bool, s: FiniteSet[V], x: V, y: V) {
-    is_edge_2_coloring(complete_graph[V], color) and
-    s.contains(x) and s.contains(y) and x != y and color(x, y)
-    implies has_red_clique(color, s, Nat.2)
-}
-
-theorem ramsey_r2k_upper(k: Nat) {
-    ramsey_number_upper(Nat.2, k, k)
-}
-
-theorem ramsey_r23_upper {
-    ramsey_number_upper(Nat.2, Nat.3, Nat.3)
-}
-
-define r23_lb_color(x: Nat, y: Nat) -> Bool {
-    false
-}
-
-theorem r23_lb_color_is_edge_2_coloring {
-    is_edge_2_coloring(complete_graph[Nat], r23_lb_color)
-}
-
-theorem r23_lb_no_red_clique {
-    not has_red_clique(r23_lb_color, range_set(Nat.2), Nat.2)
-}
-
-theorem lt_two_cases(x: Nat) {
-    x < Nat.2 implies (x = Nat.0 or x = Nat.1)
-}
-
-theorem three_lt_two_not_distinct(x: Nat, y: Nat, z: Nat) {
-    x < Nat.2 and y < Nat.2 and z < Nat.2 implies (x = y or x = z or y = z)
-}
-
-theorem r23_lb_no_blue_clique {
-    not has_blue_clique(r23_lb_color, range_set(Nat.2), Nat.3)
-}
-
-theorem ramsey_r23_lower_bound {
-    exists(color: (Nat, Nat) -> Bool) {
-        is_edge_2_coloring(complete_graph[Nat], color) and
-        not has_red_clique(color, range_set(Nat.2), Nat.2) and
-        not has_blue_clique(color, range_set(Nat.2), Nat.3)
-    }
-}
-
-theorem ramsey_r23_exact {
-    ramsey_number_upper(Nat.2, Nat.3, Nat.3) and
-    exists(color: (Nat, Nat) -> Bool) {
-        is_edge_2_coloring(complete_graph[Nat], color) and
-        not has_red_clique(color, range_set(Nat.2), Nat.2) and
-        not has_blue_clique(color, range_set(Nat.2), Nat.3)
-    }
-}
-
-theorem ramsey_r33_upper_clique {
-    ramsey_number_upper(Nat.3, Nat.3, Nat.6)
-}
-
-theorem ramsey_r34_pigeonhole_restated(color: (Nat, Nat) -> Bool) {
-    four_edges_from_zero_share_color(color)
-}
-
-theorem ramsey_r34_upper_restated(color: (Nat, Nat) -> Bool) {
-    is_edge_2_coloring(complete_graph[Nat], color) implies
-    (has_mono_triangle(color, nine_vertices) or has_mono_k4(color, nine_vertices))
-}
-
-theorem ramsey_r25_upper {
-    ramsey_number_upper(Nat.2, Nat.5, Nat.5)
-}
-
-theorem ramsey_r35_bound_arith_restated {
-    Nat.14 = Nat.5 + Nat.9
-}
-
-theorem ramsey_r35_from_recurrence_restated {
-    ramsey_number_upper(Nat.2, Nat.5, Nat.5) and
-    ramsey_number_upper(Nat.3, Nat.4, Nat.9) and
-    ramsey_recurrence(Nat.3, Nat.5, Nat.5, Nat.9)
-    implies ramsey_number_upper(Nat.3, Nat.5, Nat.14)
-}
-
-define ramsey_binom_bound(k: Nat, l: Nat) -> Bool {
-    ramsey_number_upper(k, l, (k + l - Nat.2).binom(k - Nat.1))
-}
-
-theorem ramsey_binom_bound_small23 {
-    ramsey_binom_bound(Nat.2, Nat.3)
-}
-
-theorem ramsey_binom_bound_small33 {
-    ramsey_binom_bound(Nat.3, Nat.3)
-}
-
-theorem c5_color_symmetric(x: Nat, y: Nat) {
-    c5_color(x, y) = c5_color(y, x)
-}
-
-theorem c5_color_is_edge_2_coloring {
-    is_edge_2_coloring(complete_graph[Nat], c5_color)
-}
-
-theorem five_vertices_lt(x: Nat) {
-    five_vertices.contains(x) implies x < Nat.5
-}
-
-theorem lt_five_cases(x: Nat) {
-    x < Nat.5 implies (x = Nat.0 or x = Nat.1 or x = Nat.2 or x = Nat.3 or x = Nat.4)
-}
-
-define is_vertex_cover[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]) -> Bool {
-    forall(x: V, y: V) {
-        s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
-    }
-}
-
-theorem is_vertex_cover_apply[V](
-    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], x: V, y: V
-) {
-    is_vertex_cover(g, s, c) and s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
-}
-
-theorem is_vertex_cover_intro[V](g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V]) {
-    (forall(x: V, y: V) {
-        s.contains(x) and s.contains(y) and g.adj(x, y) implies c.contains(x) or c.contains(y)
-    }) implies is_vertex_cover(g, s, c)
-}
-
-theorem is_vertex_cover_self[V](g: SimpleGraph[V], s: FiniteSet[V]) {
-    is_vertex_cover(g, s, s)
-}
-
-theorem is_vertex_cover_of_subset[V](
-    g: SimpleGraph[V], s: FiniteSet[V], c: FiniteSet[V], d: FiniteSet[V]
-) {
-    c.subset_eq(d) and is_vertex_cover(g, s, c) implies is_vertex_cover(g, s, d)
-}
-
-theorem is_vertex_cover_of_smaller_ambient[V](
-    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V], c: FiniteSet[V]
-) {
-    t.subset_eq(s) and is_vertex_cover(g, s, c) implies is_vertex_cover(g, t, c)
-}
-
-define common_neighborhood[V](
-    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V
-) -> FiniteSet[V] {
-    finite_set_filter(neighborhood(g, s, u), neighbor_pred(g, v))
-}
-
-theorem common_neighborhood_contains_eq[V](
-    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
-) {
-    common_neighborhood(g, s, u, v).contains(w) = (s.contains(w) and g.adj(u, w) and g.adj(v, w))
-}
-
-theorem common_neighborhood_subset[V](g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V) {
-    common_neighborhood(g, s, u, v).subset_eq(neighborhood(g, s, u))
-}
-
-theorem common_neighborhood_adj_left[V](
-    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
-) {
-    common_neighborhood(g, s, u, v).contains(w) implies g.adj(u, w)
-}
-
-theorem common_neighborhood_adj_right[V](
-    g: SimpleGraph[V], s: FiniteSet[V], u: V, v: V, w: V
-) {
-    common_neighborhood(g, s, u, v).contains(w) implies g.adj(v, w)
-}
-
-define is_independent_in[V](g: SimpleGraph[V], t: FiniteSet[V]) -> Bool {
-    forall(x: V, y: V) {
-        t.contains(x) and t.contains(y) implies not g.adj(x, y)
-    }
-}
-
-theorem is_independent_in_apply[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
-    is_independent_in(g, t) and t.contains(x) and t.contains(y) implies not g.adj(x, y)
-}
-
-theorem is_independent_in_intro[V](g: SimpleGraph[V], t: FiniteSet[V]) {
-    (forall(x: V, y: V) {
-        t.contains(x) and t.contains(y) implies not g.adj(x, y)
-    }) implies is_independent_in(g, t)
-}
-
-theorem is_independent_in_of_subset[V](g: SimpleGraph[V], t: FiniteSet[V], r: FiniteSet[V]) {
-    r.subset_eq(t) and is_independent_in(g, t) implies is_independent_in(g, r)
-}
-
-define is_clique_in[V](g: SimpleGraph[V], t: FiniteSet[V]) -> Bool {
-    forall(x: V, y: V) {
-        t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
-    }
-}
-
-theorem is_clique_in_apply[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
-    is_clique_in(g, t) and t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
-}
-
-theorem is_clique_in_intro[V](g: SimpleGraph[V], t: FiniteSet[V]) {
-    (forall(x: V, y: V) {
-        t.contains(x) and t.contains(y) and x != y implies g.adj(x, y)
-    }) implies is_clique_in(g, t)
-}
-
-theorem is_clique_in_of_subset[V](g: SimpleGraph[V], t: FiniteSet[V], r: FiniteSet[V]) {
-    r.subset_eq(t) and is_clique_in(g, t) implies is_clique_in(g, r)
-}
-
-theorem clique_and_independent_no_two[V](g: SimpleGraph[V], t: FiniteSet[V], x: V, y: V) {
-    is_clique_in(g, t) and is_independent_in(g, t) and t.contains(x) and t.contains(y) implies x = y
-}
-
-theorem vertex_cover_of_independent_complement[V](
-    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
-) {
-    is_independent_in(g, t) implies is_vertex_cover(g, s, fs_difference(s, t))
-}
-
-define has_no_common_neighbor[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
-) -> Bool {
-    forall(z: V) {
-        not common_neighborhood(g, s, x, y).contains(z)
-    }
-}
-
-theorem has_no_common_neighbor_apply[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
-) {
-    has_no_common_neighbor(g, s, x, y) implies not common_neighborhood(g, s, x, y).contains(z)
-}
-
-theorem has_no_common_neighbor_intro[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
-) {
-    (forall(z: V) { not common_neighborhood(g, s, x, y).contains(z) })
-        implies has_no_common_neighbor(g, s, x, y)
-}
-
-theorem has_no_common_neighbor_not_adj[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
-) {
-    has_no_common_neighbor(g, s, x, y) and s.contains(z) and g.adj(x, z)
-        implies not g.adj(y, z)
-}
-
-define is_triangle_free[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
-    forall(x: V, y: V) {
-        s.contains(x) and s.contains(y) and g.adj(x, y)
-            implies has_no_common_neighbor(g, s, x, y)
-    }
-}
-
-theorem is_triangle_free_apply[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V
-) {
-    is_triangle_free(g, s) and s.contains(x) and s.contains(y) and g.adj(x, y) implies has_no_common_neighbor(g, s, x, y)
-}
-
-theorem is_triangle_free_intro[V](g: SimpleGraph[V], s: FiniteSet[V]) {
-    (forall(x: V, y: V) {
-        s.contains(x) and s.contains(y) and g.adj(x, y) implies has_no_common_neighbor(g, s, x, y)
-    }) implies is_triangle_free(g, s)
-}
-
-theorem is_triangle_free_no_triangle[V](
-    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V
-) {
-    is_triangle_free(g, s) and s.contains(x) and s.contains(y) and s.contains(z) and g.adj(x, y) and g.adj(x, z) implies not g.adj(y, z)
-}
-
-theorem is_triangle_free_of_subset[V](
-    g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
-) {
-    t.subset_eq(s) and is_triangle_free(g, s) implies is_triangle_free(g, t)
-}
-
-theorem triangle_free_neighborhood_independent[V](
-    g: SimpleGraph[V], s: FiniteSet[V], v: V
-) {
-    is_triangle_free(g, s) and s.contains(v) implies is_independent_in(g, neighborhood(g, s, v))
 }

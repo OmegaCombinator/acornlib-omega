@@ -1,3 +1,837 @@
+theorem cycle_has_all_path_edges_on_range(n: Nat) {
+    has_all_edges_of_on(cycle_graph(n), path_graph, range_set(n))
+}
+
+theorem cycle_domination_number_le_path(n: Nat) {
+    domination_number(cycle_graph(n), range_set(n))
+        <= domination_number(path_graph, range_set(n))
+}
+
+theorem cycle_domination_number_upper_bound(n: Nat) {
+    Nat.3 * domination_number(cycle_graph(n), range_set(n)) <= n + Nat.2
+}
+
+theorem cycle_domination_number_bounds(n: Nat) {
+    n <= Nat.3 * domination_number(cycle_graph(n), range_set(n))
+        and Nat.3 * domination_number(cycle_graph(n), range_set(n)) <= n + Nat.2
+}
+
+define is_white_neighbor[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, w: V
+) -> Bool {
+    s.contains(w) and not b.contains(w) and g.adj(u, w)
+}
+
+define can_force[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V
+) -> Bool {
+    b.contains(u) and is_white_neighbor(g, s, b, u, v) and forall(w: V) {
+        (is_white_neighbor(g, s, b, u, w) implies w = v)
+    }
+}
+
+theorem can_force_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V
+) {
+    can_force(g, s, b, u, v) implies b.contains(u) and is_white_neighbor(g, s, b, u, v)
+}
+
+theorem can_force_unique[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V, w: V
+) {
+    can_force(g, s, b, u, v) and is_white_neighbor(g, s, b, u, w) implies w = v
+}
+
+theorem can_force_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V
+) {
+    b.contains(u) and is_white_neighbor(g, s, b, u, v) and (forall(w: V) {
+        (is_white_neighbor(g, s, b, u, w) implies w = v)
+    }) implies can_force(g, s, b, u, v)
+}
+
+theorem can_force_deterministic[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V, v2: V
+) {
+    can_force(g, s, b, u, v) and can_force(g, s, b, u, v2) implies v = v2
+}
+
+define is_forceable[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) -> Bool {
+    exists(u: V) {
+        can_force(g, s, b, u, v)
+    }
+}
+
+theorem is_forceable_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V
+) {
+    can_force(g, s, b, u, v) implies is_forceable(g, s, b, v)
+}
+
+theorem is_forceable_witness[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    is_forceable(g, s, b, v) implies exists(u: V) { can_force(g, s, b, u, v) }
+}
+
+theorem is_forceable_white[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    is_forceable(g, s, b, v) implies s.contains(v) and not b.contains(v)
+}
+
+define derived_pred[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) -> (V -> Bool) {
+    function(v: V) {
+        b.contains(v) or is_forceable(g, s, b, v)
+    }
+}
+
+define derived_set[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) -> FiniteSet[V] {
+    finite_set_filter(s, derived_pred(g, s, b))
+}
+
+theorem derived_set_contains_eq[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    derived_set(g, s, b).contains(v) =
+        (s.contains(v) and (b.contains(v) or is_forceable(g, s, b, v)))
+}
+
+theorem derived_set_subset[V](g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]) {
+    derived_set(g, s, b).subset_eq(s)
+}
+
+theorem derived_set_contains_blue[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    b.subset_eq(s) and b.contains(v) implies derived_set(g, s, b).contains(v)
+}
+
+theorem derived_set_grows[V](g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]) {
+    b.subset_eq(s) implies b.subset_eq(derived_set(g, s, b))
+}
+
+theorem derived_set_contains_forced[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, v: V
+) {
+    can_force(g, s, b, u, v) implies derived_set(g, s, b).contains(v)
+}
+
+define is_forcing_closed[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) -> Bool {
+    forall(v: V) {
+        not is_forceable(g, s, b, v)
+    }
+}
+
+theorem is_forcing_closed_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    is_forcing_closed(g, s, b) implies not is_forceable(g, s, b, v)
+}
+
+theorem is_forcing_closed_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    (forall(v: V) { not is_forceable(g, s, b, v) }) implies is_forcing_closed(g, s, b)
+}
+
+theorem derived_set_eq_of_closed[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], v: V
+) {
+    b.subset_eq(s) and is_forcing_closed(g, s, b)
+        implies derived_set(g, s, b).contains(v) = b.contains(v)
+}
+
+theorem ambient_is_forcing_closed[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_forcing_closed(g, s, s)
+}
+
+define forcing_iterate[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) -> FiniteSet[V] {
+    match n {
+        Nat.zero {
+            b
+        }
+        Nat.suc(k) {
+            derived_set(g, s, forcing_iterate(g, s, b, k))
+        }
+    }
+}
+
+theorem forcing_iterate_zero[V](g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]) {
+    forcing_iterate(g, s, b, Nat.0) = b
+}
+
+theorem forcing_iterate_suc[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], k: Nat
+) {
+    forcing_iterate(g, s, b, k.suc) = derived_set(g, s, forcing_iterate(g, s, b, k))
+}
+
+theorem forcing_iterate_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) implies forcing_iterate(g, s, b, n).subset_eq(s)
+}
+
+theorem forcing_iterate_step_grows[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s)
+        implies forcing_iterate(g, s, b, n).subset_eq(forcing_iterate(g, s, b, n.suc))
+}
+
+theorem forcing_iterate_contains_start[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) implies b.subset_eq(forcing_iterate(g, s, b, n))
+}
+
+theorem forcing_iterate_stationary[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat, m: Nat
+) {
+    b.subset_eq(s) and is_forcing_closed(g, s, forcing_iterate(g, s, b, n))
+        implies forcing_iterate(g, s, b, n.suc) = forcing_iterate(g, s, b, n)
+}
+
+define is_zero_forcing_set[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) -> Bool {
+    b.subset_eq(s) and exists(n: Nat) {
+        forcing_iterate(g, s, b, n) = s
+    }
+}
+
+theorem is_zero_forcing_set_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    is_zero_forcing_set(g, s, b)
+        implies b.subset_eq(s) and exists(n: Nat) { forcing_iterate(g, s, b, n) = s }
+}
+
+theorem is_zero_forcing_set_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) and forcing_iterate(g, s, b, n) = s implies is_zero_forcing_set(g, s, b)
+}
+
+theorem ambient_is_zero_forcing_set[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_zero_forcing_set(g, s, s)
+}
+
+theorem forcing_iterate_constant_of_closed[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(s) and is_forcing_closed(g, s, b)
+        implies forcing_iterate(g, s, b, n) = b
+}
+
+define zero_forcing_size_pred[V](
+    g: SimpleGraph[V], s: FiniteSet[V]
+) -> (Nat -> Bool) {
+    function(n: Nat) {
+        exists(b: FiniteSet[V]) {
+            is_zero_forcing_set(g, s, b) and fs_card(b) = n
+        }
+    }
+}
+
+theorem zero_forcing_size_pred_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    is_zero_forcing_set(g, s, b) implies zero_forcing_size_pred(g, s)(fs_card(b))
+}
+
+theorem zero_forcing_size_pred_ambient[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    zero_forcing_size_pred(g, s)(fs_card(s))
+}
+
+let zero_forcing_number[V](g: SimpleGraph[V], s: FiniteSet[V]) -> result: Nat satisfy {
+    is_min(zero_forcing_size_pred(g, s), result)
+}
+
+theorem zero_forcing_number_attained[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    zero_forcing_size_pred(g, s)(zero_forcing_number(g, s))
+}
+
+theorem zero_forcing_number_is_least[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    is_zero_forcing_set(g, s, b) implies zero_forcing_number(g, s) <= fs_card(b)
+}
+
+theorem zero_forcing_number_le_ambient[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    zero_forcing_number(g, s) <= fs_card(s)
+}
+
+define is_minimum_zero_forcing_set[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) -> Bool {
+    is_zero_forcing_set(g, s, b) and fs_card(b) = zero_forcing_number(g, s)
+}
+
+theorem is_minimum_zero_forcing_set_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    is_minimum_zero_forcing_set(g, s, b)
+        implies is_zero_forcing_set(g, s, b) and fs_card(b) = zero_forcing_number(g, s)
+}
+
+theorem is_minimum_zero_forcing_set_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    is_zero_forcing_set(g, s, b) and fs_card(b) = zero_forcing_number(g, s)
+        implies is_minimum_zero_forcing_set(g, s, b)
+}
+
+theorem minimum_zero_forcing_set_exists[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    exists(b: FiniteSet[V]) { is_minimum_zero_forcing_set(g, s, b) }
+}
+
+theorem is_minimum_zero_forcing_set_of_lte[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V]
+) {
+    is_minimum_zero_forcing_set(g, s, c) and is_zero_forcing_set(g, s, b)
+        and fs_card(b) <= fs_card(c)
+        implies is_minimum_zero_forcing_set(g, s, b)
+}
+
+theorem minimum_zero_forcing_sets_same_size[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V]
+) {
+    is_minimum_zero_forcing_set(g, s, b) and is_minimum_zero_forcing_set(g, s, c)
+        implies fs_card(b) = fs_card(c)
+}
+
+theorem no_blue_is_forcing_closed[V](g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]) {
+    (forall(x: V) { not b.contains(x) }) implies is_forcing_closed(g, s, b)
+}
+
+theorem zero_forcing_set_nonempty[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], x: V
+) {
+    s.contains(x) and is_zero_forcing_set(g, s, b)
+        implies exists(y: V) { b.contains(y) }
+}
+
+theorem zero_forcing_number_pos[V](g: SimpleGraph[V], s: FiniteSet[V], x: V) {
+    s.contains(x) implies Nat.1 <= zero_forcing_number(g, s)
+}
+
+define has_two_white_neighbors[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V
+) -> Bool {
+    exists(w1: V, w2: V) {
+        w1 != w2 and is_white_neighbor(g, s, b, u, w1) and is_white_neighbor(g, s, b, u, w2)
+    }
+}
+
+theorem has_two_white_neighbors_intro[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V, w1: V, w2: V
+) {
+    w1 != w2 and is_white_neighbor(g, s, b, u, w1) and is_white_neighbor(g, s, b, u, w2)
+        implies has_two_white_neighbors(g, s, b, u)
+}
+
+theorem has_two_white_neighbors_apply[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], u: V
+) {
+    has_two_white_neighbors(g, s, b, u) implies exists(w1: V, w2: V) {
+        w1 != w2 and is_white_neighbor(g, s, b, u, w1) and is_white_neighbor(g, s, b, u, w2)
+    }
+}
+
+theorem two_white_neighbors_blocks_forcing[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
+) {
+    (forall(u: V) { b.contains(u) implies has_two_white_neighbors(g, s, b, u) })
+        implies is_forcing_closed(g, s, b)
+}
+
+theorem is_white_neighbor_of_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V], u: V, w: V
+) {
+    b.subset_eq(c) and is_white_neighbor(g, s, c, u, w)
+        implies is_white_neighbor(g, s, b, u, w)
+}
+
+theorem can_force_of_subset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V], u: V, v: V
+) {
+    b.subset_eq(c) and can_force(g, s, b, u, v) and not c.contains(v)
+        implies can_force(g, s, c, u, v)
+}
+
+theorem derived_set_mono[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V]
+) {
+    b.subset_eq(c) and c.subset_eq(s) implies derived_set(g, s, b).subset_eq(derived_set(g, s, c))
+}
+
+theorem forcing_iterate_mono[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V], n: Nat
+) {
+    b.subset_eq(c) and c.subset_eq(s)
+        implies forcing_iterate(g, s, b, n).subset_eq(forcing_iterate(g, s, c, n))
+}
+
+theorem zero_forcing_set_of_superset[V](
+    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], c: FiniteSet[V]
+) {
+    is_zero_forcing_set(g, s, b) and b.subset_eq(c) and c.subset_eq(s)
+        implies is_zero_forcing_set(g, s, c)
+}
+
+theorem cycle_later_neighbor_is_suc(n: Nat, k: Nat, w: Nat) {
+    Nat.1 <= k and k.suc < n and w < n and k.suc <= w and cycle_graph(n).adj(k, w)
+        implies w = k.suc
+}
+
+theorem cycle_prefix_can_force(n: Nat, k: Nat) {
+    Nat.1 <= k and k.suc < n
+        implies can_force(cycle_graph(n), range_set(n), range_set(k.suc), k, k.suc)
+}
+
+theorem cycle_derived_set_step(n: Nat, k: Nat) {
+    Nat.1 <= k and k.suc < n implies
+        range_set(k.suc.suc).subset_eq(
+            derived_set(cycle_graph(n), range_set(n), range_set(k.suc)))
+}
+
+theorem cycle_forcing_iterate_prefix(n: Nat, k: Nat) {
+    k.suc.suc <= n implies
+        range_set(k.suc.suc).subset_eq(
+            forcing_iterate(cycle_graph(n), range_set(n), range_set(Nat.2), k))
+}
+
+theorem cycle_pair_is_zero_forcing(n: Nat) {
+    Nat.2 <= n implies
+        is_zero_forcing_set(cycle_graph(n.suc), range_set(n.suc), range_set(Nat.2))
+}
+
+theorem cycle_zero_forcing_number_le_two(n: Nat) {
+    Nat.2 <= n implies zero_forcing_number(cycle_graph(n.suc), range_set(n.suc)) <= Nat.2
+}
+
+define is_neighbor_pair(n: Nat, v: Nat, w1: Nat, w2: Nat) -> Bool {
+    w1 != w2 and w1 != v and w2 != v and w1 < n and w2 < n
+        and cycle_graph(n).adj(v, w1) and cycle_graph(n).adj(v, w2)
+}
+
+theorem is_neighbor_pair_intro(n: Nat, v: Nat, w1: Nat, w2: Nat) {
+    w1 != w2 and w1 != v and w2 != v and w1 < n and w2 < n
+        and cycle_graph(n).adj(v, w1) and cycle_graph(n).adj(v, w2)
+        implies is_neighbor_pair(n, v, w1, w2)
+}
+
+theorem is_neighbor_pair_apply(n: Nat, v: Nat, w1: Nat, w2: Nat) {
+    is_neighbor_pair(n, v, w1, w2) implies
+        (w1 != w2 and w1 != v and w2 != v and w1 < n and w2 < n
+            and cycle_graph(n).adj(v, w1) and cycle_graph(n).adj(v, w2))
+}
+
+theorem cycle_two_neighbors(p: Nat, v: Nat) {
+    Nat.2 <= p and v < p.suc implies exists(w1: Nat, w2: Nat) {
+        is_neighbor_pair(p.suc, v, w1, w2)
+    }
+}
+
+theorem cycle_singleton_blocks_forcing(p: Nat, b: FiniteSet[Nat], v: Nat) {
+    Nat.2 <= p and v < p.suc and (forall(x: Nat) { b.contains(x) implies x = v })
+        implies is_forcing_closed(cycle_graph(p.suc), range_set(p.suc), b)
+}
+
+theorem cycle_zero_forcing_set_card(p: Nat, b: FiniteSet[Nat]) {
+    Nat.2 <= p and b.subset_eq(range_set(p.suc))
+        and is_zero_forcing_set(cycle_graph(p.suc), range_set(p.suc), b)
+        implies Nat.2 <= fs_card(b)
+}
+
+define max_degree_at_most[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat) -> Bool {
+    forall(v: V) {
+        s.contains(v) implies degree(g, s, v) <= n
+    }
+}
+
+theorem max_degree_at_most_apply[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat, v: V) {
+    max_degree_at_most(g, s, n) and s.contains(v) implies degree(g, s, v) <= n
+}
+
+theorem max_degree_at_most_intro[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat) {
+    (forall(v: V) { s.contains(v) implies degree(g, s, v) <= n })
+        implies max_degree_at_most(g, s, n)
+}
+
+define min_degree_at_least[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat) -> Bool {
+    forall(v: V) {
+        s.contains(v) implies n <= degree(g, s, v)
+    }
+}
+
+theorem min_degree_at_least_apply[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat, v: V) {
+    min_degree_at_least(g, s, n) and s.contains(v) implies n <= degree(g, s, v)
+}
+
+theorem min_degree_at_least_intro[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat) {
+    (forall(v: V) { s.contains(v) implies n <= degree(g, s, v) })
+        implies min_degree_at_least(g, s, n)
+}
+
+define is_regular[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) -> Bool {
+    forall(v: V) {
+        s.contains(v) implies degree(g, s, v) = k
+    }
+}
+
+theorem is_regular_apply[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat, v: V) {
+    is_regular(g, s, k) and s.contains(v) implies degree(g, s, v) = k
+}
+
+theorem is_regular_intro[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    (forall(v: V) { s.contains(v) implies degree(g, s, v) = k }) implies is_regular(g, s, k)
+}
+
+define is_cubic[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    is_regular(g, s, Nat.3)
+}
+
+theorem cubic_is_regular_three[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_cubic(g, s) implies is_regular(g, s, Nat.3)
+}
+
+theorem cubic_of_regular_three[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_regular(g, s, Nat.3) implies is_cubic(g, s)
+}
+
+theorem cubic_degree[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    is_cubic(g, s) and s.contains(v) implies degree(g, s, v) = Nat.3
+}
+
+theorem regular_max_degree_at_most[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_regular(g, s, k) implies max_degree_at_most(g, s, k)
+}
+
+theorem regular_min_degree_at_least[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    is_regular(g, s, k) implies min_degree_at_least(g, s, k)
+}
+
+theorem regular_of_bounds[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat) {
+    max_degree_at_most(g, s, k) and min_degree_at_least(g, s, k) implies is_regular(g, s, k)
+}
+
+theorem max_degree_at_most_weaken[V](g: SimpleGraph[V], s: FiniteSet[V], m: Nat, n: Nat) {
+    max_degree_at_most(g, s, m) and m <= n implies max_degree_at_most(g, s, n)
+}
+
+theorem min_degree_at_least_weaken[V](g: SimpleGraph[V], s: FiniteSet[V], m: Nat, n: Nat) {
+    min_degree_at_least(g, s, m) and n <= m implies min_degree_at_least(g, s, n)
+}
+
+theorem min_degree_at_least_zero[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    min_degree_at_least(g, s, Nat.0)
+}
+
+theorem cubic_max_degree_three[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_cubic(g, s) implies max_degree_at_most(g, s, Nat.3)
+}
+
+theorem cubic_min_degree_three[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_cubic(g, s) implies min_degree_at_least(g, s, Nat.3)
+}
+
+theorem degree_le_ambient[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    degree(g, s, v) <= fs_card(s)
+}
+
+theorem max_degree_at_most_ambient[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    max_degree_at_most(g, s, fs_card(s))
+}
+
+theorem regular_degree_le_ambient[V](g: SimpleGraph[V], s: FiniteSet[V], k: Nat, v: V) {
+    is_regular(g, s, k) and s.contains(v) implies k <= fs_card(s)
+}
+
+theorem degree_le_of_ambient_bound[V](g: SimpleGraph[V], s: FiniteSet[V], v: V, n: Nat) {
+    fs_card(s) <= n implies degree(g, s, v) <= n
+}
+
+theorem neighborhood_card_le[V](g: SimpleGraph[V], s: FiniteSet[V], v: V, n: Nat) {
+    fs_card(s) <= n implies fs_card(neighborhood(g, s, v)) <= n
+}
+
+define diamond4_adj(x: Fin[Nat.4], y: Fin[Nat.4]) -> Bool {
+    x.value != y.value
+        and (x.value = Nat.0 or x.value = Nat.1 or y.value = Nat.0 or y.value = Nat.1)
+}
+
+theorem diamond4_adj_is_symmetric {
+    is_symmetric(diamond4_adj)
+}
+
+theorem diamond4_adj_is_irreflexive {
+    is_irreflexive(diamond4_adj)
+}
+
+theorem diamond4_adj_constraint {
+    SimpleGraph.constraint(diamond4_adj)
+}
+
+theorem diamond4_graph_exists {
+    exists(g: SimpleGraph[Fin[Nat.4]]) { SimpleGraph.new(diamond4_adj) = Option.some(g) }
+}
+
+let diamond4_graph: SimpleGraph[Fin[Nat.4]] satisfy {
+    SimpleGraph.new(diamond4_adj) = Option.some(diamond4_graph)
+}
+
+theorem diamond4_graph_adj_iff(x: Fin[Nat.4], y: Fin[Nat.4]) {
+    diamond4_graph.adj(x, y) = (x.value != y.value
+        and (x.value = Nat.0 or x.value = Nat.1 or y.value = Nat.0 or y.value = Nat.1))
+}
+
+define is_diamond_at[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) -> Bool {
+    g.adj(a, b) and g.adj(a, c) and g.adj(a, d) and g.adj(b, c) and g.adj(b, d)
+        and c != d and not g.adj(c, d)
+}
+
+theorem is_diamond_at_intro[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    g.adj(a, b) and g.adj(a, c) and g.adj(a, d) and g.adj(b, c) and g.adj(b, d)
+        and c != d and not g.adj(c, d) implies is_diamond_at(g, a, b, c, d)
+}
+
+theorem is_diamond_at_apply[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    is_diamond_at(g, a, b, c, d) implies
+        g.adj(a, b) and g.adj(a, c) and g.adj(a, d) and g.adj(b, c) and g.adj(b, d)
+            and c != d and not g.adj(c, d)
+}
+
+theorem diamond_four_distinct[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    is_diamond_at(g, a, b, c, d) implies four_distinct(a, b, c, d)
+}
+
+theorem diamond_pairs[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    is_diamond_at(g, a, b, c, d) implies
+        not g.adj(a, a)
+            and g.adj(a, b)
+            and g.adj(a, c)
+            and g.adj(a, d)
+            and g.adj(b, a)
+            and not g.adj(b, b)
+            and g.adj(b, c)
+            and g.adj(b, d)
+            and g.adj(c, a)
+            and g.adj(c, b)
+            and not g.adj(c, c)
+            and not g.adj(c, d)
+            and g.adj(d, a)
+            and g.adj(d, b)
+            and not g.adj(d, c)
+            and not g.adj(d, d)
+}
+
+theorem diamond_map_is_embedding[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    is_diamond_at(g, a, b, c, d)
+        implies is_graph_embedding(diamond4_graph, g, claw_map(a, b, c, d))
+}
+
+theorem contains_induced_diamond_of_config[V](g: SimpleGraph[V], a: V, b: V, c: V, d: V) {
+    is_diamond_at(g, a, b, c, d) implies contains_induced(g, diamond4_graph)
+}
+
+theorem is_diamond_at_of_common_neighbors[V](
+    g: SimpleGraph[V], s: FiniteSet[V], x: V, y: V, z: V, w: V
+) {
+    g.adj(x, y) and common_neighborhood(g, s, x, y).contains(z)
+        and common_neighborhood(g, s, x, y).contains(w)
+        and z != w and not g.adj(z, w) implies is_diamond_at(g, x, y, z, w)
+}
+
+theorem is_diamond_free_of_free_of_diamond[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    is_free_of(g, diamond4_graph) implies is_diamond_free(g, s)
+}
+
+theorem config_of_contains_induced_diamond[V](g: SimpleGraph[V]) {
+    contains_induced(g, diamond4_graph) implies exists(s: FiniteSet[V], x: V, y: V) {
+        s.contains(x) and s.contains(y) and g.adj(x, y)
+            and has_nonadjacent_common_neighbors(g, s, x, y)
+    }
+}
+
+theorem free_of_diamond_of_is_diamond_free[V](g: SimpleGraph[V]) {
+    (forall(s: FiniteSet[V]) { is_diamond_free(g, s) })
+        implies is_free_of(g, diamond4_graph)
+}
+
+theorem free_of_diamond_iff_diamond_free[V](g: SimpleGraph[V]) {
+    is_free_of(g, diamond4_graph) = forall(s: FiniteSet[V]) { is_diamond_free(g, s) }
+}
+
+theorem dominating_set_contains_some[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V], v: V
+) {
+    is_dominating_set(g, s, d) and s.contains(v) implies exists(w: V) { d.contains(w) }
+}
+
+theorem dominating_set_card_positive[V](
+    g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V], v: V
+) {
+    is_dominating_set(g, s, d) and s.contains(v) implies Nat.1 <= fs_card(d)
+}
+
+theorem domination_number_positive[V](g: SimpleGraph[V], s: FiniteSet[V], v: V) {
+    s.contains(v) implies Nat.1 <= domination_number(g, s)
+}
+
+theorem empty_graph_is_dominated_eq[V](d: FiniteSet[V], v: V) {
+    is_dominated(empty_graph[V], d, v) = d.contains(v)
+}
+
+theorem empty_graph_dominating_subset_eq[V](s: FiniteSet[V], d: FiniteSet[V]) {
+    is_dominating_subset(empty_graph[V], s, d) implies d = s
+}
+
+theorem empty_graph_domination_number[V](s: FiniteSet[V]) {
+    domination_number(empty_graph[V], s) = fs_card(s)
+}
+
+theorem complete_graph_singleton_dominates[V](s: FiniteSet[V], v: V) {
+    is_dominating_set(complete_graph[V], s, FiniteSet.empty[V].insert(v))
+}
+
+theorem complete_graph_domination_number[V](s: FiniteSet[V], v: V) {
+    s.contains(v) implies domination_number(complete_graph[V], s) = Nat.1
+}
+
+define has_all_edges_of[V](h: SimpleGraph[V], g: SimpleGraph[V]) -> Bool {
+    forall(x: V, y: V) {
+        g.adj(x, y) implies h.adj(x, y)
+    }
+}
+
+theorem has_all_edges_of_apply[V](
+    h: SimpleGraph[V], g: SimpleGraph[V], x: V, y: V
+) {
+    has_all_edges_of(h, g) and g.adj(x, y) implies h.adj(x, y)
+}
+
+theorem has_all_edges_of_intro[V](h: SimpleGraph[V], g: SimpleGraph[V]) {
+    (forall(x: V, y: V) { g.adj(x, y) implies h.adj(x, y) }) implies has_all_edges_of(h, g)
+}
+
+theorem complete_graph_has_all_edges[V](g: SimpleGraph[V]) {
+    has_all_edges_of(complete_graph[V], g)
+}
+
+theorem is_dominated_of_has_all_edges[V](
+    h: SimpleGraph[V], g: SimpleGraph[V], d: FiniteSet[V], v: V
+) {
+    has_all_edges_of(h, g) and is_dominated(g, d, v) implies is_dominated(h, d, v)
+}
+
+theorem is_dominating_set_of_has_all_edges[V](
+    h: SimpleGraph[V], g: SimpleGraph[V], s: FiniteSet[V], d: FiniteSet[V]
+) {
+    has_all_edges_of(h, g) and is_dominating_set(g, s, d) implies is_dominating_set(h, s, d)
+}
+
+theorem domination_number_antitone_in_edges[V](
+    h: SimpleGraph[V], g: SimpleGraph[V], s: FiniteSet[V]
+) {
+    has_all_edges_of(h, g) implies domination_number(h, s) <= domination_number(g, s)
+}
+
+theorem complete_graph_domination_number_least[V](g: SimpleGraph[V], s: FiniteSet[V]) {
+    domination_number(complete_graph[V], s) <= domination_number(g, s)
+}
+
+theorem has_all_edges_of_trans[V](
+    k: SimpleGraph[V], h: SimpleGraph[V], g: SimpleGraph[V]
+) {
+    has_all_edges_of(k, h) and has_all_edges_of(h, g) implies has_all_edges_of(k, g)
+}
+
+define walk_visits_set[V](s: FiniteSet[V], start: V, steps: List[V]) -> Bool {
+    forall(x: V) {
+        s.contains(x) implies simple_graph_walk_vertices(start, steps).contains(x)
+    }
+}
+
+define is_hamiltonian_cycle[V](g: SimpleGraph[V], s: FiniteSet[V], start: V, steps: List[V]) -> Bool {
+    simple_graph_closed_walk(g, start, steps) and
+    Nat.3 <= steps.length and
+    steps.is_unique and
+    walk_vertices_in_set(s, start, steps) and
+    walk_visits_set(s, start, steps)
+}
+
+theorem is_hamiltonian_cycle_unfold[V](g: SimpleGraph[V], s: FiniteSet[V], start: V, steps: List[V]) {
+    is_hamiltonian_cycle(g, s, start, steps) = (
+        simple_graph_closed_walk(g, start, steps) and Nat.3 <= steps.length and
+        steps.is_unique and walk_vertices_in_set(s, start, steps) and
+        walk_visits_set(s, start, steps)
+    )
+}
+
+define simple_graph_fs_connected[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    forall(x: V, y: V) {
+        s.contains(x) and s.contains(y) implies simple_graph_reachable(g, x, y)
+    }
+}
+
+define is_hamiltonian[V](g: SimpleGraph[V], s: FiniteSet[V]) -> Bool {
+    exists(start: V, steps: List[V]) {
+        is_hamiltonian_cycle(g, s, start, steps)
+    }
+}
+
+define cycle_steps(n: Nat) -> List[Nat] {
+    match n {
+        Nat.zero {
+            List.nil[Nat]
+        }
+        Nat.suc(m) {
+            List.cons(m, cycle_steps(m))
+        }
+    }
+}
+
+theorem cycle_steps_lt(n: Nat, x: Nat) {
+    cycle_steps(n).contains(x) implies x < n
+}
+
+theorem cycle_steps_length(n: Nat) {
+    cycle_steps(n).length = n
+}
+
+theorem cycle_steps_unique(n: Nat) {
+    cycle_steps(n).is_unique
+}
+
+theorem cycle_steps_contains_of_lt(n: Nat, x: Nat) {
+    Nat.1 <= x and x < n implies cycle_steps(n).contains(x)
+}
+
+theorem cycle_steps_walk_vertices_in_range(n: Nat) {
+    Nat.1 <= n implies walk_vertices_in_set(range_set(n), Nat.0, cycle_steps(n))
+}
+
+theorem cycle_steps_walk_visits_range(n: Nat) {
+    walk_visits_set(range_set(n), Nat.0, cycle_steps(n))
+}
+
+theorem cycle_graph_walk_desc(n: Nat, m: Nat) {
+    m < n implies simple_graph_walk(cycle_graph(n), m, Nat.0, cycle_steps(m))
+}
+
 theorem cycle_graph_closed_walk_suc(m: Nat) {
     Nat.2 <= m implies simple_graph_closed_walk(cycle_graph(m.suc), Nat.0, cycle_steps(m.suc))
 }
@@ -1473,95 +2307,4 @@ theorem strictly_growing_upto_apply[V](
 ) {
     strictly_growing_upto(g, s, b, n) and k < n
         implies forcing_iterate(g, s, b, k.suc) != forcing_iterate(g, s, b, k)
-}
-
-theorem strictly_growing_upto_weaken[V](
-    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat, m: Nat
-) {
-    strictly_growing_upto(g, s, b, n) and m <= n implies strictly_growing_upto(g, s, b, m)
-}
-
-theorem forcing_iterate_card_bound[V](
-    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V], n: Nat
-) {
-    b.subset_eq(s) and strictly_growing_upto(g, s, b, n)
-        implies fs_card(b) + n <= fs_card(forcing_iterate(g, s, b, n))
-}
-
-theorem forcing_iterate_becomes_stationary[V](
-    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
-) {
-    b.subset_eq(s) implies not strictly_growing_upto(g, s, b, fs_card(s).suc)
-}
-
-theorem forcing_iterate_fixed_point_exists[V](
-    g: SimpleGraph[V], s: FiniteSet[V], b: FiniteSet[V]
-) {
-    b.subset_eq(s) implies exists(k: Nat) {
-        k <= fs_card(s) and forcing_iterate(g, s, b, k.suc) = forcing_iterate(g, s, b, k)
-    }
-}
-
-theorem complete_graph_can_force_last[V](
-    s: FiniteSet[V], v: V, u: V
-) {
-    s.contains(v) and fs_remove(s, v).contains(u)
-        implies can_force(complete_graph[V], s, fs_remove(s, v), u, v)
-}
-
-theorem complete_graph_derived_set_all[V](s: FiniteSet[V], v: V, u: V) {
-    s.contains(v) and fs_remove(s, v).contains(u)
-        implies derived_set(complete_graph[V], s, fs_remove(s, v)) = s
-}
-
-theorem complete_graph_remove_is_zero_forcing[V](s: FiniteSet[V], v: V, u: V) {
-    s.contains(v) and fs_remove(s, v).contains(u)
-        implies is_zero_forcing_set(complete_graph[V], s, fs_remove(s, v))
-}
-
-theorem complete_graph_zero_forcing_number_lt[V](s: FiniteSet[V], v: V, u: V) {
-    s.contains(v) and s.contains(u) and u != v
-        implies zero_forcing_number(complete_graph[V], s) < fs_card(s)
-}
-
-theorem complete_graph_two_white_blocks_forcing[V](
-    s: FiniteSet[V], b: FiniteSet[V], w1: V, w2: V
-) {
-    s.contains(w1) and not b.contains(w1) and s.contains(w2) and not b.contains(w2)
-        and w1 != w2
-        implies is_forcing_closed(complete_graph[V], s, b)
-}
-
-theorem complete_graph_zero_forcing_set_card[V](s: FiniteSet[V], b: FiniteSet[V]) {
-    b.subset_eq(s) and is_zero_forcing_set(complete_graph[V], s, b)
-        implies fs_card(fs_difference(s, b)) < Nat.2
-}
-
-theorem walk_concat[V](g: SimpleGraph[V], a: V, m: V, b: V, w1: List[V], w2: List[V]) {
-    simple_graph_walk(g, a, m, w1) and simple_graph_walk(g, m, b, w2)
-        implies simple_graph_walk(g, a, b, w1 + w2)
-}
-
-theorem walk_reverse[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
-    simple_graph_walk(g, a, b, steps)
-        implies simple_graph_walk(g, b, a, rev_walk_targets(steps, a))
-}
-
-define graph_distance[V](g: SimpleGraph[V], x: V, y: V, n: Nat) -> Bool {
-    exists(steps: List[V]) {
-        simple_graph_walk(g, x, y, steps) and steps.length = n and
-            forall(shorter: List[V]) {
-                simple_graph_walk(g, x, y, shorter) implies n <= shorter.length
-            }
-    }
-}
-
-theorem graph_distance_adj[V](g: SimpleGraph[V], x: V, y: V) {
-    g.adj(x, y) implies graph_distance(g, x, y, Nat.1)
-}
-
-theorem walk_contains_path[V](g: SimpleGraph[V], a: V, b: V, steps: List[V]) {
-    simple_graph_walk(g, a, b, steps) implies exists(steps2: List[V]) {
-        simple_graph_path(g, a, b, steps2)
-    }
 }

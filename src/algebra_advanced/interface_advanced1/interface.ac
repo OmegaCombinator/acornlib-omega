@@ -18,6 +18,7 @@ define polyc_neg[R: CommRing](p: PolyC[R]) -> PolyC[R] {
 let polyc_zero[R: CommRing]: PolyC[R] = PolyC[R].new(polynomial_zero[R])
 
 /// The wrapped one polynomial.
+
 let polyc_one[R: CommRing]: PolyC[R] = PolyC[R].new(polynomial_one[R])
 
 /// The constant polynomial with the given value, wrapped.
@@ -52,6 +53,22 @@ attributes PolyC[R: CommRing] {
 
 instance PolyC[R: CommRing]: Add {
     let add = PolyC[R].add
+}
+
+instance PolyC[R: CommRing]: Mul {
+    let mul = PolyC[R].mul
+}
+
+instance PolyC[R: CommRing]: Neg {
+    let neg = PolyC[R].neg
+}
+
+instance PolyC[R: CommRing]: Zero {
+    let 0 = PolyC[R].zero
+}
+
+instance PolyC[R: CommRing]: One {
+    let 1 = PolyC[R].one
 }
 
 theorem polyc_typeclass_add_eq_polyc_add[R: CommRing](p: PolyC[R], q: PolyC[R]) {
@@ -167,6 +184,65 @@ theorem polyc_semiring_distrib_right_instance_law[R: CommRing](p: PolyC[R], q: P
     Mul.mul(Add.add(p, q), r) = Add.add(Mul.mul(p, r), Mul.mul(q, r))
 }
 
+instance PolyC[R: CommRing]: AddSemigroup
+
+/// Wrapped polynomials over a commutative ring form an additive commutative semigroup.
+
+instance PolyC[R: CommRing]: AddCommSemigroup
+
+/// Wrapped polynomials over a commutative ring form an additive monoid.
+
+instance PolyC[R: CommRing]: AddMonoid
+
+/// Wrapped polynomials over a commutative ring form an additive commutative monoid.
+
+instance PolyC[R: CommRing]: AddCommMonoid
+
+/// Wrapped polynomials over a commutative ring form an additive group.
+
+instance PolyC[R: CommRing]: AddGroup
+
+/// Wrapped polynomials over a commutative ring form an additive commutative group.
+
+instance PolyC[R: CommRing]: AddCommGroup
+
+/// Wrapped polynomials over a commutative ring form a multiplicative semigroup.
+
+instance PolyC[R: CommRing]: Semigroup
+
+/// Wrapped polynomials over a commutative ring form a commutative semigroup.
+
+instance PolyC[R: CommRing]: CommSemigroup
+
+/// Wrapped polynomials over a commutative ring form a monoid.
+
+instance PolyC[R: CommRing]: Monoid
+
+/// Wrapped polynomials over a commutative ring form a commutative monoid.
+
+instance PolyC[R: CommRing]: CommMonoid
+
+/// Wrapped polynomials over a commutative ring form a semiring.
+
+instance PolyC[R: CommRing]: Semiring
+
+/// Wrapped polynomials over a commutative ring form a ring.
+
+instance PolyC[R: CommRing]: Ring
+
+/// Wrapped polynomials over a commutative ring form a commutative ring.
+
+instance PolyC[R: CommRing]: CommRing
+
+// ---------------------------------------------------------------------------
+// Evaluation of a wrapped polynomial at a ring element
+// ---------------------------------------------------------------------------
+
+/// Evaluation of a wrapped polynomial at a ring element.
+define polyc_eval[R: CommRing](c: PolyC[R], x: R) -> R {
+    polynomial_eval(c.underlying, x)
+}
+
 theorem polyc_eval_add[R: CommRing](c: PolyC[R], d: PolyC[R], x: R) {
     polyc_eval(polyc_add(c, d), x) = polyc_eval(c, x) + polyc_eval(d, x)
 }
@@ -231,12 +307,15 @@ define poly2_sub[R: CommRing](p: Poly2[R], q: Poly2[R]) -> Poly2[R] {
 let biv_zero[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_zero[PolyC[R]])
 
 /// The one bivariate polynomial.
+
 let biv_one[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_one[PolyC[R]])
 
 /// The coordinate polynomial `X` (constant in `Y`).
+
 let biv_x[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_constant[PolyC[R]](polyc_x[R]))
 
 /// The coordinate polynomial `Y`.
+
 let biv_y[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_monomial[PolyC[R]](Nat.1, polyc_one[R]))
 
 /// A bivariate polynomial is determined by its underlying polynomial.
@@ -252,6 +331,7 @@ let parabola_poly[R: CommRing]: Poly2[R] =
     poly2_sub(biv_y[R], poly2_mul(biv_x[R], biv_x[R]))
 
 /// The bivariate polynomial `X^2 + Y^2 - 1` (the unit circle).
+
 let circle_poly[R: CommRing]: Poly2[R] =
     poly2_sub(poly2_add(poly2_mul(biv_x[R], biv_x[R]), poly2_mul(biv_y[R], biv_y[R])), biv_one[R])
 
@@ -338,6 +418,7 @@ define zero_set[R: CommRing](f: Poly2[R]) -> Set[PlanePoint[R]] {
 let field_two[F: Field]: F = F.1 + F.1
 
 /// Four, written as `1 + 1 + 1 + 1` in any field.
+
 let field_four[F: Field]: F = F.1 + F.1 + F.1 + F.1
 
 /// `4 = 2^2` in any field.
@@ -530,82 +611,6 @@ theorem real_ordered_field_inverse_positive_smoke(a: Real) {
     Real.0 < a implies Real.0 < a.inverse
 }
 
-theorem int_neg_one_neq_zero {
-    -Int.1 != Int.0
-}
-
-theorem int_two_ne_zero {
-    Int.1 + Int.1 != Int.0
-}
-
-theorem int_two_mul(a: Int) {
-    (Int.1 + Int.1) * a = a + a
-}
-
-theorem int_neg_neg_one {
-    --Int.1 = Int.1
-}
-
-theorem int_from_nat_two {
-    from_nat[Int](2) = Int.1 + Int.1
-}
-
-theorem int_pow_two(a: Int) {
-    a.pow(2) = a * a
-}
-
-theorem int_sub_self_pow_two(a: Int) {
-    (a - a).pow(2) = Int.0
-}
-
-theorem int_mul_neg_one(a: Int) {
-    a * -Int.1 = -a
-}
-
-theorem rat_two_inverse_mul_two {
-    Rat.2.inverse * Rat.2 = Rat.1
-}
-
-theorem rat_two_mul_inverse {
-    Rat.2 * Rat.2.inverse = Rat.1
-}
-
-theorem rat_two_inverse_inverse {
-    Rat.2.inverse.inverse = Rat.2
-}
-
-theorem rat_two_inverse_ne_zero {
-    Rat.2.inverse != Rat.0
-}
-
-theorem rat_fdiv_one_two {
-    fdiv(Rat.1, Rat.2) = Rat.2.inverse
-}
-
-theorem rat_fdiv_one_two_cancel {
-    fdiv(Rat.1, Rat.2) * Rat.2 = Rat.1
-}
-
-theorem rat_one_plus_one_pos {
-    (Rat.1 + Rat.1).is_positive
-}
-
-theorem rat_one_plus_one_ne_zero {
-    Rat.1 + Rat.1 != Rat.0
-}
-
-theorem rat_one_plus_one_inverse_pos {
-    (Rat.1 + Rat.1).inverse.is_positive
-}
-
-theorem rat_mul_cancel_left(a: Rat, b: Rat, c: Rat) {
-    a != Rat.0 and a * b = a * c implies b = c
-}
-
-theorem rat_two_inverse_pow_two {
-    Rat.2.inverse.pow(2) = Rat.2.pow(2).inverse
-}
-
 theorem field_mul_cancel_left[F: Field](a: F, b: F, c: F) {
     a != F.0 and a * b = a * c implies b = c
 }
@@ -700,6 +705,82 @@ theorem field_fdiv_scale[F: Field](a: F, b: F, c: F) {
 
 theorem field_fdiv_inv[F: Field](a: F, b: F, c: F) {
     fdiv(a, fdiv(b, c)) = fdiv(a * c, b)
+}
+
+theorem int_neg_one_neq_zero {
+    -Int.1 != Int.0
+}
+
+theorem int_two_ne_zero {
+    Int.1 + Int.1 != Int.0
+}
+
+theorem int_two_mul(a: Int) {
+    (Int.1 + Int.1) * a = a + a
+}
+
+theorem int_neg_neg_one {
+    --Int.1 = Int.1
+}
+
+theorem int_from_nat_two {
+    from_nat[Int](2) = Int.1 + Int.1
+}
+
+theorem int_pow_two(a: Int) {
+    a.pow(2) = a * a
+}
+
+theorem int_sub_self_pow_two(a: Int) {
+    (a - a).pow(2) = Int.0
+}
+
+theorem int_mul_neg_one(a: Int) {
+    a * -Int.1 = -a
+}
+
+theorem rat_two_inverse_mul_two {
+    Rat.2.inverse * Rat.2 = Rat.1
+}
+
+theorem rat_two_mul_inverse {
+    Rat.2 * Rat.2.inverse = Rat.1
+}
+
+theorem rat_two_inverse_inverse {
+    Rat.2.inverse.inverse = Rat.2
+}
+
+theorem rat_two_inverse_ne_zero {
+    Rat.2.inverse != Rat.0
+}
+
+theorem rat_fdiv_one_two {
+    fdiv(Rat.1, Rat.2) = Rat.2.inverse
+}
+
+theorem rat_fdiv_one_two_cancel {
+    fdiv(Rat.1, Rat.2) * Rat.2 = Rat.1
+}
+
+theorem rat_one_plus_one_pos {
+    (Rat.1 + Rat.1).is_positive
+}
+
+theorem rat_one_plus_one_ne_zero {
+    Rat.1 + Rat.1 != Rat.0
+}
+
+theorem rat_one_plus_one_inverse_pos {
+    (Rat.1 + Rat.1).inverse.is_positive
+}
+
+theorem rat_mul_cancel_left(a: Rat, b: Rat, c: Rat) {
+    a != Rat.0 and a * b = a * c implies b = c
+}
+
+theorem rat_two_inverse_pow_two {
+    Rat.2.inverse.pow(2) = Rat.2.pow(2).inverse
 }
 
 theorem field_fdiv_inverse_rev[F: Field](a: F, b: F) {

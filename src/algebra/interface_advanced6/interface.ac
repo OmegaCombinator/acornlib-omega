@@ -1,3 +1,611 @@
+theorem subfield_contains_inverse[F: Field](s: Subfield[F], a: F) {
+    s.contains(a) and a != F.0 implies s.contains(a.inverse)
+}
+
+theorem subfield_contains_mul_inverse[F: Field](s: Subfield[F], a: F, b: F) {
+    s.contains(a) and s.contains(b) and b != F.0 implies s.contains(a * b.inverse)
+}
+
+define subfield_inter_contains[F: Field](a: F -> Bool, b: F -> Bool) -> F -> Bool {
+    function(x: F) { a(x) and b(x) }
+}
+
+theorem subfield_inter_is_subfield[F: Field](a: Subfield[F], b: Subfield[F]) {
+    subfield_constraint(subfield_inter_contains(a.contains, b.contains))
+}
+
+let subfield_inter[F: Field](a: Subfield[F], b: Subfield[F]) -> result: Subfield[F] satisfy {
+    Subfield.new(subfield_inter_contains(a.contains, b.contains)) = Option.some(result)
+}
+
+theorem subfield_inter_contains_eq[F: Field](a: Subfield[F], b: Subfield[F], x: F) {
+    subfield_inter(a, b).contains(x) = (a.contains(x) and b.contains(x))
+}
+
+theorem subfield_inter_le_left[F: Field](a: Subfield[F], b: Subfield[F]) {
+    subfield_le(subfield_inter(a, b), a)
+}
+
+theorem subfield_inter_le_right[F: Field](a: Subfield[F], b: Subfield[F]) {
+    subfield_le(subfield_inter(a, b), b)
+}
+
+theorem subfield_inter_greatest[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
+    subfield_le(c, a) and subfield_le(c, b) implies subfield_le(c, subfield_inter(a, b))
+}
+
+theorem subfield_inter_comm[F: Field](a: Subfield[F], b: Subfield[F]) {
+    subfield_inter(a, b) = subfield_inter(b, a)
+}
+
+theorem subfield_inter_idem[F: Field](a: Subfield[F]) {
+    subfield_inter(a, a) = a
+}
+
+theorem subfield_inter_eq_left_iff_le[F: Field](a: Subfield[F], b: Subfield[F]) {
+    (subfield_inter(a, b) = a) = subfield_le(a, b)
+}
+
+theorem subfield_inter_mono_left[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
+    subfield_le(a, b) implies subfield_le(subfield_inter(a, c), subfield_inter(b, c))
+}
+
+theorem subfield_inter_mono_right[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
+    subfield_le(a, b) implies subfield_le(subfield_inter(c, a), subfield_inter(c, b))
+}
+
+theorem subfield_inter_mono[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F], d: Subfield[F]) {
+    subfield_le(a, b) and subfield_le(c, d) implies subfield_le(subfield_inter(a, c), subfield_inter(b, d))
+}
+
+theorem subfield_le_inter_iff[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
+    subfield_le(c, subfield_inter(a, b)) = (subfield_le(c, a) and subfield_le(c, b))
+}
+
+theorem subfield_inter_assoc[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
+    subfield_inter(subfield_inter(a, b), c) = subfield_inter(a, subfield_inter(b, c))
+}
+
+define field_hom_image_contains[F: Field, E: Field](phi: FieldHom[F, E], y: E) -> Bool {
+    exists(x: F) { phi.hom(x) = y }
+}
+
+let field_hom_image[F: Field, E: Field](phi: FieldHom[F, E]) -> result: Subfield[E] satisfy {
+    Subfield.new(field_hom_image_contains(phi)) = Option.some(result)
+}
+
+theorem field_hom_image_contains_eq[F: Field, E: Field](phi: FieldHom[F, E]) {
+    field_hom_image(phi).contains = field_hom_image_contains(phi)
+}
+
+theorem field_hom_image_contains_hom[F: Field, E: Field](phi: FieldHom[F, E], x: F) {
+    field_hom_image(phi).contains(phi.hom(x))
+}
+
+define top_subfield_contains[F: Field](x: F) -> Bool {
+    true
+}
+
+theorem top_subfield_contains_is_subfield[F: Field] {
+    subfield_constraint(top_subfield_contains[F])
+}
+
+let top_subfield[F: Field]: Subfield[F] satisfy {
+    Subfield.new(top_subfield_contains[F]) = Option.some(top_subfield)
+}
+
+theorem top_subfield_contains_all[F: Field](x: F) {
+    top_subfield[F].contains(x)
+}
+
+theorem field_hom_image_identity[F: Field] {
+    field_hom_image(identity_field_hom[F]) = top_subfield[F]
+}
+
+theorem top_subfield_ge[F: Field](s: Subfield[F]) {
+    subfield_le(s, top_subfield[F])
+}
+
+theorem field_hom_image_le_top[F: Field, E: Field](phi: FieldHom[F, E]) {
+    subfield_le(field_hom_image(phi), top_subfield[E])
+}
+
+theorem field_hom_image_compose_contains[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], y: K) {
+    field_hom_image(compose_field_hom(f, g)).contains(y) implies field_hom_image(f).contains(y)
+}
+
+theorem field_hom_image_compose_le[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
+    subfield_le(field_hom_image(compose_field_hom(f, g)), field_hom_image(f))
+}
+
+define subfield_preimage_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E]) -> F -> Bool {
+    function(x: F) { s.contains(phi.hom(x)) }
+}
+
+let subfield_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E]) -> result: Subfield[F] satisfy {
+    Subfield.new(subfield_preimage_contains(phi, s)) = Option.some(result)
+}
+
+theorem subfield_preimage_contains_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], x: F) {
+    subfield_preimage(phi, s).contains(x) = s.contains(phi.hom(x))
+}
+
+theorem subfield_preimage_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]) {
+    subfield_le(s, t) implies subfield_le(subfield_preimage(phi, s), subfield_preimage(phi, t))
+}
+
+theorem subfield_preimage_inter[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]) {
+    subfield_preimage(phi, subfield_inter(s, t)) = subfield_inter(subfield_preimage(phi, s), subfield_preimage(phi, t))
+}
+
+theorem subfield_preimage_identity[F: Field](s: Subfield[F]) {
+    subfield_preimage(identity_field_hom[F], s) = s
+}
+
+theorem subfield_preimage_compose[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], s: Subfield[K]) {
+    subfield_preimage(compose_field_hom(f, g), s) = subfield_preimage(g, subfield_preimage(f, s))
+}
+
+theorem subfield_preimage_top[F: Field, E: Field](phi: FieldHom[F, E]) {
+    subfield_preimage(phi, top_subfield[E]) = top_subfield[F]
+}
+
+define subfield_image_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) -> E -> Bool {
+    function(y: E) { exists(x: F) { s.contains(x) and phi.hom(x) = y } }
+}
+
+let subfield_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) -> result: Subfield[E] satisfy {
+    Subfield.new(subfield_image_contains(phi, s)) = Option.some(result)
+}
+
+theorem subfield_image_contains_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], y: E) {
+    subfield_image(phi, s).contains(y) = exists(x: F) { s.contains(x) and phi.hom(x) = y }
+}
+
+theorem subfield_image_contains_hom[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], x: F) {
+    s.contains(x) implies subfield_image(phi, s).contains(phi.hom(x))
+}
+
+theorem subfield_image_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
+    subfield_le(s, t) implies subfield_le(subfield_image(phi, s), subfield_image(phi, t))
+}
+
+theorem subfield_image_top[F: Field, E: Field](phi: FieldHom[F, E]) {
+    subfield_image(phi, top_subfield[F]) = field_hom_image(phi)
+}
+
+theorem subfield_image_identity[F: Field](s: Subfield[F]) {
+    subfield_image(identity_field_hom[F], s) = s
+}
+
+theorem subfield_image_compose[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], s: Subfield[F]) {
+    subfield_image(compose_field_hom(f, g), s) = subfield_image(f, subfield_image(g, s))
+}
+
+theorem subfield_image_inter_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
+    subfield_le(subfield_image(phi, subfield_inter(s, t)), subfield_inter(subfield_image(phi, s), subfield_image(phi, t)))
+}
+
+theorem subfield_image_inter[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
+    subfield_image(phi, subfield_inter(s, t)) = subfield_inter(subfield_image(phi, s), subfield_image(phi, t))
+}
+
+theorem subfield_image_le_field_hom_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
+    subfield_le(subfield_image(phi, s), field_hom_image(phi))
+}
+
+theorem subfield_image_preimage_contains[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
+    subfield_image(phi, subfield_preimage(phi, t)).contains(y) implies t.contains(y)
+}
+
+theorem subfield_image_preimage_le[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
+    subfield_le(subfield_image(phi, subfield_preimage(phi, t)), t)
+}
+
+theorem subfield_preimage_image_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], x: F) {
+    s.contains(x) implies subfield_preimage(phi, subfield_image(phi, s)).contains(x)
+}
+
+theorem subfield_le_preimage_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
+    subfield_le(s, subfield_preimage(phi, subfield_image(phi, s)))
+}
+
+theorem subfield_preimage_image_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
+    subfield_preimage(phi, subfield_image(phi, s)) = s
+}
+
+theorem subfield_inter_preimage_image_contains[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
+    t.contains(y) and field_hom_image(phi).contains(y) implies subfield_image(phi, subfield_preimage(phi, t)).contains(y)
+}
+
+theorem subfield_image_preimage_in_image[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
+    subfield_image(phi, subfield_preimage(phi, t)).contains(y) implies field_hom_image(phi).contains(y)
+}
+
+theorem subfield_image_preimage_eq_inter[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
+    subfield_image(phi, subfield_preimage(phi, t)) = subfield_inter(t, field_hom_image(phi))
+}
+
+theorem subfield_image_le_of_le_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
+    subfield_le(s, subfield_preimage(phi, t)) implies subfield_le(subfield_image(phi, s), t)
+}
+
+theorem subfield_le_preimage_of_image_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
+    subfield_le(subfield_image(phi, s), t) implies subfield_le(s, subfield_preimage(phi, t))
+}
+
+theorem subfield_image_le_iff_le_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
+    subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+}
+
+theorem subfield_image_preimage_eq_iff_le_image[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
+    (subfield_image(phi, subfield_preimage(phi, t)) = t) = subfield_le(t, field_hom_image(phi))
+}
+
+theorem subfield_image_preimage_image_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
+    subfield_image(phi, subfield_preimage(phi, subfield_image(phi, s))) = subfield_image(phi, s)
+}
+
+theorem subfield_preimage_image_preimage_eq[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
+    subfield_preimage(phi, subfield_image(phi, subfield_preimage(phi, t))) = subfield_preimage(phi, t)
+}
+
+theorem field_hom_image_compose_eq[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
+    field_hom_image(compose_field_hom(f, g)) = subfield_image(f, field_hom_image(g))
+}
+
+define is_field_hom_surjective[F: Field, E: Field](phi: FieldHom[F, E]) -> Bool {
+    forall(y: E) { exists(x: F) { phi.hom(x) = y } }
+}
+
+theorem field_hom_image_eq_top_implies_surjective[F: Field, E: Field](phi: FieldHom[F, E]) {
+    field_hom_image(phi) = top_subfield[E] implies is_field_hom_surjective(phi)
+}
+
+theorem surjective_implies_field_hom_image_eq_top[F: Field, E: Field](phi: FieldHom[F, E]) {
+    is_field_hom_surjective(phi) implies field_hom_image(phi) = top_subfield[E]
+}
+
+theorem field_hom_image_eq_top_iff_surjective[F: Field, E: Field](phi: FieldHom[F, E]) {
+    (field_hom_image(phi) = top_subfield[E]) = is_field_hom_surjective(phi)
+}
+
+theorem identity_field_hom_surjective[F: Field] {
+    is_field_hom_surjective(identity_field_hom[F])
+}
+
+theorem compose_field_hom_surjective[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
+    is_field_hom_surjective(f) and is_field_hom_surjective(g) implies is_field_hom_surjective(compose_field_hom(f, g))
+}
+
+define is_subfield_image_preimage_galois_connection[F: Field, E: Field](
+    phi: FieldHom[F, E]
+) -> Bool {
+    forall(s: Subfield[F], t: Subfield[E]) {
+        subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+    }
+}
+
+theorem subfield_image_preimage_galois_connection_at[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]
+) {
+    subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+}
+
+theorem field_hom_subfield_image_preimage_galois_connection_raw[F: Field, E: Field](
+    phi: FieldHom[F, E]
+) {
+    forall(s: Subfield[F], t: Subfield[E]) {
+        subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+    }
+}
+
+define subfield_image_preimage_closure[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F]
+) -> Subfield[F] {
+    subfield_preimage(phi, subfield_image(phi, s))
+}
+
+theorem subfield_image_preimage_closure_extensive[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F]
+) {
+    subfield_le(s, subfield_image_preimage_closure(phi, s))
+}
+
+theorem subfield_image_preimage_closure_monotone[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]
+) {
+    subfield_le(s, t) implies
+        subfield_le(subfield_image_preimage_closure(phi, s), subfield_image_preimage_closure(phi, t))
+}
+
+theorem subfield_le_image_preimage_closure_iff_image_le[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]
+) {
+    subfield_le(s, subfield_image_preimage_closure(phi, t)) =
+        subfield_le(subfield_image(phi, s), subfield_image(phi, t))
+}
+
+theorem subfield_image_preimage_closure_eq_self[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F]
+) {
+    subfield_image_preimage_closure(phi, s) = s
+}
+
+theorem subfield_image_of_preimage_closure_eq[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F]
+) {
+    subfield_image(phi, subfield_image_preimage_closure(phi, s)) = subfield_image(phi, s)
+}
+
+theorem subfield_image_preimage_closure_idempotent[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[F]
+) {
+    subfield_image_preimage_closure(phi, subfield_image_preimage_closure(phi, s)) =
+        subfield_image_preimage_closure(phi, s)
+}
+
+define subfield_image_preimage_kernel[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) -> Subfield[E] {
+    subfield_image(phi, subfield_preimage(phi, t))
+}
+
+theorem subfield_image_preimage_kernel_le[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_le(subfield_image_preimage_kernel(phi, t), t)
+}
+
+theorem subfield_image_preimage_kernel_le_field_hom_image[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_le(subfield_image_preimage_kernel(phi, t), field_hom_image(phi))
+}
+
+theorem subfield_image_preimage_kernel_eq_inter[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_image_preimage_kernel(phi, t) = subfield_inter(t, field_hom_image(phi))
+}
+
+theorem subfield_image_preimage_kernel_le_iff_preimage_le[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]
+) {
+    subfield_le(subfield_image_preimage_kernel(phi, s), t) =
+        subfield_le(subfield_preimage(phi, s), subfield_preimage(phi, t))
+}
+
+theorem subfield_image_preimage_kernel_monotone[F: Field, E: Field](
+    phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]
+) {
+    subfield_le(s, t) implies
+        subfield_le(subfield_image_preimage_kernel(phi, s), subfield_image_preimage_kernel(phi, t))
+}
+
+theorem subfield_image_preimage_kernel_idempotent[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_image_preimage_kernel(phi, subfield_image_preimage_kernel(phi, t)) =
+        subfield_image_preimage_kernel(phi, t)
+}
+
+theorem subfield_image_preimage_kernel_fixed_iff_le_image[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    (subfield_image_preimage_kernel(phi, t) = t) = subfield_le(t, field_hom_image(phi))
+}
+
+theorem subfield_image_preimage_kernel_eq_of_le_image[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_le(t, field_hom_image(phi)) implies subfield_image_preimage_kernel(phi, t) = t
+}
+
+theorem subfield_le_image_of_subfield_image_preimage_kernel_eq[F: Field, E: Field](
+    phi: FieldHom[F, E], t: Subfield[E]
+) {
+    subfield_image_preimage_kernel(phi, t) = t implies subfield_le(t, field_hom_image(phi))
+}
+
+theorem zero_ideal_is_proper[F: Field] {
+    ideal_proper_constraint(zero_ideal[F])
+}
+
+theorem zero_ideal_not_contains_one[F: Field] {
+    not zero_ideal[F](F.1)
+}
+
+theorem zero_ideal_is_maximal[F: Field] {
+    is_maximal_ideal(zero_ideal[F])
+}
+
+theorem zero_ideal_is_prime[F: Field] {
+    is_prime_ideal(zero_ideal[F])
+}
+
+let field_zero_maximal_ideal[F: Field]: MaximalIdeal[F] satisfy {
+    MaximalIdeal[F].new(zero_ideal[F]) = Option.some(field_zero_maximal_ideal)
+}
+
+theorem field_zero_maximal_ideal_contains_eq[F: Field](x: F) {
+    field_zero_maximal_ideal[F].contains(x) = zero_ideal[F](x)
+}
+
+theorem zero_ideal_is_maximal_and_prime[F: Field] {
+    is_maximal_ideal(zero_ideal[F]) and is_prime_ideal(zero_ideal[F])
+}
+
+define lie_bracket_add_left_constraint[R: CommRing, L: AddCommGroup](
+    bracket: (L, L) -> L
+) -> Bool {
+    forall(x: L, y: L, z: L) {
+        bracket(x + y, z) = bracket(x, z) + bracket(y, z)
+    }
+}
+
+define lie_bracket_add_right_constraint[R: CommRing, L: AddCommGroup](
+    bracket: (L, L) -> L
+) -> Bool {
+    forall(x: L, y: L, z: L) {
+        bracket(x, y + z) = bracket(x, y) + bracket(x, z)
+    }
+}
+
+define lie_bracket_smul_left_constraint[R: CommRing, L: AddCommGroup](
+    m: Module[R, L], bracket: (L, L) -> L
+) -> Bool {
+    forall(c: R, x: L, y: L) {
+        bracket(m.smul(c, x), y) = m.smul(c, bracket(x, y))
+    }
+}
+
+define lie_bracket_smul_right_constraint[R: CommRing, L: AddCommGroup](
+    m: Module[R, L], bracket: (L, L) -> L
+) -> Bool {
+    forall(c: R, x: L, y: L) {
+        bracket(x, m.smul(c, y)) = m.smul(c, bracket(x, y))
+    }
+}
+
+define lie_bracket_alternating_constraint[R: CommRing, L: AddCommGroup](
+    bracket: (L, L) -> L
+) -> Bool {
+    forall(x: L) {
+        bracket(x, x) = L.0
+    }
+}
+
+define lie_bracket_jacobi_constraint[R: CommRing, L: AddCommGroup](
+    bracket: (L, L) -> L
+) -> Bool {
+    forall(x: L, y: L, z: L) {
+        (bracket(x, bracket(y, z)) + bracket(y, bracket(z, x))) + bracket(z, bracket(x, y)) = L.0
+    }
+}
+
+define is_lie_bracket[R: CommRing, L: AddCommGroup](
+    m: Module[R, L], bracket: (L, L) -> L
+) -> Bool {
+    lie_bracket_add_left_constraint[R, L](bracket)
+    and lie_bracket_add_right_constraint[R, L](bracket)
+    and lie_bracket_smul_left_constraint(m, bracket)
+    and lie_bracket_smul_right_constraint(m, bracket)
+    and lie_bracket_alternating_constraint[R, L](bracket)
+    and lie_bracket_jacobi_constraint[R, L](bracket)
+}
+
+structure LieAlgebra[R: CommRing, L: AddCommGroup] {
+    /// The underlying R-module structure.
+    module: Module[R, L]
+    /// The Lie bracket.
+    bracket: (L, L) -> L
+} constraint {
+    is_lie_bracket(module, bracket)
+}
+
+theorem lie_bracket_add_left[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L, z: L
+) {
+    a.bracket(x + y, z) = a.bracket(x, z) + a.bracket(y, z)
+}
+
+theorem lie_bracket_add_right[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L, z: L
+) {
+    a.bracket(x, y + z) = a.bracket(x, y) + a.bracket(x, z)
+}
+
+theorem lie_bracket_smul_left[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], c: R, x: L, y: L
+) {
+    a.bracket(a.module.smul(c, x), y) = a.module.smul(c, a.bracket(x, y))
+}
+
+theorem lie_bracket_smul_right[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], c: R, x: L, y: L
+) {
+    a.bracket(x, a.module.smul(c, y)) = a.module.smul(c, a.bracket(x, y))
+}
+
+theorem lie_bracket_self[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(x, x) = L.0
+}
+
+theorem lie_bracket_jacobi[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L, z: L
+) {
+    (a.bracket(x, a.bracket(y, z)) + a.bracket(y, a.bracket(z, x))) + a.bracket(z, a.bracket(x, y)) = L.0
+}
+
+theorem lie_bracket_zero_left[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(L.0, x) = L.0
+}
+
+theorem lie_bracket_zero_right[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(x, L.0) = L.0
+}
+
+theorem lie_bracket_skew[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L, y: L) {
+    a.bracket(x, y) = -a.bracket(y, x)
+}
+
+theorem lie_bracket_neg_left[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L, y: L) {
+    a.bracket(-x, y) = -a.bracket(x, y)
+}
+
+theorem lie_bracket_neg_right[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L, y: L) {
+    a.bracket(x, -y) = -a.bracket(x, y)
+}
+
+theorem lie_bracket_add_left_eq[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L, z: L
+) {
+    a.bracket(x + y, z) = a.bracket(x, z) + a.bracket(y, z)
+}
+
+theorem lie_bracket_add_right_eq[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L, z: L
+) {
+    a.bracket(x, y + z) = a.bracket(x, y) + a.bracket(x, z)
+}
+
+theorem lie_bracket_smul_left_eq[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], c: R, x: L, y: L
+) {
+    a.bracket(a.module.smul(c, x), y) = a.module.smul(c, a.bracket(x, y))
+}
+
+theorem lie_bracket_smul_right_eq[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], c: R, x: L, y: L
+) {
+    a.bracket(x, a.module.smul(c, y)) = a.module.smul(c, a.bracket(x, y))
+}
+
+theorem lie_bracket_self_eq_zero[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(x, x) = L.0
+}
+
+theorem lie_bracket_zero_left_eq[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(L.0, x) = L.0
+}
+
+theorem lie_bracket_zero_right_eq[R: CommRing, L: AddCommGroup](a: LieAlgebra[R, L], x: L) {
+    a.bracket(x, L.0) = L.0
+}
+
+theorem lie_bracket_add_zero_left[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L
+) {
+    a.bracket(x + L.0, y) = a.bracket(x, y)
+}
+
+theorem lie_bracket_zero_add_left[R: CommRing, L: AddCommGroup](
+    a: LieAlgebra[R, L], x: L, y: L
+) {
+    a.bracket(L.0 + x, y) = a.bracket(x, y)
+}
+
 theorem lie_bracket_add_zero_right[R: CommRing, L: AddCommGroup](
     a: LieAlgebra[R, L], x: L, y: L
 ) {
@@ -371,6 +979,28 @@ define gf4_inv(x: GF4) -> GF4 {
 
 instance GF4: Add {
     let add = gf4_add
+}
+
+instance GF4: Mul {
+    let mul = gf4_mul
+}
+
+instance GF4: Neg {
+    let neg = gf4_neg
+}
+
+instance GF4: Zero {
+    let 0 = GF4.zero
+}
+
+instance GF4: One {
+    let 1 = GF4.one
+}
+
+instance GF4: Inverse {
+    define inverse(self) -> GF4 {
+        gf4_inv(self)
+    }
 }
 
 theorem gf4_cases(x: GF4) {
@@ -791,6 +1421,65 @@ theorem gf4_field_inverse(x: GF4) {
 
 theorem gf4_zero_ne_one {
     Zero.0[GF4] != One.1[GF4]
+}
+
+instance GF4: AddSemigroup
+
+/// The elements of GF4 form an additive commutative semigroup.
+
+instance GF4: AddCommSemigroup
+
+/// The elements of GF4 form an additive monoid.
+
+instance GF4: AddMonoid
+
+/// The elements of GF4 form an additive commutative monoid.
+
+instance GF4: AddCommMonoid
+
+/// The elements of GF4 form an additive group.
+
+instance GF4: AddGroup
+
+/// The elements of GF4 form an additive commutative group.
+
+instance GF4: AddCommGroup
+
+/// The elements of GF4 form a multiplicative semigroup.
+
+instance GF4: Semigroup
+
+/// The elements of GF4 form a multiplicative commutative semigroup.
+
+instance GF4: CommSemigroup
+
+/// The elements of GF4 form a multiplicative monoid.
+
+instance GF4: Monoid
+
+/// The elements of GF4 form a multiplicative commutative monoid.
+
+instance GF4: CommMonoid
+
+/// The elements of GF4 form a semiring.
+
+instance GF4: Semiring
+
+/// The elements of GF4 form a ring.
+
+instance GF4: Ring
+
+/// The elements of GF4 form a commutative ring.
+
+instance GF4: CommRing
+
+/// The elements of GF4 form a field.
+
+instance GF4: Field
+
+/// The defining relation of GF(4): the class of X satisfies X^2 + X + 1 = 0.
+theorem gf4_x_squared_plus_x_plus_one_eq_zero {
+    gf4_add(gf4_add(gf4_mul(GF4.x, GF4.x), GF4.x), GF4.one) = GF4.zero
 }
 
 theorem gf4_x_inverse {
@@ -1533,982 +2222,4 @@ theorem submonoid_mul_mem[M: Monoid](s: Submonoid[M], a: M, b: M) {
 
 theorem submonoid_mul_mul_mem[M: Monoid](s: Submonoid[M], a: M, b: M, c: M) {
     s.contains(a) and s.contains(b) and s.contains(c) implies s.contains(a * b * c)
-}
-
-theorem submonoid_pow_mem[M: Monoid](s: Submonoid[M], a: M, n: Nat) {
-    s.contains(a) implies s.contains(a.pow(n))
-}
-
-theorem submonoid_intersection_contains_eq[M: Monoid](a: Submonoid[M], b: Submonoid[M], x: M) {
-    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
-}
-
-theorem submonoid_intersection_subset_left[M: Monoid](a: Submonoid[M], b: Submonoid[M], x: M) {
-    a.intersection(b).contains(x) implies a.contains(x)
-}
-
-theorem submonoid_intersection_subset_right[M: Monoid](a: Submonoid[M], b: Submonoid[M], x: M) {
-    a.intersection(b).contains(x) implies b.contains(x)
-}
-
-theorem submonoid_intersection_comm[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    a.intersection(b) = b.intersection(a)
-}
-
-theorem submonoid_intersection_assoc[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M],
-    c: Submonoid[M]
-) {
-    a.intersection(b).intersection(c) = a.intersection(b.intersection(c))
-}
-
-theorem submonoid_intersection_idempotent[M: Monoid](a: Submonoid[M]) {
-    a.intersection(a) = a
-}
-
-define submonoid_subset[M: Monoid](a: Submonoid[M], b: Submonoid[M]) -> Bool {
-    forall(x: M) {
-        a.contains(x) implies b.contains(x)
-    }
-}
-
-theorem submonoid_subset_as_set_eq[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(a, b) = a.as_set.subset(b.as_set)
-}
-
-theorem submonoid_as_set_subset_of_subset[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(a, b) implies a.as_set.subset(b.as_set)
-}
-
-theorem submonoid_subset_of_as_set_subset[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    a.as_set.subset(b.as_set) implies submonoid_subset(a, b)
-}
-
-theorem submonoid_subset_refl[M: Monoid](a: Submonoid[M]) {
-    submonoid_subset(a, a)
-}
-
-theorem submonoid_subset_trans[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M],
-    c: Submonoid[M]
-) {
-    submonoid_subset(a, b) and submonoid_subset(b, c) implies submonoid_subset(a, c)
-}
-
-theorem submonoid_intersection_subset_left_relation[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M]
-) {
-    submonoid_subset(a.intersection(b), a)
-}
-
-theorem submonoid_intersection_subset_right_relation[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M]
-) {
-    submonoid_subset(a.intersection(b), b)
-}
-
-theorem submonoid_subset_intersection_of_subset_left_right[M: Monoid](
-    c: Submonoid[M],
-    a: Submonoid[M],
-    b: Submonoid[M]
-) {
-    submonoid_subset(c, a) and submonoid_subset(c, b) implies submonoid_subset(c, a.intersection(b))
-}
-
-theorem submonoid_subset_intersection_iff[M: Monoid](
-    c: Submonoid[M],
-    a: Submonoid[M],
-    b: Submonoid[M]
-) {
-    submonoid_subset(c, a.intersection(b)) = (submonoid_subset(c, a) and submonoid_subset(c, b))
-}
-
-define is_monoid_identity[M: Monoid](m: M) -> Bool {
-    m = M.1
-}
-
-theorem identity_submonoid_constraint[M: Monoid] {
-    submonoid_constraint(is_monoid_identity[M])
-}
-
-let identity_submonoid[M: Monoid]: Submonoid[M] satisfy {
-    Submonoid.new(is_monoid_identity[M]) = Option.some(identity_submonoid)
-}
-
-theorem identity_submonoid_only_has_identity[M: Monoid](m: M) {
-    identity_submonoid[M].contains(m) implies m = M.1
-}
-
-theorem submonoid_contains_identity[M: Monoid](s: Submonoid[M]) {
-    s.contains(M.1)
-}
-
-theorem identity_submonoid_contains_eq[M: Monoid](m: M) {
-    identity_submonoid[M].contains(m) = (m = M.1)
-}
-
-theorem identity_submonoid_subset[M: Monoid](s: Submonoid[M]) {
-    submonoid_subset(identity_submonoid[M], s)
-}
-
-define full_monoid_contains[M: Monoid](a: M) -> Bool {
-    true
-}
-
-theorem full_submonoid_constraint[M: Monoid] {
-    submonoid_constraint(full_monoid_contains[M])
-}
-
-let full_submonoid[M: Monoid]: Submonoid[M] satisfy {
-    Submonoid.new(full_monoid_contains[M]) = Option.some(full_submonoid)
-}
-
-theorem full_submonoid_contains_everything[M: Monoid](m: M) {
-    full_submonoid[M].contains(m)
-}
-
-theorem full_submonoid_contains_eq[M: Monoid](m: M) {
-    full_submonoid[M].contains(m) = true
-}
-
-theorem submonoid_subset_full[M: Monoid](s: Submonoid[M]) {
-    submonoid_subset(s, full_submonoid[M])
-}
-
-theorem submonoid_subset_antisymm[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(a, b) and submonoid_subset(b, a) implies a = b
-}
-
-theorem submonoid_eq_iff_subset_both[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    a = b = (submonoid_subset(a, b) and submonoid_subset(b, a))
-}
-
-theorem submonoid_intersection_eq_left_of_subset[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(a, b) implies a.intersection(b) = a
-}
-
-theorem submonoid_intersection_eq_right_of_subset[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(b, a) implies a.intersection(b) = b
-}
-
-theorem identity_submonoid_intersection_left[M: Monoid](s: Submonoid[M]) {
-    identity_submonoid[M].intersection(s) = identity_submonoid[M]
-}
-
-theorem identity_submonoid_intersection_right[M: Monoid](s: Submonoid[M]) {
-    s.intersection(identity_submonoid[M]) = identity_submonoid[M]
-}
-
-theorem full_submonoid_intersection_left[M: Monoid](s: Submonoid[M]) {
-    full_submonoid[M].intersection(s) = s
-}
-
-theorem full_submonoid_intersection_right[M: Monoid](s: Submonoid[M]) {
-    s.intersection(full_submonoid[M]) = s
-}
-
-define set_subset_submonoid[M: Monoid](a: Set[M], s: Submonoid[M]) -> Bool {
-    forall(x: M) {
-        a.contains(x) implies s.contains(x)
-    }
-}
-
-theorem set_subset_submonoid_as_set_eq[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    set_subset_submonoid(a, s) = a.subset(s.as_set)
-}
-
-theorem set_as_set_subset_of_subset_submonoid[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    set_subset_submonoid(a, s) implies a.subset(s.as_set)
-}
-
-theorem set_subset_submonoid_of_as_set_subset[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    a.subset(s.as_set) implies set_subset_submonoid(a, s)
-}
-
-theorem submonoid_as_set_subset_self[M: Monoid](s: Submonoid[M]) {
-    set_subset_submonoid(s.as_set, s)
-}
-
-theorem set_subset_submonoid_trans[M: Monoid](
-    a: Set[M],
-    s: Submonoid[M],
-    t: Submonoid[M]
-) {
-    set_subset_submonoid(a, s) and submonoid_subset(s, t) implies set_subset_submonoid(a, t)
-}
-
-theorem set_subset_submonoid_of_set_subset[M: Monoid](
-    a: Set[M],
-    b: Set[M],
-    s: Submonoid[M]
-) {
-    a.subset(b) and set_subset_submonoid(b, s) implies set_subset_submonoid(a, s)
-}
-
-define submonoid_closure_contains[M: Monoid](a: Set[M], x: M) -> Bool {
-    forall(s: Submonoid[M]) {
-        set_subset_submonoid(a, s) implies s.contains(x)
-    }
-}
-
-theorem submonoid_closure_contains_of_set_subset_raw[M: Monoid](
-    a: Set[M],
-    s: Submonoid[M],
-    x: M
-) {
-    submonoid_closure_contains(a, x) and set_subset_submonoid(a, s) implies s.contains(x)
-}
-
-theorem submonoid_closure_identity_constraint[M: Monoid](a: Set[M]) {
-    submonoid_identity_constraint(submonoid_closure_contains(a))
-}
-
-theorem submonoid_closure_closure_constraint[M: Monoid](a: Set[M]) {
-    submonoid_closure_constraint(submonoid_closure_contains(a))
-}
-
-theorem submonoid_generated_constraint[M: Monoid](a: Set[M]) {
-    submonoid_constraint(submonoid_closure_contains(a))
-}
-
-let submonoid_closure[M: Monoid](a: Set[M]) -> result: Submonoid[M] satisfy {
-    Submonoid.new(submonoid_closure_contains(a)) = Option.some(result)
-}
-
-theorem submonoid_closure_contains_eq[M: Monoid](a: Set[M], x: M) {
-    submonoid_closure(a).contains(x) = submonoid_closure_contains(a, x)
-}
-
-theorem submonoid_subset_closure[M: Monoid](a: Set[M]) {
-    set_subset_submonoid(a, submonoid_closure(a))
-}
-
-theorem submonoid_closure_contains_of_set_contains[M: Monoid](a: Set[M], x: M) {
-    a.contains(x) implies submonoid_closure(a).contains(x)
-}
-
-theorem submonoid_closure_subset_of_set_subset[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    set_subset_submonoid(a, s) implies submonoid_subset(submonoid_closure(a), s)
-}
-
-theorem submonoid_closure_le_iff_set_subset[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    submonoid_subset(submonoid_closure(a), s) = set_subset_submonoid(a, s)
-}
-
-theorem submonoid_closure_as_set_galois_connection[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    submonoid_closure(a).as_set.subset(s.as_set) = a.subset(s.as_set)
-}
-
-theorem submonoid_closure_as_set[M: Monoid](s: Submonoid[M]) {
-    submonoid_closure(s.as_set) = s
-}
-
-theorem submonoid_closure_mono[M: Monoid](a: Set[M], b: Set[M]) {
-    a.subset(b) implies submonoid_subset(submonoid_closure(a), submonoid_closure(b))
-}
-
-theorem submonoid_closure_eq_of_set_eq[M: Monoid](a: Set[M], b: Set[M]) {
-    a = b implies submonoid_closure(a) = submonoid_closure(b)
-}
-
-theorem submonoid_closure_idempotent[M: Monoid](a: Set[M]) {
-    submonoid_closure(submonoid_closure(a).as_set) = submonoid_closure(a)
-}
-
-define submonoid_set_closure[M: Monoid](a: Set[M]) -> Set[M] {
-    submonoid_closure(a).as_set
-}
-
-theorem submonoid_set_closure_at[M: Monoid](a: Set[M]) {
-    submonoid_set_closure(a) = submonoid_closure(a).as_set
-}
-
-theorem submonoid_set_closure_extensive[M: Monoid](a: Set[M]) {
-    a.subset(submonoid_set_closure(a))
-}
-
-theorem submonoid_set_closure_mono[M: Monoid](a: Set[M], b: Set[M]) {
-    a.subset(b) implies submonoid_set_closure(a).subset(submonoid_set_closure(b))
-}
-
-theorem submonoid_set_closure_idempotent[M: Monoid](a: Set[M]) {
-    submonoid_set_closure(submonoid_set_closure(a)) = submonoid_set_closure(a)
-}
-
-theorem submonoid_set_closure_is_monotone[M: Monoid] {
-    is_subset_monotone_map(submonoid_set_closure[M])
-}
-
-theorem submonoid_set_closure_is_extensive[M: Monoid] {
-    is_set_extensive_map(submonoid_set_closure[M])
-}
-
-theorem submonoid_set_closure_is_idempotent[M: Monoid] {
-    is_set_idempotent_map(submonoid_set_closure[M])
-}
-
-theorem submonoid_set_closure_operator[M: Monoid] {
-    is_set_closure_operator(submonoid_set_closure[M])
-}
-
-theorem submonoid_closure_empty[M: Monoid] {
-    submonoid_closure(Set[M].empty_set) = identity_submonoid[M]
-}
-
-theorem submonoid_closure_universal[M: Monoid] {
-    submonoid_closure(Set[M].universal_set) = full_submonoid[M]
-}
-
-define submonoid_sup[M: Monoid](a: Submonoid[M], b: Submonoid[M]) -> Submonoid[M] {
-    submonoid_closure(a.as_set.union(b.as_set))
-}
-
-theorem submonoid_sup_eq_closure_union[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_sup(a, b) = submonoid_closure(a.as_set.union(b.as_set))
-}
-
-theorem submonoid_subset_sup_left[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(a, submonoid_sup(a, b))
-}
-
-theorem submonoid_subset_sup_right[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_subset(b, submonoid_sup(a, b))
-}
-
-theorem submonoid_sup_subset_of_subset_left_right[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M],
-    c: Submonoid[M]
-) {
-    submonoid_subset(a, c) and submonoid_subset(b, c) implies submonoid_subset(submonoid_sup(a, b), c)
-}
-
-theorem submonoid_sup_subset_iff[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M],
-    c: Submonoid[M]
-) {
-    submonoid_subset(submonoid_sup(a, b), c) = (submonoid_subset(a, c) and submonoid_subset(b, c))
-}
-
-attributes Submonoid[M: Monoid] {
-    /// The smallest submonoid containing a set.
-    let closure: Set[M] -> Submonoid[M] = submonoid_closure
-
-    /// The least submonoid containing this submonoid and another submonoid.
-    let sup: (Submonoid[M], Submonoid[M]) -> Submonoid[M] = submonoid_sup
-}
-
-define submonoid_is_finitely_generated[M: Monoid](s: Submonoid[M]) -> Bool {
-    exists(a: Set[M]) {
-        a.is_finite and submonoid_closure(a) = s
-    }
-}
-
-theorem submonoid_is_finitely_generated_witness[M: Monoid](s: Submonoid[M]) {
-    submonoid_is_finitely_generated(s) implies exists(a: Set[M]) {
-        a.is_finite and submonoid_closure(a) = s
-    }
-}
-
-theorem submonoid_is_finitely_generated_of_closure_eq[M: Monoid](a: Set[M], s: Submonoid[M]) {
-    a.is_finite and submonoid_closure(a) = s implies submonoid_is_finitely_generated(s)
-}
-
-theorem submonoid_is_finitely_generated_of_eq[M: Monoid](s: Submonoid[M], t: Submonoid[M]) {
-    submonoid_is_finitely_generated(s) and s = t implies submonoid_is_finitely_generated(t)
-}
-
-theorem submonoid_closure_is_finitely_generated[M: Monoid](a: Set[M]) {
-    a.is_finite implies submonoid_is_finitely_generated(submonoid_closure(a))
-}
-
-theorem submonoid_closure_singleton_is_finitely_generated[M: Monoid](a: M) {
-    submonoid_is_finitely_generated(submonoid_closure(Set[M].singleton(a)))
-}
-
-theorem submonoid_closure_singleton_contains[M: Monoid](a: M) {
-    submonoid_closure(Set[M].singleton(a)).contains(a)
-}
-
-theorem identity_submonoid_is_finitely_generated[M: Monoid] {
-    submonoid_is_finitely_generated(identity_submonoid[M])
-}
-
-theorem submonoid_subsemigroup_constraint[M: Monoid](s: Submonoid[M]) {
-    subsemigroup_closure_constraint(s.contains)
-}
-
-let submonoid_to_subsemigroup[M: Monoid](s: Submonoid[M]) -> result: Subsemigroup[M] satisfy {
-    Subsemigroup.new(s.contains) = Option.some(result)
-}
-
-theorem submonoid_to_subsemigroup_contains[M: Monoid](s: Submonoid[M]) {
-    submonoid_to_subsemigroup(s).contains = s.contains
-}
-
-theorem submonoid_to_subsemigroup_contains_eq[M: Monoid](s: Submonoid[M], x: M) {
-    submonoid_to_subsemigroup(s).contains(x) = s.contains(x)
-}
-
-theorem submonoid_contains_to_subsemigroup_eq[M: Monoid](s: Submonoid[M], x: M) {
-    s.contains(x) = submonoid_to_subsemigroup(s).contains(x)
-}
-
-theorem submonoid_to_subsemigroup_as_set[M: Monoid](s: Submonoid[M]) {
-    submonoid_to_subsemigroup(s).as_set = s.as_set
-}
-
-define submonoid_preimage_contains[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    a: M
-) -> Bool {
-    s.contains(f.hom(a))
-}
-
-theorem submonoid_preimage_identity_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N]
-) {
-    submonoid_identity_constraint(submonoid_preimage_contains(f, s))
-}
-
-theorem submonoid_preimage_closure_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N]
-) {
-    submonoid_closure_constraint(submonoid_preimage_contains(f, s))
-}
-
-theorem submonoid_preimage_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N]
-) {
-    submonoid_constraint(submonoid_preimage_contains(f, s))
-}
-
-let submonoid_preimage[M: Monoid, N: Monoid](f: MonoidHom[M, N], s: Submonoid[N]) -> result: Submonoid[M] satisfy {
-    Submonoid.new(submonoid_preimage_contains(f, s)) = Option.some(result)
-}
-
-theorem submonoid_preimage_contains_eq[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    a: M
-) {
-    submonoid_preimage(f, s).contains(a) = s.contains(f.hom(a))
-}
-
-theorem submonoid_preimage_contains_of_contains_map[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    a: M
-) {
-    s.contains(f.hom(a)) implies submonoid_preimage(f, s).contains(a)
-}
-
-theorem submonoid_contains_map_of_preimage_contains[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    a: M
-) {
-    submonoid_preimage(f, s).contains(a) implies s.contains(f.hom(a))
-}
-
-theorem submonoid_preimage_subset_of_subset[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    t: Submonoid[N]
-) {
-    submonoid_subset(s, t) implies submonoid_subset(submonoid_preimage(f, s), submonoid_preimage(f, t))
-}
-
-theorem submonoid_preimage_intersection[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[N],
-    t: Submonoid[N]
-) {
-    submonoid_preimage(f, s.intersection(t)) =
-        submonoid_preimage(f, s).intersection(submonoid_preimage(f, t))
-}
-
-theorem submonoid_preimage_full[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
-    submonoid_preimage(f, full_submonoid[N]) = full_submonoid[M]
-}
-
-define submonoid_image_contains[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M]
-) -> N -> Bool {
-    function(y: N) {
-        exists(x: M) {
-            s.contains(x) and f.hom(x) = y
-        }
-    }
-}
-
-theorem submonoid_image_identity_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M]
-) {
-    submonoid_identity_constraint(submonoid_image_contains(f, s))
-}
-
-theorem submonoid_image_mul_mem[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    a: N,
-    b: N
-) {
-    submonoid_image_contains(f, s)(a) and submonoid_image_contains(f, s)(b)
-        implies submonoid_image_contains(f, s)(a * b)
-}
-
-theorem submonoid_image_closure_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M]
-) {
-    submonoid_closure_constraint(submonoid_image_contains(f, s))
-}
-
-theorem submonoid_image_constraint[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M]
-) {
-    submonoid_constraint(submonoid_image_contains(f, s))
-}
-
-let submonoid_image[M: Monoid, N: Monoid](f: MonoidHom[M, N], s: Submonoid[M]) -> result: Submonoid[N] satisfy {
-    Submonoid.new(submonoid_image_contains(f, s)) = Option.some(result)
-}
-
-theorem submonoid_image_contains_eq[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    y: N
-) {
-    submonoid_image(f, s).contains(y) = exists(x: M) {
-        s.contains(x) and f.hom(x) = y
-    }
-}
-
-theorem submonoid_image_contains_map[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    x: M
-) {
-    s.contains(x) implies submonoid_image(f, s).contains(f.hom(x))
-}
-
-theorem submonoid_image_subset_of_subset[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    t: Submonoid[M]
-) {
-    submonoid_subset(s, t) implies submonoid_subset(submonoid_image(f, s), submonoid_image(f, t))
-}
-
-theorem submonoid_image_preimage_contains[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    t: Submonoid[N],
-    y: N
-) {
-    submonoid_image(f, submonoid_preimage(f, t)).contains(y) implies t.contains(y)
-}
-
-theorem submonoid_image_preimage_subset[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    t: Submonoid[N]
-) {
-    submonoid_subset(submonoid_image(f, submonoid_preimage(f, t)), t)
-}
-
-theorem submonoid_preimage_image_contains[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    x: M
-) {
-    s.contains(x) implies submonoid_preimage(f, submonoid_image(f, s)).contains(x)
-}
-
-theorem submonoid_subset_preimage_image[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M]
-) {
-    submonoid_subset(s, submonoid_preimage(f, submonoid_image(f, s)))
-}
-
-theorem submonoid_image_subset_of_subset_preimage[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    t: Submonoid[N]
-) {
-    submonoid_subset(s, submonoid_preimage(f, t)) implies submonoid_subset(submonoid_image(f, s), t)
-}
-
-theorem submonoid_subset_preimage_of_image_subset[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    t: Submonoid[N]
-) {
-    submonoid_subset(submonoid_image(f, s), t) implies submonoid_subset(s, submonoid_preimage(f, t))
-}
-
-theorem submonoid_image_subset_iff_subset_preimage[M: Monoid, N: Monoid](
-    f: MonoidHom[M, N],
-    s: Submonoid[M],
-    t: Submonoid[N]
-) {
-    submonoid_subset(submonoid_image(f, s), t) = submonoid_subset(s, submonoid_preimage(f, t))
-}
-
-define monoid_hom_kernel[M: Monoid, N: Monoid](f: MonoidHom[M, N]) -> Submonoid[M] {
-    submonoid_preimage(f, identity_submonoid[N])
-}
-
-theorem monoid_hom_kernel_contains_eq[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M) {
-    monoid_hom_kernel(f).contains(a) = (f.hom(a) = N.1)
-}
-
-theorem monoid_hom_kernel_contains_of_maps_to_identity[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M) {
-    f.hom(a) = N.1 implies monoid_hom_kernel(f).contains(a)
-}
-
-theorem monoid_hom_maps_to_identity_of_kernel_contains[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M) {
-    monoid_hom_kernel(f).contains(a) implies f.hom(a) = N.1
-}
-
-theorem submonoid_sup_comm[M: Monoid](a: Submonoid[M], b: Submonoid[M]) {
-    submonoid_sup(a, b) = submonoid_sup(b, a)
-}
-
-theorem submonoid_sup_idempotent[M: Monoid](a: Submonoid[M]) {
-    submonoid_sup(a, a) = a
-}
-
-theorem submonoid_sup_assoc[M: Monoid](
-    a: Submonoid[M],
-    b: Submonoid[M],
-    c: Submonoid[M]
-) {
-    submonoid_sup(submonoid_sup(a, b), c) = submonoid_sup(a, submonoid_sup(b, c))
-}
-
-define identity_constraint[G: Group](contains: G -> Bool) -> Bool {
-    contains(G.1)
-}
-
-define closure_constraint[G: Group](contains: G -> Bool) -> Bool {
-    forall(a: G, b: G) {
-        contains(a) and contains(b) implies contains(a * b)
-    }
-}
-
-define inverse_constraint[G: Group](contains: G -> Bool) -> Bool {
-    forall(a: G) {
-        contains(a) implies contains(a.inverse)
-    }
-}
-
-define subgroup_constraint[G: Group](contains: G -> Bool) -> Bool {
-    identity_constraint(contains) and closure_constraint(contains) and inverse_constraint(contains)
-}
-
-define is_identity[G: Group](g: G) -> Bool {
-    g = G.1
-}
-
-theorem identity_subgroup_constraint[G: Group] {
-    subgroup_constraint(is_identity[G])
-}
-
-structure Subgroup[G: Group] {
-    /// True if the given element is a member of this subgroup.
-    contains: G -> Bool
-} constraint {
-    subgroup_constraint(contains)
-}
-
-theorem subgroup_ext[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    (forall(x: G) { a.contains(x) = b.contains(x) }) implies a = b
-}
-
-theorem subgroup_eq_contains[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a = b implies a.contains = b.contains
-}
-
-theorem subgroup_eq_contains_at[G: Group](a: Subgroup[G], b: Subgroup[G], x: G) {
-    a = b implies a.contains(x) = b.contains(x)
-}
-
-theorem subgroup_eq_transport_predicate[G: Group](
-    p: Subgroup[G] -> Bool,
-    a: Subgroup[G],
-    b: Subgroup[G]
-) {
-    a = b and p(a) implies p(b)
-}
-
-theorem subgroup_eq_transport_predicate_rev[G: Group](
-    p: Subgroup[G] -> Bool,
-    a: Subgroup[G],
-    b: Subgroup[G]
-) {
-    a = b and p(b) implies p(a)
-}
-
-theorem subgroup_eq_of_contains_eq[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a.contains = b.contains implies a = b
-}
-
-theorem subgroup_eq_of_contains_at_eq[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    (forall(x: G) { a.contains(x) = b.contains(x) }) implies a = b
-}
-
-theorem subgroup_contains_identity[G: Group](s: Subgroup[G]) {
-    s.contains(G.1)
-}
-
-theorem subgroup_mul_mem[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a) and s.contains(b) implies s.contains(a * b)
-}
-
-theorem subgroup_inv_mem[G: Group](s: Subgroup[G], a: G) {
-    s.contains(a) implies s.contains(a.inverse)
-}
-
-theorem subgroup_contains_inverse_iff[G: Group](s: Subgroup[G], a: G) {
-    s.contains(a.inverse) = s.contains(a)
-}
-
-theorem subgroup_mul_inv_mem[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a) and s.contains(b) implies s.contains(a * b.inverse)
-}
-
-theorem subgroup_inv_mul_mem[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a) and s.contains(b) implies s.contains(a.inverse * b)
-}
-
-theorem same_left_coset_raw_reflexive[G: Group](s: Subgroup[G], a: G) {
-    s.contains(a.inverse * a)
-}
-
-theorem same_left_coset_raw_symmetric[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a.inverse * b) implies s.contains(b.inverse * a)
-}
-
-theorem same_left_coset_raw_transitive[G: Group](s: Subgroup[G], a: G, b: G, c: G) {
-    s.contains(a.inverse * b) and s.contains(b.inverse * c) implies s.contains(a.inverse * c)
-}
-
-theorem left_coset_intersection_witness_implies_same_representative_raw[G: Group](
-    s: Subgroup[G],
-    a: G,
-    b: G,
-    x: G
-) {
-    s.contains(a.inverse * x) and s.contains(b.inverse * x) implies s.contains(a.inverse * b)
-}
-
-theorem same_representative_implies_left_coset_membership_eq_raw[G: Group](
-    s: Subgroup[G],
-    a: G,
-    b: G,
-    y: G
-) {
-    s.contains(a.inverse * b) implies s.contains(a.inverse * y) = s.contains(b.inverse * y)
-}
-
-theorem intersecting_left_cosets_equal_raw[G: Group](s: Subgroup[G], a: G, b: G) {
-    exists(x: G) {
-        s.contains(a.inverse * x) and s.contains(b.inverse * x)
-    } implies forall(y: G) {
-        s.contains(a.inverse * y) = s.contains(b.inverse * y)
-    }
-}
-
-theorem subgroup_mul_mul_mem[G: Group](s: Subgroup[G], a: G, b: G, c: G) {
-    s.contains(a) and s.contains(b) and s.contains(c) implies s.contains(a * b * c)
-}
-
-theorem subgroup_conj_mem[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a) and s.contains(b) implies s.contains(a * b * a.inverse)
-}
-
-theorem subgroup_pow_mem[G: Group](s: Subgroup[G], a: G, n: Nat) {
-    s.contains(a) implies s.contains(a.pow(n))
-}
-
-define subgroup_intersection_contains[G: Group](a: Subgroup[G], b: Subgroup[G], x: G) -> Bool {
-    a.contains(x) and b.contains(x)
-}
-
-theorem subgroup_intersection_identity_constraint[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    identity_constraint(subgroup_intersection_contains(a, b))
-}
-
-theorem subgroup_intersection_closure_constraint[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    closure_constraint(subgroup_intersection_contains(a, b))
-}
-
-theorem subgroup_intersection_inverse_constraint[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    inverse_constraint(subgroup_intersection_contains(a, b))
-}
-
-theorem subgroup_intersection_constraint[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_constraint(subgroup_intersection_contains(a, b))
-}
-
-let subgroup_intersection[G: Group](a: Subgroup[G], b: Subgroup[G]) -> result: Subgroup[G] satisfy {
-    Subgroup.new(subgroup_intersection_contains(a, b)) = Option.some(result)
-}
-
-attributes Subgroup[G: Group] {
-    /// Subgroup extensionality from pointwise equality of membership.
-    let ext = subgroup_ext[G]
-
-    /// The subset of group elements belonging to this subgroup.
-    define as_set(self) -> Set[G] {
-        Set[G].new(self.contains)
-    }
-
-    /// The common part of two subgroups.
-    let intersection: (Subgroup[G], Subgroup[G]) -> Subgroup[G] = subgroup_intersection
-}
-
-theorem subgroup_as_set_contains_eq[G: Group](s: Subgroup[G], x: G) {
-    s.as_set.contains(x) = s.contains(x)
-}
-
-theorem subgroup_contains_as_set_eq[G: Group](s: Subgroup[G], x: G) {
-    s.contains(x) = s.as_set.contains(x)
-}
-
-theorem subgroup_eq_as_set[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a = b implies a.as_set = b.as_set
-}
-
-theorem subgroup_intersection_contains_eq[G: Group](a: Subgroup[G], b: Subgroup[G], x: G) {
-    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
-}
-
-theorem subgroup_intersection_subset_left[G: Group](a: Subgroup[G], b: Subgroup[G], x: G) {
-    a.intersection(b).contains(x) implies a.contains(x)
-}
-
-theorem subgroup_intersection_subset_right[G: Group](a: Subgroup[G], b: Subgroup[G], x: G) {
-    a.intersection(b).contains(x) implies b.contains(x)
-}
-
-theorem subgroup_intersection_comm[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a.intersection(b) = b.intersection(a)
-}
-
-theorem subgroup_intersection_assoc[G: Group](
-    a: Subgroup[G],
-    b: Subgroup[G],
-    c: Subgroup[G]
-) {
-    a.intersection(b).intersection(c) = a.intersection(b.intersection(c))
-}
-
-theorem subgroup_intersection_idempotent[G: Group](a: Subgroup[G]) {
-    a.intersection(a) = a
-}
-
-define subgroup_subset[G: Group](a: Subgroup[G], b: Subgroup[G]) -> Bool {
-    forall(x: G) {
-        a.contains(x) implies b.contains(x)
-    }
-}
-
-theorem subgroup_subset_as_set_eq[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(a, b) = a.as_set.subset(b.as_set)
-}
-
-theorem subgroup_as_set_subset_of_subset[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(a, b) implies a.as_set.subset(b.as_set)
-}
-
-theorem subgroup_subset_of_as_set_subset[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a.as_set.subset(b.as_set) implies subgroup_subset(a, b)
-}
-
-theorem subgroup_subset_refl[G: Group](a: Subgroup[G]) {
-    subgroup_subset(a, a)
-}
-
-theorem subgroup_subset_trans[G: Group](a: Subgroup[G], b: Subgroup[G], c: Subgroup[G]) {
-    subgroup_subset(a, b) and subgroup_subset(b, c) implies subgroup_subset(a, c)
-}
-
-theorem subgroup_intersection_subset_left_relation[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(a.intersection(b), a)
-}
-
-theorem subgroup_intersection_subset_right_relation[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(a.intersection(b), b)
-}
-
-theorem subgroup_subset_intersection_of_subset_left_right[G: Group](
-    c: Subgroup[G], a: Subgroup[G], b: Subgroup[G]
-) {
-    subgroup_subset(c, a) and subgroup_subset(c, b) implies subgroup_subset(c, a.intersection(b))
-}
-
-theorem subgroup_subset_intersection_iff[G: Group](c: Subgroup[G], a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(c, a.intersection(b)) = (subgroup_subset(c, a) and subgroup_subset(c, b))
-}
-
-let identity_subgroup[G: Group]: Subgroup[G] satisfy {
-    Subgroup.new(is_identity[G]) = Option.some(identity_subgroup)
-}
-
-theorem identity_subgroup_only_has_identity[G: Group](g: G) {
-    identity_subgroup[G].contains(g) implies g = G.1
-}
-
-theorem identity_subgroup_contains_eq[G: Group](g: G) {
-    identity_subgroup[G].contains(g) = (g = G.1)
-}
-
-theorem identity_subgroup_subset[G: Group](s: Subgroup[G]) {
-    subgroup_subset(identity_subgroup[G], s)
-}
-
-define full_group_contains[G: Group](a: G) -> Bool {
-    true
-}
-
-theorem full_subgroup_constraint[G: Group] {
-    subgroup_constraint(full_group_contains[G])
-}
-
-let full_subgroup[G: Group]: Subgroup[G] satisfy {
-    Subgroup.new(full_group_contains[G]) = Option.some(full_subgroup)
-}
-
-theorem full_subgroup_contains_everything[G: Group](g: G) {
-    full_subgroup[G].contains(g)
-}
-
-theorem full_subgroup_contains_eq[G: Group](g: G) {
-    full_subgroup[G].contains(g) = true
-}
-
-theorem subgroup_subset_full[G: Group](s: Subgroup[G]) {
-    subgroup_subset(s, full_subgroup[G])
-}
-
-theorem subgroup_subset_antisymm[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    subgroup_subset(a, b) and subgroup_subset(b, a) implies a = b
-}
-
-theorem subgroup_eq_iff_subset_both[G: Group](a: Subgroup[G], b: Subgroup[G]) {
-    a = b = (subgroup_subset(a, b) and subgroup_subset(b, a))
 }
