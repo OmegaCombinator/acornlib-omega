@@ -1,0 +1,1120 @@
+/// Public interface for the basic foundation: functions, logic, and the Set carrier.
+
+define compose[T, U, V](f: U -> V, g: T -> U) -> T -> V {
+    function(t: T) {
+        f(g(t))
+    }
+}
+
+define identity_fn[T](x: T) -> T {
+    x
+}
+
+define flip[T, U, V](f: (T, U) -> V, a: U, b: T) -> V {
+    f(b, a)
+}
+
+define is_constant[T, U](f: T -> U) -> Bool {
+    exists(y: U) {
+        forall(x: T) {
+            f(x) = y
+        }
+    }
+}
+
+theorem predicate_extensionality[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { p(x) = q(x) }) implies p = q
+}
+
+theorem function_extensionality[T, U](f: T -> U, g: T -> U) {
+    (forall(x: T) { f(x) = g(x) }) implies f = g
+}
+
+theorem binary_function_extensionality[T, U, V](f: (T, U) -> V, g: (T, U) -> V) {
+    (forall(x: T, y: U) { f(x, y) = g(x, y) }) implies f = g
+}
+
+theorem function_eq_apply[T, U](f: T -> U, g: T -> U, x: T) {
+    f = g implies f(x) = g(x)
+}
+
+theorem binary_function_eq_apply[T, U, V](f: (T, U) -> V, g: (T, U) -> V, x: T, y: U) {
+    f = g implies f(x, y) = g(x, y)
+}
+
+theorem predicate_eq_apply[T](p: T -> Bool, q: T -> Bool, x: T) {
+    p = q implies p(x) = q(x)
+}
+
+theorem function_eq_transport_predicate[T, U](p: (T -> U) -> Bool, f: T -> U, g: T -> U) {
+    f = g and p(f) implies p(g)
+}
+
+theorem function_eq_transport_predicate_rev[T, U](p: (T -> U) -> Bool, f: T -> U, g: T -> U) {
+    f = g and p(g) implies p(f)
+}
+
+theorem predicate_eq_transport_predicate[T](p: (T -> Bool) -> Bool, q: T -> Bool, r: T -> Bool) {
+    q = r and p(q) implies p(r)
+}
+
+theorem predicate_eq_transport_predicate_rev[T](p: (T -> Bool) -> Bool, q: T -> Bool, r: T -> Bool) {
+    q = r and p(r) implies p(q)
+}
+
+theorem binary_function_eq_transport_predicate[T, U, V](p: ((T, U) -> V) -> Bool, f: (T, U) -> V, g: (T, U) -> V) {
+    f = g and p(f) implies p(g)
+}
+
+theorem binary_function_eq_transport_predicate_rev[T, U, V](p: ((T, U) -> V) -> Bool, f: (T, U) -> V, g: (T, U) -> V) {
+    f = g and p(g) implies p(f)
+}
+
+theorem predicate_eq_forward[T](p: T -> Bool, q: T -> Bool, x: T) {
+    p = q and p(x) implies q(x)
+}
+
+theorem predicate_eq_backward[T](p: T -> Bool, q: T -> Bool, x: T) {
+    p = q and q(x) implies p(x)
+}
+
+theorem eq_transport_predicate[T](p: T -> Bool, x: T, y: T) {
+    x = y and p(x) implies p(y)
+}
+
+theorem eq_transport_predicate_rev[T](p: T -> Bool, x: T, y: T) {
+    x = y and p(y) implies p(x)
+}
+
+theorem compose_identity_left[T, U](f: T -> U) {
+    compose(identity_fn[U], f) = f
+}
+
+theorem compose_identity_right[T, U](f: T -> U) {
+    compose(f, identity_fn[T]) = f
+}
+
+theorem compose_assoc[A, B, C, D](f: C -> D, g: B -> C, h: A -> B) {
+    compose(f, compose(g, h)) = compose(compose(f, g), h)
+}
+
+theorem compose_eq_left[T, U, V](f: U -> V, g: U -> V, h: T -> U) {
+    f = g implies compose(f, h) = compose(g, h)
+}
+
+theorem compose_eq_right[T, U, V](f: U -> V, g: T -> U, h: T -> U) {
+    g = h implies compose(f, g) = compose(f, h)
+}
+
+theorem compose_eq[T, U, V](f: U -> V, g: U -> V, h: T -> U, k: T -> U) {
+    f = g and h = k implies compose(f, h) = compose(g, k)
+}
+
+theorem compose_constant[T, U, V](f: U -> V, u: U) {
+    compose(f, constant[T, U](u)) = constant[T, V](f(u))
+}
+
+theorem constant_is_constant[T, U](u: U) {
+    is_constant(constant[T, U](u))
+}
+
+theorem function_eq_transport_constant[T, U](f: T -> U, g: T -> U) {
+    f = g and is_constant(f) implies is_constant(g)
+}
+
+theorem function_eq_transport_constant_rev[T, U](f: T -> U, g: T -> U) {
+    f = g and is_constant(g) implies is_constant(f)
+}
+
+typeclass I: Inhabited {
+    /// A distinguished element of the type.
+    default: I
+}
+
+theorem is_constant_imp_eq_constant[T: Inhabited, U](f: T -> U) {
+    is_constant(f) implies exists(u: U) {
+        constant[T, U](u) = f
+    }
+}
+
+define is_injective_fn[T, U](f: T -> U) -> Bool {
+    forall(x: T, y: T) {
+        f(x) = f(y) implies x = y
+    }
+}
+
+define is_surjective_fn[T, U](f: T -> U) -> Bool {
+    forall(y: U) {
+        exists(x: T) {
+            f(x) = y
+        }
+    }
+}
+
+define is_bijection_fn[T, U](f: T -> U) -> Bool {
+    is_injective_fn(f) and is_surjective_fn(f)
+}
+
+theorem bijection_fn_is_injective[T, U](f: T -> U) {
+    is_bijection_fn(f) implies is_injective_fn(f)
+}
+
+theorem bijection_fn_is_surjective[T, U](f: T -> U) {
+    is_bijection_fn(f) implies is_surjective_fn(f)
+}
+
+theorem function_eq_transport_injective_fn[T, U](f: T -> U, g: T -> U) {
+    f = g and is_injective_fn(f) implies is_injective_fn(g)
+}
+
+theorem function_eq_transport_injective_fn_rev[T, U](f: T -> U, g: T -> U) {
+    f = g and is_injective_fn(g) implies is_injective_fn(f)
+}
+
+theorem function_eq_transport_surjective_fn[T, U](f: T -> U, g: T -> U) {
+    f = g and is_surjective_fn(f) implies is_surjective_fn(g)
+}
+
+theorem function_eq_transport_surjective_fn_rev[T, U](f: T -> U, g: T -> U) {
+    f = g and is_surjective_fn(g) implies is_surjective_fn(f)
+}
+
+theorem function_eq_transport_bijection_fn[T, U](f: T -> U, g: T -> U) {
+    f = g and is_bijection_fn(f) implies is_bijection_fn(g)
+}
+
+theorem function_eq_transport_bijection_fn_rev[T, U](f: T -> U, g: T -> U) {
+    f = g and is_bijection_fn(g) implies is_bijection_fn(f)
+}
+
+theorem injective_fn_eq[T, U](f: T -> U, x1: T, x2: T) {
+    is_injective_fn(f) and f(x1) = f(x2) implies x1 = x2
+}
+
+theorem injective_fn_ne[T, U](f: T -> U, x1: T, x2: T) {
+    is_injective_fn(f) and x1 != x2 implies f(x1) != f(x2)
+}
+
+theorem injective_fn_of_ne[T, U](f: T -> U) {
+    forall(x1: T, x2: T) {
+        x1 != x2 implies f(x1) != f(x2)
+    }
+    implies is_injective_fn(f)
+}
+
+theorem injective_fn_iff_ne[T, U](f: T -> U) {
+    is_injective_fn(f) = forall(x1: T, x2: T) {
+        x1 != x2 implies f(x1) != f(x2)
+    }
+}
+
+define is_left_inverse_fn[T, U](f: T -> U, g: U -> T) -> Bool {
+    forall(x: T) {
+        g(f(x)) = x
+    }
+}
+
+define is_right_inverse_fn[T, U](f: T -> U, g: U -> T) -> Bool {
+    forall(y: U) {
+        f(g(y)) = y
+    }
+}
+
+define is_two_sided_inverse_fn[T, U](f: T -> U, g: U -> T) -> Bool {
+    is_left_inverse_fn(f, g) and is_right_inverse_fn(f, g)
+}
+
+theorem left_inverse_fn_apply[T, U](f: T -> U, g: U -> T, x: T) {
+    is_left_inverse_fn(f, g) implies g(f(x)) = x
+}
+
+theorem right_inverse_fn_apply[T, U](f: T -> U, g: U -> T, y: U) {
+    is_right_inverse_fn(f, g) implies f(g(y)) = y
+}
+
+theorem two_sided_inverse_fn_left_apply[T, U](f: T -> U, g: U -> T, x: T) {
+    is_two_sided_inverse_fn(f, g) implies g(f(x)) = x
+}
+
+theorem two_sided_inverse_fn_right_apply[T, U](f: T -> U, g: U -> T, y: U) {
+    is_two_sided_inverse_fn(f, g) implies f(g(y)) = y
+}
+
+define has_left_inverse_fn[T, U](f: T -> U) -> Bool {
+    exists(g: U -> T) {
+        is_left_inverse_fn(f, g)
+    }
+}
+
+define has_right_inverse_fn[T, U](f: T -> U) -> Bool {
+    exists(g: U -> T) {
+        is_right_inverse_fn(f, g)
+    }
+}
+
+theorem left_inverse_fn_imp_injective_fn[T, U](f: T -> U, g: U -> T) {
+    is_left_inverse_fn(f, g) implies is_injective_fn(f)
+}
+
+theorem has_left_inverse_fn_imp_injective_fn[T, U](f: T -> U) {
+    has_left_inverse_fn(f) implies is_injective_fn(f)
+}
+
+theorem right_inverse_fn_imp_surjective_fn[T, U](f: T -> U, g: U -> T) {
+    is_right_inverse_fn(f, g) implies is_surjective_fn(f)
+}
+
+theorem has_right_inverse_fn_imp_surjective_fn[T, U](f: T -> U) {
+    has_right_inverse_fn(f) implies is_surjective_fn(f)
+}
+
+theorem injective_fn_right_inverse_fn_imp_left_inverse_fn[T, U](f: T -> U, g: U -> T) {
+    is_injective_fn(f) and is_right_inverse_fn(f, g) implies is_left_inverse_fn(f, g)
+}
+
+theorem two_sided_inverse_fn_imp_bijection_fn[T, U](f: T -> U, g: U -> T) {
+    is_two_sided_inverse_fn(f, g) implies is_bijection_fn(f)
+}
+
+theorem compose_left_inverse_fn[T, U, V](f: T -> U, g: U -> V, invf: U -> T, invg: V -> U) {
+    is_left_inverse_fn(f, invf) and is_left_inverse_fn(g, invg)
+    implies is_left_inverse_fn(compose(g, f), compose(invf, invg))
+}
+
+theorem compose_right_inverse_fn[T, U, V](f: T -> U, g: U -> V, invf: U -> T, invg: V -> U) {
+    is_right_inverse_fn(f, invf) and is_right_inverse_fn(g, invg)
+    implies is_right_inverse_fn(compose(g, f), compose(invf, invg))
+}
+
+theorem compose_two_sided_inverse_fn[T, U, V](f: T -> U, g: U -> V, invf: U -> T, invg: V -> U) {
+    is_two_sided_inverse_fn(f, invf) and is_two_sided_inverse_fn(g, invg)
+    implies is_two_sided_inverse_fn(compose(g, f), compose(invf, invg))
+}
+
+theorem two_sided_inverse_fn_symm[T, U](f: T -> U, g: U -> T) {
+    is_two_sided_inverse_fn(f, g) implies is_two_sided_inverse_fn(g, f)
+}
+
+theorem two_sided_inverse_fn_unique[T, U](f: T -> U, g1: U -> T, g2: U -> T) {
+    is_two_sided_inverse_fn(f, g1) and is_two_sided_inverse_fn(f, g2) implies g1 = g2
+}
+
+theorem left_inverse_fn_eq_right_inverse_fn[T, U](f: T -> U, g: U -> T, h: U -> T) {
+    is_left_inverse_fn(f, g) and is_right_inverse_fn(f, h) implies g = h
+}
+
+theorem right_inverse_fn_unique_of_injective_fn[T, U](f: T -> U, g1: U -> T, g2: U -> T) {
+    is_injective_fn(f) and is_right_inverse_fn(f, g1) and is_right_inverse_fn(f, g2) implies g1 = g2
+}
+
+theorem left_inverse_fn_unique_of_surjective_fn[T, U](f: T -> U, g1: U -> T, g2: U -> T) {
+    is_surjective_fn(f) and is_left_inverse_fn(f, g1) and is_left_inverse_fn(f, g2) implies g1 = g2
+}
+
+theorem inverse_of_two_sided_inverse_fn_is_bijection_fn[T, U](f: T -> U, g: U -> T) {
+    is_two_sided_inverse_fn(f, g) implies is_bijection_fn(g)
+}
+
+theorem compose_injective_fn[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(f) and is_injective_fn(g) implies is_injective_fn(compose(f, g))
+}
+
+theorem compose_injective_fn_imp_right_factor_injective[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(compose(f, g)) implies is_injective_fn(g)
+}
+
+theorem compose_cancel_left_of_injective_fn[T, U, V](left: U -> V, f: T -> U, g: T -> U) {
+    is_injective_fn(left) and compose(left, f) = compose(left, g) implies f = g
+}
+
+theorem surjective_fn_has_preimage[T, U](f: T -> U, y: U) {
+    is_surjective_fn(f) implies exists(x: T) {
+        f(x) = y
+    }
+}
+
+theorem compose_surjective_fn_imp_left_factor_surjective[T, U, V](f: U -> V, g: T -> U) {
+    is_surjective_fn(compose(f, g)) implies is_surjective_fn(f)
+}
+
+theorem compose_cancel_right_of_surjective_fn[T, U, V](right: T -> U, f: U -> V, g: U -> V) {
+    is_surjective_fn(right) and compose(f, right) = compose(g, right) implies f = g
+}
+
+theorem compose_cancel_left_of_left_inverse_fn[T, U, V](left: U -> V, invleft: V -> U, f: T -> U, g: T -> U) {
+    is_left_inverse_fn(left, invleft) and compose(left, f) = compose(left, g) implies f = g
+}
+
+theorem compose_cancel_right_of_right_inverse_fn[T, U, V](right: T -> U, invright: U -> T, f: U -> V, g: U -> V) {
+    is_right_inverse_fn(right, invright) and compose(f, right) = compose(g, right) implies f = g
+}
+
+let inverse_fn_at[T: Inhabited, U](f: T -> U, y: U) -> result: T satisfy {
+    is_surjective_fn(f) implies f(result) = y
+}
+
+define inverse_fn[T: Inhabited, U](f: T -> U, y: U) -> T {
+    inverse_fn_at(f, y)
+}
+
+theorem inverse_fn_apply_of_surjective[T: Inhabited, U](f: T -> U, y: U) {
+    is_surjective_fn(f) implies f(inverse_fn(f, y)) = y
+}
+
+theorem inverse_fn_apply_image_of_bijection[T: Inhabited, U](f: T -> U, x: T) {
+    is_bijection_fn(f) implies inverse_fn(f, f(x)) = x
+}
+
+theorem inverse_fn_is_right_inverse_of_surjective[T: Inhabited, U](f: T -> U) {
+    is_surjective_fn(f) implies is_right_inverse_fn(f, inverse_fn(f))
+}
+
+theorem inverse_fn_is_left_inverse_of_bijection[T: Inhabited, U](f: T -> U) {
+    is_bijection_fn(f) implies is_left_inverse_fn(f, inverse_fn(f))
+}
+
+theorem inverse_fn_is_two_sided_inverse_of_bijection[T: Inhabited, U](f: T -> U) {
+    is_bijection_fn(f) implies is_two_sided_inverse_fn(f, inverse_fn(f))
+}
+
+theorem inverse_fn_eq_of_two_sided_inverse[T: Inhabited, U](f: T -> U, g: U -> T) {
+    is_bijection_fn(f) and is_two_sided_inverse_fn(f, g) implies inverse_fn(f) = g
+}
+
+theorem inverse_fn_is_injective_of_bijection[T: Inhabited, U](f: T -> U) {
+    is_bijection_fn(f) implies is_injective_fn(inverse_fn(f))
+}
+
+theorem inverse_fn_is_surjective_of_bijection[T: Inhabited, U](f: T -> U) {
+    is_bijection_fn(f) implies is_surjective_fn(inverse_fn(f))
+}
+
+theorem inverse_fn_is_bijection_of_bijection[T: Inhabited, U](f: T -> U) {
+    is_bijection_fn(f) implies is_bijection_fn(inverse_fn(f))
+}
+
+theorem compose_surjective_fn[T, U, V](f: U -> V, g: T -> U) {
+    is_surjective_fn(f) and is_surjective_fn(g) implies is_surjective_fn(compose(f, g))
+}
+
+theorem compose_bijection_fn[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(f) and is_bijection_fn(g) implies is_bijection_fn(compose(f, g))
+}
+
+theorem compose_bijection_fn_imp_right_factor_injective[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(compose(f, g)) implies is_injective_fn(g)
+}
+
+theorem compose_bijection_fn_imp_left_factor_surjective[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(compose(f, g)) implies is_surjective_fn(f)
+}
+
+theorem compose_bijection_fn_and_left_injective_imp_right_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(compose(f, g)) and is_injective_fn(f) implies is_bijection_fn(g)
+}
+
+theorem compose_bijection_fn_and_right_surjective_imp_left_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(compose(f, g)) and is_surjective_fn(g) implies is_bijection_fn(f)
+}
+
+theorem compose_injective_fn_imp_left_factor_injective_of_right_surjective[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(compose(f, g)) and is_surjective_fn(g) implies is_injective_fn(f)
+}
+
+theorem compose_surjective_fn_imp_right_factor_surjective_of_left_injective[T, U, V](f: U -> V, g: T -> U) {
+    is_surjective_fn(compose(f, g)) and is_injective_fn(f) implies is_surjective_fn(g)
+}
+
+theorem compose_injective_fn_and_right_surjective_imp_right_factor_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(compose(f, g)) and is_surjective_fn(g) implies is_bijection_fn(g)
+}
+
+theorem compose_surjective_fn_and_left_injective_imp_left_factor_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_surjective_fn(compose(f, g)) and is_injective_fn(f) implies is_bijection_fn(f)
+}
+
+theorem compose_injective_fn_iff_factors_injective_of_right_surjective[T, U, V](f: U -> V, g: T -> U) {
+    is_surjective_fn(g) implies (is_injective_fn(compose(f, g)) = (is_injective_fn(f) and is_injective_fn(g)))
+}
+
+theorem compose_surjective_fn_iff_factors_surjective_of_left_injective[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(f) implies (is_surjective_fn(compose(f, g)) = (is_surjective_fn(f) and is_surjective_fn(g)))
+}
+
+theorem compose_injective_fn_iff_left_factor_injective_of_right_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(g) implies (is_injective_fn(compose(f, g)) = is_injective_fn(f))
+}
+
+theorem compose_surjective_fn_iff_right_factor_surjective_of_left_bijection[T, U, V](f: U -> V, g: T -> U) {
+    is_bijection_fn(f) implies (is_surjective_fn(compose(f, g)) = is_surjective_fn(g))
+}
+
+theorem compose_bijection_fn_iff_factors_bijection_of_left_injective_right_surjective[T, U, V](f: U -> V, g: T -> U) {
+    is_injective_fn(f) and is_surjective_fn(g)
+    implies (is_bijection_fn(compose(f, g)) = (is_bijection_fn(f) and is_bijection_fn(g)))
+}
+
+structure Bijection[T, U] {
+    /// The underlying map.
+    map: T -> U
+} constraint {
+    is_bijection_fn(map)
+}
+
+theorem bijection_new_map[T, U](f: T -> U, e: Bijection[T, U]) {
+    Bijection[T, U].new(f) = Option.some(e) implies e.map = f
+}
+
+theorem bijection_new_self[T, U](e: Bijection[T, U]) {
+    Bijection[T, U].new(e.map) = Option.some(e)
+}
+
+theorem bijection_some_injective[T, U](e: Bijection[T, U], h: Bijection[T, U]) {
+    Option.some(e) = Option.some(h) implies e = h
+}
+
+theorem bijection_ext[T, U](e: Bijection[T, U], h: Bijection[T, U]) {
+    e.map = h.map implies e = h
+}
+
+theorem bijection_eq_map[T, U](e: Bijection[T, U], h: Bijection[T, U]) {
+    e = h implies e.map = h.map
+}
+
+theorem bijection_map_is_bijection[T, U](e: Bijection[T, U]) {
+    is_bijection_fn(e.map)
+}
+
+theorem bijection_map_is_injective[T, U](e: Bijection[T, U]) {
+    is_injective_fn(e.map)
+}
+
+theorem bijection_map_is_surjective[T, U](e: Bijection[T, U]) {
+    is_surjective_fn(e.map)
+}
+
+let identity_bijection[T](anchor: T) -> result: Bijection[T, T] satisfy {
+    result.map = identity_fn[T]
+}
+
+theorem identity_bijection_map[T](anchor: T) {
+    identity_bijection(anchor).map = identity_fn[T]
+}
+
+let inverse_bijection[T: Inhabited, U](e: Bijection[T, U]) -> result: Bijection[U, T] satisfy {
+    result.map = inverse_fn(e.map)
+}
+
+theorem inverse_bijection_map[T: Inhabited, U](e: Bijection[T, U]) {
+    inverse_bijection(e).map = inverse_fn(e.map)
+}
+
+theorem inverse_bijection_apply_image[T: Inhabited, U](e: Bijection[T, U], x: T) {
+    inverse_bijection(e).map(e.map(x)) = x
+}
+
+theorem bijection_apply_inverse[T: Inhabited, U](e: Bijection[T, U], y: U) {
+    e.map(inverse_bijection(e).map(y)) = y
+}
+
+let compose_bijection[T, U, V](e: Bijection[U, V], h: Bijection[T, U]) -> result: Bijection[T, V] satisfy {
+    result.map = compose(e.map, h.map)
+}
+
+theorem compose_bijection_map[T, U, V](e: Bijection[U, V], h: Bijection[T, U]) {
+    compose_bijection(e, h).map = compose(e.map, h.map)
+}
+
+theorem compose_bijection_identity_left[T, U](anchor: U, e: Bijection[T, U]) {
+    compose_bijection(identity_bijection(anchor), e) = e
+}
+
+theorem compose_bijection_identity_right[T, U](e: Bijection[T, U], anchor: T) {
+    compose_bijection(e, identity_bijection(anchor)) = e
+}
+
+theorem compose_bijection_assoc[A, B, C, D](f: Bijection[C, D], g: Bijection[B, C], h: Bijection[A, B]) {
+    compose_bijection(f, compose_bijection(g, h)) = compose_bijection(compose_bijection(f, g), h)
+}
+
+theorem inverse_bijection_inverse[T: Inhabited, U: Inhabited](e: Bijection[T, U]) {
+    inverse_bijection(inverse_bijection(e)) = e
+}
+
+theorem compose_bijection_inverse_left[T: Inhabited, U](anchor: T, e: Bijection[T, U]) {
+    compose_bijection(inverse_bijection(e), e) = identity_bijection(anchor)
+}
+
+theorem compose_bijection_inverse_right[T: Inhabited, U](e: Bijection[T, U], anchor: U) {
+    compose_bijection(e, inverse_bijection(e)) = identity_bijection(anchor)
+}
+
+theorem inverse_bijection_compose[T: Inhabited, U: Inhabited, V](e: Bijection[U, V], h: Bijection[T, U]) {
+    inverse_bijection(compose_bijection(e, h)) = compose_bijection(inverse_bijection(h), inverse_bijection(e))
+}
+
+define is_injective[T](f: T -> T) -> Bool {
+    forall(x: T, y: T) {
+        f(x) = f(y) implies x = y
+    }
+}
+
+define is_surjective[T](f: T -> T) -> Bool {
+    forall(y: T) {
+        exists(x: T) {
+            f(x) = y
+        }
+    }
+}
+
+define is_bijection[T](f: T -> T) -> Bool {
+    is_injective(f) and is_surjective(f)
+}
+
+theorem is_injective_eq_is_injective_fn[T](f: T -> T) {
+    is_injective(f) = is_injective_fn(f)
+}
+
+theorem is_surjective_eq_is_surjective_fn[T](f: T -> T) {
+    is_surjective(f) = is_surjective_fn(f)
+}
+
+theorem is_bijection_eq_is_bijection_fn[T](f: T -> T) {
+    is_bijection(f) = is_bijection_fn(f)
+}
+
+theorem function_eq_transport_injective[T](f: T -> T, g: T -> T) {
+    f = g and is_injective(f) implies is_injective(g)
+}
+
+theorem function_eq_transport_injective_rev[T](f: T -> T, g: T -> T) {
+    f = g and is_injective(g) implies is_injective(f)
+}
+
+theorem function_eq_transport_surjective[T](f: T -> T, g: T -> T) {
+    f = g and is_surjective(f) implies is_surjective(g)
+}
+
+theorem function_eq_transport_surjective_rev[T](f: T -> T, g: T -> T) {
+    f = g and is_surjective(g) implies is_surjective(f)
+}
+
+theorem function_eq_transport_bijection[T](f: T -> T, g: T -> T) {
+    f = g and is_bijection(f) implies is_bijection(g)
+}
+
+theorem function_eq_transport_bijection_rev[T](f: T -> T, g: T -> T) {
+    f = g and is_bijection(g) implies is_bijection(f)
+}
+
+theorem and_left(a: Bool, b: Bool) {
+    a and b implies a
+}
+
+theorem and_right(a: Bool, b: Bool) {
+    a and b implies b
+}
+
+theorem and_intro(a: Bool, b: Bool) {
+    a and b implies a and b
+}
+
+theorem and_comm(a: Bool, b: Bool) {
+    (a and b) = (b and a)
+}
+
+theorem and_assoc(a: Bool, b: Bool, c: Bool) {
+    ((a and b) and c) = (a and (b and c))
+}
+
+theorem and_self(a: Bool) {
+    (a and a) = a
+}
+
+theorem and_true(a: Bool) {
+    (a and true) = a
+}
+
+theorem true_and(a: Bool) {
+    (true and a) = a
+}
+
+theorem and_false(a: Bool) {
+    (a and false) = false
+}
+
+theorem false_and(a: Bool) {
+    (false and a) = false
+}
+
+theorem or_comm(a: Bool, b: Bool) {
+    (a or b) = (b or a)
+}
+
+theorem or_assoc(a: Bool, b: Bool, c: Bool) {
+    ((a or b) or c) = (a or (b or c))
+}
+
+theorem or_intro_left(a: Bool, b: Bool) {
+    a implies a or b
+}
+
+theorem or_intro_right(a: Bool, b: Bool) {
+    b implies a or b
+}
+
+theorem or_self(a: Bool) {
+    (a or a) = a
+}
+
+theorem or_true(a: Bool) {
+    (a or true) = true
+}
+
+theorem true_or(a: Bool) {
+    (true or a) = true
+}
+
+theorem or_false(a: Bool) {
+    (a or false) = a
+}
+
+theorem false_or(a: Bool) {
+    (false or a) = a
+}
+
+theorem not_true {
+    (not true) = false
+}
+
+theorem not_false {
+    (not false) = true
+}
+
+theorem not_not(a: Bool) {
+    (not not a) = a
+}
+
+theorem not_not_elim(a: Bool) {
+    not not a implies a
+}
+
+theorem not_not_intro(a: Bool) {
+    a implies not not a
+}
+
+theorem and_not_self(a: Bool) {
+    (a and not a) = false
+}
+
+theorem or_not_self(a: Bool) {
+    (a or not a) = true
+}
+
+theorem not_and(a: Bool, b: Bool) {
+    (not (a and b)) = (not a or not b)
+}
+
+theorem not_or(a: Bool, b: Bool) {
+    (not (a or b)) = (not a and not b)
+}
+
+theorem true_implies(a: Bool) {
+    (true implies a) = a
+}
+
+theorem false_implies(a: Bool) {
+    (false implies a) = true
+}
+
+theorem implies_true(a: Bool) {
+    (a implies true) = true
+}
+
+theorem implies_false(a: Bool) {
+    (a implies false) = not a
+}
+
+theorem implies_self(a: Bool) {
+    (a implies a) = true
+}
+
+theorem implies_eq_not_or(a: Bool, b: Bool) {
+    (a implies b) = (not a or b)
+}
+
+theorem not_implies(a: Bool, b: Bool) {
+    (not (a implies b)) = (a and not b)
+}
+
+theorem false_elim(a: Bool) {
+    false implies a
+}
+
+theorem not_intro(a: Bool) {
+    (a implies false) implies not a
+}
+
+theorem not_and_self(a: Bool) {
+    not (a and not a)
+}
+
+theorem not_self_and(a: Bool) {
+    not (not a and a)
+}
+
+theorem by_contradiction(a: Bool) {
+    (not a implies false) implies a
+}
+
+theorem excluded_middle(a: Bool) {
+    a or not a
+}
+
+theorem contrapose(a: Bool, b: Bool) {
+    (a implies b) and not b implies not a
+}
+
+theorem contrapose_iff(a: Bool, b: Bool) {
+    (a implies b) = (not b implies not a)
+}
+
+theorem implies_contrapositive(a: Bool, b: Bool) {
+    (a implies b) = (not b implies not a)
+}
+
+theorem eq_true_elim(a: Bool) {
+    a = true implies a
+}
+
+theorem eq_true_intro(a: Bool) {
+    a implies a = true
+}
+
+theorem eq_false_elim(a: Bool) {
+    a = false implies not a
+}
+
+theorem eq_false_intro(a: Bool) {
+    not a implies a = false
+}
+
+define iff_bool(a: Bool, b: Bool) -> Bool {
+    (a implies b) and (b implies a)
+}
+
+theorem iff_bool_refl(a: Bool) {
+    iff_bool(a, a)
+}
+
+theorem iff_bool_symm(a: Bool, b: Bool) {
+    iff_bool(a, b) implies iff_bool(b, a)
+}
+
+theorem iff_bool_trans(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) and iff_bool(b, c) implies iff_bool(a, c)
+}
+
+theorem iff_bool_forward(a: Bool, b: Bool) {
+    iff_bool(a, b) implies (a implies b)
+}
+
+theorem iff_bool_backward(a: Bool, b: Bool) {
+    iff_bool(a, b) implies (b implies a)
+}
+
+theorem eq_imp_iff_bool(a: Bool, b: Bool) {
+    a = b implies iff_bool(a, b)
+}
+
+theorem iff_bool_imp_eq(a: Bool, b: Bool) {
+    iff_bool(a, b) implies a = b
+}
+
+theorem iff_bool_eq_eq(a: Bool, b: Bool) {
+    iff_bool(a, b) = (a = b)
+}
+
+theorem eq_eq_iff_bool(a: Bool, b: Bool) {
+    (a = b) = iff_bool(a, b)
+}
+
+theorem iff_bool_not(a: Bool, b: Bool) {
+    iff_bool(a, b) implies iff_bool(not a, not b)
+}
+
+theorem iff_bool_and_left(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(a and c, b and c)
+}
+
+theorem iff_bool_and_right(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(c and a, c and b)
+}
+
+theorem iff_bool_and(a: Bool, b: Bool, c: Bool, d: Bool) {
+    iff_bool(a, b) and iff_bool(c, d) implies iff_bool(a and c, b and d)
+}
+
+theorem iff_bool_or_left(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(a or c, b or c)
+}
+
+theorem iff_bool_or_right(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(c or a, c or b)
+}
+
+theorem iff_bool_or(a: Bool, b: Bool, c: Bool, d: Bool) {
+    iff_bool(a, b) and iff_bool(c, d) implies iff_bool(a or c, b or d)
+}
+
+theorem iff_bool_implies_left(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(a implies c, b implies c)
+}
+
+theorem iff_bool_implies_right(a: Bool, b: Bool, c: Bool) {
+    iff_bool(a, b) implies iff_bool(c implies a, c implies b)
+}
+
+theorem iff_bool_implies(a: Bool, b: Bool, c: Bool, d: Bool) {
+    iff_bool(a, b) and iff_bool(c, d) implies iff_bool(a implies c, b implies d)
+}
+
+theorem iff_bool_forall[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { iff_bool(p(x), q(x)) }) implies
+    iff_bool(forall(x: T) { p(x) }, forall(x: T) { q(x) })
+}
+
+theorem iff_bool_exists_forward[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { iff_bool(p(x), q(x)) }) implies
+    (exists(x: T) { p(x) } implies exists(x: T) { q(x) })
+}
+
+theorem iff_bool_exists_backward[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { iff_bool(p(x), q(x)) }) implies
+    (exists(x: T) { q(x) } implies exists(x: T) { p(x) })
+}
+
+theorem iff_bool_exists[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { iff_bool(p(x), q(x)) }) implies
+    iff_bool(exists(x: T) { p(x) }, exists(x: T) { q(x) })
+}
+
+theorem and_or_distrib_left(a: Bool, b: Bool, c: Bool) {
+    (a and (b or c)) = ((a and b) or (a and c))
+}
+
+theorem or_and_distrib_left(a: Bool, b: Bool, c: Bool) {
+    (a or (b and c)) = ((a or b) and (a or c))
+}
+
+theorem and_or_distrib_right(a: Bool, b: Bool, c: Bool) {
+    ((a or b) and c) = ((a and c) or (b and c))
+}
+
+theorem or_and_distrib_right(a: Bool, b: Bool, c: Bool) {
+    ((a and b) or c) = ((a or c) and (b or c))
+}
+
+theorem implies_and(a: Bool, b: Bool, c: Bool) {
+    (a implies b and c) = ((a implies b) and (a implies c))
+}
+
+theorem or_implies(a: Bool, b: Bool, c: Bool) {
+    ((a or b) implies c) = ((a implies c) and (b implies c))
+}
+
+theorem implies_eq_or_not(a: Bool, b: Bool) {
+    (a implies b) = (not a or b)
+}
+
+theorem not_eq_not(a: Bool, b: Bool) {
+    a = b implies not a = not b
+}
+
+theorem eq_implies_left(a: Bool, b: Bool, c: Bool) {
+    a = b implies (a implies c) = (b implies c)
+}
+
+theorem eq_implies_right(a: Bool, b: Bool, c: Bool) {
+    a = b implies (c implies a) = (c implies b)
+}
+
+theorem forall_and_distrib[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { p(x) and q(x) }) =
+    ((forall(x: T) { p(x) }) and (forall(x: T) { q(x) }))
+}
+
+theorem forall_and_left[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { p(x) and q(x) }) implies forall(x: T) { p(x) }
+}
+
+theorem forall_and_right[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { p(x) and q(x) }) implies forall(x: T) { q(x) }
+}
+
+theorem forall_and_intro[T](p: T -> Bool, q: T -> Bool) {
+    (forall(x: T) { p(x) }) and (forall(x: T) { q(x) }) implies
+    forall(x: T) { p(x) and q(x) }
+}
+
+theorem exists_or_forward[T](p: T -> Bool, q: T -> Bool) {
+    exists(x: T) { p(x) or q(x) } implies
+    (exists(x: T) { p(x) }) or (exists(x: T) { q(x) })
+}
+
+theorem exists_or_backward_left[T](p: T -> Bool, q: T -> Bool) {
+    exists(x: T) { p(x) } implies exists(x: T) { p(x) or q(x) }
+}
+
+theorem exists_or_backward_right[T](p: T -> Bool, q: T -> Bool) {
+    exists(x: T) { q(x) } implies exists(x: T) { p(x) or q(x) }
+}
+
+theorem exists_or_backward[T](p: T -> Bool, q: T -> Bool) {
+    (exists(x: T) { p(x) }) or (exists(x: T) { q(x) }) implies
+    exists(x: T) { p(x) or q(x) }
+}
+
+theorem exists_or_distrib[T](p: T -> Bool, q: T -> Bool) {
+    (exists(x: T) { p(x) or q(x) }) =
+    ((exists(x: T) { p(x) }) or (exists(x: T) { q(x) }))
+}
+
+theorem exists_intro[T](p: T -> Bool, x: T) {
+    p(x) implies exists(y: T) {
+        p(y)
+    }
+}
+
+theorem not_exists_forward[T](p: T -> Bool) {
+    not exists(x: T) { p(x) } implies forall(x: T) {
+        not p(x)
+    }
+}
+
+theorem not_exists_backward[T](p: T -> Bool) {
+    (forall(x: T) { not p(x) }) implies not exists(x: T) {
+        p(x)
+    }
+}
+
+theorem not_exists[T](p: T -> Bool) {
+    (not exists(x: T) { p(x) }) = forall(x: T) {
+        not p(x)
+    }
+}
+
+theorem exists_not_imp_not_forall[T](p: T -> Bool) {
+    exists(x: T) {
+        not p(x)
+    } implies not forall(x: T) {
+        p(x)
+    }
+}
+
+theorem not_forall_imp_exists_not[T](p: T -> Bool) {
+    not forall(x: T) {
+        p(x)
+    } implies exists(x: T) {
+        not p(x)
+    }
+}
+
+theorem not_forall[T](p: T -> Bool) {
+    (not forall(x: T) { p(x) }) = exists(x: T) {
+        not p(x)
+    }
+}
+
+theorem forall_eq_not_exists_not[T](p: T -> Bool) {
+    (forall(x: T) { p(x) }) = not exists(x: T) {
+        not p(x)
+    }
+}
+
+theorem exists_eq_not_forall_not[T](p: T -> Bool) {
+    (exists(x: T) { p(x) }) = not forall(x: T) {
+        not p(x)
+    }
+}
+
+theorem forall_implies_const_left[T](a: Bool, p: T -> Bool) {
+    (forall(x: T) { a implies p(x) }) = (a implies forall(x: T) { p(x) })
+}
+
+theorem forall_implies_const_left_forward[T](a: Bool, p: T -> Bool) {
+    (forall(x: T) { a implies p(x) }) implies (a implies forall(x: T) { p(x) })
+}
+
+theorem forall_implies_const_left_backward[T](a: Bool, p: T -> Bool) {
+    (a implies forall(x: T) { p(x) }) implies forall(x: T) { a implies p(x) }
+}
+
+theorem forall_implies_const_right[T](p: T -> Bool, a: Bool) {
+    (forall(x: T) { p(x) implies a }) = ((exists(x: T) { p(x) }) implies a)
+}
+
+theorem forall_implies_const_right_forward[T](p: T -> Bool, a: Bool) {
+    (forall(x: T) { p(x) implies a }) implies ((exists(x: T) { p(x) }) implies a)
+}
+
+theorem forall_implies_const_right_backward[T](p: T -> Bool, a: Bool) {
+    ((exists(x: T) { p(x) }) implies a) implies forall(x: T) { p(x) implies a }
+}
+
+theorem exists_and_const_left_forward[T](a: Bool, p: T -> Bool) {
+    exists(x: T) { a and p(x) } implies a and exists(x: T) { p(x) }
+}
+
+theorem exists_and_const_left_backward[T](a: Bool, p: T -> Bool) {
+    a and exists(x: T) { p(x) } implies exists(x: T) { a and p(x) }
+}
+
+theorem exists_and_const_left[T](a: Bool, p: T -> Bool) {
+    (exists(x: T) { a and p(x) }) = (a and exists(x: T) { p(x) })
+}
+
+theorem exists_and_const_right_forward[T](p: T -> Bool, a: Bool) {
+    exists(x: T) { p(x) and a } implies (exists(x: T) { p(x) }) and a
+}
+
+theorem exists_and_const_right_backward[T](p: T -> Bool, a: Bool) {
+    (exists(x: T) { p(x) }) and a implies exists(x: T) { p(x) and a }
+}
+
+theorem exists_and_const_right[T](p: T -> Bool, a: Bool) {
+    (exists(x: T) { p(x) and a }) = ((exists(x: T) { p(x) }) and a)
+}
+
+theorem forall_forall_or_forward[T, U](p: T -> Bool, q: U -> Bool) {
+    (forall(x: T) { forall(y: U) { p(x) or q(y) } }) implies
+        ((forall(x: T) { p(x) }) or (forall(y: U) { q(y) }))
+}
+
+theorem forall_forall_or_backward[T, U](p: T -> Bool, q: U -> Bool) {
+    ((forall(x: T) { p(x) }) or (forall(y: U) { q(y) })) implies
+        forall(x: T) { forall(y: U) { p(x) or q(y) } }
+}
+
+theorem forall_forall_or_eq_or_forall[T, U](p: T -> Bool, q: U -> Bool) {
+    (forall(x: T) { forall(y: U) { p(x) or q(y) } }) =
+        ((forall(x: T) { p(x) }) or (forall(y: U) { q(y) }))
+}
+
+structure Set[K] {
+    /// True if the element is in the set.
+    contains: K -> Bool
+}
+
+attributes Set[K] {
+    /// True if every element of `self` is an element of `s`.
+    define subset(self, s: Set[K]) -> Bool {
+        forall(x: K) {
+            self.contains(x) implies s.contains(x)
+        }
+    }
+}
+
+typeclass A: LTE {
+    lte: (A, A) -> Bool
+}
