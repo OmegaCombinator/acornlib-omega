@@ -1,0 +1,2453 @@
+define coeff_tail[R](c: Nat -> R, i: Nat) -> R {
+    c(i.suc)
+}
+
+define coeff_eval[R: Semiring](c: Nat -> R, x: R, n: Nat) -> R {
+    match n {
+        Nat.zero {
+            R.0
+        }
+        Nat.suc(pred) {
+            c(Nat.0) + x * coeff_eval(coeff_tail(c), x, pred)
+        }
+    }
+}
+
+define coeff_quotient[R: Semiring](c: Nat -> R, a: R, n: Nat, i: Nat) -> R {
+    match n {
+        Nat.zero {
+            R.0
+        }
+        Nat.suc(pred) {
+            match i {
+                Nat.zero {
+                    coeff_eval(coeff_tail(c), a, pred)
+                }
+                Nat.suc(ipred) {
+                    coeff_quotient(coeff_tail(c), a, pred, ipred)
+                }
+            }
+        }
+    }
+}
+
+define coeff_mul_x_minus_a[R: CommRing](q: Nat -> R, a: R, x: R, n: Nat) -> R {
+    coeff_eval(q, x, n) * (x - a)
+}
+
+define coeff_eval_add_at[R: Semiring](c: Nat -> R, d: Nat -> R, x: R, n: Nat) -> Bool {
+    coeff_eval(pointwise_add(c, d), x, n) = coeff_eval(c, x, n) + coeff_eval(d, x, n)
+}
+
+define coeff_eval_add_property[R: Semiring](x: R, n: Nat) -> Bool {
+    forall(c: Nat -> R, d: Nat -> R) {
+        coeff_eval_add_at(c, d, x, n)
+    }
+}
+
+theorem coeff_eval_zero_index[R: Semiring](c: Nat -> R, x: R) {
+    coeff_eval(c, x, Nat.0) = R.0
+}
+
+theorem coeff_eval_add[R: Semiring](c: Nat -> R, d: Nat -> R, x: R, n: Nat) {
+    coeff_eval(pointwise_add(c, d), x, n) = coeff_eval(c, x, n) + coeff_eval(d, x, n)
+}
+
+define coeff_divisible_by_x_minus_a[R: CommRing](c: Nat -> R, a: R, n: Nat) -> Bool {
+    exists(q: Nat -> R) {
+        forall(x: R) {
+            coeff_eval(c, x, n) = coeff_mul_x_minus_a(q, a, x, n)
+        }
+    }
+}
+
+theorem coeff_quotient_zero_index[R: Semiring](c: Nat -> R, a: R, n: Nat) {
+    coeff_quotient(c, a, n.suc, Nat.0) = coeff_eval(coeff_tail(c), a, n)
+}
+
+theorem coeff_tail_quotient[R: Semiring](c: Nat -> R, a: R, n: Nat) {
+    coeff_tail(coeff_quotient(c, a, n.suc), Nat.0) = coeff_quotient(coeff_tail(c), a, n, Nat.0) and
+    coeff_tail(coeff_quotient(c, a, n.suc)) = coeff_quotient(coeff_tail(c), a, n)
+}
+
+define coeff_remainder_at[R: CommRing](c: Nat -> R, a: R, x: R, n: Nat) -> Bool {
+    coeff_eval(c, x, n) = coeff_eval(c, a, n) + (x - a) * coeff_eval(coeff_quotient(c, a, n), x, n)
+}
+
+define coeff_remainder_property[R: CommRing](a: R, x: R, n: Nat) -> Bool {
+    forall(c: Nat -> R) {
+        coeff_remainder_at(c, a, x, n)
+    }
+}
+
+theorem coeff_remainder_theorem[R: CommRing](c: Nat -> R, a: R, x: R, n: Nat) {
+    coeff_eval(c, x, n) = coeff_eval(c, a, n) + (x - a) * coeff_eval(coeff_quotient(c, a, n), x, n)
+}
+
+theorem coeff_factor_theorem_forward[R: CommRing](c: Nat -> R, a: R, n: Nat) {
+    coeff_eval(c, a, n) = R.0 implies coeff_divisible_by_x_minus_a(c, a, n)
+}
+
+theorem coeff_factor_theorem_reverse[R: CommRing](c: Nat -> R, a: R, n: Nat) {
+    coeff_divisible_by_x_minus_a(c, a, n) implies coeff_eval(c, a, n) = R.0
+}
+
+theorem coeff_factor_theorem[R: CommRing](c: Nat -> R, a: R, n: Nat) {
+    coeff_eval(c, a, n) = R.0 = coeff_divisible_by_x_minus_a(c, a, n)
+}
+
+define coeff_zero_at[R: Semiring](c: Nat -> R, k: Nat) -> Bool {
+    c(k) = R.0
+}
+
+define coeff_zero_from_at[R: Semiring](c: Nat -> R, n: Nat, k: Nat) -> Bool {
+    not k < n implies coeff_zero_at(c, k)
+}
+
+define coeff_zero_from[R: Semiring](c: Nat -> R, n: Nat) -> Bool {
+    forall(k: Nat) {
+        coeff_zero_from_at(c, n, k)
+    }
+}
+
+define coeff_eval_stable_suc_at[R: Semiring](c: Nat -> R, x: R, n: Nat) -> Bool {
+    coeff_zero_from(c, n) implies coeff_eval(c, x, n.suc) = coeff_eval(c, x, n)
+}
+
+define add_monoid_algebra_support_bounded_by[R: Semiring](p: AddMonoidAlgebra[R, Nat], n: Nat) -> Bool {
+    coeff_zero_from(p.coeff, n)
+}
+
+define add_monoid_algebra_eval_bound[R: Semiring](p: AddMonoidAlgebra[R, Nat], x: R, n: Nat) -> R {
+    coeff_eval(p.coeff, x, n)
+}
+
+define finite_set_nat_outside_bound(s: FiniteSet[Nat], n: Nat, k: Nat) -> Bool {
+    not k < n implies not s.contains(k)
+}
+
+define finite_set_nat_bounded_by(s: FiniteSet[Nat], n: Nat) -> Bool {
+    forall(k: Nat) {
+        finite_set_nat_outside_bound(s, n, k)
+    }
+}
+
+theorem coeff_zero_from_apply[R: Semiring](c: Nat -> R, n: Nat, k: Nat) {
+    coeff_zero_from(c, n) and not k < n implies c(k) = R.0
+}
+
+theorem finite_set_nat_bounded_by_not_contains(s: FiniteSet[Nat], n: Nat, k: Nat) {
+    finite_set_nat_bounded_by(s, n) and not k < n implies not s.contains(k)
+}
+
+theorem finite_set_nat_bounded_by_apply(s: FiniteSet[Nat], n: Nat, k: Nat) {
+    finite_set_nat_bounded_by(s, n) and s.contains(k) implies k < n
+}
+
+define coeff_eval_stable_suc_property[R: Semiring](x: R, n: Nat) -> Bool {
+    forall(c: Nat -> R) {
+        coeff_eval_stable_suc_at(c, x, n)
+    }
+}
+
+theorem coeff_eval_stable_suc_of_zero_from[R: Semiring](c: Nat -> R, x: R, n: Nat) {
+    coeff_zero_from(c, n) implies coeff_eval(c, x, n.suc) = coeff_eval(c, x, n)
+}
+
+theorem coeff_eval_stable_add_of_zero_from[R: Semiring](c: Nat -> R, x: R, n: Nat, d: Nat) {
+    coeff_zero_from(c, n) implies coeff_eval(c, x, n + d) = coeff_eval(c, x, n)
+}
+
+theorem coeff_eval_eq_of_zero_from_le[R: Semiring](c: Nat -> R, x: R, n: Nat, m: Nat) {
+    coeff_zero_from(c, n) and n <= m implies coeff_eval(c, x, m) = coeff_eval(c, x, n)
+}
+
+theorem add_monoid_algebra_support_bounded_by_of_has_support_in[R: Semiring](
+    p: AddMonoidAlgebra[R, Nat],
+    s: FiniteSet[Nat],
+    n: Nat
+) {
+    has_support_in(p.coeff, s) and finite_set_nat_bounded_by(s, n) implies
+    add_monoid_algebra_support_bounded_by(p, n)
+}
+
+theorem add_monoid_algebra_eval_bound_eq_of_support_bounded_le[R: Semiring](
+    p: AddMonoidAlgebra[R, Nat],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    add_monoid_algebra_support_bounded_by(p, n) and n <= m implies
+    add_monoid_algebra_eval_bound(p, x, m) = add_monoid_algebra_eval_bound(p, x, n)
+}
+
+theorem add_monoid_algebra_eval_bound_eq_of_has_support_in_le[R: Semiring](
+    p: AddMonoidAlgebra[R, Nat],
+    s: FiniteSet[Nat],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    has_support_in(p.coeff, s) and finite_set_nat_bounded_by(s, n) and n <= m implies
+    add_monoid_algebra_eval_bound(p, x, m) = add_monoid_algebra_eval_bound(p, x, n)
+}
+
+theorem add_monoid_algebra_eval_bound_eq_of_support_bounded[R: Semiring](
+    p: AddMonoidAlgebra[R, Nat],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    add_monoid_algebra_support_bounded_by(p, n) and add_monoid_algebra_support_bounded_by(p, m) implies
+    add_monoid_algebra_eval_bound(p, x, n) = add_monoid_algebra_eval_bound(p, x, m)
+}
+
+structure Polynomial[R: Semiring] {
+    /// The coefficient of `X^n`.
+    coeff: Nat -> R
+} constraint {
+    is_finitely_supported(coeff)
+}
+
+theorem polynomial_ext[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    p.coeff = q.coeff implies p = q
+}
+
+theorem polynomial_ext_pointwise[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    (forall(n: Nat) { p.coeff(n) = q.coeff(n) }) implies p = q
+}
+
+theorem polynomial_eq_coeff[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    p = q implies p.coeff = q.coeff
+}
+
+theorem polynomial_eq_coeff_at[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    p = q implies p.coeff(n) = q.coeff(n)
+}
+
+let polynomial_singleton_support(n: Nat) -> result: FiniteSet[Nat] satisfy {
+    FiniteSet[Nat].new(Set[Nat].singleton(n)) = Option.some(result)
+}
+
+define polynomial_monomial_coeff[R: Semiring](n: Nat, r: R, k: Nat) -> R {
+    if k = n {
+        r
+    } else {
+        R.0
+    }
+}
+
+theorem polynomial_monomial_coeff_zero_of_not_contains[R: Semiring](n: Nat, r: R, k: Nat) {
+    not polynomial_singleton_support(n).contains(k) implies
+    polynomial_monomial_coeff[R](n, r, k) = R.0
+}
+
+theorem polynomial_monomial_coeff_has_support[R: Semiring](n: Nat, r: R) {
+    has_support_in(polynomial_monomial_coeff[R](n, r), polynomial_singleton_support(n))
+}
+
+theorem polynomial_monomial_coeff_is_finitely_supported[R: Semiring](n: Nat, r: R) {
+    is_finitely_supported(polynomial_monomial_coeff[R](n, r))
+}
+
+let polynomial_monomial[R: Semiring](n: Nat, r: R) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(polynomial_monomial_coeff[R](n, r)) = Option.some(result)
+}
+
+define polynomial_constant[R: Semiring](r: R) -> Polynomial[R] {
+    polynomial_monomial(Nat.0, r)
+}
+
+let polynomial_zero[R: Semiring]: Polynomial[R] = polynomial_constant(R.0)
+
+/// The one polynomial.
+
+let polynomial_one[R: Semiring]: Polynomial[R] = polynomial_constant(R.1)
+
+/// The coefficientwise sum of two polynomials.
+let polynomial_add[R: Semiring](p: Polynomial[R], q: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(pointwise_add(p.coeff, q.coeff)) = Option.some(result)
+}
+
+attributes Polynomial[R: Semiring] {
+    /// Polynomial extensionality from equality of coefficients.
+    let ext = polynomial_ext[R]
+
+    /// The monomial `r * X^n`.
+    let monomial: (Nat, R) -> Polynomial[R] = polynomial_monomial
+
+    /// The constant polynomial with coefficient `r`.
+    let constant: R -> Polynomial[R] = polynomial_constant
+
+    /// The zero polynomial.
+    let zero: Polynomial[R] = polynomial_zero[R]
+
+    /// The one polynomial.
+    let one: Polynomial[R] = polynomial_one[R]
+
+    /// Coefficientwise addition of polynomials.
+    define add(self, other: Polynomial[R]) -> Polynomial[R] {
+        polynomial_add(self, other)
+    }
+}
+
+instance Polynomial[R: Semiring]: Add {
+    let add = Polynomial[R].add
+}
+
+instance Polynomial[R: Semiring]: Zero {
+    let 0 = Polynomial[R].zero
+}
+
+instance Polynomial[R: Semiring]: One {
+    let 1 = Polynomial[R].one
+}
+
+theorem polynomial_zero_coeff[R: Semiring](n: Nat) {
+    Polynomial[R].zero.coeff(n) = R.0
+}
+
+theorem polynomial_add_coeff[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    (p + q).coeff(n) = p.coeff(n) + q.coeff(n)
+}
+
+theorem polynomial_monomial_coeff_self[R: Semiring](n: Nat, r: R) {
+    Polynomial[R].monomial(n, r).coeff(n) = r
+}
+
+theorem polynomial_monomial_coeff_of_ne[R: Semiring](n: Nat, r: R, k: Nat) {
+    k != n implies Polynomial[R].monomial(n, r).coeff(k) = R.0
+}
+
+theorem polynomial_constant_coeff_zero[R: Semiring](r: R) {
+    Polynomial[R].constant(r).coeff(Nat.0) = r
+}
+
+theorem polynomial_constant_coeff_of_ne_zero[R: Semiring](r: R, n: Nat) {
+    n != Nat.0 implies Polynomial[R].constant(r).coeff(n) = R.0
+}
+
+theorem polynomial_one_coeff_zero[R: Semiring] {
+    Polynomial[R].one.coeff(Nat.0) = R.1
+}
+
+theorem polynomial_one_coeff_of_ne_zero[R: Semiring](n: Nat) {
+    n != Nat.0 implies Polynomial[R].one.coeff(n) = R.0
+}
+
+theorem polynomial_zero_has_support_in[R: Semiring](s: FiniteSet[Nat]) {
+    has_support_in(Polynomial[R].zero.coeff, s)
+}
+
+theorem polynomial_zero_has_support_empty[R: Semiring] {
+    has_support_in(Polynomial[R].zero.coeff, FiniteSet[Nat].empty)
+}
+
+theorem polynomial_eq_zero_of_has_support_empty[R: Semiring](p: Polynomial[R]) {
+    has_support_in(p.coeff, FiniteSet[Nat].empty) implies p = Polynomial[R].zero
+}
+
+theorem polynomial_monomial_has_support_in_singleton[R: Semiring](n: Nat, r: R) {
+    has_support_in(Polynomial[R].monomial(n, r).coeff, polynomial_singleton_support(n))
+}
+
+theorem polynomial_add_has_support_in_union[R: Semiring](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    s: FiniteSet[Nat],
+    u: FiniteSet[Nat]
+) {
+    has_support_in(p.coeff, s) and has_support_in(q.coeff, u) implies
+    has_support_in(polynomial_add(p, q).coeff, s.union(u))
+}
+
+theorem polynomial_add_assoc[R: Semiring](p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]) {
+    polynomial_add(p, polynomial_add(q, r)) = polynomial_add(polynomial_add(p, q), r)
+}
+
+theorem polynomial_add_comm[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_add(p, q) = polynomial_add(q, p)
+}
+
+theorem polynomial_add_zero_right[R: Semiring](p: Polynomial[R]) {
+    polynomial_add(p, polynomial_zero[R]) = p
+}
+
+theorem polynomial_add_zero_left[R: Semiring](p: Polynomial[R]) {
+    polynomial_add(polynomial_zero[R], p) = p
+}
+
+theorem polynomial_eq_zero_of_coeff_zero[R: Semiring](p: Polynomial[R]) {
+    (forall(n: Nat) { p.coeff(n) = R.0 }) implies p = Polynomial[R].zero
+}
+
+theorem polynomial_coeff_zero_of_eq_zero[R: Semiring](p: Polynomial[R], n: Nat) {
+    p = Polynomial[R].zero implies p.coeff(n) = R.0
+}
+
+let polynomial_neg[R: Ring](p: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(pointwise_neg(p.coeff)) = Option.some(result)
+}
+
+attributes Polynomial[R: Ring] {
+    /// The coefficientwise additive inverse of a polynomial.
+    define neg(self) -> Polynomial[R] {
+        polynomial_neg(self)
+    }
+
+    /// The coefficientwise difference of two polynomials.
+    define sub(self, other: Polynomial[R]) -> Polynomial[R] {
+        self + other.neg
+    }
+}
+
+theorem polynomial_neg_coeff[R: Ring](p: Polynomial[R], n: Nat) {
+    p.neg.coeff(n) = -p.coeff(n)
+}
+
+theorem polynomial_sub_coeff[R: Ring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    p.sub(q).coeff(n) = p.coeff(n) + -q.coeff(n)
+}
+
+theorem polynomial_neg_has_support_in[R: Ring](p: Polynomial[R], s: FiniteSet[Nat]) {
+    has_support_in(p.coeff, s) implies has_support_in(p.neg.coeff, s)
+}
+
+theorem polynomial_sub_has_support_in_union[R: Ring](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    s: FiniteSet[Nat],
+    u: FiniteSet[Nat]
+) {
+    has_support_in(p.coeff, s) and has_support_in(q.coeff, u) implies
+    has_support_in(p.sub(q).coeff, s.union(u))
+}
+
+theorem polynomial_add_neg_right[R: Ring](p: Polynomial[R]) {
+    polynomial_add(p, p.neg) = Polynomial[R].zero
+}
+
+theorem polynomial_sub_self[R: Ring](p: Polynomial[R]) {
+    p.sub(p) = Polynomial[R].zero
+}
+
+define polynomial_support_bounded_by[R: Semiring](p: Polynomial[R], n: Nat) -> Bool {
+    coeff_zero_from(p.coeff, n)
+}
+
+define polynomial_eval_bound[R: Semiring](p: Polynomial[R], x: R, n: Nat) -> R {
+    coeff_eval(p.coeff, x, n)
+}
+
+theorem polynomial_eval_bound_eq_coeff_eval[R: Semiring](p: Polynomial[R], x: R, n: Nat) {
+    polynomial_eval_bound(p, x, n) = coeff_eval(p.coeff, x, n)
+}
+
+define polynomial_quotient_coeff[R: Semiring](p: Polynomial[R], a: R, n: Nat, i: Nat) -> R {
+    coeff_quotient(p.coeff, a, n, i)
+}
+
+define polynomial_quotient_eval_bound[R: Semiring](p: Polynomial[R], a: R, x: R, n: Nat) -> R {
+    coeff_eval(polynomial_quotient_coeff(p, a, n), x, n)
+}
+
+define polynomial_x_minus_a_witness_bound[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    q: Nat -> R
+) -> Bool {
+    forall(x: R) {
+        polynomial_eval_bound(p, x, n) = coeff_mul_x_minus_a(q, a, x, n)
+    }
+}
+
+define polynomial_divisible_by_x_minus_a_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) -> Bool {
+    exists(q: Nat -> R) {
+        polynomial_x_minus_a_witness_bound(p, a, n, q)
+    }
+}
+
+define coeff_quotient_zero_from_bound_at[R: Semiring](c: Nat -> R, a: R, n: Nat, k: Nat) -> Bool {
+    not k < n implies coeff_quotient(c, a, n, k) = R.0
+}
+
+define coeff_quotient_zero_from_bound_property[R: Semiring](n: Nat) -> Bool {
+    forall(c: Nat -> R, a: R, k: Nat) {
+        coeff_quotient_zero_from_bound_at(c, a, n, k)
+    }
+}
+
+theorem polynomial_quotient_coeff_has_support_in_range[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    has_support_in(polynomial_quotient_coeff(p, a, n), fs_from_list[Nat](n.range))
+}
+
+theorem polynomial_quotient_coeff_is_finitely_supported[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    is_finitely_supported(polynomial_quotient_coeff(p, a, n))
+}
+
+let polynomial_quotient[R: Semiring](p: Polynomial[R], a: R, n: Nat) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(polynomial_quotient_coeff(p, a, n)) = Option.some(result)
+}
+
+theorem polynomial_quotient_coeff_eq[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_quotient(p, a, n).coeff = polynomial_quotient_coeff(p, a, n)
+}
+
+theorem polynomial_quotient_coeff_at[R: Semiring](p: Polynomial[R], a: R, n: Nat, k: Nat) {
+    polynomial_quotient(p, a, n).coeff(k) = polynomial_quotient_coeff(p, a, n, k)
+}
+
+theorem polynomial_quotient_eval_bound_eq[R: Semiring](p: Polynomial[R], a: R, x: R, n: Nat) {
+    polynomial_eval_bound(polynomial_quotient(p, a, n), x, n) = polynomial_quotient_eval_bound(p, a, x, n)
+}
+
+define polynomial_x_minus_a_polynomial_witness_bound[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    q: Polynomial[R]
+) -> Bool {
+    forall(x: R) {
+        polynomial_eval_bound(p, x, n) = polynomial_eval_bound(q, x, n) * (x - a)
+    }
+}
+
+theorem polynomial_x_minus_a_polynomial_witness_bound_apply[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    q: Polynomial[R],
+    x: R
+) {
+    polynomial_x_minus_a_polynomial_witness_bound(p, a, n, q) implies
+    polynomial_eval_bound(p, x, n) = polynomial_eval_bound(q, x, n) * (x - a)
+}
+
+define polynomial_divisible_by_x_minus_a_polynomial_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) -> Bool {
+    exists(q: Polynomial[R]) {
+        polynomial_x_minus_a_polynomial_witness_bound(p, a, n, q)
+    }
+}
+
+theorem polynomial_support_bounded_by_of_has_support_in[R: Semiring](
+    p: Polynomial[R],
+    s: FiniteSet[Nat],
+    n: Nat
+) {
+    has_support_in(p.coeff, s) and finite_set_nat_bounded_by(s, n) implies
+    polynomial_support_bounded_by(p, n)
+}
+
+theorem polynomial_quotient_support_bounded_by[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_support_bounded_by(polynomial_quotient(p, a, n), n)
+}
+
+theorem polynomial_eval_bound_eq_of_support_bounded_le[R: Semiring](
+    p: Polynomial[R],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m implies
+    polynomial_eval_bound(p, x, m) = polynomial_eval_bound(p, x, n)
+}
+
+theorem polynomial_eval_bound_eq_of_has_support_in_le[R: Semiring](
+    p: Polynomial[R],
+    s: FiniteSet[Nat],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    has_support_in(p.coeff, s) and finite_set_nat_bounded_by(s, n) and n <= m implies
+    polynomial_eval_bound(p, x, m) = polynomial_eval_bound(p, x, n)
+}
+
+theorem polynomial_support_bounded_by_apply[R: Semiring](p: Polynomial[R], n: Nat, k: Nat) {
+    polynomial_support_bounded_by(p, n) and not k < n implies p.coeff(k) = R.0
+}
+
+theorem polynomial_support_bounded_by_monotone[R: Semiring](
+    p: Polynomial[R],
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m implies polynomial_support_bounded_by(p, m)
+}
+
+theorem polynomial_eval_bound_eq_of_support_bounded[R: Semiring](
+    p: Polynomial[R],
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(p, m) implies
+    polynomial_eval_bound(p, x, n) = polynomial_eval_bound(p, x, m)
+}
+
+define list_nat_strict_bound(items: List[Nat]) -> Nat {
+    match items {
+        List.nil {
+            Nat.0
+        }
+        List.cons(head, tail) {
+            list_max(head, tail).suc
+        }
+    }
+}
+
+theorem finite_set_nat_bounded_by_exists(s: FiniteSet[Nat]) {
+    exists(n: Nat) {
+        finite_set_nat_bounded_by(s, n)
+    }
+}
+
+theorem polynomial_support_bound_exists[R: Semiring](p: Polynomial[R]) {
+    exists(n: Nat) {
+        polynomial_support_bounded_by(p, n)
+    }
+}
+
+theorem polynomial_add_support_bounded_by[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n) implies
+    polynomial_support_bounded_by(p + q, n)
+}
+
+theorem polynomial_zero_support_bounded_by_zero[R: Semiring] {
+    polynomial_support_bounded_by(Polynomial[R].zero, Nat.0)
+}
+
+theorem polynomial_eval_bound_zero[R: Semiring](x: R, n: Nat) {
+    polynomial_eval_bound(Polynomial[R].zero, x, n) = R.0
+}
+
+theorem polynomial_constant_support_bounded_by_one[R: Semiring](r: R) {
+    polynomial_support_bounded_by(Polynomial[R].constant(r), Nat.0.suc)
+}
+
+theorem polynomial_one_support_bounded_by_one[R: Semiring] {
+    polynomial_support_bounded_by(Polynomial[R].one, Nat.0.suc)
+}
+
+theorem polynomial_eval_bound_add[R: Semiring](p: Polynomial[R], q: Polynomial[R], x: R, n: Nat) {
+    polynomial_eval_bound(p + q, x, n) = polynomial_eval_bound(p, x, n) + polynomial_eval_bound(q, x, n)
+}
+
+theorem polynomial_eval_bound_constant_one[R: Semiring](r: R, x: R) {
+    polynomial_eval_bound(Polynomial[R].constant(r), x, Nat.0.suc) = r
+}
+
+theorem polynomial_eval_bound_one_one[R: Semiring](x: R) {
+    polynomial_eval_bound(Polynomial[R].one, x, Nat.0.suc) = R.1
+}
+
+theorem polynomial_eval_bound_constant_of_one_le[R: Semiring](r: R, x: R, n: Nat) {
+    Nat.0.suc <= n implies polynomial_eval_bound(Polynomial[R].constant(r), x, n) = r
+}
+
+theorem polynomial_eval_bound_one_of_one_le[R: Semiring](x: R, n: Nat) {
+    Nat.0.suc <= n implies polynomial_eval_bound(Polynomial[R].one, x, n) = R.1
+}
+
+theorem polynomial_remainder_theorem_bound[R: CommRing](p: Polynomial[R], a: R, x: R, n: Nat) {
+    polynomial_eval_bound(p, x, n) =
+        polynomial_eval_bound(p, a, n) +
+        (x - a) * polynomial_quotient_eval_bound(p, a, x, n)
+}
+
+theorem polynomial_remainder_theorem_bundled_bound[R: CommRing](p: Polynomial[R], a: R, x: R, n: Nat) {
+    polynomial_eval_bound(p, x, n) =
+        polynomial_eval_bound(p, a, n) +
+        (x - a) * polynomial_eval_bound(polynomial_quotient(p, a, n), x, n)
+}
+
+theorem polynomial_factor_theorem_forward_bundled_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_eval_bound(p, a, n) = R.0 implies polynomial_divisible_by_x_minus_a_polynomial_bound(p, a, n)
+}
+
+theorem polynomial_factor_theorem_forward_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_eval_bound(p, a, n) = R.0 implies polynomial_divisible_by_x_minus_a_bound(p, a, n)
+}
+
+theorem polynomial_factor_theorem_reverse_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_divisible_by_x_minus_a_bound(p, a, n) implies polynomial_eval_bound(p, a, n) = R.0
+}
+
+theorem polynomial_factor_theorem_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_eval_bound(p, a, n) = R.0 = polynomial_divisible_by_x_minus_a_bound(p, a, n)
+}
+
+theorem polynomial_factor_theorem_reverse_bundled_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_divisible_by_x_minus_a_polynomial_bound(p, a, n) implies polynomial_eval_bound(p, a, n) = R.0
+}
+
+theorem polynomial_factor_theorem_bundled_bound[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_eval_bound(p, a, n) = R.0 = polynomial_divisible_by_x_minus_a_polynomial_bound(p, a, n)
+}
+
+theorem polynomial_remainder_theorem_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m implies
+    polynomial_eval_bound(p, x, m) =
+        polynomial_eval_bound(p, a, n) +
+        (x - a) * polynomial_quotient_eval_bound(p, a, x, m)
+}
+
+theorem polynomial_factor_theorem_forward_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m and polynomial_eval_bound(p, a, n) = R.0
+    implies polynomial_divisible_by_x_minus_a_bound(p, a, m)
+}
+
+theorem polynomial_factor_theorem_reverse_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m and polynomial_divisible_by_x_minus_a_bound(p, a, m)
+    implies polynomial_eval_bound(p, a, n) = R.0
+}
+
+theorem polynomial_remainder_theorem_bundled_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    x: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m implies
+    polynomial_eval_bound(p, x, m) =
+        polynomial_eval_bound(p, a, n) +
+        (x - a) * polynomial_eval_bound(polynomial_quotient(p, a, m), x, m)
+}
+
+theorem polynomial_factor_theorem_forward_bundled_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m and polynomial_eval_bound(p, a, n) = R.0
+    implies polynomial_divisible_by_x_minus_a_polynomial_bound(p, a, m)
+}
+
+theorem polynomial_factor_theorem_reverse_bundled_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m and polynomial_divisible_by_x_minus_a_polynomial_bound(p, a, m)
+    implies polynomial_eval_bound(p, a, n) = R.0
+}
+
+let polynomial_eval[R: Semiring](p: Polynomial[R], x: R) -> result: R satisfy {
+    forall(n: Nat) {
+        polynomial_support_bounded_by(p, n) implies result = polynomial_eval_bound(p, x, n)
+    }
+}
+
+theorem polynomial_eval_eq_eval_bound_of_support_bounded[R: Semiring](p: Polynomial[R], x: R, n: Nat) {
+    polynomial_support_bounded_by(p, n) implies polynomial_eval(p, x) = polynomial_eval_bound(p, x, n)
+}
+
+theorem polynomial_eval_zero[R: Semiring](x: R) {
+    polynomial_eval(Polynomial[R].zero, x) = R.0
+}
+
+theorem polynomial_eval_constant[R: Semiring](r: R, x: R) {
+    polynomial_eval(Polynomial[R].constant(r), x) = r
+}
+
+theorem polynomial_eval_one[R: Semiring](x: R) {
+    polynomial_eval(Polynomial[R].one, x) = R.1
+}
+
+theorem polynomial_eval_add[R: Semiring](p: Polynomial[R], q: Polynomial[R], x: R) {
+    polynomial_eval(p + q, x) = polynomial_eval(p, x) + polynomial_eval(q, x)
+}
+
+theorem polynomial_eval_neg[R: Ring](p: Polynomial[R], x: R) {
+    polynomial_eval(p.neg, x) = -polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_sub[R: Ring](p: Polynomial[R], q: Polynomial[R], x: R) {
+    polynomial_eval(p.sub(q), x) = polynomial_eval(p, x) - polynomial_eval(q, x)
+}
+
+define polynomial_mul_term_coeff[R: Semiring](p: Polynomial[R], q: Polynomial[R], k: Nat, i: Nat) -> R {
+    p.coeff(i) * q.coeff(k - i)
+}
+
+define polynomial_mul_coeff[R: Semiring](p: Polynomial[R], q: Polynomial[R], k: Nat) -> R {
+    partial(function(i: Nat) { polynomial_mul_term_coeff(p, q, k, i) }, k.suc)
+}
+
+define polynomial_zero_nat_function[R: Semiring](i: Nat) -> R {
+    R.0
+}
+
+theorem polynomial_mul_coeff_zero_of_support_bounded[R: Semiring](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    m: Nat,
+    n: Nat,
+    k: Nat
+) {
+    polynomial_support_bounded_by(p, m) and polynomial_support_bounded_by(q, n) and
+    not k < m + n implies polynomial_mul_coeff(p, q, k) = R.0
+}
+
+theorem polynomial_mul_coeff_is_finitely_supported[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    is_finitely_supported(polynomial_mul_coeff(p, q))
+}
+
+let polynomial_mul[R: Semiring](p: Polynomial[R], q: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(polynomial_mul_coeff(p, q)) = Option.some(result)
+}
+
+theorem polynomial_mul_coeff_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_mul(p, q).coeff = polynomial_mul_coeff(p, q)
+}
+
+theorem polynomial_mul_coeff_apply[R: Semiring](p: Polynomial[R], q: Polynomial[R], k: Nat) {
+    polynomial_mul(p, q).coeff(k) = polynomial_mul_coeff(p, q, k)
+}
+
+theorem polynomial_mul_support_bounded_by_add[R: Semiring](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    m: Nat,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, m) and polynomial_support_bounded_by(q, n) implies
+    polynomial_support_bounded_by(polynomial_mul(p, q), m + n)
+}
+
+define eval_mul_scalar_coeff[R: CommRing](a: R, c: Nat -> R, i: Nat) -> R {
+    a * c(i)
+}
+
+define eval_mul_scalar_coeff_eval_at[R: CommRing](a: R, c: Nat -> R, x: R, n: Nat) -> Bool {
+    coeff_eval(eval_mul_scalar_coeff(a, c), x, n) = a * coeff_eval(c, x, n)
+}
+
+define eval_mul_scalar_coeff_eval_property[R: CommRing](a: R, x: R, n: Nat) -> Bool {
+    forall(c: Nat -> R) {
+        eval_mul_scalar_coeff_eval_at(a, c, x, n)
+    }
+}
+
+define coeff_convolution_term[R: CommRing](c: Nat -> R, d: Nat -> R, k: Nat, i: Nat) -> R {
+    c(i) * d(k - i)
+}
+
+define coeff_convolution[R: CommRing](c: Nat -> R, d: Nat -> R, k: Nat) -> R {
+    partial(function(i: Nat) { coeff_convolution_term(c, d, k, i) }, k.suc)
+}
+
+define eval_mul_zero_nat_function[R: CommRing](i: Nat) -> R {
+    R.0
+}
+
+define coeff_eval_convolution_mul_at[R: CommRing](c: Nat -> R, d: Nat -> R, x: R, m: Nat, n: Nat) -> Bool {
+    coeff_zero_from(c, m) and coeff_zero_from(d, n) implies
+    coeff_eval(coeff_convolution(c, d), x, m + n) = coeff_eval(c, x, m) * coeff_eval(d, x, n)
+}
+
+define coeff_eval_convolution_mul_property[R: CommRing](x: R, m: Nat) -> Bool {
+    forall(c: Nat -> R, d: Nat -> R, n: Nat) {
+        coeff_eval_convolution_mul_at(c, d, x, m, n)
+    }
+}
+
+theorem polynomial_eval_bound_mul_of_support_bounded[R: CommRing](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    x: R,
+    m: Nat,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, m) and polynomial_support_bounded_by(q, n) implies
+    polynomial_eval_bound(polynomial_mul(p, q), x, m + n) =
+        polynomial_eval_bound(p, x, m) * polynomial_eval_bound(q, x, n)
+}
+
+theorem polynomial_eval_mul[R: CommRing](p: Polynomial[R], q: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(p, q), x) = polynomial_eval(p, x) * polynomial_eval(q, x)
+}
+
+define polynomial_eval_at[R: Semiring](x: R, p: Polynomial[R]) -> R {
+    polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_at_zero[R: Semiring](x: R) {
+    polynomial_eval_at(x, Polynomial[R].zero) = R.0
+}
+
+theorem polynomial_eval_at_constant[R: Semiring](x: R, r: R) {
+    polynomial_eval_at(x, Polynomial[R].constant(r)) = r
+}
+
+theorem polynomial_eval_at_one[R: Semiring](x: R) {
+    polynomial_eval_at(x, Polynomial[R].one) = R.1
+}
+
+theorem polynomial_eval_at_add[R: Semiring](x: R, p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_eval_at(x, p + q) = polynomial_eval_at(x, p) + polynomial_eval_at(x, q)
+}
+
+theorem polynomial_eval_at_mul[R: CommRing](x: R, p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_eval_at(x, polynomial_mul(p, q)) = polynomial_eval_at(x, p) * polynomial_eval_at(x, q)
+}
+
+theorem polynomial_eval_at_neg[R: Ring](x: R, p: Polynomial[R]) {
+    polynomial_eval_at(x, p.neg) = -polynomial_eval_at(x, p)
+}
+
+theorem polynomial_eval_at_sub[R: Ring](x: R, p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_eval_at(x, p.sub(q)) = polynomial_eval_at(x, p) - polynomial_eval_at(x, q)
+}
+
+define polynomial_x_minus_a_polynomial_witness_at[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    q: Polynomial[R],
+    x: R
+) -> Bool {
+    polynomial_eval(p, x) = polynomial_eval(q, x) * (x - a)
+}
+
+define polynomial_x_minus_a_polynomial_witness[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    q: Polynomial[R]
+) -> Bool {
+    forall(x: R) {
+        polynomial_x_minus_a_polynomial_witness_at(p, a, q, x)
+    }
+}
+
+define polynomial_divisible_by_x_minus_a_polynomial[R: CommRing](p: Polynomial[R], a: R) -> Bool {
+    exists(q: Polynomial[R]) {
+        polynomial_x_minus_a_polynomial_witness(p, a, q)
+    }
+}
+
+theorem polynomial_x_minus_a_polynomial_witness_apply[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    q: Polynomial[R],
+    x: R
+) {
+    polynomial_x_minus_a_polynomial_witness(p, a, q) implies
+    polynomial_eval(p, x) = polynomial_eval(q, x) * (x - a)
+}
+
+theorem polynomial_quotient_global_witness_of_support_bounded[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_support_bounded_by(p, n) and polynomial_eval(p, a) = R.0 implies
+    polynomial_x_minus_a_polynomial_witness(p, a, polynomial_quotient(p, a, n))
+}
+
+theorem polynomial_quotient_global_witness_of_support_bounded_le[R: CommRing](
+    p: Polynomial[R],
+    a: R,
+    n: Nat,
+    m: Nat
+) {
+    polynomial_support_bounded_by(p, n) and n <= m and polynomial_eval(p, a) = R.0 implies
+    polynomial_x_minus_a_polynomial_witness(p, a, polynomial_quotient(p, a, m))
+}
+
+theorem polynomial_factor_theorem_forward_global[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem polynomial_factor_theorem_reverse_global[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_divisible_by_x_minus_a_polynomial(p, a) implies polynomial_eval(p, a) = R.0
+}
+
+theorem polynomial_factor_theorem_global[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 = polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+define polynomial_map_coeff[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    n: Nat
+) -> S {
+    f.hom(p.coeff(n))
+}
+
+theorem polynomial_map_coeff_is_finitely_supported[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R]
+) {
+    is_finitely_supported(polynomial_map_coeff(f, p))
+}
+
+let polynomial_map[R: Semiring, S: Semiring](f: SemiringHom[R, S], p: Polynomial[R]) -> result: Polynomial[S] satisfy {
+    Polynomial[S].new(polynomial_map_coeff(f, p)) = Option.some(result)
+}
+
+theorem polynomial_map_coeff_apply[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    n: Nat
+) {
+    polynomial_map(f, p).coeff(n) = f.hom(p.coeff(n))
+}
+
+define polynomial_map_coeff_fn[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    c: Nat -> R,
+    n: Nat
+) -> S {
+    f.hom(c(n))
+}
+
+theorem coeff_eval_map[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    c: Nat -> R,
+    x: R,
+    n: Nat
+) {
+    coeff_eval(polynomial_map_coeff_fn(f, c), f.hom(x), n) = f.hom(coeff_eval(c, x, n))
+}
+
+theorem polynomial_map_support_bounded_by[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) implies
+        polynomial_support_bounded_by(polynomial_map(f, p), n)
+}
+
+theorem polynomial_eval_bound_map[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    x: R,
+    n: Nat
+) {
+    polynomial_eval_bound(polynomial_map(f, p), f.hom(x), n) =
+        f.hom(polynomial_eval_bound(p, x, n))
+}
+
+theorem polynomial_eval_map[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    x: R
+) {
+    polynomial_eval(polynomial_map(f, p), f.hom(x)) = f.hom(polynomial_eval(p, x))
+}
+
+define is_polynomial_root[R: Semiring](p: Polynomial[R], x: R) -> Bool {
+    polynomial_eval(p, x) = R.0
+}
+
+define is_polynomial_root_mod_hom[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    x: R
+) -> Bool {
+    f.hom(polynomial_eval(p, x)) = S.0
+}
+
+theorem polynomial_root_mod_hom_iff_mapped_root[R: Semiring, S: Semiring](
+    f: SemiringHom[R, S],
+    p: Polynomial[R],
+    x: R
+) {
+    is_polynomial_root_mod_hom(f, p, x) =
+        is_polynomial_root(polynomial_map(f, p), f.hom(x))
+}
+
+define polynomial_neg_fn[R: Ring](c: Nat -> R, i: Nat) -> R {
+    -c(i)
+}
+
+theorem polynomial_constant_add[R: Semiring](r: R, s: R) {
+    polynomial_constant(r + s) = polynomial_constant(r) + polynomial_constant(s)
+}
+
+theorem polynomial_constant_mul[R: Semiring](r: R, s: R) {
+    polynomial_mul(polynomial_constant(r), polynomial_constant(s)) = polynomial_constant(r * s)
+}
+
+theorem polynomial_constant_one[R: Semiring] {
+    polynomial_constant(R.1) = Polynomial[R].one
+}
+
+theorem polynomial_constant_zero_poly[R: Semiring] {
+    polynomial_constant(R.0) = Polynomial[R].zero
+}
+
+theorem polynomial_constant_eq_zero[R: Semiring](r: R) {
+    (polynomial_constant(r) = Polynomial[R].zero) = (r = R.0)
+}
+
+theorem polynomial_constant_injective[R: Semiring](r: R, s: R) {
+    polynomial_constant(r) = polynomial_constant(s) implies r = s
+}
+
+theorem polynomial_constant_ne_zero[R: Semiring](r: R) {
+    r != R.0 implies polynomial_constant(r) != Polynomial[R].zero
+}
+
+theorem polynomial_mul_add_right[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]
+) {
+    polynomial_mul(p + q, r) = polynomial_mul(p, r) + polynomial_mul(q, r)
+}
+
+theorem polynomial_mul_neg_right[R: Ring](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_mul(p, q.neg) = polynomial_mul(p, q).neg
+}
+
+theorem polynomial_mul_neg_left[R: CommRing](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_mul(p.neg, q) = polynomial_mul(p, q).neg
+}
+
+theorem polynomial_scalar_mul_coeff[R: Semiring](r: R, p: Polynomial[R], k: Nat) {
+    polynomial_mul(polynomial_constant(r), p).coeff(k) = r * p.coeff(k)
+}
+
+theorem polynomial_scalar_distrib[R: CommRing](r: R, s: R, p: Polynomial[R]) {
+    polynomial_mul(polynomial_constant(r + s), p) =
+        polynomial_mul(polynomial_constant(r), p) + polynomial_mul(polynomial_constant(s), p)
+}
+
+theorem polynomial_mul_assoc_coeff[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]
+) {
+    polynomial_mul(polynomial_mul(p, q), r) = polynomial_mul(p, polynomial_mul(q, r))
+}
+
+theorem polynomial_mul_comm_coeff[R: CommRing](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_mul(p, q) = polynomial_mul(q, p)
+}
+
+theorem polynomial_eval_zero_point[R: Semiring](p: Polynomial[R]) {
+    polynomial_eval(p, R.0) = p.coeff(Nat.0)
+}
+
+theorem polynomial_monomial_support_bounded_by_suc[R: Semiring](n: Nat, r: R) {
+    polynomial_support_bounded_by(Polynomial[R].monomial(n, r), n.suc)
+}
+
+theorem polynomial_eval_monomial[R: CommRing](n: Nat, r: R, x: R) {
+    polynomial_eval(Polynomial[R].monomial(n, r), x) = r * x.pow(n)
+}
+
+theorem polynomial_eval_constant_eq_zero[R: Semiring](r: R, x: R) {
+    (polynomial_eval(Polynomial[R].constant(r), x) = R.0) = (r = R.0)
+}
+
+theorem polynomial_eval_constant_mul[R: CommRing](r: R, p: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(polynomial_constant(r), p), x) =
+        r * polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_mul_add_distributive[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], x: R
+) {
+    polynomial_eval(polynomial_mul(p, q + r), x) =
+        polynomial_eval(p, x) * (polynomial_eval(q, x) + polynomial_eval(r, x))
+}
+
+theorem polynomial_eval_add_mul_distributive[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], x: R
+) {
+    polynomial_eval(polynomial_mul(p + q, r), x) =
+        (polynomial_eval(p, x) + polynomial_eval(q, x)) * polynomial_eval(r, x)
+}
+
+theorem polynomial_eval_mul_one[R: CommRing](p: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(p, Polynomial[R].one), x) = polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_one_mul[R: CommRing](p: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(Polynomial[R].one, p), x) = polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_linear_combination[R: CommRing](
+    r1: R, r2: R, p: Polynomial[R], q: Polynomial[R], x: R
+) {
+    polynomial_eval(polynomial_mul(polynomial_constant(r1), p) +
+        polynomial_mul(polynomial_constant(r2), q), x) =
+        r1 * polynomial_eval(p, x) + r2 * polynomial_eval(q, x)
+}
+
+theorem polynomial_eval_scalar_mul_comm[R: CommRing](r: R, p: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(polynomial_constant(r), p), x) =
+        polynomial_eval(polynomial_mul(p, polynomial_constant(r)), x)
+}
+
+theorem polynomial_constant_eq_monomial_zero[R: Semiring](r: R) {
+    polynomial_constant(r) = polynomial_monomial(Nat.0, r)
+}
+
+theorem polynomial_monomial_mul[R: CommRing](m: Nat, a: R, n: Nat, b: R) {
+    polynomial_mul(polynomial_monomial(m, a), polynomial_monomial(n, b)) =
+        polynomial_monomial(m + n, a * b)
+}
+
+theorem polynomial_constant_mul_monomial[R: CommRing](r: R, n: Nat, s: R) {
+    polynomial_mul(polynomial_constant(r), polynomial_monomial(n, s)) =
+        polynomial_monomial(n, r * s)
+}
+
+theorem polynomial_monomial_mul_constant[R: CommRing](n: Nat, s: R, r: R) {
+    polynomial_mul(polynomial_monomial(n, s), polynomial_constant(r)) =
+        polynomial_monomial(n, s * r)
+}
+
+theorem polynomial_monomial_eq_zero[R: Semiring](n: Nat, r: R) {
+    (polynomial_monomial(n, r) = Polynomial[R].zero) = (r = R.0)
+}
+
+theorem polynomial_monomial_ne_zero_of_ne[R: Semiring](n: Nat, r: R) {
+    r != R.0 implies polynomial_monomial(n, r) != Polynomial[R].zero
+}
+
+theorem polynomial_constant_ne_zero_of_ne[R: Semiring](r: R) {
+    r != R.0 implies polynomial_constant(r) != Polynomial[R].zero
+}
+
+theorem polynomial_monomial_mul_comm[R: CommRing](m: Nat, a: R, n: Nat, b: R) {
+    polynomial_mul(polynomial_monomial(m, a), polynomial_monomial(n, b)) =
+        polynomial_mul(polynomial_monomial(n, b), polynomial_monomial(m, a))
+}
+
+theorem polynomial_x_pow_mul[R: CommRing](m: Nat, n: Nat) {
+    polynomial_mul(polynomial_monomial(m, R.1), polynomial_monomial(n, R.1)) =
+        polynomial_monomial(m + n, R.1)
+}
+
+theorem polynomial_x_pow_eval[R: CommRing](n: Nat, x: R) {
+    polynomial_eval(polynomial_monomial(n, R.1), x) = x.pow(n)
+}
+
+theorem polynomial_x_pow_zero_eval[R: CommRing](n: Nat) {
+    polynomial_eval(polynomial_monomial(n.suc, R.1), R.0) = R.0
+}
+
+define polynomial_degree_le[R: Semiring](p: Polynomial[R], d: Nat) -> Bool {
+    polynomial_support_bounded_by(p, d.suc)
+}
+
+theorem polynomial_degree_le_zero[R: Semiring](d: Nat) {
+    polynomial_degree_le(Polynomial[R].zero, d)
+}
+
+theorem polynomial_degree_constant_le_zero[R: Semiring](r: R) {
+    polynomial_degree_le(polynomial_constant(r), Nat.0)
+}
+
+theorem polynomial_degree_monomial_le[R: Semiring](n: Nat, r: R) {
+    polynomial_degree_le(polynomial_monomial(n, r), n)
+}
+
+theorem polynomial_degree_le_monotone[R: Semiring](p: Polynomial[R], d: Nat, e: Nat) {
+    polynomial_degree_le(p, d) and d <= e implies polynomial_degree_le(p, e)
+}
+
+theorem polynomial_coeff_zero_of_degree_lt[R: Semiring](p: Polynomial[R], d: Nat, n: Nat) {
+    polynomial_degree_le(p, d) and d < n implies p.coeff(n) = R.0
+}
+
+theorem polynomial_coeff_nonzero_not_degree_lt[R: Semiring](
+    p: Polynomial[R], n: Nat, d: Nat
+) {
+    p.coeff(n) != R.0 implies not (polynomial_degree_le(p, d) and d < n)
+}
+
+theorem polynomial_degree_le_zero_iff_constant[R: Semiring](p: Polynomial[R]) {
+    polynomial_degree_le(p, Nat.0) iff p = polynomial_constant(p.coeff(Nat.0))
+}
+
+theorem polynomial_degree_le_one_iff_linear[R: Semiring](p: Polynomial[R]) {
+    polynomial_degree_le(p, Nat.1) iff
+        p = polynomial_constant(p.coeff(Nat.0)) + polynomial_monomial(Nat.1, p.coeff(Nat.1))
+}
+
+theorem polynomial_degree_sum_le_max[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
+    polynomial_degree_le(p + q, m.max(n))
+}
+
+theorem polynomial_degree_sum_leading_coeff[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) and m < n implies
+    (p + q).coeff(n) = q.coeff(n)
+}
+
+theorem polynomial_degree_monomial_exact[R: Semiring](n: Nat, r: R, k: Nat) {
+    r != R.0 and k < n implies not polynomial_degree_le(polynomial_monomial(n, r), k)
+}
+
+theorem polynomial_degree_monomial_mul_exact[F: Field](m: Nat, a: F, n: Nat, b: F, k: Nat) {
+    a != F.0 and b != F.0 and k < m + n implies
+    not polynomial_degree_le(polynomial_mul(polynomial_monomial(m, a),
+        polynomial_monomial(n, b)), k)
+}
+
+theorem polynomial_degree_sum_exact[F: Field](
+    p: Polynomial[F], q: Polynomial[F], m: Nat, n: Nat, k: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) and m < n and k < n and
+    q.coeff(n) != F.0 implies not polynomial_degree_le(p + q, k)
+}
+
+theorem polynomial_degree_monomial_mul_le[R: CommRing](m: Nat, a: R, n: Nat, b: R) {
+    polynomial_degree_le(polynomial_mul(polynomial_monomial(m, a), polynomial_monomial(n, b)),
+        m + n)
+}
+
+theorem polynomial_degree_mul_le_add[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
+    polynomial_degree_le(polynomial_mul(p, q), m + n + Nat.1)
+}
+
+theorem polynomial_degree_mul_comm_le[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], d: Nat
+) {
+    (polynomial_degree_le(polynomial_mul(p, q), d)) =
+        (polynomial_degree_le(polynomial_mul(q, p), d))
+}
+
+theorem polynomial_degree_x_pow[F: Field](n: Nat, k: Nat) {
+    k < n implies not polynomial_degree_le(polynomial_monomial(n, F.1), k)
+}
+
+theorem polynomial_mul_leading_coeff[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
+    polynomial_mul(p, q).coeff(m + n) = p.coeff(m) * q.coeff(n)
+}
+
+theorem polynomial_degree_mul_lower_bound[F: Field](
+    p: Polynomial[F], q: Polynomial[F], m: Nat, n: Nat, k: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) and
+    p.coeff(m) != F.0 and q.coeff(n) != F.0 and k < m + n implies
+    not polynomial_degree_le(polynomial_mul(p, q), k)
+}
+
+theorem polynomial_degree_mul_exact[F: Field](
+    p: Polynomial[F], q: Polynomial[F], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) and
+    p.coeff(m) != F.0 and q.coeff(n) != F.0
+    implies (polynomial_degree_le(polynomial_mul(p, q), m + n + Nat.1) and
+        forall(k: Nat) {
+            k < m + n implies not polynomial_degree_le(polynomial_mul(p, q), k)
+        })
+}
+
+theorem polynomial_degree_drop_top[R: Semiring](p: Polynomial[R], d: Nat) {
+    polynomial_degree_le(p, d.suc) and p.coeff(d.suc) = R.0 implies polynomial_degree_le(p, d)
+}
+
+theorem polynomial_support_bounded_by_drop_top[R: Semiring](p: Polynomial[R], n: Nat) {
+    polynomial_support_bounded_by(p, n.suc) and p.coeff(n) = R.0 implies
+    polynomial_support_bounded_by(p, n)
+}
+
+theorem polynomial_degree_mul_le_sum[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
+    polynomial_degree_le(polynomial_mul(p, q), m + n)
+}
+
+theorem polynomial_degree_neg_iff[R: Ring](p: Polynomial[R], d: Nat) {
+    polynomial_degree_le(p.neg, d) = polynomial_degree_le(p, d)
+}
+
+theorem polynomial_degree_sub_le_max[R: Ring](
+    p: Polynomial[R], q: Polynomial[R], m: Nat, n: Nat
+) {
+    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
+    polynomial_degree_le(p.sub(q), m.max(n))
+}
+
+define linear_polynomial[R: Semiring](a: R, b: R) -> Polynomial[R] {
+    polynomial_constant(b) + polynomial_monomial(Nat.1, a)
+}
+
+define quadratic_polynomial[R: Semiring](a: R, b: R, c: R) -> Polynomial[R] {
+    polynomial_constant(c) + polynomial_monomial(Nat.1, b) + polynomial_monomial(Nat.2, a)
+}
+
+theorem polynomial_monomial_add_same[R: Semiring](n: Nat, r: R, s: R) {
+    polynomial_monomial(n, r) + polynomial_monomial(n, s) = polynomial_monomial(n, r + s)
+}
+
+theorem linear_polynomial_coeff_zero[R: Semiring](a: R, b: R) {
+    linear_polynomial(a, b).coeff(Nat.0) = b
+}
+
+theorem linear_polynomial_coeff_one[R: Semiring](a: R, b: R) {
+    linear_polynomial(a, b).coeff(Nat.1) = a
+}
+
+theorem linear_polynomial_eval[R: CommRing](a: R, b: R, x: R) {
+    polynomial_eval(linear_polynomial(a, b), x) = b + a * x
+}
+
+theorem quadratic_polynomial_eval[R: CommRing](a: R, b: R, c: R, x: R) {
+    polynomial_eval(quadratic_polynomial(a, b, c), x) = c + b * x + a * x * x
+}
+
+theorem linear_polynomial_neg_root[R: CommRing](a: R) {
+    polynomial_eval(linear_polynomial(R.1, -a), a) = R.0
+}
+
+theorem polynomial_root_mul_left[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
+}
+
+theorem polynomial_root_mul_right[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
+    polynomial_eval(q, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
+}
+
+theorem polynomial_linear_mul_quadratic[R: CommRing](a: R, b: R) {
+    polynomial_mul(linear_polynomial(R.1, -a), linear_polynomial(R.1, -b)) =
+        quadratic_polynomial(R.1, -(a + b), a * b)
+}
+
+theorem quadratic_root_vieta_a[R: CommRing](a: R, b: R) {
+    polynomial_eval(quadratic_polynomial(R.1, -(a + b), a * b), a) = R.0
+}
+
+theorem quadratic_root_vieta_b[R: CommRing](a: R, b: R) {
+    polynomial_eval(quadratic_polynomial(R.1, -(a + b), a * b), b) = R.0
+}
+
+theorem quadratic_eval_factorized[R: CommRing](a: R, b: R, x: R) {
+    polynomial_eval(quadratic_polynomial(R.1, -(a + b), a * b), x) =
+        polynomial_eval(linear_polynomial(R.1, -b), x) * (x - a)
+}
+
+theorem polynomial_linear_vieta_witness[R: CommRing](a: R, b: R) {
+    polynomial_x_minus_a_polynomial_witness(
+        quadratic_polynomial(R.1, -(a + b), a * b), a, linear_polynomial(R.1, -b))
+}
+
+theorem polynomial_linear_vieta_divides[R: CommRing](a: R, b: R) {
+    polynomial_divisible_by_x_minus_a_polynomial(
+        quadratic_polynomial(R.1, -(a + b), a * b), a)
+}
+
+theorem polynomial_linear_shift_eval[R: CommRing](a: R, b: R, t: R, x: R) {
+    polynomial_eval(linear_polynomial(a, b + a * t), x) =
+        polynomial_eval(linear_polynomial(a, b), x + t)
+}
+
+theorem polynomial_linear_compose_eval[R: CommRing](a: R, b: R, c: R, d: R, x: R) {
+    polynomial_eval(linear_polynomial(a, b), polynomial_eval(linear_polynomial(c, d), x)) =
+        (b + a * d) + (a * c) * x
+}
+
+theorem quadratic_polynomial_coeff_zero[R: Semiring](a: R, b: R, c: R) {
+    quadratic_polynomial(a, b, c).coeff(Nat.0) = c
+}
+
+theorem quadratic_polynomial_coeff_one[R: Semiring](a: R, b: R, c: R) {
+    quadratic_polynomial(a, b, c).coeff(Nat.1) = b
+}
+
+theorem quadratic_polynomial_coeff_two[R: Semiring](a: R, b: R, c: R) {
+    quadratic_polynomial(a, b, c).coeff(Nat.2) = a
+}
+
+theorem vieta_quadratic_coeff_linear[R: CommRing](r1: R, r2: R) {
+    quadratic_polynomial(R.1, -(r1 + r2), r1 * r2).coeff(Nat.1) = -(r1 + r2)
+}
+
+theorem vieta_quadratic_coeff_constant[R: CommRing](r1: R, r2: R) {
+    quadratic_polynomial(R.1, -(r1 + r2), r1 * r2).coeff(Nat.0) = r1 * r2
+}
+
+theorem vieta_quadratic_coeff_leading[R: CommRing](r1: R, r2: R) {
+    quadratic_polynomial(R.1, -(r1 + r2), r1 * r2).coeff(Nat.2) = R.1
+}
+
+let real_x_squared_minus_one: Polynomial[Real] =
+    quadratic_polynomial(Real.1, Real.0, -Real.1)
+
+/// The factor theorem over the reals: `a` is a root of `p` exactly when
+/// `X - a` divides `p`.
+theorem polynomial_real_factor_theorem(p: Polynomial[Real], a: Real) {
+    (polynomial_eval(p, a) = Real.0) =
+        polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem polynomial_real_factor_theorem_forward(p: Polynomial[Real], a: Real) {
+    polynomial_eval(p, a) = Real.0 implies
+    polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem real_x_squared_minus_one_eq_vieta {
+    real_x_squared_minus_one =
+        quadratic_polynomial(Real.1, -(Real.1 + -Real.1), Real.1 * -Real.1)
+}
+
+theorem real_x_squared_minus_one_root_one {
+    polynomial_eval(real_x_squared_minus_one, Real.1) = Real.0
+}
+
+theorem real_x_squared_minus_one_root_neg_one {
+    polynomial_eval(real_x_squared_minus_one, -Real.1) = Real.0
+}
+
+theorem real_x_minus_one_divides_x_squared_minus_one {
+    polynomial_divisible_by_x_minus_a_polynomial(real_x_squared_minus_one, Real.1)
+}
+
+theorem real_x_squared_minus_one_root_iff_divides {
+    (polynomial_eval(real_x_squared_minus_one, Real.1) = Real.0) =
+        polynomial_divisible_by_x_minus_a_polynomial(real_x_squared_minus_one, Real.1)
+}
+
+theorem real_x_squared_minus_one_eval_factorized(x: Real) {
+    polynomial_eval(real_x_squared_minus_one, x) =
+        polynomial_eval(linear_polynomial(Real.1, Real.1), x) * (x - Real.1)
+}
+
+let real_x_squared_minus_x: Polynomial[Real] =
+    quadratic_polynomial(Real.1, -Real.1, Real.0)
+
+/// `X^2 - X` is the Vieta quadratic with roots `0` and `1`.
+theorem real_x_squared_minus_x_eq_vieta {
+    real_x_squared_minus_x =
+        quadratic_polynomial(Real.1, -(Real.0 + Real.1), Real.0 * Real.1)
+}
+
+theorem real_x_squared_minus_x_root_zero {
+    polynomial_eval(real_x_squared_minus_x, Real.0) = Real.0
+}
+
+theorem real_x_squared_minus_x_root_one {
+    polynomial_eval(real_x_squared_minus_x, Real.1) = Real.0
+}
+
+theorem real_x_squared_minus_one_eq_mul {
+    polynomial_mul(linear_polynomial(Real.1, -Real.1), linear_polynomial(Real.1, Real.1)) =
+        real_x_squared_minus_one
+}
+
+theorem real_x_squared_minus_one_degree {
+    polynomial_degree_le(real_x_squared_minus_one, Nat.2) and
+    not polynomial_degree_le(real_x_squared_minus_one, Nat.1)
+}
+
+define degree_bound_at[R: Semiring](p: Polynomial[R], n: Nat) -> Bool {
+    polynomial_support_bounded_by(p, n) implies
+    (p = Polynomial[R].zero or
+        exists(d: Nat) {
+            d < n and polynomial_degree_le(p, d) and p.coeff(d) != R.0
+        })
+}
+
+theorem polynomial_exact_degree_bound[R: Semiring](p: Polynomial[R], n: Nat) {
+    polynomial_support_bounded_by(p, n) implies
+    (p = Polynomial[R].zero or
+        exists(d: Nat) {
+            d < n and polynomial_degree_le(p, d) and p.coeff(d) != R.0
+        })
+}
+
+theorem polynomial_degree_exists[R: Semiring](p: Polynomial[R]) {
+    exists(result: Nat) {
+        (p = Polynomial[R].zero implies result = Nat.0) and
+        (p != Polynomial[R].zero implies polynomial_degree_le(p, result) and p.coeff(result) != R.0)
+    }
+}
+
+let polynomial_degree[R: Semiring](p: Polynomial[R]) -> result: Nat satisfy {
+    (p = Polynomial[R].zero implies result = Nat.0) and
+    (p != Polynomial[R].zero implies polynomial_degree_le(p, result) and p.coeff(result) != R.0)
+}
+
+theorem polynomial_degree_le_self[R: Semiring](p: Polynomial[R]) {
+    polynomial_degree_le(p, polynomial_degree(p))
+}
+
+theorem polynomial_degree_zero[R: Semiring] {
+    polynomial_degree(Polynomial[R].zero) = Nat.0
+}
+
+theorem polynomial_degree_coeff_nonzero[R: Semiring](p: Polynomial[R]) {
+    p != Polynomial[R].zero implies p.coeff(polynomial_degree(p)) != R.0
+}
+
+theorem polynomial_degree_exact[R: Semiring](p: Polynomial[R], d: Nat) {
+    polynomial_degree_le(p, d) and p.coeff(d) != R.0 implies polynomial_degree(p) = d
+}
+
+theorem polynomial_degree_monomial[R: Semiring](n: Nat, r: R) {
+    r != R.0 implies polynomial_degree(polynomial_monomial(n, r)) = n
+}
+
+define polynomial_divides[R: CommRing](p: Polynomial[R], q: Polynomial[R]) -> Bool {
+    exists(r: Polynomial[R]) {
+        polynomial_mul(p, r) = q
+    }
+}
+
+theorem polynomial_mul_zero_left[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(Polynomial[R].zero, p) = Polynomial[R].zero
+}
+
+theorem polynomial_mul_zero_right[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(p, Polynomial[R].zero) = Polynomial[R].zero
+}
+
+theorem polynomial_divides_refl[R: CommRing](p: Polynomial[R]) {
+    polynomial_divides(p, p)
+}
+
+theorem polynomial_divides_zero_right[R: CommRing](p: Polynomial[R]) {
+    polynomial_divides(p, Polynomial[R].zero)
+}
+
+theorem polynomial_divides_zero_left_imp[R: CommRing](p: Polynomial[R]) {
+    polynomial_divides(Polynomial[R].zero, p) implies p = Polynomial[R].zero
+}
+
+theorem polynomial_divides_zero_iff[R: CommRing](p: Polynomial[R]) {
+    polynomial_divides(Polynomial[R].zero, p) iff p = Polynomial[R].zero
+}
+
+theorem polynomial_divides_add[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], q: Polynomial[R]
+) {
+    polynomial_divides(d, p) and polynomial_divides(d, q) implies polynomial_divides(d, p + q)
+}
+
+theorem polynomial_divides_mul_right[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], q: Polynomial[R]
+) {
+    polynomial_divides(d, p) implies polynomial_divides(d, polynomial_mul(p, q))
+}
+
+theorem polynomial_divides_mul_left[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], q: Polynomial[R]
+) {
+    polynomial_divides(d, p) implies polynomial_divides(d, polynomial_mul(q, p))
+}
+
+theorem polynomial_divides_trans[R: CommRing](
+    d: Polynomial[R], e: Polynomial[R], f: Polynomial[R]
+) {
+    polynomial_divides(d, e) and polynomial_divides(e, f) implies polynomial_divides(d, f)
+}
+
+theorem polynomial_divides_sub[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], q: Polynomial[R]
+) {
+    polynomial_divides(d, p) and polynomial_divides(d, q) implies polynomial_divides(d, p.sub(q))
+}
+
+theorem polynomial_divides_eval_witness[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], r: Polynomial[R], x: R
+) {
+    polynomial_mul(d, r) = p implies
+    polynomial_eval(p, x) = polynomial_eval(d, x) * polynomial_eval(r, x)
+}
+
+theorem polynomial_divides_eval[R: CommRing](
+    d: Polynomial[R], p: Polynomial[R], x: R
+) {
+    polynomial_divides(d, p) implies
+    exists(r: Polynomial[R]) {
+        polynomial_eval(p, x) = polynomial_eval(d, x) * polynomial_eval(r, x)
+    }
+}
+
+define polynomial_shift_eval[R: CommRing](p: Polynomial[R], a: R, x: R) -> R {
+    polynomial_eval(p, x + a)
+}
+
+define polynomial_scale_eval[R: CommRing](p: Polynomial[R], c: R, x: R) -> R {
+    polynomial_eval(p, c * x)
+}
+
+theorem polynomial_sub_eq_zero_iff[R: CommRing](x: R, a: R) {
+    (x - a = R.0) = (x = a)
+}
+
+theorem polynomial_root_linear_one[R: CommRing](a: R, x: R) {
+    (polynomial_eval(linear_polynomial(R.1, -a), x) = R.0) = (x = a)
+}
+
+theorem polynomial_root_linear[R: CommRing](a: R, b: R, x: R) {
+    (polynomial_eval(linear_polynomial(a, b), x) = R.0) = (b + a * x = R.0)
+}
+
+theorem polynomial_linear_root_unique[F: Field](a: F, b: F, x: F, y: F) {
+    a != F.0 and polynomial_eval(linear_polynomial(a, b), x) = F.0 and
+    polynomial_eval(linear_polynomial(a, b), y) = F.0 implies x = y
+}
+
+theorem polynomial_linear_root_inverse[F: Field](a: F, b: F) {
+    a != F.0 implies polynomial_eval(linear_polynomial(a, b), -b * a.inverse) = F.0
+}
+
+theorem polynomial_linear_has_root[F: Field](a: F, b: F) {
+    a != F.0 implies exists(x: F) {
+        polynomial_eval(linear_polynomial(a, b), x) = F.0
+    }
+}
+
+theorem polynomial_root_constant[R: Semiring](r: R, x: R) {
+    (polynomial_eval(polynomial_constant(r), x) = R.0) = (r = R.0)
+}
+
+theorem polynomial_root_monomial_one[F: Field](r: F, x: F) {
+    (polynomial_eval(polynomial_monomial(Nat.1, r), x) = F.0) = (r = F.0 or x = F.0)
+}
+
+theorem polynomial_root_product_iff[F: Field](p: Polynomial[F], q: Polynomial[F], x: F) {
+    (polynomial_eval(polynomial_mul(p, q), x) = F.0) =
+        (polynomial_eval(p, x) = F.0 or polynomial_eval(q, x) = F.0)
+}
+
+theorem polynomial_root_linear_product[F: Field](a: F, b: F, x: F) {
+    (polynomial_eval(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -b)), x) = F.0) = (x = a or x = b)
+}
+
+theorem polynomial_shift_root[R: CommRing](p: Polynomial[R], a: R, r: R) {
+    (polynomial_eval(p, r) = R.0) = (polynomial_shift_eval(p, a, r - a) = R.0)
+}
+
+theorem polynomial_scale_eval_of_mul[R: CommRing](p: Polynomial[R], c: R, x: R) {
+    polynomial_scale_eval(p, c, x) = polynomial_eval(p, c * x)
+}
+
+theorem polynomial_root_scale_field[F: Field](p: Polynomial[F], c: F, r: F) {
+    c != F.0 implies
+    (polynomial_eval(p, r) = F.0) = (polynomial_scale_eval(p, c, r * c.inverse) = F.0)
+}
+
+theorem polynomial_root_shift_zero[R: CommRing](p: Polynomial[R], a: R) {
+    (polynomial_eval(p, a) = R.0) = (polynomial_shift_eval(p, a, R.0) = R.0)
+}
+
+theorem polynomial_root_zero_point[R: Semiring](p: Polynomial[R]) {
+    (polynomial_eval(p, R.0) = R.0) = (p.coeff(Nat.0) = R.0)
+}
+
+theorem polynomial_root_monomial_power[F: Field](n: Nat, r: F, x: F) {
+    (polynomial_eval(polynomial_monomial(n.suc, r), x) = F.0) =
+        (r = F.0 or x.pow(n.suc) = F.0)
+}
+
+define polynomial_double_root[R: CommRing](p: Polynomial[R], a: R) -> Bool {
+    polynomial_divides(polynomial_mul(linear_polynomial(R.1, -a), linear_polynomial(R.1, -a)),
+        p)
+}
+
+theorem polynomial_square_root_unique[F: Field](a: F, x: F) {
+    (polynomial_eval(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -a)), x) = F.0) = (x = a)
+}
+
+theorem polynomial_square_root_at_a[R: CommRing](a: R) {
+    polynomial_eval(polynomial_mul(linear_polynomial(R.1, -a),
+        linear_polynomial(R.1, -a)), a) = R.0
+}
+
+theorem polynomial_double_root_implies_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_double_root(p, a) implies polynomial_eval(p, a) = R.0
+}
+
+theorem polynomial_double_root_eval[R: CommRing](p: Polynomial[R], a: R, x: R) {
+    polynomial_double_root(p, a) implies
+    exists(q: Polynomial[R]) {
+        polynomial_eval(p, x) =
+            polynomial_eval(polynomial_mul(linear_polynomial(R.1, -a),
+                linear_polynomial(R.1, -a)), x) * polynomial_eval(q, x)
+    }
+}
+
+theorem polynomial_quotient_support_bounded_by_pred[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(polynomial_quotient(p, a, n.suc), n)
+}
+
+theorem polynomial_eq_zero_of_root_quotient_eq_zero[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n.suc) and
+        polynomial_eval(p, a) = F.0 and
+        polynomial_quotient(p, a, n.suc) = Polynomial[F].zero
+    implies p = Polynomial[F].zero
+}
+
+theorem polynomial_quotient_ne_zero_of_root[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n.suc) and
+        p != Polynomial[F].zero and
+        polynomial_eval(p, a) = F.0
+    implies polynomial_quotient(p, a, n.suc) != Polynomial[F].zero
+}
+
+define polynomial_roots_on_list[F: Field](p: Polynomial[F], roots: List[F]) -> Bool {
+    forall(x: F) {
+        roots.contains(x) implies polynomial_eval(p, x) = F.0
+    }
+}
+
+theorem polynomial_roots_on_list_tail[F: Field](
+    p: Polynomial[F],
+    head: F,
+    tail: List[F]
+) {
+    polynomial_roots_on_list(p, List.cons(head, tail)) implies
+        polynomial_roots_on_list(p, tail)
+}
+
+theorem polynomial_quotient_root_of_distinct_root[F: Field](
+    p: Polynomial[F],
+    a: F,
+    x: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        polynomial_eval(p, a) = F.0 and
+        polynomial_eval(p, x) = F.0 and
+        x != a
+    implies polynomial_eval(polynomial_quotient(p, a, n), x) = F.0
+}
+
+theorem polynomial_roots_on_list_quotient_tail[F: Field](
+    p: Polynomial[F],
+    head: F,
+    tail: List[F],
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        List.cons(head, tail).is_unique and
+        polynomial_roots_on_list(p, List.cons(head, tail))
+    implies polynomial_roots_on_list(polynomial_quotient(p, head, n), tail)
+}
+
+define polynomial_root_list_bound_property[F: Field](n: Nat) -> Bool {
+    forall(p: Polynomial[F], roots: List[F]) {
+        polynomial_support_bounded_by(p, n) and
+            p != Polynomial[F].zero and
+            roots.is_unique and
+            polynomial_roots_on_list(p, roots)
+        implies roots.length < n
+    }
+}
+
+theorem polynomial_root_list_length_lt_support_bound[F: Field](
+    p: Polynomial[F],
+    roots: List[F],
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        p != Polynomial[F].zero and
+        roots.is_unique and
+        polynomial_roots_on_list(p, roots)
+    implies roots.length < n
+}
+
+define polynomial_pow[R: Semiring](p: Polynomial[R], k: Nat) -> Polynomial[R] {
+    match k {
+        Nat.zero {
+            Polynomial[R].one
+        }
+        Nat.suc(pred) {
+            polynomial_mul(p, polynomial_pow(p, pred))
+        }
+    }
+}
+
+theorem polynomial_pow_zero[R: Semiring](p: Polynomial[R]) {
+    polynomial_pow(p, Nat.0) = Polynomial[R].one
+}
+
+theorem polynomial_pow_suc[R: Semiring](p: Polynomial[R], k: Nat) {
+    polynomial_pow(p, k.suc) = polynomial_mul(p, polynomial_pow(p, k))
+}
+
+theorem polynomial_pow_one[R: CommRing](p: Polynomial[R]) {
+    polynomial_pow(p, Nat.1) = p
+}
+
+theorem polynomial_pow_add[R: CommRing](p: Polynomial[R], m: Nat, n: Nat) {
+    polynomial_pow(p, m + n) = polynomial_mul(polynomial_pow(p, m), polynomial_pow(p, n))
+}
+
+theorem polynomial_mul_linear_coeff[R: CommRing](a: R, b: R, q: Polynomial[R], k: Nat) {
+    k >= Nat.1 implies
+    polynomial_mul(linear_polynomial(a, b), q).coeff(k) =
+        linear_polynomial(a, b).coeff(Nat.0) * q.coeff(k) +
+        linear_polynomial(a, b).coeff(Nat.1) * q.coeff(k - Nat.1)
+}
+
+theorem polynomial_mul_x_minus_a_coeff[R: CommRing](a: R, q: Polynomial[R], k: Nat) {
+    k >= Nat.1 implies
+    polynomial_mul(linear_polynomial(R.1, -a), q).coeff(k) =
+        (-a) * q.coeff(k) + q.coeff(k - Nat.1)
+}
+
+theorem polynomial_mul_x_minus_a_coeff_zero[R: CommRing](a: R, q: Polynomial[R]) {
+    polynomial_mul(linear_polynomial(R.1, -a), q).coeff(Nat.0) = (-a) * q.coeff(Nat.0)
+}
+
+theorem multiplicity_coeff_quotient_recurrence[R: Semiring](c: Nat -> R, a: R, n: Nat, i: Nat) {
+    i < n implies
+    coeff_quotient(c, a, n.suc, i) = c(i.suc) + a * coeff_quotient(c, a, n.suc, i.suc)
+}
+
+theorem multiplicity_quotient_recurrence[R: Semiring](p: Polynomial[R], a: R, n: Nat, i: Nat) {
+    i < n implies
+    polynomial_quotient(p, a, n.suc).coeff(i) =
+        p.coeff(i.suc) + a * polynomial_quotient(p, a, n.suc).coeff(i.suc)
+}
+
+theorem multiplicity_quotient_zero_coeff[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_quotient(p, a, n.suc).coeff(Nat.0) = coeff_eval(coeff_tail(p.coeff), a, n)
+}
+
+theorem multiplicity_quotient_diagonal_zero[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_quotient(p, a, n.suc).coeff(n) = R.0
+}
+
+theorem polynomial_mul_linear_quotient_eq[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_support_bounded_by(p, n) and polynomial_eval(p, a) = R.0 implies
+    polynomial_mul(linear_polynomial(R.1, -a), polynomial_quotient(p, a, n.suc)) = p
+}
+
+theorem polynomial_root_imp_linear_divides[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_divides(linear_polynomial(R.1, -a), p)
+}
+
+theorem polynomial_linear_divides_imp_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_divides(linear_polynomial(R.1, -a), p) implies polynomial_eval(p, a) = R.0
+}
+
+theorem polynomial_linear_divides_iff_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_divides(linear_polynomial(R.1, -a), p) = (polynomial_eval(p, a) = R.0)
+}
+
+define polynomial_root_multiplicity_at_least[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat
+) -> Bool {
+    polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k), p)
+}
+
+theorem polynomial_root_multiplicity_one_iff_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_root_multiplicity_at_least(p, a, Nat.1) = (polynomial_eval(p, a) = R.0)
+}
+
+theorem polynomial_root_multiplicity_at_least_monotone[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat, j: Nat
+) {
+    polynomial_root_multiplicity_at_least(p, a, k) and j <= k implies
+        polynomial_root_multiplicity_at_least(p, a, j)
+}
+
+define polynomial_root_multiplicity_exact[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat
+) -> Bool {
+    polynomial_root_multiplicity_at_least(p, a, k) and
+        not polynomial_root_multiplicity_at_least(p, a, k.suc)
+}
+
+theorem polynomial_root_multiplicity_exact_divides[R: CommRing](p: Polynomial[R], a: R, k: Nat) {
+    polynomial_root_multiplicity_exact(p, a, k) implies
+        polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k), p)
+}
+
+theorem polynomial_root_multiplicity_exact_not_next[R: CommRing](p: Polynomial[R], a: R, k: Nat) {
+    polynomial_root_multiplicity_exact(p, a, k) implies
+        not polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k.suc), p)
+}
+
+define linear_factor_product[F: Field](roots: List[F]) -> Polynomial[F] {
+    match roots {
+        List.nil {
+            Polynomial[F].one
+        }
+        List.cons(head, tail) {
+            polynomial_mul(linear_polynomial(F.1, -head), linear_factor_product(tail))
+        }
+    }
+}
+
+theorem multiplicity_root_mul_left[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
+}
+
+theorem polynomial_two_roots_product_divides[F: Field](p: Polynomial[F], a: F, b: F) {
+    a != b and polynomial_eval(p, a) = F.0 and polynomial_eval(p, b) = F.0 implies
+    polynomial_divides(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -b)), p)
+}
+
+theorem polynomial_coprime_linear_product_divides[F: Field](
+    f: Polynomial[F], a: F, p: Polynomial[F]
+) {
+    polynomial_divides(f, p) and polynomial_divides(linear_polynomial(F.1, -a), p) and
+    polynomial_eval(f, a) != F.0
+    implies polynomial_divides(polynomial_mul(linear_polynomial(F.1, -a), f), p)
+}
+
+theorem linear_factor_product_eval_ne_zero[F: Field](roots: List[F], a: F) {
+    roots.is_unique and not roots.contains(a) implies
+    polynomial_eval(linear_factor_product(roots), a) != F.0
+}
+
+theorem polynomial_root_list_product_divides[F: Field](p: Polynomial[F], roots: List[F]) {
+    roots.is_unique and polynomial_roots_on_list(p, roots) implies
+    polynomial_divides(linear_factor_product(roots), p)
+}
+
+theorem polynomial_root_count_le_degree[F: Field](p: Polynomial[F], roots: List[F], d: Nat) {
+    polynomial_degree_le(p, d) and p != Polynomial[F].zero and roots.is_unique and
+        polynomial_roots_on_list(p, roots)
+    implies roots.length <= d
+}
+
+define polynomial_deriv_coeff[R: Semiring](p: Polynomial[R], n: Nat) -> R {
+    from_nat[R](n.suc) * p.coeff(n.suc)
+}
+
+theorem polynomial_deriv_coeff_has_support_in_range[R: Semiring](
+    p: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) implies
+    has_support_in(polynomial_deriv_coeff(p), fs_from_list[Nat](n.range))
+}
+
+theorem polynomial_deriv_coeff_is_finitely_supported[R: Semiring](p: Polynomial[R]) {
+    is_finitely_supported(polynomial_deriv_coeff(p))
+}
+
+let polynomial_deriv[R: Semiring](p: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(polynomial_deriv_coeff(p)) = Option.some(result)
+}
+
+theorem polynomial_deriv_coeff_apply[R: Semiring](p: Polynomial[R], n: Nat) {
+    polynomial_deriv(p).coeff(n) = from_nat[R](n.suc) * p.coeff(n.suc)
+}
+
+theorem polynomial_deriv_constant_zero[R: Semiring](r: R) {
+    polynomial_deriv(polynomial_constant(r)) = Polynomial[R].zero
+}
+
+theorem polynomial_deriv_add[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_deriv(p + q) = polynomial_deriv(p) + polynomial_deriv(q)
+}
+
+theorem polynomial_deriv_monomial[R: CommRing](n: Nat, r: R) {
+    polynomial_deriv(polynomial_monomial(n.suc, r)) =
+        polynomial_monomial(n, from_nat[R](n.suc) * r)
+}
+
+theorem polynomial_deriv_linear[R: CommRing](a: R, b: R) {
+    polynomial_deriv(linear_polynomial(a, b)) = polynomial_constant(a)
+}
+
+theorem polynomial_deriv_linear_factor[R: CommRing](a: R) {
+    polynomial_deriv(linear_polynomial(R.1, -a)) = polynomial_constant(R.1)
+}
+
+theorem polynomial_deriv_x_minus_a_mul[R: CommRing](a: R, r: Polynomial[R]) {
+    polynomial_deriv(polynomial_mul(linear_polynomial(R.1, -a), r)) =
+        r + polynomial_mul(linear_polynomial(R.1, -a), polynomial_deriv(r))
+}
+
+theorem polynomial_double_root_imp_deriv_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_double_root(p, a) implies polynomial_eval(polynomial_deriv(p), a) = R.0
+}
+
+theorem polynomial_root_and_deriv_root_imp_double_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 and polynomial_eval(polynomial_deriv(p), a) = R.0 implies
+    polynomial_double_root(p, a)
+}
+
+define polynomial_squarefree[R: CommRing](p: Polynomial[R]) -> Bool {
+    forall(a: R) {
+        not polynomial_double_root(p, a)
+    }
+}
+
+theorem polynomial_squarefree_iff_no_common_root_with_deriv[R: CommRing](p: Polynomial[R]) {
+    polynomial_squarefree(p) = (not exists(a: R) {
+        polynomial_eval(p, a) = R.0 and polynomial_eval(polynomial_deriv(p), a) = R.0
+    })
+}
+
+theorem polynomial_sub_add_cancel[R: Ring](p: Polynomial[R], t: Polynomial[R]) {
+    p.sub(t) + t = p
+}
+
+define division_claim_at[F: Field](d: Polynomial[F], n: Nat, m: Nat, p: Polynomial[F]) -> Bool {
+    polynomial_support_bounded_by(p, m) implies
+    exists(q: Polynomial[F], r: Polynomial[F]) {
+        p = polynomial_mul(q, d) + r and polynomial_support_bounded_by(r, n)
+    }
+}
+
+define division_claim[F: Field](d: Polynomial[F], n: Nat, m: Nat) -> Bool {
+    forall(p: Polynomial[F]) {
+        division_claim_at(d, n, m, p)
+    }
+}
+
+theorem division_claim_apply[F: Field](d: Polynomial[F], n: Nat, m: Nat, p: Polynomial[F]) {
+    division_claim(d, n, m) implies division_claim_at(d, n, m, p)
+}
+
+theorem polynomial_euclidean_division[F: Field](p: Polynomial[F], d: Polynomial[F], n: Nat) {
+    polynomial_degree_le(d, n) and d.coeff(n) != F.0
+    implies exists(q: Polynomial[F], r: Polynomial[F]) {
+        p = polynomial_mul(q, d) + r and polynomial_support_bounded_by(r, n)
+    }
+}
+
+define agrees_below[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) -> Bool {
+    forall(k: Nat) {
+        k < n implies p.coeff(k) = q.coeff(k)
+    }
+}
+
+theorem agrees_below_of_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    p = q implies agrees_below(p, q, n)
+}
+
+theorem agrees_below_apply[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat, k: Nat
+) {
+    agrees_below(p, q, n) and k < n implies p.coeff(k) = q.coeff(k)
+}
+
+theorem polynomial_eq_of_agrees_below[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        and agrees_below(p, q, n)
+        implies p = q
+}
+
+theorem polynomial_eq_iff_agrees_below[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        implies ((p = q) = agrees_below(p, q, n))
+}
+
+define int_agrees_on_list(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
+) -> Bool {
+    forall(x: Int) {
+        points.contains(x) implies polynomial_eval(p, x) = polynomial_eval(q, x)
+    }
+}
+
+theorem int_agreement_gives_roots(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
+) {
+    int_agrees_on_list(p, q, points) implies int_roots_on_list(p.sub(q), points)
+}
+
+theorem int_polynomial_sub_zero_of_eq(p: Polynomial[Int], q: Polynomial[Int]) {
+    p = q implies p.sub(q) = Polynomial[Int].zero
+}
+
+theorem int_polynomial_eq_of_sub_zero(p: Polynomial[Int], q: Polynomial[Int]) {
+    p.sub(q) = Polynomial[Int].zero implies p = q
+}
+
+theorem int_polynomial_eq_of_agreement(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        and points.is_unique and n <= points.length and int_agrees_on_list(p, q, points)
+        implies p = q
+}
+
+define is_int_root(p: Polynomial[Int], r: Int) -> Bool {
+    polynomial_eval(p, r) = Int.0
+}
+
+theorem is_int_root_apply(p: Polynomial[Int], r: Int) {
+    is_int_root(p, r) implies polynomial_eval(p, r) = Int.0
+}
+
+theorem is_int_root_intro(p: Polynomial[Int], r: Int) {
+    polynomial_eval(p, r) = Int.0 implies is_int_root(p, r)
+}
+
+theorem polynomial_support_bound_suc_exists(p: Polynomial[Int]) {
+    exists(n: Nat) {
+        polynomial_support_bounded_by(p, n.suc)
+    }
+}
+
+theorem polynomial_int_eval_split(p: Polynomial[Int], r: Int, n: Nat) {
+    polynomial_support_bounded_by(p, n.suc) implies polynomial_eval(p, r)
+        = p.coeff(Nat.0) + r * coeff_eval(coeff_tail(p.coeff), r, n)
+}
+
+theorem int_root_divides_constant_coeff(p: Polynomial[Int], r: Int) {
+    is_int_root(p, r) implies r.divides(p.coeff(Nat.0))
+}
+
+theorem not_int_root_of_not_divides(p: Polynomial[Int], r: Int) {
+    not r.divides(p.coeff(Nat.0)) implies not is_int_root(p, r)
+}
+
+theorem int_root_zero_iff_constant_coeff_zero(p: Polynomial[Int]) {
+    is_int_root(p, Int.0) = (p.coeff(Nat.0) = Int.0)
+}
+
+theorem int_root_abs_lte(p: Polynomial[Int], r: Int) {
+    is_int_root(p, r) and p.coeff(Nat.0) != Int.0
+        implies abs(r) <= abs(p.coeff(Nat.0))
+}
+
+define rationalise(p: Polynomial[Int]) -> Polynomial[Rat] {
+    polynomial_map(int_to_rat_hom, p)
+}
+
+theorem rationalise_coeff(p: Polynomial[Int], n: Nat) {
+    rationalise(p).coeff(n) = Rat.from_int(p.coeff(n))
+}
+
+theorem rationalise_ne_zero(p: Polynomial[Int]) {
+    p != Polynomial[Int].zero implies rationalise(p) != Polynomial[Rat].zero
+}
+
+theorem rationalise_support_bounded_by(p: Polynomial[Int], n: Nat) {
+    polynomial_support_bounded_by(p, n)
+        implies polynomial_support_bounded_by(rationalise(p), n)
+}
+
+define int_roots_on_list(p: Polynomial[Int], roots: List[Int]) -> Bool {
+    forall(x: Int) {
+        roots.contains(x) implies polynomial_eval(p, x) = Int.0
+    }
+}
+
+theorem int_roots_rationalise(p: Polynomial[Int], roots: List[Int]) {
+    int_roots_on_list(p, roots)
+        implies polynomial_roots_on_list(rationalise(p), map(roots, Rat.from_int))
+}
+
+theorem int_polynomial_root_list_length_lt_support_bound(
+    p: Polynomial[Int], roots: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and p != Polynomial[Int].zero
+        and roots.is_unique and int_roots_on_list(p, roots)
+        implies roots.length < n
+}
+
+define int_solutions_on_list(p: Polynomial[Int], c: Int, roots: List[Int]) -> Bool {
+    forall(x: Int) {
+        roots.contains(x) implies polynomial_eval(p, x) = c
+    }
+}
+
+theorem int_solutions_are_roots(p: Polynomial[Int], c: Int, roots: List[Int]) {
+    int_solutions_on_list(p, c, roots)
+        implies int_roots_on_list(p.sub(Polynomial[Int].constant(c)), roots)
+}
+
+theorem int_polynomial_value_list_length_lt_support_bound(
+    p: Polynomial[Int], c: Int, roots: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p.sub(Polynomial[Int].constant(c)), n)
+        and p.sub(Polynomial[Int].constant(c)) != Polynomial[Int].zero
+        and roots.is_unique and int_solutions_on_list(p, c, roots)
+        implies roots.length < n
+}
+
+define scale_right_fn[R: Semiring](f: Nat -> R, c: R, i: Nat) -> R {
+    f(i) * c
+}
+
+theorem range_sum_scale_right[R: Semiring](f: Nat -> R, c: R, n: Nat) {
+    range_sum(scale_right_fn(f, c), n) = range_sum(f, n) * c
+}
+
+theorem sub_sub_diag(k: Nat, i: Nat, j: Nat) {
+    j <= i and i <= k implies k - j - (i - j) = k - i
+}
+
+define assoc_term[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat, a: Nat, b: Nat
+) -> R {
+    p.coeff(a) * (q.coeff(b) * r.coeff(k - a - b))
+}
+
+theorem assoc_term_row[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat, a: Nat
+) {
+    row_upto_sum(assoc_term(p, q, r, k), k, a)
+        = p.coeff(a) * polynomial_mul_coeff(q, r, k - a)
+}
+
+theorem tri_row_sum_assoc[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat
+) {
+    (tri_row_sum(assoc_term(p, q, r, k), k)
+        = polynomial_mul_coeff(p, polynomial_mul(q, r), k))
+}
+
+theorem assoc_term_diag[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat, i: Nat
+) {
+    i <= k implies diag_sum(assoc_term(p, q, r, k), i)
+        = polynomial_mul_coeff(p, q, i) * r.coeff(k - i)
+}
+
+theorem tri_diag_sum_assoc[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat
+) {
+    tri_diag_sum(assoc_term(p, q, r, k), k)
+        = polynomial_mul_coeff(polynomial_mul(p, q), r, k)
+}
+
+theorem polynomial_mul_assoc[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]
+) {
+    polynomial_mul(polynomial_mul(p, q), r) = polynomial_mul(p, polynomial_mul(q, r))
+}
+
+theorem mul_term_coeff_rev[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], k: Nat, i: Nat
+) {
+    i <= k implies rev_fn(polynomial_mul_term_coeff(p, q, k), k.suc, i)
+        = polynomial_mul_term_coeff(q, p, k, i)
+}
+
+theorem mul_coeff_eq_range_sum[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], k: Nat
+) {
+    (polynomial_mul_coeff(p, q, k)
+        = range_sum(polynomial_mul_term_coeff(p, q, k), k.suc))
+}
+
+theorem polynomial_mul_coeff_comm[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], k: Nat
+) {
+    polynomial_mul_coeff(p, q, k) = polynomial_mul_coeff(q, p, k)
+}
+
+theorem polynomial_mul_comm[R: CommRing](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_mul(p, q) = polynomial_mul(q, p)
+}
+
+theorem polynomial_mul_coeff_one[R: CommRing](p: Polynomial[R], k: Nat) {
+    polynomial_mul_coeff(p, Polynomial[R].one, k) = p.coeff(k)
+}
+
+theorem polynomial_mul_one_right[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(p, Polynomial[R].one) = p
+}
+
+theorem polynomial_mul_one_left[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(Polynomial[R].one, p) = p
+}
+
+theorem mul_term_coeff_add[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat
+) {
+    polynomial_mul_term_coeff(p, q + r, k)
+        = add_fn(polynomial_mul_term_coeff(p, q, k), polynomial_mul_term_coeff(p, r, k))
+}
+
+theorem polynomial_mul_coeff_add[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R], k: Nat
+) {
+    polynomial_mul_coeff(p, q + r, k)
+        = polynomial_mul_coeff(p, q, k) + polynomial_mul_coeff(p, r, k)
+}
+
+theorem polynomial_mul_add_left[R: CommRing](
+    p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]
+) {
+    polynomial_mul(p, q + r) = polynomial_mul(p, q) + polynomial_mul(p, r)
+}
+
+define coeff_hom_eval(c: Nat -> Int, a: Int, b: Int, n: Nat) -> Int {
+    match n {
+        Nat.zero {
+            Int.0
+        }
+        Nat.suc(pred) {
+            c(Nat.0) * b.pow(pred) + a * coeff_hom_eval(coeff_tail(c), a, b, pred)
+        }
+    }
+}
+
+theorem coeff_hom_eval_suc(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    coeff_hom_eval(c, a, b, n.suc)
+        = c(Nat.0) * b.pow(n) + a * coeff_hom_eval(coeff_tail(c), a, b, n)
+}
+
+theorem coeff_hom_eval_zero(c: Nat -> Int, a: Int, b: Int) {
+    coeff_hom_eval(c, a, b, Nat.0) = Int.0
+}
+
+theorem coeff_hom_eval_one(c: Nat -> Int, a: Int, n: Nat) {
+    coeff_hom_eval(c, a, Int.1, n) = coeff_eval(c, a, n)
+}
+
+theorem hom_root_numerator_divides(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    coeff_hom_eval(c, a, b, n.suc) = Int.0 and is_coprime(a, b)
+        implies a.divides(c(Nat.0))
+}
+
+theorem int_add_sub_cancel(x: Int, y: Int) {
+    (x + y) - y = x
+}
+
+theorem int_sub_self(x: Int) {
+    x - x = Int.0
+}
+
+theorem hom_eval_minus_top_divisible(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b.divides(coeff_hom_eval(c, a, b, n.suc) - c(n) * a.pow(n))
+}
+
+theorem hom_root_denominator_divides(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    coeff_hom_eval(c, a, b, n.suc) = Int.0 and is_coprime(a, b)
+        implies b.divides(c(n))
+}

@@ -1,3 +1,1042 @@
+define is_galois_connection[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) -> Bool {
+    forall(a: A, b: B) {
+        lower(a) <= b = (a <= upper(b))
+    }
+}
+
+theorem galois_connection_at[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    (lower(a) <= b = (a <= upper(b)))
+}
+
+theorem galois_connection_le_upper[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: B
+) {
+    is_galois_connection(lower, upper) and lower(a) <= b implies a <= upper(b)
+}
+
+theorem galois_connection_lower_le[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: B
+) {
+    is_galois_connection(lower, upper) and a <= upper(b) implies lower(a) <= b
+}
+
+theorem galois_connection_lower_monotone[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies is_monotone(lower)
+}
+
+theorem galois_connection_upper_monotone[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies is_monotone(upper)
+}
+
+define image_pred[A, B](f: A -> B, p: A -> Bool, y: B) -> Bool {
+    exists(x: A) { p(x) and f(x) = y }
+}
+
+theorem galois_connection_lower_preserves_lub[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    p: A -> Bool,
+    a: A
+) {
+    is_galois_connection(lower, upper) and is_lub(p, a) implies
+    is_lub(image_pred(lower, p), lower(a))
+}
+
+theorem galois_connection_upper_preserves_glb[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    q: B -> Bool,
+    b: B
+) {
+    is_galois_connection(lower, upper) and is_glb(q, b) implies
+    is_glb(image_pred(upper, q), upper(b))
+}
+
+theorem galois_connection_lower_preserves_join[A: JoinSemilattice, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A
+) {
+    is_galois_connection(lower, upper) implies lower(a.join(b)) = lower(a).join(lower(b))
+}
+
+theorem galois_connection_upper_preserves_meet[A: MeetSemilattice, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    c: B,
+    d: B
+) {
+    is_galois_connection(lower, upper) implies upper(c.meet(d)) = upper(c).meet(upper(d))
+}
+
+theorem galois_connection_unit[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies a <= upper(lower(a))
+}
+
+theorem galois_connection_counit[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies lower(upper(b)) <= b
+}
+
+define galois_closure[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) -> A {
+    upper(lower(a))
+}
+
+define galois_kernel[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) -> B {
+    lower(upper(b))
+}
+
+theorem galois_closure_at[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    galois_closure(lower, upper, a) = upper(lower(a))
+}
+
+theorem galois_kernel_at[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    galois_kernel(lower, upper, b) = lower(upper(b))
+}
+
+theorem galois_closure_extensive[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies a <= galois_closure(lower, upper, a)
+}
+
+theorem galois_kernel_reductive[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies galois_kernel(lower, upper, b) <= b
+}
+
+theorem galois_closure_monotone[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies is_monotone(galois_closure(lower, upper))
+}
+
+theorem galois_kernel_monotone[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies is_monotone(galois_kernel(lower, upper))
+}
+
+theorem galois_closure_raw_idempotent[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies upper(lower(upper(lower(a)))) = upper(lower(a))
+}
+
+theorem galois_closure_idempotent[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    galois_closure(lower, upper, galois_closure(lower, upper, a)) =
+    galois_closure(lower, upper, a)
+}
+
+theorem galois_kernel_raw_idempotent[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies lower(upper(lower(upper(b)))) = lower(upper(b))
+}
+
+theorem galois_kernel_idempotent[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    galois_kernel(lower, upper, galois_kernel(lower, upper, b)) =
+    galois_kernel(lower, upper, b)
+}
+
+define is_galois_insertion[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) -> Bool {
+    is_galois_connection(lower, upper) and forall(b: B) {
+        lower(upper(b)) = b
+    }
+}
+
+define is_galois_coinsertion[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) -> Bool {
+    is_galois_connection(lower, upper) and forall(a: A) {
+        upper(lower(a)) = a
+    }
+}
+
+theorem galois_insertion_is_connection[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_insertion(lower, upper) implies is_galois_connection(lower, upper)
+}
+
+theorem galois_coinsertion_is_connection[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_coinsertion(lower, upper) implies is_galois_connection(lower, upper)
+}
+
+theorem galois_insertion_counit_eq[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_insertion(lower, upper) implies lower(upper(b)) = b
+}
+
+theorem galois_coinsertion_unit_eq[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_coinsertion(lower, upper) implies upper(lower(a)) = a
+}
+
+theorem galois_insertion_kernel_eq_self[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_insertion(lower, upper) implies galois_kernel(lower, upper, b) = b
+}
+
+theorem galois_coinsertion_closure_eq_self[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_coinsertion(lower, upper) implies galois_closure(lower, upper, a) = a
+}
+
+define galois_insertion_meet[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) -> B {
+    lower(upper(x).meet(upper(y)))
+}
+
+define galois_insertion_join[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) -> B {
+    lower(upper(x).join(upper(y)))
+}
+
+theorem galois_insertion_meet_lte_left[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_meet(lower, upper, x, y) <= x
+}
+
+theorem galois_insertion_meet_lte_right[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_meet(lower, upper, x, y) <= y
+}
+
+theorem lte_galois_insertion_meet_of_bounds[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    z: B,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) and z <= x and z <= y implies
+    z <= galois_insertion_meet(lower, upper, x, y)
+}
+
+theorem lte_galois_insertion_meet_iff[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    z: B,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    (z <= galois_insertion_meet(lower, upper, x, y) = (z <= x and z <= y))
+}
+
+theorem galois_insertion_lte_join_left[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    x <= galois_insertion_join(lower, upper, x, y)
+}
+
+theorem galois_insertion_lte_join_right[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    y <= galois_insertion_join(lower, upper, x, y)
+}
+
+theorem galois_insertion_join_lte_of_bounds[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B,
+    z: B
+) {
+    is_galois_insertion(lower, upper) and x <= z and y <= z implies
+    galois_insertion_join(lower, upper, x, y) <= z
+}
+
+theorem galois_insertion_join_lte_iff[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B,
+    z: B
+) {
+    is_galois_insertion(lower, upper) implies
+    (galois_insertion_join(lower, upper, x, y) <= z = (x <= z and y <= z))
+}
+
+theorem galois_insertion_meet_comm[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_meet(lower, upper, x, y) = galois_insertion_meet(lower, upper, y, x)
+}
+
+theorem galois_insertion_join_comm[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_join(lower, upper, x, y) = galois_insertion_join(lower, upper, y, x)
+}
+
+theorem galois_insertion_meet_idem[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_meet(lower, upper, x, x) = x
+}
+
+theorem galois_insertion_join_idem[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_join(lower, upper, x, x) = x
+}
+
+theorem galois_insertion_meet_assoc[A: MeetSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B,
+    z: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_meet(lower, upper, galois_insertion_meet(lower, upper, x, y), z) =
+    galois_insertion_meet(lower, upper, x, galois_insertion_meet(lower, upper, y, z))
+}
+
+theorem galois_insertion_join_assoc[A: JoinSemilattice, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    x: B,
+    y: B,
+    z: B
+) {
+    is_galois_insertion(lower, upper) implies
+    galois_insertion_join(lower, upper, galois_insertion_join(lower, upper, x, y), z) =
+    galois_insertion_join(lower, upper, x, galois_insertion_join(lower, upper, y, z))
+}
+
+define galois_coinsertion_meet[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) -> A {
+    upper(lower(x).meet(lower(y)))
+}
+
+define galois_coinsertion_join[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) -> A {
+    upper(lower(x).join(lower(y)))
+}
+
+theorem galois_coinsertion_meet_lte_left[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, y) <= x
+}
+
+theorem galois_coinsertion_meet_lte_right[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, y) <= y
+}
+
+theorem lte_galois_coinsertion_meet_of_bounds[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    z: A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) and z <= x and z <= y implies
+    z <= galois_coinsertion_meet(lower, upper, x, y)
+}
+
+theorem lte_galois_coinsertion_meet_iff[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    z: A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    (z <= galois_coinsertion_meet(lower, upper, x, y) = (z <= x and z <= y))
+}
+
+theorem galois_coinsertion_lte_join_left[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    x <= galois_coinsertion_join(lower, upper, x, y)
+}
+
+theorem galois_coinsertion_lte_join_right[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    y <= galois_coinsertion_join(lower, upper, x, y)
+}
+
+theorem galois_coinsertion_join_lte_of_bounds[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A,
+    z: A
+) {
+    is_galois_coinsertion(lower, upper) and x <= z and y <= z implies
+    galois_coinsertion_join(lower, upper, x, y) <= z
+}
+
+theorem galois_coinsertion_join_lte_iff[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A,
+    z: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    (galois_coinsertion_join(lower, upper, x, y) <= z = (x <= z and y <= z))
+}
+
+theorem galois_coinsertion_meet_comm[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, y) = galois_coinsertion_meet(lower, upper, y, x)
+}
+
+theorem galois_coinsertion_join_comm[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_join(lower, upper, x, y) = galois_coinsertion_join(lower, upper, y, x)
+}
+
+theorem galois_coinsertion_meet_idem[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, x) = x
+}
+
+theorem galois_coinsertion_join_idem[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_join(lower, upper, x, x) = x
+}
+
+theorem galois_coinsertion_meet_assoc[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A,
+    z: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, galois_coinsertion_meet(lower, upper, x, y), z) =
+    galois_coinsertion_meet(lower, upper, x, galois_coinsertion_meet(lower, upper, y, z))
+}
+
+theorem galois_coinsertion_join_assoc[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A,
+    z: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_join(lower, upper, galois_coinsertion_join(lower, upper, x, y), z) =
+    galois_coinsertion_join(lower, upper, x, galois_coinsertion_join(lower, upper, y, z))
+}
+
+theorem galois_coinsertion_meet_lte_meet[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A,
+    d: A
+) {
+    is_galois_coinsertion(lower, upper) and a <= b and c <= d implies
+    galois_coinsertion_meet(lower, upper, a, c) <= galois_coinsertion_meet(lower, upper, b, d)
+}
+
+theorem galois_coinsertion_join_lte_join[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A,
+    d: A
+) {
+    is_galois_coinsertion(lower, upper) and a <= b and c <= d implies
+    galois_coinsertion_join(lower, upper, a, c) <= galois_coinsertion_join(lower, upper, b, d)
+}
+
+theorem galois_coinsertion_meet_lte_meet_left[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A
+) {
+    is_galois_coinsertion(lower, upper) and a <= b implies
+    galois_coinsertion_meet(lower, upper, a, c) <= galois_coinsertion_meet(lower, upper, b, c)
+}
+
+theorem galois_coinsertion_meet_lte_meet_right[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A
+) {
+    is_galois_coinsertion(lower, upper) and b <= c implies
+    galois_coinsertion_meet(lower, upper, a, b) <= galois_coinsertion_meet(lower, upper, a, c)
+}
+
+theorem galois_coinsertion_join_lte_join_left[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A
+) {
+    is_galois_coinsertion(lower, upper) and a <= b implies
+    galois_coinsertion_join(lower, upper, a, c) <= galois_coinsertion_join(lower, upper, b, c)
+}
+
+theorem galois_coinsertion_join_lte_join_right[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    b: A,
+    c: A
+) {
+    is_galois_coinsertion(lower, upper) and b <= c implies
+    galois_coinsertion_join(lower, upper, a, b) <= galois_coinsertion_join(lower, upper, a, c)
+}
+
+theorem galois_coinsertion_meet_le_left[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, y) <= x
+}
+
+theorem galois_coinsertion_meet_le_right[A: PartialOrder, B: MeetSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    galois_coinsertion_meet(lower, upper, x, y) <= y
+}
+
+theorem galois_coinsertion_le_join_left[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    x <= galois_coinsertion_join(lower, upper, x, y)
+}
+
+theorem galois_coinsertion_le_join_right[A: PartialOrder, B: JoinSemilattice](
+    lower: A -> B,
+    upper: B -> A,
+    x: A,
+    y: A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    y <= galois_coinsertion_join(lower, upper, x, y)
+}
+
+define is_extensive[A: PartialOrder](f: A -> A) -> Bool {
+    forall(a: A) {
+        a <= f(a)
+    }
+}
+
+define is_reductive[A: PartialOrder](f: A -> A) -> Bool {
+    forall(a: A) {
+        f(a) <= a
+    }
+}
+
+define is_idempotent_map[A](f: A -> A) -> Bool {
+    forall(a: A) {
+        f(f(a)) = f(a)
+    }
+}
+
+define is_closure_operator[A: PartialOrder](close: A -> A) -> Bool {
+    is_monotone(close) and is_extensive(close) and is_idempotent_map(close)
+}
+
+define is_kernel_operator[A: PartialOrder](kernel: A -> A) -> Bool {
+    is_monotone(kernel) and is_reductive(kernel) and is_idempotent_map(kernel)
+}
+
+define is_fixed_by[A](f: A -> A, a: A) -> Bool {
+    f(a) = a
+}
+
+theorem closure_operator_is_monotone[A: PartialOrder](close: A -> A) {
+    is_closure_operator(close) implies is_monotone(close)
+}
+
+theorem closure_operator_is_extensive[A: PartialOrder](close: A -> A) {
+    is_closure_operator(close) implies is_extensive(close)
+}
+
+theorem closure_operator_is_idempotent[A: PartialOrder](close: A -> A) {
+    is_closure_operator(close) implies is_idempotent_map(close)
+}
+
+theorem closure_operator_extensive_at[A: PartialOrder](close: A -> A, a: A) {
+    is_closure_operator(close) implies a <= close(a)
+}
+
+theorem closure_operator_idempotent_at[A: PartialOrder](close: A -> A, a: A) {
+    is_closure_operator(close) implies close(close(a)) = close(a)
+}
+
+theorem closure_operator_image_fixed[A: PartialOrder](close: A -> A, a: A) {
+    is_closure_operator(close) implies is_fixed_by(close, close(a))
+}
+
+theorem closure_operator_fixed_iff_image[A: PartialOrder](close: A -> A, c: A) {
+    is_closure_operator(close) implies (is_fixed_by(close, c) iff exists(a: A) { close(a) = c })
+}
+
+theorem closure_operator_le_fixed_of_le[A: PartialOrder](close: A -> A, a: A, c: A) {
+    is_closure_operator(close) and is_fixed_by(close, c) and a <= c implies close(a) <= c
+}
+
+theorem closure_operator_le_fixed_iff_le[A: PartialOrder](close: A -> A, a: A, c: A) {
+    is_closure_operator(close) and is_fixed_by(close, c) implies (close(a) <= c = (a <= c))
+}
+
+theorem kernel_operator_is_monotone[A: PartialOrder](kernel: A -> A) {
+    is_kernel_operator(kernel) implies is_monotone(kernel)
+}
+
+theorem kernel_operator_is_reductive[A: PartialOrder](kernel: A -> A) {
+    is_kernel_operator(kernel) implies is_reductive(kernel)
+}
+
+theorem kernel_operator_is_idempotent[A: PartialOrder](kernel: A -> A) {
+    is_kernel_operator(kernel) implies is_idempotent_map(kernel)
+}
+
+theorem kernel_operator_reductive_at[A: PartialOrder](kernel: A -> A, a: A) {
+    is_kernel_operator(kernel) implies kernel(a) <= a
+}
+
+theorem kernel_operator_idempotent_at[A: PartialOrder](kernel: A -> A, a: A) {
+    is_kernel_operator(kernel) implies kernel(kernel(a)) = kernel(a)
+}
+
+theorem kernel_operator_image_fixed[A: PartialOrder](kernel: A -> A, a: A) {
+    is_kernel_operator(kernel) implies is_fixed_by(kernel, kernel(a))
+}
+
+theorem kernel_operator_fixed_iff_image[A: PartialOrder](kernel: A -> A, k: A) {
+    is_kernel_operator(kernel) implies (is_fixed_by(kernel, k) iff exists(a: A) { kernel(a) = k })
+}
+
+theorem fixed_le_kernel_operator_of_le[A: PartialOrder](kernel: A -> A, k: A, a: A) {
+    is_kernel_operator(kernel) and is_fixed_by(kernel, k) and k <= a implies k <= kernel(a)
+}
+
+theorem fixed_le_kernel_operator_iff_le[A: PartialOrder](kernel: A -> A, k: A, a: A) {
+    is_kernel_operator(kernel) and is_fixed_by(kernel, k) implies (k <= kernel(a) = (k <= a))
+}
+
+theorem galois_closure_is_closure_operator[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies
+    is_closure_operator(galois_closure(lower, upper))
+}
+
+theorem galois_kernel_is_kernel_operator[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies
+    is_kernel_operator(galois_kernel(lower, upper))
+}
+
+theorem galois_closure_image_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_by(galois_closure(lower, upper), galois_closure(lower, upper, a))
+}
+
+theorem galois_kernel_image_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_by(galois_kernel(lower, upper), galois_kernel(lower, upper, b))
+}
+
+theorem galois_closure_upper_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_by(galois_closure(lower, upper), upper(b))
+}
+
+theorem galois_kernel_lower_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_by(galois_kernel(lower, upper), lower(a))
+}
+
+theorem galois_closure_fixed_has_upper_preimage[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) and is_fixed_by(galois_closure(lower, upper), a)
+    implies exists(b: B) { a = upper(b) }
+}
+
+theorem galois_closure_fixed_of_upper_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) and exists(b: B) { a = upper(b) } implies
+    is_fixed_by(galois_closure(lower, upper), a)
+}
+
+theorem galois_closure_fixed_iff_upper_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    (is_fixed_by(galois_closure(lower, upper), a) iff exists(b: B) { a = upper(b) })
+}
+
+theorem galois_kernel_fixed_has_lower_preimage[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) and is_fixed_by(galois_kernel(lower, upper), b)
+    implies exists(a: A) { b = lower(a) }
+}
+
+theorem galois_kernel_fixed_of_lower_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) and exists(a: A) { b = lower(a) } implies
+    is_fixed_by(galois_kernel(lower, upper), b)
+}
+
+theorem galois_kernel_fixed_iff_lower_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    (is_fixed_by(galois_kernel(lower, upper), b) iff exists(a: A) { b = lower(a) })
+}
+
+theorem galois_insertion_closure_is_closure_operator[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_insertion(lower, upper) implies
+    is_closure_operator(galois_closure(lower, upper))
+}
+
+theorem galois_coinsertion_kernel_is_kernel_operator[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_coinsertion(lower, upper) implies
+    is_kernel_operator(galois_kernel(lower, upper))
+}
+
+theorem galois_insertion_upper_is_order_embedding[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_insertion(lower, upper) implies is_order_embedding(upper)
+}
+
+theorem galois_insertion_lower_is_order_surjection[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_insertion(lower, upper) implies is_order_surjection(lower)
+}
+
+theorem galois_coinsertion_lower_is_order_embedding[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_coinsertion(lower, upper) implies is_order_embedding(lower)
+}
+
+theorem galois_coinsertion_upper_is_order_surjection[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_coinsertion(lower, upper) implies is_order_surjection(upper)
+}
+
+theorem galois_insertion_closure_fixed_of_upper_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_insertion(lower, upper) and exists(b: B) { a = upper(b) } implies
+    is_fixed_by(galois_closure(lower, upper), a)
+}
+
+theorem galois_coinsertion_kernel_fixed_of_lower_image[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_coinsertion(lower, upper) and exists(a: A) { b = lower(a) } implies
+    is_fixed_by(galois_kernel(lower, upper), b)
+}
+
+theorem galois_closure_le_iff_le_of_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A,
+    c: A
+) {
+    is_galois_connection(lower, upper) and is_fixed_by(galois_closure(lower, upper), c)
+    implies (galois_closure(lower, upper, a) <= c = (a <= c))
+}
+
+theorem le_galois_kernel_iff_le_of_fixed[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    k: B,
+    b: B
+) {
+    is_galois_connection(lower, upper) and is_fixed_by(galois_kernel(lower, upper), k)
+    implies (k <= galois_kernel(lower, upper, b) = (k <= b))
+}
+
+theorem identity_galois_connection[A: PartialOrder] {
+    is_galois_connection(identity_fn[A], identity_fn[A])
+}
+
+theorem compose_galois_connection[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    lower1: A -> B,
+    upper1: B -> A,
+    lower2: B -> C,
+    upper2: C -> B
+) {
+    is_galois_connection(lower1, upper1) and is_galois_connection(lower2, upper2) implies
+        is_galois_connection(compose(lower2, lower1), compose(upper1, upper2))
+}
+
+theorem identity_galois_insertion[A: PartialOrder] {
+    is_galois_insertion(identity_fn[A], identity_fn[A])
+}
+
+theorem identity_galois_coinsertion[A: PartialOrder] {
+    is_galois_coinsertion(identity_fn[A], identity_fn[A])
+}
+
+theorem compose_galois_insertion[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    lower1: A -> B,
+    upper1: B -> A,
+    lower2: B -> C,
+    upper2: C -> B
+) {
+    is_galois_insertion(lower1, upper1) and is_galois_insertion(lower2, upper2) implies
+        is_galois_insertion(compose(lower2, lower1), compose(upper1, upper2))
+}
+
+theorem compose_galois_coinsertion[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    lower1: A -> B,
+    upper1: B -> A,
+    lower2: B -> C,
+    upper2: C -> B
+) {
+    is_galois_coinsertion(lower1, upper1) and is_galois_coinsertion(lower2, upper2) implies
+        is_galois_coinsertion(compose(lower2, lower1), compose(upper1, upper2))
+}
+
 define is_order_iso_pair[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) -> Bool {
     forall(a: A) {
         g(f(a)) = a
@@ -1841,536 +2880,4 @@ theorem add_right_map_is_strict_monotone[G: AddOrderedGroup](c: G) {
 
 theorem add_left_map_left_inverse[G: AddLeftOrderedGroup](c: G, x: G) {
     add_left_map(-c, add_left_map(c, x)) = x
-}
-
-theorem add_left_map_right_inverse[G: AddLeftOrderedGroup](c: G, x: G) {
-    add_left_map(c, add_left_map(-c, x)) = x
-}
-
-theorem add_right_map_left_inverse[G: AddOrderedGroup](c: G, x: G) {
-    add_right_map(-c, add_right_map(c, x)) = x
-}
-
-theorem add_right_map_right_inverse[G: AddOrderedGroup](c: G, x: G) {
-    add_right_map(c, add_right_map(-c, x)) = x
-}
-
-theorem add_left_map_is_order_iso_pair[G: AddLeftOrderedGroup](c: G) {
-    is_order_iso_pair(add_left_map(c), add_left_map(-c))
-}
-
-theorem add_right_map_is_order_iso_pair[G: AddOrderedGroup](c: G) {
-    is_order_iso_pair(add_right_map(c), add_right_map(-c))
-}
-
-let add_left_order_iso[G: AddLeftOrderedGroup](c: G) -> result: OrderIso[G, G] satisfy {
-    result.map = add_left_map(c) and result.inv = add_left_map(-c)
-}
-
-theorem add_left_order_iso_map[G: AddLeftOrderedGroup](c: G) {
-    add_left_order_iso(c).map = add_left_map(c)
-}
-
-theorem add_left_order_iso_inv[G: AddLeftOrderedGroup](c: G) {
-    add_left_order_iso(c).inv = add_left_map(-c)
-}
-
-let add_right_order_iso[G: AddOrderedGroup](c: G) -> result: OrderIso[G, G] satisfy {
-    result.map = add_right_map(c) and result.inv = add_right_map(-c)
-}
-
-theorem add_right_order_iso_map[G: AddOrderedGroup](c: G) {
-    add_right_order_iso(c).map = add_right_map(c)
-}
-
-theorem add_right_order_iso_inv[G: AddOrderedGroup](c: G) {
-    add_right_order_iso(c).inv = add_right_map(-c)
-}
-
-theorem add_le_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    a <= b implies c + a <= c + b
-}
-
-theorem add_le_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a <= b implies a + c <= b + c
-}
-
-theorem add_lt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    a < b implies c + a < c + b
-}
-
-theorem add_lt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a < b implies a + c < b + c
-}
-
-theorem add_ge_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    a >= b implies c + a >= c + b
-}
-
-theorem add_ge_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a >= b implies a + c >= b + c
-}
-
-theorem add_gt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    a > b implies c + a > c + b
-}
-
-theorem add_gt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a > b implies a + c > b + c
-}
-
-theorem le_of_add_le_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a <= c + b implies a <= b
-}
-
-theorem le_of_add_le_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c <= b + c implies a <= b
-}
-
-theorem lt_of_add_lt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a < c + b implies a < b
-}
-
-theorem lt_of_add_lt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c < b + c implies a < b
-}
-
-theorem ge_of_add_ge_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a >= c + b implies a >= b
-}
-
-theorem ge_of_add_ge_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c >= b + c implies a >= b
-}
-
-theorem gt_of_add_gt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a > c + b implies a > b
-}
-
-theorem gt_of_add_gt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c > b + c implies a > b
-}
-
-theorem add_le_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a <= c + b = (a <= b)
-}
-
-theorem add_le_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c <= b + c = (a <= b)
-}
-
-theorem add_le_iff_le_sub_right[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + b <= c = (a <= c - b)
-}
-
-theorem add_lt_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a < c + b = (a < b)
-}
-
-theorem add_lt_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c < b + c = (a < b)
-}
-
-theorem add_ge_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a >= c + b = (a >= b)
-}
-
-theorem add_ge_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c >= b + c = (a >= b)
-}
-
-theorem add_gt_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
-    c + a > c + b = (a > b)
-}
-
-theorem add_gt_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
-    a + c > b + c = (a > b)
-}
-
-theorem add_le_add[G: AddOrderedGroup](a: G, b: G, c: G, d: G) {
-    a <= b and c <= d implies a + c <= b + d
-}
-
-theorem add_ge_add[G: AddOrderedGroup](a: G, b: G, c: G, d: G) {
-    a >= b and c >= d implies a + c >= b + d
-}
-
-define neg_map[G: AddOrderedGroup](x: G) -> G {
-    -x
-}
-
-theorem neg_map_apply[G: AddOrderedGroup](x: G) {
-    neg_map(x) = -x
-}
-
-theorem neg_map_is_antitone[G: AddOrderedGroup] {
-    is_antitone(neg_map[G])
-}
-
-theorem neg_map_reflects_le[G: AddOrderedGroup](x: G, y: G) {
-    neg_map(y) <= neg_map(x) implies x <= y
-}
-
-theorem neg_map_is_strict_antitone[G: AddOrderedGroup] {
-    is_strict_antitone(neg_map[G])
-}
-
-let neg_order_dual_iso[G: AddOrderedGroup](anchor: G) -> result: OrderDualIso[G, G] satisfy {
-    OrderDualIso[G, G].new(neg_map[G], neg_map[G]) = Option.some(result)
-}
-
-theorem neg_order_dual_iso_map[G: AddOrderedGroup](anchor: G) {
-    neg_order_dual_iso(anchor).map = neg_map[G]
-}
-
-theorem neg_order_dual_iso_inv[G: AddOrderedGroup](anchor: G) {
-    neg_order_dual_iso(anchor).inv = neg_map[G]
-}
-
-theorem neg_map_reflects_lt[G: AddOrderedGroup](x: G, y: G) {
-    neg_map(y) < neg_map(x) implies x < y
-}
-
-theorem neg_le_neg[G: AddOrderedGroup](a: G, b: G) {
-    a <= b implies -b <= -a
-}
-
-theorem le_of_neg_le_neg[G: AddOrderedGroup](a: G, b: G) {
-    -b <= -a implies a <= b
-}
-
-theorem neg_lt_neg[G: AddOrderedGroup](a: G, b: G) {
-    a < b implies -b < -a
-}
-
-theorem lt_of_neg_lt_neg[G: AddOrderedGroup](a: G, b: G) {
-    -b < -a implies a < b
-}
-
-theorem neg_ge_neg[G: AddOrderedGroup](a: G, b: G) {
-    a >= b implies -b >= -a
-}
-
-theorem ge_of_neg_ge_neg[G: AddOrderedGroup](a: G, b: G) {
-    -b >= -a implies a >= b
-}
-
-theorem neg_gt_neg[G: AddOrderedGroup](a: G, b: G) {
-    a > b implies -b > -a
-}
-
-theorem gt_of_neg_gt_neg[G: AddOrderedGroup](a: G, b: G) {
-    -b > -a implies a > b
-}
-
-theorem neg_le_neg_iff[G: AddOrderedGroup](a: G, b: G) {
-    -b <= -a = (a <= b)
-}
-
-theorem neg_lt_neg_iff[G: AddOrderedGroup](a: G, b: G) {
-    -b < -a = (a < b)
-}
-
-theorem neg_ge_neg_iff[G: AddOrderedGroup](a: G, b: G) {
-    -b >= -a = (a >= b)
-}
-
-theorem neg_gt_neg_iff[G: AddOrderedGroup](a: G, b: G) {
-    -b > -a = (a > b)
-}
-
-inductive Int {
-    /// `Int.from_nat` converts a natural number to an integer via the typical embedding.
-    from_nat(Nat)
-
-    /// `Int.neg_suc` converts a natural number `x` into `-(x+1)`.
-    /// This isn't particularly intuitive, it's just to give every integer a unique constructor.
-    /// In particular, `neg_suc` can construct any negative integer, but not zero.
-    neg_suc(Nat)
-}
-numerals Int
-
-let from_nat = Int.from_nat
-
-/// Yields the absolute value of an integer as a natural number.
-define abs(a: Int) -> Nat {
-    match a {
-        Int.from_nat(n) {
-            n
-        }
-        Int.neg_suc(k) {
-            k.suc
-        }
-    }
-}
-
-theorem abs_from_nat(n: Nat) {
-    abs(Int.from_nat(n)) = n
-}
-
-attributes Int {
-    /// The integer two.
-    let 2: Int = Int.from_nat(Nat.2)
-    /// The integer three.
-    let 3: Int = Int.from_nat(Nat.3)
-    /// The integer four.
-    let 4: Int = Int.from_nat(Nat.4)
-    /// The integer five.
-    let 5: Int = Int.from_nat(Nat.5)
-    /// The integer six.
-    let 6: Int = Int.from_nat(Nat.6)
-    /// The integer seven.
-    let 7: Int = Int.from_nat(Nat.7)
-    /// The integer eight.
-    let 8: Int = Int.from_nat(Nat.8)
-    /// The integer nine.
-    let 9: Int = Int.from_nat(Nat.9)
-    /// The integer ten.
-    let 10: Int = Int.from_nat(Nat.10)
-}
-
-instance Int: Zero {
-    let 0: Int = Int.from_nat(Nat.0)
-}
-
-instance Int: One {
-    let 1: Int = Int.from_nat(Nat.1)
-}
-
-define neg_nat(n: Nat) -> Int {
-    if n = Nat.0 {
-        0
-    } else {
-        Int.neg_suc(n - Nat.1)
-    }
-}
-
-theorem neg_nat_zero { neg_nat(Nat.0) = 0 }
-
-theorem neg_nat_suc(n: Nat) {
-    neg_nat(n.suc) = Int.neg_suc(n)
-}
-
-theorem abs_neg_nat(n: Nat) {
-    abs(neg_nat(n)) = n
-}
-
-instance Int: Neg {
-    define neg(self) -> Int {
-        match self {
-            Int.from_nat(n) {
-                neg_nat(n)
-            }
-            Int.neg_suc(n) {
-                Int.from_nat(n.suc)
-            }
-        }
-    }
-}
-
-theorem neg_zero {
-    -0 = 0
-}
-
-theorem neg_neg_suc(n: Nat) {
-    -Int.neg_suc(n) = Int.from_nat(n.suc)
-}
-
-theorem neg_from_nat(n: Nat) {
-    -Int.from_nat(n) = neg_nat(n)
-}
-
-theorem neg_neg(a: Int) {
-    -(-a) = a
-}
-
-theorem fix_neg(a: Int) {
-    -a = a implies a = 0
-}
-
-theorem abs_neg(a: Int) {
-    abs(-a) = abs(a)
-}
-
-theorem neg_or_pos(a: Int) {
-    a = Int.from_nat(abs(a)) or a = -(Int.from_nat(abs(a)))
-}
-
-theorem from_eq_neg_from(p: Nat, q: Nat) {
-    Int.from_nat(p) = -(Int.from_nat(q)) implies p = Nat.0 and q = Nat.0
-}
-
-theorem abs_zero { abs(0) = Nat.0 }
-
-theorem one_neq_zero { 1 != 0 }
-
-define sub_nat(m: Nat, n: Nat) -> Int {
-    if n <= m {
-        Int.from_nat(m - n)
-    } else {
-        -(Int.from_nat(n - m))
-    }
-}
-
-theorem sub_nat_zero_right(n: Nat) {
-    sub_nat(n, Nat.0) = Int.from_nat(n)
-}
-
-theorem sub_nat_zero_left(n: Nat) { sub_nat(Nat.0, n) = -(Int.from_nat(n)) }
-
-theorem sub_nat_self(n: Nat) { sub_nat(n, n) = 0 }
-
-theorem sub_nat_add_left(p: Nat, q: Nat) {
-    sub_nat(p + q, q) = Int.from_nat(p)
-}
-
-theorem neg_sub_nat(m: Nat, n: Nat) { sub_nat(m, n) = -(sub_nat(n, m)) }
-
-theorem sub_nat_add_right(p: Nat, q: Nat) { sub_nat(p, p + q) = -(Int.from_nat(q)) }
-
-theorem sub_nat_eq_helper(m: Nat, n: Nat, p: Nat, q: Nat) {
-    m + n = p + q and p <= m implies sub_nat(m, p) = sub_nat(q, n)
-}
-
-theorem sub_nat_eq(m: Nat, n: Nat, p: Nat, q: Nat) {
-    m + n = p + q implies sub_nat(m, p) = sub_nat(q, n)
-}
-
-theorem sub_nat_imp_add(i: Nat, j: Nat, k: Nat) {
-    sub_nat(i, j) = Int.from_nat(k) implies j + k = i
-}
-
-theorem sub_nat_negate_imp_add(i: Nat, j: Nat, k: Nat) {
-    sub_nat(i, j) = -(Int.from_nat(k)) implies i + k = j
-}
-
-theorem sub_nat_cancel_right(i: Nat, j: Nat, k: Nat) { sub_nat(i, k) = sub_nat(j, k) implies i = j }
-
-theorem sub_nat_cancel_left(i: Nat, j: Nat, k: Nat) {
-    sub_nat(k, i) = sub_nat(k, j) implies i = j
-}
-
-theorem sub_nat_add_cancel_right(m: Nat, n: Nat, k: Nat) {
-    sub_nat(m, n) = sub_nat(m + k, n + k)
-}
-
-theorem sub_nat_add_cancel_left(m: Nat, n: Nat, k: Nat) {
-    sub_nat(m, n) = sub_nat(k + m, k + n)
-}
-
-theorem sub_nat_imp_add_eq_helper(m: Nat, n: Nat, p: Nat, q: Nat) {
-    sub_nat(m, p) = sub_nat(q, n) and p <= m implies m + n = p + q
-}
-
-theorem sub_nat_imp_add_eq(m: Nat, n: Nat, p: Nat, q: Nat) { sub_nat(m, p) = sub_nat(q, n) implies m + n = p + q }
-
-theorem sub_nat_double_cancel_left(p: Nat, q: Nat, r: Nat, s: Nat, t: Nat) {
-    sub_nat(p + t, q) = sub_nat(r + t, s) implies sub_nat(p, q) = sub_nat(r, s)
-}
-
-theorem sub_nat_double_cancel_right(p: Nat, q: Nat, r: Nat, s: Nat, t: Nat) {
-    sub_nat(p, q + t) = sub_nat(r, s + t) implies sub_nat(p, q) = sub_nat(r, s)
-}
-
-attributes Int {
-    /// True if the integer is negative.
-    define is_negative(self) -> Bool {
-        self != Int.from_nat(abs(self))
-    }
-
-    /// True if the integer is positive.
-    define is_positive(self) -> Bool {
-        (-self).is_negative
-    }
-}
-
-theorem zero_not_neg { not 0.is_negative }
-
-theorem zero_not_pos {
-    not 0.is_positive
-}
-
-theorem one_pos { 1.is_positive }
-
-theorem nonzero_pos_or_neg(a: Int) {
-    a != 0 implies a.is_positive or a.is_negative
-}
-
-theorem pos_is_not_neg(a: Int) { a.is_positive implies not a.is_negative }
-
-theorem non_pos_is_neg_abs(a: Int) { not a.is_positive implies a = -(Int.from_nat(abs(a))) }
-
-attributes Int {
-    /// The positive part of this integer.
-    define pos_part(self) -> Nat {
-        if self.is_positive {
-            abs(self)
-        } else {
-            Nat.0
-        }
-    }
-
-    /// The negative part of this integer.
-    define neg_part(self) -> Nat {
-        if self.is_positive {
-            Nat.0
-        } else {
-            abs(self)
-        }
-    }
-}
-
-theorem sub_nat_parts(a: Int) { sub_nat(a.pos_part, a.neg_part) = a }
-
-theorem pos_part_neg(a: Int) { (-a).pos_part = a.neg_part }
-
-theorem pos_part_from(n: Nat) { Int.from_nat(n).pos_part = n }
-
-theorem neg_part_from(n: Nat) {
-    Int.from_nat(n).neg_part = Nat.0
-}
-
-theorem neg_part_neg(a: Int) { (-a).neg_part = a.pos_part }
-
-theorem parts_sub_nat(j: Nat, k: Nat) { sub_nat(j, k).pos_part + k = sub_nat(j, k).neg_part + j }
-
-theorem add_part_sub_nat(r: Nat, s: Nat) { r + sub_nat(r, s).neg_part = s + sub_nat(r, s).pos_part }
-
-instance Int: Add {
-    define add(self, other: Int) -> Int {
-        sub_nat(self.pos_part + other.pos_part, self.neg_part + other.neg_part)
-    }
-}
-
-theorem add_zero_left(a: Int) { (0 + a) = a }
-
-theorem add_zero_right(a: Int) { a + 0 = a }
-
-theorem add_comm(a: Int, b: Int) { a + b = b + a }
-
-theorem neg_distrib(a: Int, b: Int) { -(a + b) = -a + -b }
-
-theorem parts_of_add(a: Int, b: Int) {
-    (a.pos_part + b.pos_part + (a + b).neg_part =
-     a.neg_part + b.neg_part + (a + b).pos_part)
-}
-
-theorem add_neg(a: Int) { a + -a = 0 }
-
-theorem add_eq_zero(a: Int, b: Int) { a + b = 0 implies a = -b }
-
-theorem add_right_cancel(a: Int, b: Int, c: Int) { a + c = b + c implies a = b }
-
-theorem add_left_cancel(a: Int, b: Int, c: Int) { c + a = c + b implies a = b }
-
-theorem add_sub_nat_left_pos(p: Nat, q: Nat, r: Nat) {
-    (sub_nat(p, q) + Int.from_nat(r)) = sub_nat(p + r, q)
-}
-
-theorem add_sub_nat_left_neg(p: Nat, q: Nat, r: Nat) {
-    (sub_nat(p, q) + -(Int.from_nat(r))) = sub_nat(p, q + r)
-}
-
-theorem add_sub_nat_left(p: Nat, q: Nat, a: Int) {
-    (sub_nat(p, q) + a) = sub_nat(p + a.pos_part, q + a.neg_part)
 }

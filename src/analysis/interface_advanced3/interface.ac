@@ -1,3 +1,551 @@
+theorem common_post_fixed_point_set_subset_compose[P: PartialOrder](f: P -> P, g: P -> P) {
+    is_monotone(f) implies
+        common_post_fixed_point_set(f, g).subset(post_fixed_point_set(compose(f, g)))
+}
+
+define logistic_map(r: Real, x: Real) -> Real {
+    r * x * (Real.1 - x)
+}
+
+theorem logistic_map_zero(r: Real) {
+    logistic_map(r, Real.0) = Real.0
+}
+
+theorem logistic_map_zero_fixed_point(r: Real) {
+    is_fixed_point(logistic_map(r), Real.0)
+}
+
+theorem one_sub_sub_cancel(a: Real) {
+    Real.1 - (Real.1 - a) = a
+}
+
+theorem logistic_map_second_fixed_point(r: Real) {
+    r != Real.0 implies logistic_map(r, Real.1 - Real.1 / r) = Real.1 - Real.1 / r
+}
+
+theorem logistic_map_second_fixed_point_fp(r: Real) {
+    r != Real.0 implies is_fixed_point(logistic_map(r), Real.1 - Real.1 / r)
+}
+
+define is_contraction(f: Real -> Real, c: Real) -> Bool {
+    Real.0 <= c and c < Real.1
+        and forall(x: Real, y: Real) {
+            (f(x) - f(y)).abs <= c * (x - y).abs
+        }
+}
+
+theorem is_contraction_apply(f: Real -> Real, c: Real, x: Real, y: Real) {
+    is_contraction(f, c) implies (f(x) - f(y)).abs <= c * (x - y).abs
+}
+
+theorem is_contraction_intro(f: Real -> Real, c: Real) {
+    Real.0 <= c and c < Real.1
+        and (forall(x: Real, y: Real) { (f(x) - f(y)).abs <= c * (x - y).abs })
+    implies is_contraction(f, c)
+}
+
+theorem is_contraction_constant_lt_one(f: Real -> Real, c: Real) {
+    is_contraction(f, c) implies c < Real.1
+}
+
+theorem is_contraction_constant_nonneg(f: Real -> Real, c: Real) {
+    is_contraction(f, c) implies Real.0 <= c
+}
+
+theorem contraction_fixed_point_unique(f: Real -> Real, c: Real, x: Real, y: Real) {
+    is_contraction(f, c) and f(x) = x and f(y) = y implies x = y
+}
+
+define babylonian_step(a: Real, x: Real) -> Real {
+    (x + a / x) * Real.one_half
+}
+
+define babylonian_seq(a: Real, x0: Real, n: Nat) -> Real {
+    iterate(babylonian_step(a), n, x0)
+}
+
+theorem babylonian_seq_zero(a: Real, x0: Real) {
+    babylonian_seq(a, x0, Nat.0) = x0
+}
+
+theorem babylonian_seq_suc(a: Real, x0: Real, n: Nat) {
+    babylonian_seq(a, x0, n.suc) = babylonian_step(a, babylonian_seq(a, x0, n))
+}
+
+theorem babylonian_step_fixed_point(a: Real, y: Real) {
+    y * y = a and y != Real.0 implies babylonian_step(a, y) = y
+}
+
+theorem babylonian_has_fixed_point(a: Real) {
+    a > Real.0 implies exists(y: Real) {
+        y != Real.0 and y * y = a and babylonian_step(a, y) = y
+    }
+}
+
+let quarter: Real = Real.one_half * Real.one_half
+
+/// Three quarters: 1 − 1/4 = 3/4.
+
+let three_quarters: Real = Real.1 - quarter
+
+/// The tent map: T(x) = 2x for x ≤ 1/2, and T(x) = 2(1 − x) for x > 1/2.
+define tent(x: Real) -> Real {
+    if x <= Real.one_half {
+        two * x
+    } else {
+        two * (Real.1 - x)
+    }
+}
+
+theorem one_half_lt_one {
+    Real.one_half < Real.1
+}
+
+theorem quarter_lte_one_half {
+    quarter <= Real.one_half
+}
+
+theorem two_mul_quarter_eq_one_half {
+    two * quarter = Real.one_half
+}
+
+theorem tent_quarter {
+    tent(quarter) = Real.one_half
+}
+
+theorem quarter_positive {
+    quarter > Real.0
+}
+
+theorem one_half_minus_quarter {
+    Real.one_half - quarter = quarter
+}
+
+theorem three_quarters_eq_half_plus_quarter {
+    three_quarters = Real.one_half + quarter
+}
+
+theorem three_quarters_gt_one_half {
+    Real.one_half < three_quarters
+}
+
+theorem one_minus_three_quarters {
+    Real.1 - three_quarters = quarter
+}
+
+theorem tent_three_quarters {
+    tent(three_quarters) = Real.one_half
+}
+
+define is_derivative_at(f: Real -> Real, df: Real -> Real, xstar: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(delta: Real) {
+            delta.is_positive and forall(h: Real) {
+                h != Real.0 and h.abs < delta
+                implies ((f(xstar + h) - f(xstar)) / h - df(xstar)).abs < eps
+            }
+        }
+    }
+}
+
+define is_stable_fixed_point(f: Real -> Real, xstar: Real) -> Bool {
+    is_fixed_point(f, xstar)
+        and forall(eps: Real) {
+            eps.is_positive implies exists(delta: Real) {
+                delta.is_positive and forall(x0: Real) {
+                    (x0 - xstar).abs < delta
+                    implies forall(n: Nat) {
+                        (iterate(f, n, x0) - xstar).abs < eps
+                    }
+                }
+            }
+        }
+}
+
+let two_pi = pi + pi
+
+/// The sine of n times x, for a natural number n.
+define sin_nt(n: Nat, x: Real) -> Real {
+    (from_nat[Real](n) * x).sin
+}
+
+define cos_nt(n: Nat, x: Real) -> Real {
+    (from_nat[Real](n) * x).cos
+}
+
+define fourier_cos_integrand(f: Real -> Real, n: Nat, x: Real) -> Real {
+    f(x) * cos_nt(n, x)
+}
+
+define fourier_sin_integrand(f: Real -> Real, n: Nat, x: Real) -> Real {
+    f(x) * sin_nt(n, x)
+}
+
+define fourier_cos_coeff(f: Real -> Real, n: Nat) -> Real {
+    integral(fourier_cos_integrand(f, n), Real.0, two_pi) / pi
+}
+
+define fourier_sin_coeff(f: Real -> Real, n: Nat) -> Real {
+    integral(fourier_sin_integrand(f, n), Real.0, two_pi) / pi
+}
+
+theorem two_pi_pos {
+    Real.0 < two_pi
+}
+
+theorem two_pi_nonneg {
+    Real.0 <= two_pi
+}
+
+define fn_sincos(x: Real) -> Real {
+    pointwise_mul(Real.sin, Real.cos, x)
+}
+
+define fn_sin_sq(x: Real) -> Real {
+    pointwise_mul(Real.sin, Real.sin, x)
+}
+
+define fn_cos_sq(x: Real) -> Real {
+    pointwise_mul(Real.cos, Real.cos, x)
+}
+
+define fn_sin_sin2(x: Real) -> Real {
+    x.sin * (two * x).sin
+}
+
+define fn_x_sin(x: Real) -> Real {
+    identity_fn[Real](x) * x.sin
+}
+
+theorem sin_double(x: Real) {
+    (two * x).sin = two * x.sin * x.cos
+}
+
+theorem sub_add_cancel(a: Real, b: Real) {
+    (a - b) + b = a
+}
+
+theorem add_sub_sub_cancel(a: Real, b: Real, c: Real) {
+    (a - b) + (b - c) = a - c
+}
+
+theorem add_sub_add_cancel(a: Real, b: Real, c: Real) {
+    (a + b) - (b + c) = a - c
+}
+
+theorem add_self_two(a: Real) {
+    a + a = two * a
+}
+
+theorem add_add_sub_cancel(a: Real, b: Real) {
+    (a + b) + a - b = a + a
+}
+
+theorem sub_add_add_cancel(a: Real, b: Real) {
+    (a + b) - a + b = b + b
+}
+
+theorem pythag_mul(x: Real) {
+    x.sin * x.sin + x.cos * x.cos = Real.1
+}
+
+theorem half_pythag_sin_sq(x: Real) {
+    Real.1 + x.sin * x.sin - x.cos * x.cos = two * (x.sin * x.sin)
+}
+
+theorem half_pythag_cos_sq(x: Real) {
+    Real.1 - x.sin * x.sin + x.cos * x.cos = two * (x.cos * x.cos)
+}
+
+theorem half_twice(a: Real) {
+    (Real.1 / two) * (two * a) = a
+}
+
+theorem half_pythag_then_sin(x: Real) {
+    (Real.1 / two) * (Real.1 + x.sin * x.sin - x.cos * x.cos) = x.sin * x.sin
+}
+
+theorem half_pythag_then_cos(x: Real) {
+    (Real.1 / two) * (Real.1 - x.sin * x.sin + x.cos * x.cos) = x.cos * x.cos
+}
+
+theorem one_add_two_is_three {
+    Real.1 + two = from_nat[Real](Nat.3)
+}
+
+theorem one_nonneg {
+    Real.0 <= Real.1
+}
+
+theorem abs_le_one_imp_upper(a: Real) {
+    a.abs <= Real.1 implies a <= Real.1
+}
+
+theorem abs_le_one_imp_lower(a: Real) {
+    a.abs <= Real.1 implies -Real.1 <= a
+}
+
+theorem abs_le_imp_lower(a: Real, b: Real) {
+    a.abs <= b implies -b <= a
+}
+
+theorem abs_le_imp_upper(a: Real, b: Real) {
+    a.abs <= b implies a <= b
+}
+
+theorem abs_mul_le_one(s: Real, t: Real) {
+    s.abs <= Real.1 and t.abs <= Real.1 implies (s * t).abs <= Real.1
+}
+
+theorem fn_sincos_abs_le_one(x: Real) {
+    fn_sincos(x).abs <= Real.1
+}
+
+theorem fn_sin_sq_abs_le_one(x: Real) {
+    fn_sin_sq(x).abs <= Real.1
+}
+
+theorem fn_cos_sq_abs_le_one(x: Real) {
+    fn_cos_sq(x).abs <= Real.1
+}
+
+theorem fn_sin_sin2_abs_le_one(x: Real) {
+    fn_sin_sin2(x).abs <= Real.1
+}
+
+theorem fn_x_sin_abs_le_two_pi(x: Real) {
+    interval_contains(Real.0, two_pi, x) implies fn_x_sin(x).abs <= two_pi
+}
+
+theorem fn_sincos_lipschitz_m2(u: Real, v: Real) {
+    (fn_sincos(u) - fn_sincos(v)).abs <= two * (u - v).abs
+}
+
+theorem sin_add_abs_le_two(u: Real, v: Real) {
+    (u.sin + v.sin).abs <= two
+}
+
+theorem fn_sin_sq_lipschitz_m2(u: Real, v: Real) {
+    (fn_sin_sq(u) - fn_sin_sq(v)).abs <= two * (u - v).abs
+}
+
+theorem cos_add_abs_le_two(u: Real, v: Real) {
+    (u.cos + v.cos).abs <= two
+}
+
+theorem fn_cos_sq_lipschitz_m2(u: Real, v: Real) {
+    (fn_cos_sq(u) - fn_cos_sq(v)).abs <= two * (u - v).abs
+}
+
+theorem fn_sin_sin2_lipschitz_m3(u: Real, v: Real) {
+    (fn_sin_sin2(u) - fn_sin_sin2(v)).abs <= from_nat[Real](Nat.3) * (u - v).abs
+}
+
+theorem fn_x_sin_lipschitz_on(u: Real, v: Real) {
+    interval_contains(Real.0, two_pi, u) and interval_contains(Real.0, two_pi, v)
+    implies
+    (fn_x_sin(u) - fn_x_sin(v)).abs <= (Real.1 + two_pi) * (u - v).abs
+}
+
+define g_sincos(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two), pointwise_mul(Real.sin, Real.sin), x)
+}
+
+define g_sin_sq(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two),
+        pointwise_add(identity_fn[Real], pointwise_neg(pointwise_mul(Real.sin, Real.cos))), x)
+}
+
+define g_cos_sq(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two),
+        pointwise_add(identity_fn[Real], pointwise_mul(Real.sin, Real.cos)), x)
+}
+
+define g_sin_sin2(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](two / from_nat[Real](Nat.3)),
+        pointwise_mul(pointwise_mul(Real.sin, Real.sin), Real.sin), x)
+}
+
+define g_x_sin(x: Real) -> Real {
+    pointwise_add(Real.sin, pointwise_neg(pointwise_mul(identity_fn[Real], Real.cos)), x)
+}
+
+theorem g_sincos_has_derivative {
+    is_derivative_fn(g_sincos, fn_sincos)
+}
+
+theorem g_sin_sq_has_derivative {
+    is_derivative_fn(g_sin_sq, fn_sin_sq)
+}
+
+theorem g_cos_sq_has_derivative {
+    is_derivative_fn(g_cos_sq, fn_cos_sq)
+}
+
+theorem g_sin_sin2_has_derivative {
+    is_derivative_fn(g_sin_sin2, fn_sin_sin2)
+}
+
+theorem g_x_sin_has_derivative {
+    is_derivative_fn(g_x_sin, fn_x_sin)
+}
+
+theorem g_sincos_continuous {
+    continuous(g_sincos)
+}
+
+theorem g_sin_sq_continuous {
+    continuous(g_sin_sq)
+}
+
+theorem g_cos_sq_continuous {
+    continuous(g_cos_sq)
+}
+
+theorem g_sin_sin2_continuous {
+    continuous(g_sin_sin2)
+}
+
+theorem g_x_sin_continuous {
+    continuous(g_x_sin)
+}
+
+theorem fn_sincos_integrable {
+    is_integrable(fn_sincos, Real.0, two_pi)
+}
+
+theorem fn_sin_sq_integrable {
+    is_integrable(fn_sin_sq, Real.0, two_pi)
+}
+
+theorem fn_cos_sq_integrable {
+    is_integrable(fn_cos_sq, Real.0, two_pi)
+}
+
+theorem fn_sin_sin2_integrable {
+    is_integrable(fn_sin_sin2, Real.0, two_pi)
+}
+
+theorem fn_x_sin_integrable {
+    is_integrable(fn_x_sin, Real.0, two_pi)
+}
+
+theorem integral_sin_mul_cos_zero {
+    integral(fn_sincos, Real.0, two_pi) = Real.0
+}
+
+theorem integral_sin_sq_zero_two_pi {
+    integral(fn_sin_sq, Real.0, two_pi) = pi
+}
+
+theorem integral_cos_sq_zero_two_pi {
+    integral(fn_cos_sq, Real.0, two_pi) = pi
+}
+
+theorem integral_sin_sin2_zero {
+    integral(fn_sin_sin2, Real.0, two_pi) = Real.0
+}
+
+theorem integral_x_sin_zero_two_pi {
+    integral(fn_x_sin, Real.0, two_pi) = -two_pi
+}
+
+theorem fourier_sin_coeff_identity_one {
+    fourier_sin_coeff(identity_fn[Real], Nat.1) = -two
+}
+
+theorem two_pi_eq_pi_add_pi {
+    two * pi = pi + pi
+}
+
+theorem sin_two_pi_value {
+    (two * pi).sin = Real.0
+}
+
+theorem cos_two_pi_value {
+    (two * pi).cos = Real.1
+}
+
+theorem integral_sin_zero_two_pi {
+    integral(Real.sin, Real.0, two * pi) = Real.0
+}
+
+theorem integral_cos_zero_two_pi {
+    integral(Real.cos, Real.0, two * pi) = Real.0
+}
+
+theorem integral_cos_zero_pi {
+    integral(Real.cos, Real.0, pi) = Real.0
+}
+
+theorem integral_sin_zero_pi_restated {
+    integral(Real.sin, Real.0, pi) = two
+}
+
+theorem cos_double(x: Real) {
+    (two * x).cos = x.cos * x.cos - x.sin * x.sin
+}
+
+theorem ring_add_sub_comm(a: Real, b: Real) {
+    a + b - (b - a) = a + a
+}
+
+theorem ring_sub_sub_comm(a: Real, b: Real) {
+    (a + b) - (a - b) = b + b
+}
+
+theorem ring_add_sub_comm_b(a: Real, b: Real) {
+    a + b + (a - b) = a + a
+}
+
+theorem sin_sq_times_two(x: Real) {
+    two * (x.sin * x.sin) = Real.1 - (two * x).cos
+}
+
+theorem cos_sq_times_two(x: Real) {
+    two * (x.cos * x.cos) = Real.1 + (two * x).cos
+}
+
+theorem product_to_sum_sin_cos(x: Real, y: Real) {
+    two * x.sin * y.cos = (x + y).sin + (x - y).sin
+}
+
+theorem product_to_sum_sin_sin(x: Real, y: Real) {
+    two * x.sin * y.sin = (x - y).cos - (x + y).cos
+}
+
+theorem product_to_sum_cos_cos(x: Real, y: Real) {
+    two * x.cos * y.cos = (x + y).cos + (x - y).cos
+}
+
+define sincos(x: Real) -> Real {
+    x.sin * x.cos
+}
+
+theorem sincos_abs_le_one(x: Real) {
+    sincos(x).abs <= Real.1
+}
+
+theorem sincos_le_one(x: Real) {
+    sincos(x) <= Real.1
+}
+
+theorem sincos_ge_neg_one(x: Real) {
+    -Real.1 <= sincos(x)
+}
+
+theorem sincos_lipschitz_m2(u: Real, v: Real) {
+    (sincos(u) - sincos(v)).abs <= two * (u - v).abs
+}
+
+theorem sincos_continuous {
+    continuous(sincos)
+}
+
+define sin_sq_fn(x: Real) -> Real {
+    x.sin * x.sin
+}
+
 define sincos_antiderivative(x: Real) -> Real {
     Real.one_half * sin_sq_fn(x)
 }
@@ -1500,666 +2048,4 @@ inductive Color {
 
 instance Color: MetricSpace {
     let distance: (Color, Color) -> Real = discrete
-}
-
-define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat) {
-        n <= i implies q(i).distance(a) < eps
-    }
-}
-
-define tendsto_metric[M: MetricSpace](q: Nat -> M, a: M) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(q, a, n, eps)
-        }
-    }
-}
-
-define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).distance(q(j)) < eps
-    }
-}
-
-define is_cauchy_metric[M: MetricSpace](q: Nat -> M) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(q, n, eps)
-        }
-    }
-}
-
-theorem tendsto_metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, eps: Real) {
-    tendsto_metric(q, a) and eps.is_positive implies exists(n: Nat) {
-        metric_tail_bound(q, a, n, eps)
-    }
-}
-
-theorem metric_tail_bound_at[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real, i: Nat) {
-    metric_tail_bound(q, a, n, eps) and n <= i implies q(i).distance(a) < eps
-}
-
-theorem metric_tail_bound_from_distances[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) {
-    (forall(i: Nat) {
-        n <= i implies q(i).distance(a) < eps
-    }) implies metric_tail_bound(q, a, n, eps)
-}
-
-theorem cauchy_metric_bound_from_distances[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) {
-    (forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).distance(q(j)) < eps
-    }) implies cauchy_metric_bound(q, n, eps)
-}
-
-theorem cauchy_metric_bound_at[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real, i: Nat, j: Nat) {
-    cauchy_metric_bound(q, n, eps) and n <= i and n <= j implies q(i).distance(q(j)) < eps
-}
-
-theorem is_cauchy_metric_bound[M: MetricSpace](q: Nat -> M, eps: Real) {
-    is_cauchy_metric(q) and eps.is_positive implies exists(n: Nat) {
-        cauchy_metric_bound(q, n, eps)
-    }
-}
-
-theorem tendsto_metric_from_tail_bounds[M: MetricSpace](q: Nat -> M, a: M) {
-    (forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(q, a, n, eps)
-        }
-    }) implies tendsto_metric(q, a)
-}
-
-theorem is_cauchy_metric_from_bounds[M: MetricSpace](q: Nat -> M) {
-    (forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(q, n, eps)
-        }
-    }) implies is_cauchy_metric(q)
-}
-
-theorem tendsto_metric_imp_cauchy[M: MetricSpace](q: Nat -> M, a: M) {
-    tendsto_metric(q, a) implies is_cauchy_metric(q)
-}
-
-define distance_set_contains[M: MetricSpace](s: Set[M], r: Real) -> Bool {
-    exists(x: M, y: M) {
-        s.contains(x) and s.contains(y) and r = x.distance(y)
-    }
-}
-
-define distance_set[M: MetricSpace](s: Set[M]) -> Set[Real] {
-    Set[Real].new(distance_set_contains(s))
-}
-
-theorem distance_set_contains_iff[M: MetricSpace](s: Set[M], r: Real) {
-    distance_set(s).contains(r) = distance_set_contains(s, r)
-}
-
-theorem distance_set_contains_distance[M: MetricSpace](s: Set[M], x: M, y: M) {
-    s.contains(x) and s.contains(y) implies distance_set(s).contains(x.distance(y))
-}
-
-define is_diameter[M: MetricSpace](s: Set[M], d: Real) -> Bool {
-    is_set_supremum(distance_set(s), d)
-}
-
-define has_diameter[M: MetricSpace](s: Set[M]) -> Bool {
-    is_bounded(s) and exists(x: M) { s.contains(x) }
-}
-
-theorem bounded_distance_upper_bound[M: MetricSpace](s: Set[M], c: M, r: Real) {
-    s.subset(closed_ball(c, r)) implies is_set_upper_bound(distance_set(s), r + r)
-}
-
-theorem diameter_exists[M: MetricSpace](s: Set[M]) {
-    is_bounded(s) and exists(x: M) { s.contains(x) }
-    implies
-    exists(d: Real) { is_diameter(s, d) }
-}
-
-theorem distance_le_diameter[M: MetricSpace](s: Set[M], d: Real, x: M, y: M) {
-    is_diameter(s, d) and s.contains(x) and s.contains(y)
-    implies x.distance(y) <= d
-}
-
-theorem diameter_non_negative[M: MetricSpace](s: Set[M], d: Real, x: M) {
-    is_diameter(s, d) and s.contains(x) implies 0 <= d
-}
-
-theorem diameter_unique[M: MetricSpace](s: Set[M], d1: Real, d2: Real) {
-    is_diameter(s, d1) and is_diameter(s, d2) implies d1 = d2
-}
-
-theorem tendsto_metric_unique[M: MetricSpace](q: Nat -> M, a: M, b: M) {
-    tendsto_metric(q, a) and tendsto_metric(q, b) implies a = b
-}
-
-define lipschitz_bound[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) -> Bool {
-    forall(x: M, y: M) {
-        f(x).distance(f(y)) <= k * x.distance(y)
-    }
-}
-
-define is_lipschitz_with[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) -> Bool {
-    not k.is_negative and lipschitz_bound(k, f)
-}
-
-define is_lipschitz[M: MetricSpace, N: MetricSpace](f: M -> N) -> Bool {
-    exists(k: Real) {
-        is_lipschitz_with(k, f)
-    }
-}
-
-theorem lipschitz_with_constant_non_negative[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) {
-    is_lipschitz_with(k, f) implies not k.is_negative
-}
-
-theorem lipschitz_with_distance[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N, x: M, y: M) {
-    is_lipschitz_with(k, f) implies f(x).distance(f(y)) <= k * x.distance(y)
-}
-
-theorem lipschitz_with_le_one_distance[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N, x: M, y: M) {
-    is_lipschitz_with(k, f) and k <= 1 implies f(x).distance(f(y)) <= x.distance(y)
-}
-
-theorem lipschitz_bound_from_distances[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) {
-    (forall(x: M, y: M) {
-        f(x).distance(f(y)) <= k * x.distance(y)
-    }) implies lipschitz_bound(k, f)
-}
-
-theorem identity_is_lipschitz_with_one[M: MetricSpace] {
-    is_lipschitz_with(1, identity_fn[M])
-}
-
-theorem identity_is_lipschitz[M: MetricSpace] {
-    is_lipschitz(identity_fn[M])
-}
-
-theorem lipschitz_with_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](kf: Real, kg: Real, f: N -> P, g: M -> N) {
-    is_lipschitz_with(kf, f) and is_lipschitz_with(kg, g)
-    implies is_lipschitz_with(kf * kg, compose(f, g))
-}
-
-theorem lipschitz_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
-    is_lipschitz(f) and is_lipschitz(g) implies is_lipschitz(compose(f, g))
-}
-
-define is_isometry[M: MetricSpace, N: MetricSpace](f: M -> N) -> Bool {
-    forall(x: M, y: M) {
-        f(x).distance(f(y)) = x.distance(y)
-    }
-}
-
-theorem isometry_distance[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, y: M) {
-    is_isometry(f) implies f(x).distance(f(y)) = x.distance(y)
-}
-
-theorem isometry_is_injective_fn[M: MetricSpace, N: MetricSpace](f: M -> N) {
-    is_isometry(f) implies is_injective_fn(f)
-}
-
-theorem identity_is_isometry[M: MetricSpace] {
-    is_isometry(identity_fn[M])
-}
-
-theorem isometry_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
-    is_isometry(f) and is_isometry(g) implies is_isometry(compose(f, g))
-}
-
-theorem isometry_compose_is_injective_fn[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
-    is_isometry(f) and is_isometry(g) implies is_injective_fn(compose(f, g))
-}
-
-theorem isometry_is_lipschitz_with_one[M: MetricSpace, N: MetricSpace](f: M -> N) {
-    is_isometry(f) implies is_lipschitz_with(1, f)
-}
-
-theorem isometry_is_lipschitz[M: MetricSpace, N: MetricSpace](f: M -> N) {
-    is_isometry(f) implies is_lipschitz(f)
-}
-
-theorem lipschitz_with_closed_ball_image_subset[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, s: Set[M], c: M, r: Real
-) {
-    is_lipschitz_with(k, f) and s.subset(closed_ball(c, r)) and not r.is_negative implies
-    set_image(s, f).subset(closed_ball(f(c), k * r))
-}
-
-theorem lipschitz_with_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, s: Set[M]
-) {
-    is_lipschitz_with(k, f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
-    is_bounded(set_image(s, f))
-}
-
-theorem lipschitz_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](f: M -> N, s: Set[M]) {
-    is_lipschitz(f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
-    is_bounded(set_image(s, f))
-}
-
-theorem isometry_bounded_nonempty_image_is_bounded[M: MetricSpace, N: MetricSpace](f: M -> N, s: Set[M]) {
-    is_isometry(f) and is_bounded(s) and exists(x: M) { s.contains(x) } implies
-    is_bounded(set_image(s, f))
-}
-
-theorem isometry_open_ball_contains_iff[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) implies open_ball(f(x), r).contains(f(y)) = open_ball(x, r).contains(y)
-}
-
-theorem isometry_closed_ball_contains_iff[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) implies closed_ball(f(x), r).contains(f(y)) = closed_ball(x, r).contains(y)
-}
-
-theorem isometry_open_ball_forward[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) and open_ball(x, r).contains(y) implies open_ball(f(x), r).contains(f(y))
-}
-
-theorem isometry_open_ball_backward[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) and open_ball(f(x), r).contains(f(y)) implies open_ball(x, r).contains(y)
-}
-
-theorem isometry_closed_ball_forward[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) and closed_ball(x, r).contains(y) implies closed_ball(f(x), r).contains(f(y))
-}
-
-theorem isometry_closed_ball_backward[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real, y: M) {
-    is_isometry(f) and closed_ball(f(x), r).contains(f(y)) implies closed_ball(x, r).contains(y)
-}
-
-theorem isometry_open_ball_image_subset[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real) {
-    is_isometry(f) implies set_image(open_ball(x, r), f).subset(open_ball(f(x), r))
-}
-
-theorem isometry_closed_ball_image_subset[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, r: Real) {
-    is_isometry(f) implies set_image(closed_ball(x, r), f).subset(closed_ball(f(x), r))
-}
-
-theorem isometry_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](f: M -> N, q: Nat -> M, a: M) {
-    is_isometry(f) and tendsto_metric(q, a) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(compose(f, q), f(a), n, eps)
-        }
-    }
-}
-
-define is_open_metric[M: MetricSpace](s: Set[M]) -> Bool {
-    forall(x: M) {
-        s.contains(x) implies exists(r: Real) {
-            r.is_positive and open_ball(x, r).subset(s)
-        }
-    }
-}
-
-define is_closed_metric[M: MetricSpace](s: Set[M]) -> Bool {
-    is_open_metric(s.c)
-}
-
-theorem empty_set_is_open_metric[M: MetricSpace] {
-    is_open_metric(Set[M].empty_set)
-}
-
-theorem universal_set_is_open_metric[M: MetricSpace] {
-    is_open_metric(Set[M].universal_set)
-}
-
-theorem open_ball_inner_ball[M: MetricSpace](x: M, r: Real, y: M) {
-    open_ball(x, r).contains(y) implies exists(s: Real) {
-        s.is_positive and open_ball(y, s).subset(open_ball(x, r))
-    }
-}
-
-theorem is_open_metric_from_inner_balls[M: MetricSpace](s: Set[M]) {
-    (forall(x: M) {
-        s.contains(x) implies exists(r: Real) {
-            r.is_positive and open_ball(x, r).subset(s)
-        }
-    }) implies is_open_metric(s)
-}
-
-theorem open_ball_is_open_metric[M: MetricSpace](xc: M, rad: Real) {
-    is_open_metric(open_ball(xc, rad))
-}
-
-theorem union_of_open_metric_is_open[M: MetricSpace](s: Set[M], t: Set[M]) {
-    is_open_metric(s) and is_open_metric(t) implies is_open_metric(s.union(t))
-}
-
-theorem intersection_of_open_metric_is_open[M: MetricSpace](s: Set[M], t: Set[M]) {
-    is_open_metric(s) and is_open_metric(t) implies is_open_metric(s.intersection(t))
-}
-
-theorem empty_set_is_closed_metric[M: MetricSpace] {
-    is_closed_metric(Set[M].empty_set)
-}
-
-theorem universal_set_is_closed_metric[M: MetricSpace] {
-    is_closed_metric(Set[M].universal_set)
-}
-
-theorem closed_ball_complement_inner[M: MetricSpace](xc: M, rad: Real, y: M, z: M) {
-    rad < y.distance(xc) and z.distance(y) < y.distance(xc) - rad
-        implies rad < z.distance(xc)
-}
-
-theorem closed_ball_complement_open_ball_subset[M: MetricSpace](xc: M, rad: Real, y: M) {
-    rad < y.distance(xc) implies
-        open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
-}
-
-theorem closed_ball_complement_has_open_neighborhood[M: MetricSpace](xc: M, rad: Real, y: M) {
-    closed_ball(xc, rad).c.contains(y) implies exists(r: Real) {
-        r.is_positive and open_ball(y, r).subset(closed_ball(xc, rad).c)
-    }
-}
-
-theorem isometry_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](f: M -> N, q: Nat -> M) {
-    is_isometry(f) and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
-}
-
-theorem isometry_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M
-) {
-    is_isometry(f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem isometry_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M
-) {
-    is_isometry(f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
-}
-
-theorem lipschitz_with_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(1, f) and metric_tail_bound(q, a, n, eps)
-        implies metric_tail_bound(compose(f, q), f(a), n, eps)
-}
-
-theorem lipschitz_with_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(compose(f, q), f(a), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem lipschitz_with_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(1, f) and cauchy_metric_bound(q, n, eps)
-        implies cauchy_metric_bound(compose(f, q), n, eps)
-}
-
-theorem lipschitz_with_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_one_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
-}
-
-theorem lipschitz_with_le_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(k, f) and k <= 1 and metric_tail_bound(q, a, n, eps)
-        implies metric_tail_bound(compose(f, q), f(a), n, eps)
-}
-
-theorem lipschitz_with_le_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(compose(f, q), f(a), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_le_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(k, f) and k <= 1 and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem lipschitz_with_le_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(k, f) and k <= 1 and cauchy_metric_bound(q, n, eps)
-        implies cauchy_metric_bound(compose(f, q), n, eps)
-}
-
-theorem lipschitz_with_le_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_le_one_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(k, f) and k <= 1 and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
-}
-
-theorem lipschitz_with_preserves_metric_tail_bound_of_mul_lt[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M, n: Nat, delta: Real, eps: Real
-) {
-    is_lipschitz_with(k, f) and k * delta < eps and metric_tail_bound(q, a, n, delta)
-        implies metric_tail_bound(compose(f, q), f(a), n, eps)
-}
-
-theorem lipschitz_with_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(k, f) and tendsto_metric(q, a) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(compose(f, q), f(a), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(k, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem lipschitz_with_preserves_cauchy_metric_bound_of_mul_lt[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M, n: Nat, delta: Real, eps: Real
-) {
-    is_lipschitz_with(k, f) and k * delta < eps and cauchy_metric_bound(q, n, delta)
-        implies cauchy_metric_bound(compose(f, q), n, eps)
-}
-
-theorem lipschitz_with_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(k, f) and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
-    k: Real, f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(k, f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
-}
-
-let diameter[M: MetricSpace](s: Set[M]) -> d: Real satisfy {
-    if has_diameter(s) {
-        is_diameter(s, d)
-    } else {
-        d = 0
-    }
-}
-
-theorem diameter_is_diameter[M: MetricSpace](s: Set[M]) {
-    has_diameter(s) implies is_diameter(s, diameter(s))
-}
-
-theorem diameter_default[M: MetricSpace](s: Set[M]) {
-    not has_diameter(s) implies diameter(s) = 0
-}
-
-theorem distance_le_diameter_fn[M: MetricSpace](s: Set[M], x: M, y: M) {
-    has_diameter(s) and s.contains(x) and s.contains(y) implies x.distance(y) <= diameter(s)
-}
-
-theorem diameter_non_negative_fn[M: MetricSpace](s: Set[M]) {
-    not diameter(s).is_negative
-}
-
-theorem diameter_empty[M: MetricSpace] {
-    diameter(Set[M].empty_set) = 0
-}
-
-theorem set_supremum_of_max(t: Set[Real], m: Real) {
-    t.contains(m) and is_set_upper_bound(t, m) implies is_set_supremum(t, m)
-}
-
-theorem is_diameter_singleton[M: MetricSpace](x: M) {
-    is_diameter(Set[M].singleton(x), 0)
-}
-
-theorem diameter_singleton[M: MetricSpace](x: M) {
-    diameter(Set[M].singleton(x)) = 0
-}
-
-theorem distance_set_subset_of_subset[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.subset(t) implies distance_set(s).subset(distance_set(t))
-}
-
-theorem diameter_le_of_subset[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.subset(t) and has_diameter(s) and has_diameter(t)
-    implies diameter(s) <= diameter(t)
-}
-
-theorem union_complement_eq_intersection_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.union(t).c = s.c.intersection(t.c)
-}
-
-theorem intersection_complement_eq_union_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.intersection(t).c = s.c.union(t.c)
-}
-
-theorem intersection_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
-    is_closed_metric(s) and is_closed_metric(t) implies is_closed_metric(s.intersection(t))
-}
-
-theorem union_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
-    is_closed_metric(s) and is_closed_metric(t) implies is_closed_metric(s.union(t))
-}
-
-define real_distance(x: Real, y: Real) -> Real {
-    (x - y).abs
-}
-
-theorem real_abs_zero {
-    Real.0.abs = Real.0
-}
-
-theorem real_distance_self(x: Real) {
-    real_distance(x, x) = 0
-}
-
-theorem real_distance_zero_imp_eq(x: Real, y: Real) {
-    real_distance(x, y) = 0 implies x = y
-}
-
-theorem real_distance_symm(x: Real, y: Real) {
-    real_distance(x, y) = real_distance(y, x)
-}
-
-theorem real_distance_triangle(x: Real, y: Real, z: Real) {
-    real_distance(x, z) <= real_distance(x, y) + real_distance(y, z)
-}
-
-instance Real: MetricSpace {
-    let distance: (Real, Real) -> Real = real_distance
-}
-
-typeclass M: CompleteMetricSpace extends MetricSpace {
-    /// Rule: every Cauchy sequence has a limit.
-    cauchy_metric_imp_tendsto(q: Nat -> M) {
-        is_cauchy_metric(q) implies exists(a: M) {
-            tendsto_metric(q, a)
-        }
-    }
-}
-
-theorem real_metric_tail_bound_imp_tail_bound(q: Nat -> Real, a: Real, n: Nat, eps: Real) {
-    metric_tail_bound(q, a, n, eps) implies tail_bound(q, a, n, eps)
-}
-
-theorem real_tendsto_metric_imp_converges_to(q: Nat -> Real, a: Real) {
-    tendsto_metric(q, a) implies converges_to(q, a)
-}
-
-theorem real_converges_to_imp_tendsto_metric(q: Nat -> Real, a: Real) {
-    converges_to(q, a) implies tendsto_metric(q, a)
-}
-
-theorem real_cauchy_metric_bound_imp_close_bound(q: Nat -> Real, n: Nat, eps: Real) {
-    cauchy_metric_bound(q, n, eps) implies forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).is_close(q(j), eps)
-    }
-}
-
-theorem real_is_cauchy_seq_imp_is_cauchy_metric(q: Nat -> Real) {
-    is_cauchy_seq(q) implies is_cauchy_metric(q)
-}
-
-theorem real_is_cauchy_metric_imp_is_cauchy_seq(q: Nat -> Real) {
-    is_cauchy_metric(q) implies is_cauchy_seq(q)
-}
-
-theorem real_is_cauchy_metric_iff_is_cauchy_seq(q: Nat -> Real) {
-    is_cauchy_metric(q) = is_cauchy_seq(q)
-}
-
-theorem real_tendsto_metric_iff_converges_to(q: Nat -> Real, a: Real) {
-    tendsto_metric(q, a) = converges_to(q, a)
-}
-
-theorem real_cauchy_metric_imp_tendsto(q: Nat -> Real) {
-    is_cauchy_metric(q) implies exists(a: Real) {
-        tendsto_metric(q, a)
-    }
-}
-
-instance Real: CompleteMetricSpace
-
-define is_nonnegative_seq(a: Nat -> Real) -> Bool {
-    is_lower_bound(a, Real.0)
-}
-
-theorem is_nonnegative_seq_apply(a: Nat -> Real, n: Nat) {
-    is_nonnegative_seq(a) implies Real.0 <= a(n)
 }

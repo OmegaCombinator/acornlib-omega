@@ -260,6 +260,569 @@ theorem triangular_doubled(n: Nat) {
     Nat.2 * triangular(n) = n * (n + Nat.1)
 }
 
+inductive Vote {
+    /// A vote for the leading candidate.
+    positive
+    /// A vote for the trailing candidate.
+    negative
+}
+
+define positive_count(xs: List[Vote]) -> Nat {
+    xs.count(Vote.positive)
+}
+
+define negative_count(xs: List[Vote]) -> Nat {
+    xs.count(Vote.negative)
+}
+
+define ballot_word_has_counts(xs: List[Vote], positives: Nat, negatives: Nat) -> Bool {
+    positive_count(xs) = positives and negative_count(xs) = negatives
+}
+
+theorem positive_count_cons_positive(tail: List[Vote]) {
+    positive_count(List.cons(Vote.positive, tail)) = Nat.1 + positive_count(tail)
+}
+
+theorem negative_count_cons_positive(tail: List[Vote]) {
+    negative_count(List.cons(Vote.positive, tail)) = negative_count(tail)
+}
+
+theorem positive_count_cons_negative(tail: List[Vote]) {
+    positive_count(List.cons(Vote.negative, tail)) = positive_count(tail)
+}
+
+theorem negative_count_cons_negative(tail: List[Vote]) {
+    negative_count(List.cons(Vote.negative, tail)) = Nat.1 + negative_count(tail)
+}
+
+define repeat_positive(n: Nat) -> List[Vote] {
+    match n {
+        Nat.zero {
+            List.nil[Vote]
+        }
+        Nat.suc(k) {
+            List.cons(Vote.positive, repeat_positive(k))
+        }
+    }
+}
+
+define repeat_negative(n: Nat) -> List[Vote] {
+    match n {
+        Nat.zero {
+            List.nil[Vote]
+        }
+        Nat.suc(k) {
+            List.cons(Vote.negative, repeat_negative(k))
+        }
+    }
+}
+
+define prepend_positive(xs: List[Vote]) -> List[Vote] {
+    List.cons(Vote.positive, xs)
+}
+
+define prepend_negative(xs: List[Vote]) -> List[Vote] {
+    List.cons(Vote.negative, xs)
+}
+
+define ballot_words_len(length: Nat, positives: Nat) -> List[List[Vote]] {
+    match length {
+        Nat.zero {
+            if positives = Nat.0 {
+                List.singleton(List.nil[Vote])
+            } else {
+                List.nil[List[Vote]]
+            }
+        }
+        Nat.suc(tail_length) {
+            match positives {
+                Nat.zero {
+                    map(ballot_words_len(tail_length, Nat.0), prepend_negative)
+                }
+                Nat.suc(prev_positives) {
+                    map(ballot_words_len(tail_length, prev_positives), prepend_positive) +
+                        map(ballot_words_len(tail_length, positives), prepend_negative)
+                }
+            }
+        }
+    }
+}
+
+define ballot_words(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    ballot_words_len(positives + negatives, positives)
+}
+
+define ballot_prefixes_ahead_from(xs: List[Vote], positives_so_far: Nat, negatives_so_far: Nat) -> Bool {
+    match xs {
+        List.nil[Vote] {
+            true
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    negatives_so_far < positives_so_far.suc and
+                        ballot_prefixes_ahead_from(tail, positives_so_far.suc, negatives_so_far)
+                }
+                Vote.negative {
+                    negatives_so_far.suc < positives_so_far and
+                        ballot_prefixes_ahead_from(tail, positives_so_far, negatives_so_far.suc)
+                }
+            }
+        }
+    }
+}
+
+define ballot_prefixes_ahead(xs: List[Vote]) -> Bool {
+    ballot_prefixes_ahead_from(xs, Nat.0, Nat.0)
+}
+
+define ballot_prefixes_nonnegative_from(xs: List[Vote], positives_so_far: Nat, negatives_so_far: Nat) -> Bool {
+    match xs {
+        List.nil[Vote] {
+            true
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    negatives_so_far <= positives_so_far.suc and
+                        ballot_prefixes_nonnegative_from(tail, positives_so_far.suc, negatives_so_far)
+                }
+                Vote.negative {
+                    negatives_so_far.suc <= positives_so_far and
+                        ballot_prefixes_nonnegative_from(tail, positives_so_far, negatives_so_far.suc)
+                }
+            }
+        }
+    }
+}
+
+define ballot_prefixes_nonnegative(xs: List[Vote]) -> Bool {
+    ballot_prefixes_nonnegative_from(xs, Nat.0, Nat.0)
+}
+
+theorem ballot_prefixes_nonnegative_from_cons_positive_elim(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    ballot_prefixes_nonnegative_from(List.cons(Vote.positive, tail), positives_so_far, negatives_so_far) implies
+        negatives_so_far <= positives_so_far.suc and
+        ballot_prefixes_nonnegative_from(tail, positives_so_far.suc, negatives_so_far)
+}
+
+theorem ballot_prefixes_nonnegative_from_cons_positive_intro(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    negatives_so_far <= positives_so_far.suc and
+        ballot_prefixes_nonnegative_from(tail, positives_so_far.suc, negatives_so_far)
+    implies ballot_prefixes_nonnegative_from(List.cons(Vote.positive, tail), positives_so_far, negatives_so_far)
+}
+
+theorem ballot_prefixes_nonnegative_from_cons_negative_elim(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    ballot_prefixes_nonnegative_from(List.cons(Vote.negative, tail), positives_so_far, negatives_so_far) implies
+        negatives_so_far.suc <= positives_so_far and
+        ballot_prefixes_nonnegative_from(tail, positives_so_far, negatives_so_far.suc)
+}
+
+theorem ballot_prefixes_nonnegative_from_cons_negative_intro(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    negatives_so_far.suc <= positives_so_far and
+        ballot_prefixes_nonnegative_from(tail, positives_so_far, negatives_so_far.suc)
+    implies ballot_prefixes_nonnegative_from(List.cons(Vote.negative, tail), positives_so_far, negatives_so_far)
+}
+
+define successful_ballot_word(xs: List[Vote], positives: Nat, negatives: Nat) -> Bool {
+    ballot_word_has_counts(xs, positives, negatives) and ballot_prefixes_ahead(xs)
+}
+
+define successful_ballot_words(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    ballot_words(positives, negatives).filter(ballot_prefixes_ahead)
+}
+
+define weak_ballot_words(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    ballot_words(positives, negatives).filter(ballot_prefixes_nonnegative)
+}
+
+define strict_successful_tails_image(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    map(weak_ballot_words(positives, negatives), prepend_positive)
+}
+
+define predicate_not[T](f: T -> Bool, x: T) -> Bool {
+    not f(x)
+}
+
+define ballot_prefixes_negative(xs: List[Vote]) -> Bool {
+    not ballot_prefixes_nonnegative(xs)
+}
+
+define bad_ballot_words(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    ballot_words(positives, negatives).filter(ballot_prefixes_negative)
+}
+
+theorem ballot_count_sum_length(xs: List[Vote]) {
+    positive_count(xs) + negative_count(xs) = xs.length
+}
+
+theorem add_contains_cases[T](left: List[T], right: List[T], item: T) {
+    (left + right).contains(item) implies left.contains(item) or right.contains(item)
+}
+
+theorem singleton_contains_imp_eq[T](item: T, found: T) {
+    List.singleton(item).contains(found) implies found = item
+}
+
+theorem unique_cons_not_contains[T](head: T, tail: List[T]) {
+    List.cons(head, tail).is_unique implies not tail.contains(head)
+}
+
+theorem cons_unique_of_tail_unique_not_contains[T](head: T, tail: List[T]) {
+    tail.is_unique and not tail.contains(head) implies List.cons(head, tail).is_unique
+}
+
+theorem filter_preserves_unique[T](list: List[T], f: T -> Bool) {
+    list.is_unique implies list.filter(f).is_unique
+}
+
+theorem filter_add[T](left: List[T], right: List[T], f: T -> Bool) {
+    (left + right).filter(f) = left.filter(f) + right.filter(f)
+}
+
+theorem prepend_positive_length(xs: List[Vote]) {
+    prepend_positive(xs).length = xs.length.suc
+}
+
+theorem prepend_negative_length(xs: List[Vote]) {
+    prepend_negative(xs).length = xs.length.suc
+}
+
+theorem prepend_positive_positive_count(xs: List[Vote]) {
+    positive_count(prepend_positive(xs)) = positive_count(xs).suc
+}
+
+theorem prepend_positive_negative_count(xs: List[Vote]) {
+    negative_count(prepend_positive(xs)) = negative_count(xs)
+}
+
+theorem prepend_negative_positive_count(xs: List[Vote]) {
+    positive_count(prepend_negative(xs)) = positive_count(xs)
+}
+
+theorem prepend_negative_negative_count(xs: List[Vote]) {
+    negative_count(prepend_negative(xs)) = negative_count(xs).suc
+}
+
+theorem prepend_positive_injective {
+    is_injective_fn(prepend_positive)
+}
+
+theorem prepend_negative_injective {
+    is_injective_fn(prepend_negative)
+}
+
+theorem prepend_positive_negative_disjoint(
+    positives: List[List[Vote]],
+    negatives: List[List[Vote]],
+    word: List[Vote]
+) {
+    not (
+        map(positives, prepend_positive).contains(word) and
+            map(negatives, prepend_negative).contains(word)
+    )
+}
+
+theorem map_prepend_negative_not_contains_prepend_positive(
+    words: List[List[Vote]],
+    xs: List[Vote]
+) {
+    not map(words, prepend_negative).contains(prepend_positive(xs))
+}
+
+theorem ballot_prefixes_ahead_nil {
+    ballot_prefixes_ahead(List.nil[Vote])
+}
+
+theorem ballot_prefixes_ahead_cons_negative_false(xs: List[Vote]) {
+    not ballot_prefixes_ahead(List.cons(Vote.negative, xs))
+}
+
+theorem ballot_prefixes_ahead_cons_positive(xs: List[Vote]) {
+    ballot_prefixes_ahead_from(xs, Nat.1, Nat.0) implies
+        ballot_prefixes_ahead(List.cons(Vote.positive, xs))
+}
+
+theorem ballot_prefixes_ahead_cons_positive_tail(xs: List[Vote]) {
+    ballot_prefixes_ahead(List.cons(Vote.positive, xs)) implies
+        ballot_prefixes_ahead_from(xs, Nat.1, Nat.0)
+}
+
+theorem ballot_prefixes_ahead_from_suc_imp_nonnegative_from(
+    xs: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    ballot_prefixes_ahead_from(xs, positives_so_far.suc, negatives_so_far) implies
+        ballot_prefixes_nonnegative_from(xs, positives_so_far, negatives_so_far)
+}
+
+theorem ballot_prefixes_nonnegative_from_imp_ahead_from_suc(
+    xs: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    ballot_prefixes_nonnegative_from(xs, positives_so_far, negatives_so_far) implies
+        ballot_prefixes_ahead_from(xs, positives_so_far.suc, negatives_so_far)
+}
+
+theorem ballot_prefixes_ahead_cons_positive_imp_nonnegative(xs: List[Vote]) {
+    ballot_prefixes_ahead(List.cons(Vote.positive, xs)) implies ballot_prefixes_nonnegative(xs)
+}
+
+theorem ballot_prefixes_nonnegative_imp_ahead_cons_positive(xs: List[Vote]) {
+    ballot_prefixes_nonnegative(xs) implies ballot_prefixes_ahead(List.cons(Vote.positive, xs))
+}
+
+theorem ballot_words_len_zero_sound(length: Nat, word: List[Vote]) {
+    ballot_words_len(length, Nat.0).contains(word) implies
+        word.length = length and positive_count(word) = Nat.0
+}
+
+theorem ballot_words_len_sound(length: Nat, positives: Nat, word: List[Vote]) {
+    ballot_words_len(length, positives).contains(word) implies
+        word.length = length and positive_count(word) = positives
+}
+
+theorem ballot_words_sound(positives: Nat, negatives: Nat, word: List[Vote]) {
+    ballot_words(positives, negatives).contains(word) implies
+        ballot_word_has_counts(word, positives, negatives)
+}
+
+theorem ballot_words_len_complete(length: Nat, positives: Nat, word: List[Vote]) {
+    word.length = length and positive_count(word) = positives implies
+        ballot_words_len(length, positives).contains(word)
+}
+
+theorem ballot_words_complete(positives: Nat, negatives: Nat, word: List[Vote]) {
+    ballot_word_has_counts(word, positives, negatives) implies
+        ballot_words(positives, negatives).contains(word)
+}
+
+theorem successful_ballot_words_sound(positives: Nat, negatives: Nat, word: List[Vote]) {
+    successful_ballot_words(positives, negatives).contains(word) implies
+        successful_ballot_word(word, positives, negatives)
+}
+
+define weak_ballot_word(xs: List[Vote], positives: Nat, negatives: Nat) -> Bool {
+    ballot_word_has_counts(xs, positives, negatives) and ballot_prefixes_nonnegative(xs)
+}
+
+theorem weak_ballot_words_sound(positives: Nat, negatives: Nat, word: List[Vote]) {
+    weak_ballot_words(positives, negatives).contains(word) implies
+        weak_ballot_word(word, positives, negatives)
+}
+
+theorem successful_ballot_words_complete(positives: Nat, negatives: Nat, word: List[Vote]) {
+    successful_ballot_word(word, positives, negatives) implies
+        successful_ballot_words(positives, negatives).contains(word)
+}
+
+theorem successful_ballot_words_contains_iff(positives: Nat, negatives: Nat, word: List[Vote]) {
+    successful_ballot_words(positives, negatives).contains(word) =
+        successful_ballot_word(word, positives, negatives)
+}
+
+theorem weak_ballot_words_complete(positives: Nat, negatives: Nat, word: List[Vote]) {
+    weak_ballot_word(word, positives, negatives) implies
+        weak_ballot_words(positives, negatives).contains(word)
+}
+
+theorem weak_ballot_words_contains_iff(positives: Nat, negatives: Nat, word: List[Vote]) {
+    weak_ballot_words(positives, negatives).contains(word) = weak_ballot_word(word, positives, negatives)
+}
+
+theorem bad_ballot_words_sound(positives: Nat, negatives: Nat, word: List[Vote]) {
+    bad_ballot_words(positives, negatives).contains(word) implies
+        ballot_word_has_counts(word, positives, negatives) and ballot_prefixes_negative(word)
+}
+
+theorem bad_ballot_words_complete(positives: Nat, negatives: Nat, word: List[Vote]) {
+    ballot_word_has_counts(word, positives, negatives) and ballot_prefixes_negative(word) implies
+        bad_ballot_words(positives, negatives).contains(word)
+}
+
+theorem bad_ballot_words_contains_iff(positives: Nat, negatives: Nat, word: List[Vote]) {
+    bad_ballot_words(positives, negatives).contains(word) =
+        (ballot_word_has_counts(word, positives, negatives) and ballot_prefixes_negative(word))
+}
+
+theorem weak_ballot_word_imp_successful_prepend_positive(
+    xs: List[Vote],
+    positives: Nat,
+    negatives: Nat
+) {
+    weak_ballot_word(xs, positives, negatives) implies
+        successful_ballot_word(prepend_positive(xs), positives.suc, negatives)
+}
+
+theorem successful_prepend_positive_imp_weak_ballot_word(
+    xs: List[Vote],
+    positives: Nat,
+    negatives: Nat
+) {
+    successful_ballot_word(prepend_positive(xs), positives.suc, negatives) implies
+        weak_ballot_word(xs, positives, negatives)
+}
+
+theorem weak_ballot_words_contains_imp_successful_prepend_contains(
+    positives: Nat,
+    negatives: Nat,
+    xs: List[Vote]
+) {
+    weak_ballot_words(positives, negatives).contains(xs) implies
+        successful_ballot_words(positives.suc, negatives).contains(prepend_positive(xs))
+}
+
+theorem successful_prepend_contains_imp_weak_ballot_words_contains(
+    positives: Nat,
+    negatives: Nat,
+    xs: List[Vote]
+) {
+    successful_ballot_words(positives.suc, negatives).contains(prepend_positive(xs)) implies
+        weak_ballot_words(positives, negatives).contains(xs)
+}
+
+theorem strict_successful_tails_image_same_contains(
+    positives: Nat,
+    negatives: Nat,
+    word: List[Vote]
+) {
+    strict_successful_tails_image(positives, negatives).contains(word) =
+        successful_ballot_words(positives.suc, negatives).contains(word)
+}
+
+theorem ballot_words_len_zero_zero_length {
+    ballot_words_len(Nat.0, Nat.0).length = Nat.1
+}
+
+theorem ballot_words_len_zero_suc_length(k: Nat) {
+    ballot_words_len(Nat.0, k.suc).length = Nat.0
+}
+
+theorem ballot_words_len_suc_zero_length(len: Nat) {
+    ballot_words_len(len.suc, Nat.0).length = ballot_words_len(len, Nat.0).length
+}
+
+theorem ballot_words_len_suc_suc_length(len: Nat, k: Nat) {
+    ballot_words_len(len.suc, k.suc).length =
+        ballot_words_len(len, k).length + ballot_words_len(len, k.suc).length
+}
+
+theorem ballot_words_len_zero_binom(k: Nat) {
+    ballot_words_len(Nat.0, k).length = Nat.0.binom(k)
+}
+
+theorem ballot_words_len_zero_positive_binom(length: Nat) {
+    ballot_words_len(length, Nat.0).length = length.binom(Nat.0)
+}
+
+theorem ballot_words_len_length_binom(length: Nat, positives: Nat) {
+    ballot_words_len(length, positives).length = length.binom(positives)
+}
+
+theorem ballot_words_length_binom(positives: Nat, negatives: Nat) {
+    ballot_words(positives, negatives).length = (positives + negatives).binom(positives)
+}
+
+theorem ballot_words_len_unique(length: Nat, positives: Nat) {
+    ballot_words_len(length, positives).is_unique
+}
+
+theorem ballot_words_unique(positives: Nat, negatives: Nat) {
+    ballot_words(positives, negatives).is_unique
+}
+
+theorem successful_ballot_words_unique(positives: Nat, negatives: Nat) {
+    successful_ballot_words(positives, negatives).is_unique
+}
+
+theorem weak_ballot_words_unique(positives: Nat, negatives: Nat) {
+    weak_ballot_words(positives, negatives).is_unique
+}
+
+theorem bad_ballot_words_unique(positives: Nat, negatives: Nat) {
+    bad_ballot_words(positives, negatives).is_unique
+}
+
+theorem weak_bad_filter_partition_length(words: List[List[Vote]]) {
+    words.filter(ballot_prefixes_nonnegative).length + words.filter(ballot_prefixes_negative).length =
+        words.length
+}
+
+theorem weak_bad_ballot_words_partition_length(positives: Nat, negatives: Nat) {
+    weak_ballot_words(positives, negatives).length + bad_ballot_words(positives, negatives).length =
+        ballot_words(positives, negatives).length
+}
+
+theorem strict_successful_tails_image_unique(positives: Nat, negatives: Nat) {
+    strict_successful_tails_image(positives, negatives).is_unique
+}
+
+theorem successful_ballot_words_suc_length_eq_weak(positives: Nat, negatives: Nat) {
+    successful_ballot_words(positives.suc, negatives).length =
+        weak_ballot_words(positives, negatives).length
+}
+
+theorem repeat_positive_length(n: Nat) {
+    repeat_positive(n).length = n
+}
+
+theorem repeat_positive_positive_count(n: Nat) {
+    positive_count(repeat_positive(n)) = n
+}
+
+theorem repeat_positive_negative_count(n: Nat) {
+    negative_count(repeat_positive(n)) = Nat.0
+}
+
+theorem repeat_negative_length(n: Nat) {
+    repeat_negative(n).length = n
+}
+
+theorem repeat_negative_positive_count(n: Nat) {
+    positive_count(repeat_negative(n)) = Nat.0
+}
+
+theorem repeat_negative_negative_count(n: Nat) {
+    negative_count(repeat_negative(n)) = n
+}
+
+define list_k_subsets_length_binom_pred[A](items: List[A]) -> Bool {
+    items.is_unique implies forall(k: Nat) {
+        list_k_subsets[A](items, k).length = items.length.binom(k)
+    }
+}
+
+theorem list_k_subsets_length_binom[A](items: List[A], k: Nat) {
+    items.is_unique implies list_k_subsets[A](items, k).length = items.length.binom(k)
+}
+
+theorem finite_k_subsets_cardinality_is_binom_from_list[T](s: FiniteSet[T], items: List[T], k: Nat) {
+    fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k).cardinality_is(items.length.binom(k))
+}
+
+theorem finite_k_subsets_cardinality_is_binom[T](s: FiniteSet[T], n: Nat, k: Nat) {
+    s.cardinality_is(n) implies finite_k_subsets[T](s, k).cardinality_is(n.binom(k))
+}
+
 theorem nat_suc_sub_suc(a: Nat, b: Nat) {
     a.suc - b.suc = a - b
 }

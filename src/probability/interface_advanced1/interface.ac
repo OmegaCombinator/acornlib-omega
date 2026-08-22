@@ -1,3 +1,502 @@
+define reflect_first_bad_from(
+    xs: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) -> List[Vote] {
+    match xs {
+        List.nil[Vote] {
+            List.nil[Vote]
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    if negatives_so_far <= positives_so_far.suc {
+                        List.cons(
+                            Vote.negative,
+                            reflect_first_bad_from(tail, positives_so_far.suc, negatives_so_far)
+                        )
+                    } else {
+                        List.cons(Vote.negative, tail)
+                    }
+                }
+                Vote.negative {
+                    if negatives_so_far.suc <= positives_so_far {
+                        List.cons(
+                            Vote.positive,
+                            reflect_first_bad_from(tail, positives_so_far, negatives_so_far.suc)
+                        )
+                    } else {
+                        List.cons(Vote.positive, tail)
+                    }
+                }
+            }
+        }
+    }
+}
+
+define reflect_first_bad(xs: List[Vote]) -> List[Vote] {
+    reflect_first_bad_from(xs, Nat.0, Nat.0)
+}
+
+define prefixes_nonnegative_gap(xs: List[Vote], gap: Nat) -> Bool {
+    match xs {
+        List.nil[Vote] {
+            true
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    prefixes_nonnegative_gap(tail, gap.suc)
+                }
+                Vote.negative {
+                    if gap = Nat.0 {
+                        false
+                    } else {
+                        prefixes_nonnegative_gap(tail, gap - Nat.1)
+                    }
+                }
+            }
+        }
+    }
+}
+
+define reflect_first_bad_gap(xs: List[Vote], gap: Nat) -> List[Vote] {
+    match xs {
+        List.nil[Vote] {
+            List.nil[Vote]
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    List.cons(Vote.negative, reflect_first_bad_gap(tail, gap.suc))
+                }
+                Vote.negative {
+                    if gap = Nat.0 {
+                        List.cons(Vote.positive, tail)
+                    } else {
+                        List.cons(Vote.positive, reflect_first_bad_gap(tail, gap - Nat.1))
+                    }
+                }
+            }
+        }
+    }
+}
+
+define reflect_first_bad_gap_zero(xs: List[Vote]) -> List[Vote] {
+    reflect_first_bad_gap(xs, Nat.0)
+}
+
+define reflect_first_bad_from_length_hyp(xs: List[Vote]) -> Bool {
+    forall(a: Nat, b: Nat) {
+        reflect_first_bad_from(xs, a, b).length = xs.length
+    }
+}
+
+theorem reflect_first_bad_from_cons_positive_continue_length(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    (negatives_so_far <= positives_so_far.suc and
+        reflect_first_bad_from(tail, positives_so_far.suc, negatives_so_far).length = tail.length
+    ) implies reflect_first_bad_from(List.cons(Vote.positive, tail), positives_so_far, negatives_so_far).length =
+        List.cons(Vote.positive, tail).length
+}
+
+theorem reflect_first_bad_from_cons_positive_stop_length(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    not (negatives_so_far <= positives_so_far.suc) implies
+        reflect_first_bad_from(List.cons(Vote.positive, tail), positives_so_far, negatives_so_far).length =
+            List.cons(Vote.positive, tail).length
+}
+
+theorem reflect_first_bad_from_cons_negative_continue_length(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    (negatives_so_far.suc <= positives_so_far and
+        reflect_first_bad_from(tail, positives_so_far, negatives_so_far.suc).length = tail.length
+    ) implies reflect_first_bad_from(List.cons(Vote.negative, tail), positives_so_far, negatives_so_far).length =
+        List.cons(Vote.negative, tail).length
+}
+
+theorem reflect_first_bad_from_cons_negative_stop_length(
+    tail: List[Vote],
+    positives_so_far: Nat,
+    negatives_so_far: Nat
+) {
+    not (negatives_so_far.suc <= positives_so_far) implies
+        reflect_first_bad_from(List.cons(Vote.negative, tail), positives_so_far, negatives_so_far).length =
+            List.cons(Vote.negative, tail).length
+}
+
+theorem reflect_first_bad_from_length(xs: List[Vote], positives_so_far: Nat, negatives_so_far: Nat) {
+    reflect_first_bad_from(xs, positives_so_far, negatives_so_far).length = xs.length
+}
+
+theorem reflect_first_bad_length(xs: List[Vote]) {
+    reflect_first_bad(xs).length = xs.length
+}
+
+theorem reflect_first_bad_gap_length(xs: List[Vote], gap: Nat) {
+    reflect_first_bad_gap(xs, gap).length = xs.length
+}
+
+theorem reflect_first_bad_gap_zero_length(xs: List[Vote]) {
+    reflect_first_bad_gap_zero(xs).length = xs.length
+}
+
+theorem reflect_first_bad_gap_positive_continue_count_shift(tail: List[Vote], gap: Nat) {
+    (positive_count(reflect_first_bad_gap(tail, gap.suc)) = positive_count(tail) + gap.suc.suc and
+        negative_count(reflect_first_bad_gap(tail, gap.suc)) + gap.suc.suc = negative_count(tail)
+    ) implies (
+        positive_count(reflect_first_bad_gap(List.cons(Vote.positive, tail), gap)) =
+            positive_count(List.cons(Vote.positive, tail)) + gap.suc and
+        negative_count(reflect_first_bad_gap(List.cons(Vote.positive, tail), gap)) + gap.suc =
+            negative_count(List.cons(Vote.positive, tail))
+    )
+}
+
+theorem reflect_first_bad_gap_negative_zero_count_shift(tail: List[Vote]) {
+    positive_count(reflect_first_bad_gap(List.cons(Vote.negative, tail), Nat.0)) =
+        positive_count(List.cons(Vote.negative, tail)).suc and
+    negative_count(reflect_first_bad_gap(List.cons(Vote.negative, tail), Nat.0)).suc =
+        negative_count(List.cons(Vote.negative, tail))
+}
+
+theorem reflect_first_bad_gap_negative_continue_count_shift(tail: List[Vote], gap: Nat) {
+    (gap != Nat.0 and
+        positive_count(reflect_first_bad_gap(tail, gap - Nat.1)) = positive_count(tail) + (gap - Nat.1).suc and
+        negative_count(reflect_first_bad_gap(tail, gap - Nat.1)) + (gap - Nat.1).suc = negative_count(tail)
+    ) implies (
+        positive_count(reflect_first_bad_gap(List.cons(Vote.negative, tail), gap)) =
+            positive_count(List.cons(Vote.negative, tail)) + gap.suc and
+        negative_count(reflect_first_bad_gap(List.cons(Vote.negative, tail), gap)) + gap.suc =
+            negative_count(List.cons(Vote.negative, tail))
+    )
+}
+
+define gap_reflection_count_shifted(xs: List[Vote], gap: Nat) -> Bool {
+    positive_count(reflect_first_bad_gap(xs, gap)) = positive_count(xs) + gap.suc and
+        negative_count(reflect_first_bad_gap(xs, gap)) + gap.suc = negative_count(xs)
+}
+
+theorem gap_reflection_count_shifted_cons_positive(tail: List[Vote], gap: Nat) {
+    gap_reflection_count_shifted(tail, gap.suc) implies
+        gap_reflection_count_shifted(List.cons(Vote.positive, tail), gap)
+}
+
+theorem gap_reflection_count_shifted_cons_negative_zero(tail: List[Vote]) {
+    gap_reflection_count_shifted(List.cons(Vote.negative, tail), Nat.0)
+}
+
+theorem gap_reflection_count_shifted_cons_negative_continue(tail: List[Vote], gap: Nat) {
+    gap != Nat.0 and gap_reflection_count_shifted(tail, gap - Nat.1) implies
+        gap_reflection_count_shifted(List.cons(Vote.negative, tail), gap)
+}
+
+theorem gap_reflection_bad_count_shifted(xs: List[Vote], gap: Nat) {
+    not prefixes_nonnegative_gap(xs, gap) implies gap_reflection_count_shifted(xs, gap)
+}
+
+theorem reflect_first_bad_gap_bad_count_shift(xs: List[Vote], gap: Nat) {
+    not prefixes_nonnegative_gap(xs, gap) implies (
+        positive_count(reflect_first_bad_gap(xs, gap)) = positive_count(xs) + gap.suc and
+        negative_count(reflect_first_bad_gap(xs, gap)) + gap.suc = negative_count(xs)
+    )
+}
+
+theorem reflect_first_bad_gap_zero_bad_count_shift(xs: List[Vote]) {
+    not prefixes_nonnegative_gap(xs, Nat.0) implies (
+        positive_count(reflect_first_bad_gap_zero(xs)) = positive_count(xs).suc and
+        negative_count(reflect_first_bad_gap_zero(xs)).suc = negative_count(xs)
+    )
+}
+
+theorem prefixes_nonnegative_gap_imp_from_offset(xs: List[Vote], offset: Nat, gap: Nat) {
+    prefixes_nonnegative_gap(xs, gap) implies
+        ballot_prefixes_nonnegative_from(xs, offset + gap, offset)
+}
+
+theorem prefixes_nonnegative_gap_zero_imp_ballot_prefixes_nonnegative(xs: List[Vote]) {
+    prefixes_nonnegative_gap(xs, Nat.0) implies ballot_prefixes_nonnegative(xs)
+}
+
+theorem ballot_prefixes_nonnegative_from_imp_gap(xs: List[Vote], offset: Nat, gap: Nat) {
+    ballot_prefixes_nonnegative_from(xs, offset + gap, offset) implies
+        prefixes_nonnegative_gap(xs, gap)
+}
+
+theorem ballot_prefixes_nonnegative_imp_gap_zero(xs: List[Vote]) {
+    ballot_prefixes_nonnegative(xs) implies prefixes_nonnegative_gap(xs, Nat.0)
+}
+
+theorem not_gap_zero_imp_ballot_prefixes_negative(xs: List[Vote]) {
+    not prefixes_nonnegative_gap(xs, Nat.0) implies ballot_prefixes_negative(xs)
+}
+
+theorem ballot_prefixes_negative_imp_not_gap_zero(xs: List[Vote]) {
+    ballot_prefixes_negative(xs) implies not prefixes_nonnegative_gap(xs, Nat.0)
+}
+
+define reflected_bad_ballot_words(positives: Nat, negatives: Nat) -> List[List[Vote]] {
+    map(bad_ballot_words(positives, negatives.suc), reflect_first_bad_gap_zero)
+}
+
+theorem reflected_bad_ballot_word_has_counts(positives: Nat, negatives: Nat, word: List[Vote]) {
+    bad_ballot_words(positives, negatives.suc).contains(word) implies
+        ballot_word_has_counts(reflect_first_bad_gap_zero(word), positives.suc, negatives)
+}
+
+theorem reflected_bad_ballot_word_contains_ballot_words(
+    positives: Nat,
+    negatives: Nat,
+    word: List[Vote]
+) {
+    bad_ballot_words(positives, negatives.suc).contains(word) implies
+        ballot_words(positives.suc, negatives).contains(reflect_first_bad_gap_zero(word))
+}
+
+theorem reflected_bad_ballot_words_contained_by_ballot_words(
+    positives: Nat,
+    negatives: Nat,
+    word: List[Vote]
+) {
+    reflected_bad_ballot_words(positives, negatives).contains(word) implies
+        ballot_words(positives.suc, negatives).contains(word)
+}
+
+define prefixes_nonpositive_deficit(xs: List[Vote], deficit: Nat) -> Bool {
+    match xs {
+        List.nil[Vote] {
+            true
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    if deficit = Nat.0 {
+                        false
+                    } else {
+                        prefixes_nonpositive_deficit(tail, deficit - Nat.1)
+                    }
+                }
+                Vote.negative {
+                    prefixes_nonpositive_deficit(tail, deficit.suc)
+                }
+            }
+        }
+    }
+}
+
+define reflect_first_positive_deficit(xs: List[Vote], deficit: Nat) -> List[Vote] {
+    match xs {
+        List.nil[Vote] {
+            List.nil[Vote]
+        }
+        List.cons(head, tail) {
+            match head {
+                Vote.positive {
+                    if deficit = Nat.0 {
+                        List.cons(Vote.negative, tail)
+                    } else {
+                        List.cons(Vote.negative, reflect_first_positive_deficit(tail, deficit - Nat.1))
+                    }
+                }
+                Vote.negative {
+                    List.cons(Vote.positive, reflect_first_positive_deficit(tail, deficit.suc))
+                }
+            }
+        }
+    }
+}
+
+define reflect_first_positive_deficit_zero(xs: List[Vote]) -> List[Vote] {
+    reflect_first_positive_deficit(xs, Nat.0)
+}
+
+theorem reflect_first_positive_deficit_positive_zero_count_shift(tail: List[Vote]) {
+    positive_count(reflect_first_positive_deficit(List.cons(Vote.positive, tail), Nat.0)).suc =
+        positive_count(List.cons(Vote.positive, tail)) and
+    negative_count(reflect_first_positive_deficit(List.cons(Vote.positive, tail), Nat.0)) =
+        negative_count(List.cons(Vote.positive, tail)).suc
+}
+
+theorem reflect_first_positive_deficit_positive_continue_count_shift(tail: List[Vote], deficit: Nat) {
+    (deficit != Nat.0 and
+        positive_count(reflect_first_positive_deficit(tail, deficit - Nat.1)) + (deficit - Nat.1).suc =
+            positive_count(tail) and
+        negative_count(reflect_first_positive_deficit(tail, deficit - Nat.1)) =
+            negative_count(tail) + (deficit - Nat.1).suc
+    ) implies (
+        positive_count(reflect_first_positive_deficit(List.cons(Vote.positive, tail), deficit)) + deficit.suc =
+            positive_count(List.cons(Vote.positive, tail)) and
+        negative_count(reflect_first_positive_deficit(List.cons(Vote.positive, tail), deficit)) =
+            negative_count(List.cons(Vote.positive, tail)) + deficit.suc
+    )
+}
+
+theorem reflect_first_positive_deficit_negative_continue_count_shift(tail: List[Vote], deficit: Nat) {
+    (positive_count(reflect_first_positive_deficit(tail, deficit.suc)) + deficit.suc.suc =
+        positive_count(tail) and
+        negative_count(reflect_first_positive_deficit(tail, deficit.suc)) =
+            negative_count(tail) + deficit.suc.suc
+    ) implies (
+        positive_count(reflect_first_positive_deficit(List.cons(Vote.negative, tail), deficit)) + deficit.suc =
+            positive_count(List.cons(Vote.negative, tail)) and
+        negative_count(reflect_first_positive_deficit(List.cons(Vote.negative, tail), deficit)) =
+            negative_count(List.cons(Vote.negative, tail)) + deficit.suc
+    )
+}
+
+define positive_deficit_reflection_count_shifted(xs: List[Vote], deficit: Nat) -> Bool {
+    positive_count(reflect_first_positive_deficit(xs, deficit)) + deficit.suc = positive_count(xs) and
+        negative_count(reflect_first_positive_deficit(xs, deficit)) = negative_count(xs) + deficit.suc
+}
+
+theorem positive_deficit_reflection_count_shifted_cons_positive_zero(tail: List[Vote]) {
+    positive_deficit_reflection_count_shifted(List.cons(Vote.positive, tail), Nat.0)
+}
+
+theorem positive_deficit_reflection_count_shifted_cons_positive_continue(tail: List[Vote], deficit: Nat) {
+    deficit != Nat.0 and positive_deficit_reflection_count_shifted(tail, deficit - Nat.1) implies
+        positive_deficit_reflection_count_shifted(List.cons(Vote.positive, tail), deficit)
+}
+
+theorem positive_deficit_reflection_count_shifted_cons_negative(tail: List[Vote], deficit: Nat) {
+    positive_deficit_reflection_count_shifted(tail, deficit.suc) implies
+        positive_deficit_reflection_count_shifted(List.cons(Vote.negative, tail), deficit)
+}
+
+theorem reflect_first_positive_deficit_count_shift(xs: List[Vote], deficit: Nat) {
+    not prefixes_nonpositive_deficit(xs, deficit) implies
+        positive_deficit_reflection_count_shifted(xs, deficit)
+}
+
+theorem reflect_first_positive_deficit_zero_count_shift(xs: List[Vote]) {
+    not prefixes_nonpositive_deficit(xs, Nat.0) implies (
+        positive_count(reflect_first_positive_deficit_zero(xs)).suc = positive_count(xs) and
+        negative_count(reflect_first_positive_deficit_zero(xs)) = negative_count(xs).suc
+    )
+}
+
+theorem prefixes_nonpositive_deficit_count_bound(xs: List[Vote], deficit: Nat) {
+    prefixes_nonpositive_deficit(xs, deficit) implies
+        positive_count(xs) <= negative_count(xs) + deficit
+}
+
+theorem ballot_word_counts_imp_not_prefixes_nonpositive_deficit_zero(
+    word: List[Vote],
+    positives: Nat,
+    negatives: Nat
+) {
+    ballot_word_has_counts(word, positives.suc, negatives) and negatives <= positives implies
+        not prefixes_nonpositive_deficit(word, Nat.0)
+}
+
+theorem reflect_first_positive_deficit_not_gap(xs: List[Vote], deficit: Nat) {
+    not prefixes_nonpositive_deficit(xs, deficit) implies
+        not prefixes_nonnegative_gap(reflect_first_positive_deficit(xs, deficit), deficit)
+}
+
+theorem reflect_first_positive_deficit_zero_prefixes_negative(xs: List[Vote]) {
+    not prefixes_nonpositive_deficit(xs, Nat.0) implies
+        ballot_prefixes_negative(reflect_first_positive_deficit_zero(xs))
+}
+
+theorem reflect_first_bad_gap_inverts_first_positive_deficit(xs: List[Vote], deficit: Nat) {
+    not prefixes_nonpositive_deficit(xs, deficit) implies
+        reflect_first_bad_gap(reflect_first_positive_deficit(xs, deficit), deficit) = xs
+}
+
+theorem reflect_first_bad_gap_zero_inverts_first_positive_deficit_zero(xs: List[Vote]) {
+    not prefixes_nonpositive_deficit(xs, Nat.0) implies
+        reflect_first_bad_gap_zero(reflect_first_positive_deficit_zero(xs)) = xs
+}
+
+theorem ballot_words_contained_by_reflected_bad_ballot_words(
+    positives: Nat,
+    negatives: Nat,
+    word: List[Vote]
+) {
+    negatives <= positives and ballot_words(positives.suc, negatives).contains(word) implies
+        reflected_bad_ballot_words(positives, negatives).contains(word)
+}
+
+theorem reflect_first_positive_deficit_inverts_first_bad_gap(xs: List[Vote], gap: Nat) {
+    not prefixes_nonnegative_gap(xs, gap) implies
+        reflect_first_positive_deficit(reflect_first_bad_gap(xs, gap), gap) = xs
+}
+
+theorem reflect_first_positive_deficit_zero_inverts_first_bad_gap_zero(xs: List[Vote]) {
+    not prefixes_nonnegative_gap(xs, Nat.0) implies
+        reflect_first_positive_deficit_zero(reflect_first_bad_gap_zero(xs)) = xs
+}
+
+theorem reflect_first_bad_gap_zero_injective_on_bad(xs: List[Vote], ys: List[Vote]) {
+    not prefixes_nonnegative_gap(xs, Nat.0) and not prefixes_nonnegative_gap(ys, Nat.0) and
+        reflect_first_bad_gap_zero(xs) = reflect_first_bad_gap_zero(ys) implies xs = ys
+}
+
+theorem reflect_first_bad_gap_zero_map_bad_unique(words: List[List[Vote]]) {
+    words.is_unique and
+        (forall(word: List[Vote]) { words.contains(word) implies not prefixes_nonnegative_gap(word, Nat.0) })
+    implies map(words, reflect_first_bad_gap_zero).is_unique
+}
+
+theorem reflected_bad_ballot_words_unique(positives: Nat, negatives: Nat) {
+    reflected_bad_ballot_words(positives, negatives).is_unique
+}
+
+theorem reflected_bad_ballot_words_same_contains(
+    positives: Nat,
+    negatives: Nat,
+    word: List[Vote]
+) {
+    negatives <= positives implies (
+        reflected_bad_ballot_words(positives, negatives).contains(word) =
+            ballot_words(positives.suc, negatives).contains(word)
+    )
+}
+
+theorem reflected_bad_ballot_words_sound_counts(positives: Nat, negatives: Nat, word: List[Vote]) {
+    reflected_bad_ballot_words(positives, negatives).contains(word) implies
+        ballot_word_has_counts(word, positives.suc, negatives)
+}
+
+theorem reflected_bad_ballot_words_complete_counts(positives: Nat, negatives: Nat, word: List[Vote]) {
+    negatives <= positives and ballot_word_has_counts(word, positives.suc, negatives) implies
+        reflected_bad_ballot_words(positives, negatives).contains(word)
+}
+
+theorem reflected_bad_ballot_words_contains_iff_counts(positives: Nat, negatives: Nat, word: List[Vote]) {
+    negatives <= positives implies
+        reflected_bad_ballot_words(positives, negatives).contains(word) =
+            ballot_word_has_counts(word, positives.suc, negatives)
+}
+
+theorem bad_ballot_words_suc_length_eq_ballot_words_shifted(positives: Nat, negatives: Nat) {
+    negatives <= positives implies
+        bad_ballot_words(positives, negatives.suc).length = ballot_words(positives.suc, negatives).length
+}
+
+theorem weak_ballot_words_suc_length_binom_difference(positives: Nat, negatives: Nat) {
+    negatives <= positives implies
+        weak_ballot_words(positives, negatives.suc).length +
+            (positives + negatives.suc).binom(positives.suc) =
+            (positives + negatives.suc).binom(positives)
+}
+
+theorem successful_ballot_words_suc_suc_length_binom_difference(positives: Nat, negatives: Nat) {
+    negatives <= positives implies
+        successful_ballot_words(positives.suc, negatives.suc).length +
+            (positives + negatives.suc).binom(positives.suc) =
+            (positives + negatives.suc).binom(positives)
+}
+
 define is_pmf[T](support: FiniteSet[T], mass: T -> Real) -> Bool {
     (forall(x: T) { Real.0 <= mass(x) })
         and (forall(x: T) { not support.contains(x) implies mass(x) = Real.0 })

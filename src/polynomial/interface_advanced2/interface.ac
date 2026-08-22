@@ -1,0 +1,630 @@
+define rat_coeffs(c: Nat -> Int) -> (Nat -> Rat) {
+    function(i: Nat) {
+        Rat.from_int(c(i))
+    }
+}
+
+theorem rat_coeffs_apply(c: Nat -> Int, i: Nat) {
+    rat_coeffs(c)(i) = Rat.from_int(c(i))
+}
+
+theorem rat_coeffs_tail(c: Nat -> Int) {
+    coeff_tail(rat_coeffs(c)) = rat_coeffs(coeff_tail(c))
+}
+
+theorem rat_from_int_pow(a: Int, n: Nat) {
+    Rat.from_int(a).pow(n) = Rat.from_int(a.pow(n))
+}
+
+theorem rat_from_int_ne_zero(b: Int) {
+    b != Int.0 implies Rat.from_int(b) != Rat.0
+}
+
+theorem rat_fraction_times_denom(a: Int, b: Int) {
+    b != Int.0 implies (Rat.from_int(a) / Rat.from_int(b)) * Rat.from_int(b)
+        = Rat.from_int(a)
+}
+
+theorem coeff_eval_fraction_cleared(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 implies
+        coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc)
+            * Rat.from_int(b).pow(n)
+        = Rat.from_int(coeff_hom_eval(c, a, b, n.suc))
+}
+
+theorem rat_mul_ne_zero(x: Rat, y: Rat) {
+    x != Rat.0 and y != Rat.0 implies x * y != Rat.0
+}
+
+theorem rat_pow_ne_zero(x: Rat, n: Nat) {
+    x != Rat.0 implies x.pow(n) != Rat.0
+}
+
+theorem rat_root_iff_hom_eval_zero(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 implies
+        (coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0)
+            = (coeff_hom_eval(c, a, b, n.suc) = Int.0)
+}
+
+theorem rat_root_numerator_divides(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 and is_coprime(a, b)
+        and coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0
+        implies a.divides(c(Nat.0))
+}
+
+theorem rat_root_denominator_divides(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 and is_coprime(a, b)
+        and coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0
+        implies b.divides(c(n))
+}
+
+theorem monic_rat_root_denominator_divides_one(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 and is_coprime(a, b) and c(n) = Int.1
+        and coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0
+        implies b.divides(Int.1)
+}
+
+define int_cubic_polynomial(a: Int, b: Int, c: Int, d: Int) -> Polynomial[Int] {
+    polynomial_constant(d) + polynomial_monomial(Nat.1, c) + polynomial_monomial(Nat.2, b) +
+        polynomial_monomial(Nat.3, a)
+}
+
+theorem cubic_coeff_zero(a: Int, b: Int, c: Int, d: Int) {
+    int_cubic_polynomial(a, b, c, d).coeff(Nat.0) = d
+}
+
+theorem cubic_coeff_one(a: Int, b: Int, c: Int, d: Int) {
+    int_cubic_polynomial(a, b, c, d).coeff(Nat.1) = c
+}
+
+theorem cubic_coeff_two(a: Int, b: Int, c: Int, d: Int) {
+    int_cubic_polynomial(a, b, c, d).coeff(Nat.2) = b
+}
+
+theorem cubic_coeff_three(a: Int, b: Int, c: Int, d: Int) {
+    int_cubic_polynomial(a, b, c, d).coeff(Nat.3) = a
+}
+
+theorem monomial_support_bounded_by_suc(n: Nat, r: Int) {
+    polynomial_support_bounded_by(Polynomial[Int].monomial(n, r), n.suc)
+}
+
+theorem cubic_support_bounded_by_four(a: Int, b: Int, c: Int, d: Int) {
+    polynomial_support_bounded_by(int_cubic_polynomial(a, b, c, d), Nat.4)
+}
+
+define rat_cubic_polynomial(a: Int, b: Int, c: Int, d: Int) -> Polynomial[Rat] {
+    polynomial_map(int_to_rat_hom, int_cubic_polynomial(a, b, c, d))
+}
+
+theorem rat_cubic_coeff_apply(a: Int, b: Int, c: Int, d: Int, i: Nat) {
+    rat_cubic_polynomial(a, b, c, d).coeff(i) = Rat.from_int(int_cubic_polynomial(a, b, c, d).coeff(i))
+}
+
+theorem cubic_rat_root_coeff_eval_zero(a: Int, b: Int, c: Int, d: Int, p: Int, q: Int) {
+    q != Int.0 and is_coprime(p, q) and
+    polynomial_eval(rat_cubic_polynomial(a, b, c, d),
+        Rat.from_int(p) / Rat.from_int(q)) = Rat.0
+    implies coeff_eval(rat_coeffs(int_cubic_polynomial(a, b, c, d).coeff),
+        Rat.from_int(p) / Rat.from_int(q), Nat.3.suc) = Rat.0
+}
+
+theorem cubic_rat_root_denominator_divide(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 and is_coprime(a, b) and
+        coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0
+    implies b.divides(c(n))
+}
+
+theorem cubic_rat_root_numerator_divide(c: Nat -> Int, a: Int, b: Int, n: Nat) {
+    b != Int.0 and is_coprime(a, b) and
+        coeff_eval(rat_coeffs(c), Rat.from_int(a) / Rat.from_int(b), n.suc) = Rat.0
+    implies a.divides(c(Nat.0))
+}
+
+theorem cubic_rational_root_numerator_divides(a: Int, b: Int, c: Int, d: Int, p: Int, q: Int) {
+    q != Int.0 and is_coprime(p, q) and
+    polynomial_eval(rat_cubic_polynomial(a, b, c, d),
+        Rat.from_int(p) / Rat.from_int(q)) = Rat.0
+    implies p.divides(d)
+}
+
+theorem cubic_rational_root_denominator_divides(a: Int, b: Int, c: Int, d: Int, p: Int, q: Int) {
+    q != Int.0 and is_coprime(p, q) and
+    polynomial_eval(rat_cubic_polynomial(a, b, c, d),
+        Rat.from_int(p) / Rat.from_int(q)) = Rat.0
+    implies q.divides(a)
+}
+
+theorem int_neg_from_nat_add(n: Nat, m: Nat) {
+    -Int.from_nat(m) + Int.from_nat(n) = sub_nat(n, m)
+}
+
+theorem int_neg_from_nat_add_cancel(m: Nat, n: Nat, k: Nat) {
+    m + k = n implies -Int.from_nat(m) + Int.from_nat(n) = Int.from_nat(k)
+}
+
+theorem int_neg_from_nat_add_neg(m: Nat, n: Nat, k: Nat) {
+    n + k = m implies -Int.from_nat(m) + Int.from_nat(n) = -Int.from_nat(k)
+}
+
+theorem int_neg_six_add_two {
+    -Int.6 + Int.2 = -Int.4
+}
+
+theorem int_eleven_add_neg_eight {
+    Int.11 + -Int.8 = Int.3
+}
+
+theorem int_two_mul_neg_four {
+    Int.2 * -Int.4 = -Int.8
+}
+
+theorem int_two_mul_three {
+    Int.2 * Int.3 = Int.6
+}
+
+theorem int_neg_six_add_three {
+    -Int.6 + Int.3 = -Int.3
+}
+
+theorem int_eleven_add_neg_nine {
+    Int.11 + -Int.9 = Int.2
+}
+
+theorem int_three_mul_neg_three {
+    Int.3 * -Int.3 = -Int.9
+}
+
+theorem int_three_mul_two {
+    Int.3 * Int.2 = Int.6
+}
+
+let int_cubic_x3_minus_6x2_plus_11x_minus_6: Polynomial[Int] =
+    int_cubic_polynomial(Int.1, -Int.6, Int.11, -Int.6)
+
+/// The integer cubic `X^3 - 6 X^2 + 11 X - 6` has the integer root `2`.
+///
+/// The value is computed in the Horner form at bound four.
+theorem int_cubic_root_two {
+    polynomial_eval(int_cubic_x3_minus_6x2_plus_11x_minus_6, Int.2) = Int.0
+}
+
+theorem int_cubic_root_three {
+    polynomial_eval(int_cubic_x3_minus_6x2_plus_11x_minus_6, Int.3) = Int.0
+}
+
+theorem int_cubic_root_one {
+    polynomial_eval(int_cubic_x3_minus_6x2_plus_11x_minus_6, Int.1) = Int.0
+}
+
+theorem int_divides_neg_of_divides(a: Int, b: Int) {
+    a.divides(-b) implies a.divides(b)
+}
+
+theorem rat_cubic_x3_minus_6x2_plus_11x_minus_6_root_one {
+    polynomial_eval(rat_cubic_polynomial(Int.1, -Int.6, Int.11, -Int.6), Rat.from_int(Int.1)) = Rat.0
+}
+
+theorem rat_cubic_x3_minus_6x2_plus_11x_minus_6_root_two {
+    polynomial_eval(rat_cubic_polynomial(Int.1, -Int.6, Int.11, -Int.6), Rat.from_int(Int.2)) = Rat.0
+}
+
+theorem rat_cubic_x3_minus_6x2_plus_11x_minus_6_root_three {
+    polynomial_eval(rat_cubic_polynomial(Int.1, -Int.6, Int.11, -Int.6), Rat.from_int(Int.3)) = Rat.0
+}
+
+theorem int_cubic_x3_minus_6x2_plus_11x_minus_6_root_one_divides_six {
+    Int.1.divides(Int.6)
+}
+
+theorem int_cubic_x3_minus_6x2_plus_11x_minus_6_root_two_divides_six {
+    Int.2.divides(Int.6)
+}
+
+theorem int_cubic_x3_minus_6x2_plus_11x_minus_6_root_three_divides_six {
+    Int.3.divides(Int.6)
+}
+
+theorem linear_polynomial_support_bounded_by_two[R: Semiring](a: R, b: R) {
+    polynomial_support_bounded_by(linear_polynomial(a, b), Nat.2)
+}
+
+theorem quadratic_polynomial_support_bounded_by_three[R: Semiring](a: R, b: R, c: R) {
+    polynomial_support_bounded_by(quadratic_polynomial(a, b, c), Nat.3)
+}
+
+theorem monomial_one_eval[R: CommRing](r: R, x: R) {
+    polynomial_eval(Polynomial[R].monomial(Nat.1, r), x) = r * x
+}
+
+theorem monomial_two_eval[R: CommRing](r: R, x: R) {
+    polynomial_eval(Polynomial[R].monomial(Nat.2, r), x) = r * x * x
+}
+
+theorem ring_mul_term_coeff_at[R: Semiring](p: Polynomial[R], q: Polynomial[R], k: Nat, i: Nat) {
+    polynomial_mul_term_coeff(p, q, k, i) = p.coeff(i) * q.coeff(k - i)
+}
+
+theorem linear_mul_coeff_zero[R: CommRing](a: R, b: R, c: R, d: R) {
+    polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)).coeff(Nat.0) = b * d
+}
+
+theorem linear_mul_coeff_one[R: CommRing](a: R, b: R, c: R, d: R) {
+    polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)).coeff(Nat.1) = a * d + b * c
+}
+
+theorem linear_mul_coeff_two[R: CommRing](a: R, b: R, c: R, d: R) {
+    polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)).coeff(Nat.2) = a * c
+}
+
+theorem linear_mul_coeff_three[R: CommRing](a: R, b: R, c: R, d: R) {
+    polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)).coeff(Nat.3) = R.0
+}
+
+theorem linear_mul_support_bounded_by_four[R: CommRing](a: R, b: R, c: R, d: R) {
+    polynomial_support_bounded_by(polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)), Nat.4)
+}
+
+theorem quadratic_mul_coeff_four[R: CommRing](a: R, b: R, c: R, d: R, e: R, g: R) {
+    polynomial_mul(quadratic_polynomial(a, b, c), quadratic_polynomial(d, e, g)).coeff(Nat.4) = a * d
+}
+
+theorem quadratic_mul_coeff_five[R: CommRing](a: R, b: R, c: R, d: R, e: R, g: R) {
+    polynomial_mul(quadratic_polynomial(a, b, c), quadratic_polynomial(d, e, g)).coeff(Nat.5) = R.0
+}
+
+theorem quadratic_mul_support_bounded_by_five[R: CommRing](
+    a: R, b: R, c: R, d: R, e: R, g: R
+) {
+    polynomial_support_bounded_by(polynomial_mul(quadratic_polynomial(a, b, c), quadratic_polynomial(d, e, g)), Nat.5)
+}
+
+theorem quadratic_product_degree[F: Field](a: F, b: F, c: F, d: F, e: F, g: F) {
+    a != F.0 and d != F.0 implies
+    polynomial_degree_le(polynomial_mul(quadratic_polynomial(a, b, c), quadratic_polynomial(d, e, g)), Nat.4) and
+    not polynomial_degree_le(polynomial_mul(quadratic_polynomial(a, b, c), quadratic_polynomial(d, e, g)), Nat.3)
+}
+
+theorem polynomial_eval_homomorphism[R: CommRing](x: R, p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_eval(p + q, x) = polynomial_eval(p, x) + polynomial_eval(q, x) and
+    polynomial_eval(polynomial_mul(p, q), x) = polynomial_eval(p, x) * polynomial_eval(q, x)
+}
+
+let field_x_minus_one[F: Field]: Polynomial[F] = linear_polynomial(F.1, -F.1)
+
+/// The polynomial `X + 1` over a field.
+
+let field_x_plus_one[F: Field]: Polynomial[F] = linear_polynomial(F.1, F.1)
+
+/// The polynomial `X^2 - 1` over a field.
+
+let field_x_squared_minus_one[F: Field]: Polynomial[F] = quadratic_polynomial(F.1, F.0, -F.1)
+
+// ---------------------------------------------------------------------------
+// Ring arithmetic used by the concrete evaluations
+// ---------------------------------------------------------------------------
+
+/// `(x - 1) + (x + 1) = 2x` in coefficient form.
+lemma ring_add_x_minus_one_x_plus_one[R: CommRing](x: R) {
+    (-R.1 + R.1 * x) + (R.1 + R.1 * x) = (R.1 + R.1) * x
+}
+
+theorem field_eval_add_concrete[F: Field](x: F) {
+    polynomial_eval(field_x_minus_one[F] + field_x_plus_one[F], x) = (F.1 + F.1) * x
+}
+
+theorem field_eval_mul_concrete[F: Field](x: F) {
+    polynomial_eval(polynomial_mul(field_x_minus_one[F], field_x_plus_one[F]), x) = x * x - F.1
+}
+
+theorem polynomial_remainder_theorem_global[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 iff polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem field_x_squared_minus_one_has_root_one[F: Field] {
+    polynomial_eval(field_x_squared_minus_one[F], F.1) = F.0
+}
+
+theorem field_x_minus_one_divides_x_squared_minus_one[F: Field] {
+    polynomial_divisible_by_x_minus_a_polynomial(field_x_squared_minus_one[F], F.1)
+}
+
+theorem field_x_minus_one_divides_imp_root_one[F: Field] {
+    polynomial_divisible_by_x_minus_a_polynomial(field_x_squared_minus_one[F], F.1) implies
+    polynomial_eval(field_x_squared_minus_one[F], F.1) = F.0
+}
+
+theorem field_x_squared_minus_one_root_iff_divisible[F: Field] {
+    polynomial_eval(field_x_squared_minus_one[F], F.1) = F.0 iff
+        polynomial_divisible_by_x_minus_a_polynomial(field_x_squared_minus_one[F], F.1)
+}
+
+theorem field_x_plus_one_witnesses_factor[F: Field] {
+    polynomial_x_minus_a_polynomial_witness(field_x_squared_minus_one[F], F.1, field_x_plus_one[F])
+}
+
+theorem linear_zero_product[F: Field](a: F, b: F, c: F, d: F) {
+    a != F.0 and
+    polynomial_mul(linear_polynomial(a, b), linear_polynomial(c, d)) = Polynomial[F].zero
+    implies linear_polynomial(c, d) = Polynomial[F].zero
+}
+
+theorem field_x_squared_minus_one_eq_mul[F: Field] {
+    polynomial_mul(field_x_minus_one[F], field_x_plus_one[F]) = field_x_squared_minus_one[F]
+}
+
+define polynomial_monomial_partial_sum[R: Semiring](p: Polynomial[R], n: Nat) -> Polynomial[R] {
+    match n {
+        Nat.zero {
+            Polynomial[R].zero
+        }
+        Nat.suc(pred) {
+            polynomial_monomial_partial_sum(p, pred) + polynomial_monomial(pred, p.coeff(pred))
+        }
+    }
+}
+
+theorem polynomial_eq_monomial_partial_sum_of_support_bounded[R: Semiring](
+    p: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) implies p = polynomial_monomial_partial_sum(p, n)
+}
+
+theorem polynomial_eq_monomial_partial_sum[R: Semiring](p: Polynomial[R]) {
+    exists(n: Nat) {
+        p = polynomial_monomial_partial_sum(p, n)
+    }
+}
+
+theorem polynomial_support_bounded_by_intro[R: Semiring](p: Polynomial[R], n: Nat) {
+    (forall(k: Nat) { not k < n implies p.coeff(k) = R.0 })
+        implies polynomial_support_bounded_by(p, n)
+}
+
+theorem polynomial_neg_support_bounded_by[R: Ring](p: Polynomial[R], n: Nat) {
+    polynomial_support_bounded_by(p, n)
+        implies polynomial_support_bounded_by(p.neg, n)
+}
+
+theorem polynomial_sub_support_bounded_by[R: Ring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        implies polynomial_support_bounded_by(p.sub(q), n)
+}
+
+theorem remainder_theorem_global[R: CommRing](p: Polynomial[R], a: R, x: R) {
+    exists(q: Polynomial[R]) {
+        polynomial_eval(p, x) = polynomial_eval(p, a) + polynomial_eval(q, x) * (x - a)
+    }
+}
+
+theorem remainder_theorem_root_form[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 iff polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem x_squared_minus_one_remainder_at_one[F: Field] {
+    polynomial_eval(field_x_squared_minus_one[F], F.1) = F.0
+}
+
+theorem x_minus_one_divides_x_squared_minus_one[F: Field] {
+    polynomial_divisible_by_x_minus_a_polynomial(field_x_squared_minus_one[F], F.1)
+}
+
+theorem x_squared_minus_one_remainder_identity[F: Field] {
+    polynomial_x_minus_a_polynomial_witness(field_x_squared_minus_one[F], F.1, field_x_plus_one[F])
+}
+
+theorem factor_theorem[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 iff polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem x_squared_minus_one_root_one[F: Field] {
+    polynomial_eval(field_x_squared_minus_one[F], F.1) = F.0
+}
+
+theorem x_squared_minus_one_root_neg_one[F: Field] {
+    polynomial_eval(field_x_squared_minus_one[F], -F.1) = F.0
+}
+
+theorem x_plus_one_divides_x_squared_minus_one[F: Field] {
+    polynomial_divisible_by_x_minus_a_polynomial(field_x_squared_minus_one[F], -F.1)
+}
+
+theorem x_squared_minus_one_factorization[F: Field] {
+    polynomial_mul(field_x_minus_one[F], field_x_plus_one[F]) = field_x_squared_minus_one[F]
+}
+
+theorem x_minus_one_witnesses_factor_neg_one[F: Field] {
+    polynomial_x_minus_a_polynomial_witness(field_x_squared_minus_one[F], -F.1, field_x_minus_one[F])
+}
+
+define cubic_polynomial[R: Semiring](a: R, b: R, c: R, d: R) -> Polynomial[R] {
+    polynomial_constant(d) + polynomial_monomial(Nat.1, c) + polynomial_monomial(Nat.2, b) +
+        polynomial_monomial(Nat.3, a)
+}
+
+theorem cubic_polynomial_coeff_zero[R: Semiring](a: R, b: R, c: R, d: R) {
+    cubic_polynomial(a, b, c, d).coeff(Nat.0) = d
+}
+
+theorem cubic_polynomial_coeff_three[R: Semiring](a: R, b: R, c: R, d: R) {
+    cubic_polynomial(a, b, c, d).coeff(Nat.3) = a
+}
+
+theorem cubic_polynomial_coeff_one[R: Semiring](a: R, b: R, c: R, d: R) {
+    cubic_polynomial(a, b, c, d).coeff(Nat.1) = c
+}
+
+theorem cubic_polynomial_coeff_two[R: Semiring](a: R, b: R, c: R, d: R) {
+    cubic_polynomial(a, b, c, d).coeff(Nat.2) = b
+}
+
+theorem cubic_polynomial_support_bounded_by_four[R: Semiring](a: R, b: R, c: R, d: R) {
+    polynomial_support_bounded_by(cubic_polynomial(a, b, c, d), Nat.4)
+}
+
+theorem monomial_three_eval[R: CommRing](r: R, x: R) {
+    polynomial_eval(Polynomial[R].monomial(Nat.3, r), x) = r * x * x * x
+}
+
+theorem cubic_polynomial_eval[R: CommRing](a: R, b: R, c: R, d: R, x: R) {
+    polynomial_eval(cubic_polynomial(a, b, c, d), x) = d + c * x + b * x * x + a * x * x * x
+}
+
+theorem int_mul_neg_from_nat(m: Nat, n: Nat) {
+    Int.from_nat(m) * -Int.from_nat(n) = -Int.from_nat(m * n)
+}
+
+theorem int_cubic_x3_minus_6x2_plus_11x_minus_6_root_two {
+    polynomial_eval(int_cubic_x3_minus_6x2_plus_11x_minus_6, Int.2) = Int.0
+}
+
+theorem int_cubic_x3_minus_6x2_plus_11x_minus_6_root_three {
+    polynomial_eval(int_cubic_x3_minus_6x2_plus_11x_minus_6, Int.3) = Int.0
+}
+
+let real_x_cubed_minus_one: Polynomial[Real] = cubic_polynomial[Real](Real.1, Real.0, Real.0, -Real.1)
+
+/// The real cubic `X^3 - 1` has the real root `1`.
+theorem real_x_cubed_minus_one_root_one {
+    polynomial_eval(real_x_cubed_minus_one, Real.1) = Real.0
+}
+
+let int_cubic_x3_minus_x: Polynomial[Int] = cubic_polynomial[Int](Int.1, Int.0, -Int.1, Int.0)
+
+/// `X^3 - X` has the integer root `0`.
+theorem int_cubic_x3_minus_x_root_zero {
+    polynomial_eval(int_cubic_x3_minus_x, Int.0) = Int.0
+}
+
+theorem int_cubic_x3_minus_x_root_one {
+    polynomial_eval(int_cubic_x3_minus_x, Int.1) = Int.0
+}
+
+theorem int_cubic_x3_minus_x_root_neg_one {
+    polynomial_eval(int_cubic_x3_minus_x, -Int.1) = Int.0
+}
+
+theorem polynomial_eval_eq_of_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R], x: R) {
+    p = q implies polynomial_eval(p, x) = polynomial_eval(q, x)
+}
+
+theorem polynomial_eval_ext[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    p = q implies forall(x: R) { polynomial_eval(p, x) = polynomial_eval(q, x) }
+}
+
+theorem polynomial_eval_eq_of_coeff_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R], x: R) {
+    (forall(n: Nat) { p.coeff(n) = q.coeff(n) }) implies polynomial_eval(p, x) = polynomial_eval(q, x)
+}
+
+theorem polynomial_eval_constant_add[R: Semiring](r: R, p: Polynomial[R], x: R) {
+    polynomial_eval(Polynomial[R].constant(r) + p, x) = r + polynomial_eval(p, x)
+}
+
+theorem polynomial_eval_mul_assoc[R: CommRing](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    r: Polynomial[R],
+    x: R
+) {
+    polynomial_eval(polynomial_mul(polynomial_mul(p, q), r), x) =
+        polynomial_eval(polynomial_mul(p, polynomial_mul(q, r)), x)
+}
+
+theorem polynomial_eval_mul_comm[R: CommRing](p: Polynomial[R], q: Polynomial[R], x: R) {
+    polynomial_eval(polynomial_mul(p, q), x) = polynomial_eval(polynomial_mul(q, p), x)
+}
+
+theorem polynomial_eval_mul_add_distrib[R: CommRing](
+    p: Polynomial[R],
+    q: Polynomial[R],
+    r: Polynomial[R],
+    s: Polynomial[R],
+    x: R
+) {
+    polynomial_eval(polynomial_mul(p, q) + polynomial_mul(r, s), x) =
+        polynomial_eval(p, x) * polynomial_eval(q, x) + polynomial_eval(r, x) * polynomial_eval(s, x)
+}
+
+theorem polynomial_factor_theorem_quotient_form[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_support_bounded_by(p, n) and polynomial_eval(p, a) = R.0 implies
+    polynomial_x_minus_a_polynomial_witness(p, a, polynomial_quotient(p, a, n))
+}
+
+theorem polynomial_eval_of_root_factor[R: CommRing](p: Polynomial[R], a: R, n: Nat, x: R) {
+    polynomial_support_bounded_by(p, n) and polynomial_eval(p, a) = R.0 implies
+    polynomial_eval(p, x) = polynomial_eval(polynomial_quotient(p, a, n), x) * (x - a)
+}
+
+theorem polynomial_remainder_theorem_iff[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 iff polynomial_divisible_by_x_minus_a_polynomial(p, a)
+}
+
+theorem polynomial_root_of_product[F: Field](p: Polynomial[F], q: Polynomial[F], x: F) {
+    polynomial_eval(polynomial_mul(p, q), x) = F.0 implies
+    polynomial_eval(p, x) = F.0 or polynomial_eval(q, x) = F.0
+}
+
+theorem polynomial_shift_eval_zero[R: CommRing](p: Polynomial[R], x: R) {
+    polynomial_shift_eval(p, R.0, x) = polynomial_eval(p, x)
+}
+
+theorem polynomial_shift_eval_twice[R: CommRing](p: Polynomial[R], a: R, b: R, x: R) {
+    polynomial_eval(p, (x + a) + b) = polynomial_shift_eval(p, a + b, x)
+}
+
+theorem polynomial_shift_eval_constant[R: CommRing](r: R, a: R, x: R) {
+    polynomial_shift_eval(Polynomial[R].constant(r), a, x) = r
+}
+
+theorem linear_polynomial_shift_eval[R: CommRing](a: R, b: R, t: R, x: R) {
+    polynomial_eval(linear_polynomial(a, b + a * t), x) =
+        polynomial_eval(linear_polynomial(a, b), x + t)
+}
+
+theorem polynomial_eq_zero_iff_coeff_zero[R: Semiring](p: Polynomial[R]) {
+    (p = Polynomial[R].zero) iff (forall(n: Nat) { p.coeff(n) = R.0 })
+}
+
+theorem polynomial_eval_of_coeff_zero[R: Semiring](p: Polynomial[R], x: R) {
+    (forall(n: Nat) { p.coeff(n) = R.0 }) implies polynomial_eval(p, x) = R.0
+}
+
+theorem polynomial_eval_constant_zero[R: Semiring](x: R) {
+    polynomial_eval(Polynomial[R].constant(R.0), x) = R.0
+}
+
+theorem cubic_vieta_factorization[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_mul(polynomial_mul(linear_polynomial(R.1, -r1),
+        linear_polynomial(R.1, -r2)), linear_polynomial(R.1, -r3)) =
+        cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3))
+}
+
+theorem cubic_root_vieta_a[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r1) = R.0
+}
+
+theorem cubic_root_vieta_b[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r2) = R.0
+}
+
+theorem cubic_root_vieta_c[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r3) = R.0
+}
+
+theorem vieta_cubic_coeff_quadratic[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.2) = -(r1 + r2 + r3)
+}
+
+theorem vieta_cubic_coeff_linear[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.1) = r1 * r2 + r1 * r3 + r2 * r3
+}
+
+theorem vieta_cubic_coeff_constant[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.0) = -(r1 * r2 * r3)
+}
+
+theorem vieta_cubic_coeff_leading[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.3) = R.1
+}

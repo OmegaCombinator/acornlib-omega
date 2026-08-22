@@ -1,147 +1,76 @@
-theorem sum_two_cases(t: List[Nat]) {
-    sum(t) = Nat.2 and all_positive(t) implies (t = List.cons(Nat.2, List.nil[Nat]) or t = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+theorem multiset_support_contains_iff_positive_multiplicity[T](m: Multiset[T], item: T) {
+    multiset_support(m).contains(item) = (m.multiplicity(item) > Nat.0)
 }
 
-theorem ni_tail_general(a: Nat, t: List[Nat]) {
-    non_increasing(List.cons(a, t)) implies non_increasing(t)
+theorem multiset_support_filter_contains[T](m: Multiset[T], pred: T -> Bool, item: T) {
+    multiset_support(m.filter(pred)).contains(item) =
+        (multiset_support(m).contains(item) and pred(item))
 }
 
-theorem parts_le_head(a: Nat, t: List[Nat], x: Nat) {
-    non_increasing(List.cons(a, t)) and t.contains(x) implies x <= a
+theorem multiset_support_from_list_filter_contains[T](items: List[T], pred: T -> Bool, item: T) {
+    multiset_support(Multiset.from_list(items).filter(pred)).contains(item) =
+        (items.contains(item) and pred(item))
 }
 
-let partitions_five: List[List[Nat]] =
-    List.cons(p5_a,
-        List.cons(p5_b,
-            List.cons(p5_c,
-                List.cons(p5_d,
-                    List.cons(p5_e,
-                        List.cons(p5_f,
-                            List.cons(p5_g, List.nil[List[Nat]])))))))
-
-/// Every partition of five occurs in the explicit list.
-theorem partitions_five_contains(l: List[Nat]) {
-    is_partition(l, Nat.5) implies partitions_five.contains(l)
+theorem multiset_support_from_list_contains[T](items: List[T], item: T) {
+    multiset_support(Multiset.from_list(items)).contains(item) = items.contains(item)
 }
 
-theorem ni_41 {
-    non_increasing(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+theorem multiset_support_add_contains[T](a: Multiset[T], b: Multiset[T], item: T) {
+    multiset_support(a + b).contains(item) =
+        (multiset_support(a).contains(item) or multiset_support(b).contains(item))
 }
 
-theorem ni_32 {
-    non_increasing(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+attributes Multiset[T] {
+    /// True if the multiset has a finite support set.
+    define has_finite_support(self) -> Bool {
+        exists(support: FiniteSet[T]) {
+            forall(x: T) {
+                not support.contains(x) implies self.multiplicity(x) = Nat.0
+            }
+        }
+    }
 }
 
-theorem ni_311 {
-    non_increasing(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+theorem multiset_empty_has_finite_support[T] {
+    Multiset.empty[T].has_finite_support
 }
 
-theorem ni_221 {
-    non_increasing(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+theorem multiset_from_list_has_finite_support[T](items: List[T]) {
+    Multiset.from_list(items).has_finite_support
 }
 
-theorem ni_2111 {
-    non_increasing(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+theorem multiset_singleton_has_finite_support[T](item: T) {
+    Multiset.singleton(item).has_finite_support
 }
 
-theorem ni_11111 {
-    non_increasing(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
+theorem multiset_insert_eq_add_singleton[T](a: Multiset[T], item: T) {
+    a.insert(item) = a + Multiset.singleton(item)
 }
 
-theorem ap_41 {
-    all_positive(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+theorem multiset_add_has_support_in_union[T](a: Multiset[T], b: Multiset[T],
+        support_a: FiniteSet[T], support_b: FiniteSet[T]) {
+    (forall(x: T) { not support_a.contains(x) implies a.multiplicity(x) = Nat.0 }) and
+    (forall(x: T) { not support_b.contains(x) implies b.multiplicity(x) = Nat.0 })
+    implies forall(x: T) {
+        not fs_union(support_a, support_b).contains(x) implies (a + b).multiplicity(x) = Nat.0
+    }
 }
 
-theorem ap_32 {
-    all_positive(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+theorem multiset_add_preserves_finite_support[T](a: Multiset[T], b: Multiset[T]) {
+    a.has_finite_support and b.has_finite_support implies (a + b).has_finite_support
 }
 
-theorem ap_311 {
-    all_positive(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+theorem multiset_add_has_finite_support_iff[T](a: Multiset[T], b: Multiset[T]) {
+    (a + b).has_finite_support = (a.has_finite_support and b.has_finite_support)
 }
 
-theorem ap_221 {
-    all_positive(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+theorem multiset_insert_preserves_finite_support[T](a: Multiset[T], item: T) {
+    a.has_finite_support implies a.insert(item).has_finite_support
 }
 
-theorem ap_2111 {
-    all_positive(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
-}
-
-theorem ap_11111 {
-    all_positive(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
-}
-
-theorem partition_five_sound(l: List[Nat]) {
-    (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g) implies is_partition(l, Nat.5)
-}
-
-theorem partitions_five_membership(l: List[Nat]) {
-    partitions_five.contains(l) implies is_partition(l, Nat.5)
-}
-
-theorem partition_five_char(l: List[Nat]) {
-    is_partition(l, Nat.5) = (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g)
-}
-
-theorem not_contains_p5_a {
-    not List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).contains(p5_a)
-}
-
-theorem not_contains_p5_b {
-    not List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).contains(p5_b)
-}
-
-theorem not_contains_p5_c {
-    not List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).contains(p5_c)
-}
-
-theorem not_contains_p5_d {
-    not List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).contains(p5_d)
-}
-
-theorem not_contains_p5_e {
-    not List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).contains(p5_e)
-}
-
-theorem not_contains_p5_f {
-    not List.cons(p5_g, List.nil[List[Nat]]).contains(p5_f)
-}
-
-theorem p5_suffix_unique_6 {
-    List.cons(p5_g, List.nil[List[Nat]]).is_unique
-}
-
-theorem p5_suffix_unique_5 {
-    List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).is_unique
-}
-
-theorem p5_suffix_unique_4 {
-    List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).is_unique
-}
-
-theorem p5_suffix_unique_3 {
-    List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).is_unique
-}
-
-theorem p5_suffix_unique_2 {
-    List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).is_unique
-}
-
-theorem p5_suffix_unique_1 {
-    List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).is_unique
-}
-
-theorem p5_suffix_unique_0 {
-    List.cons(p5_a, List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))))).is_unique
-}
-
-theorem partitions_five_unique {
-    partitions_five.is_unique
-}
-
-theorem p_five {
-    p(Nat.5) = Nat.7
+theorem multiset_filter_preserves_finite_support[T](a: Multiset[T], pred: T -> Bool) {
+    a.has_finite_support implies a.filter(pred).has_finite_support
 }
 
 define non_increasing_from(head: Nat, tail: List[Nat]) -> Bool {
@@ -635,6 +564,437 @@ theorem filter_all_keep[T](l: List[T], f: T -> Bool) {
 
 theorem p_four {
     p(Nat.4) = Nat.5
+}
+
+define is_odd(n: Nat) -> Bool {
+    match n {
+        Nat.zero {
+            false
+        }
+        Nat.suc(pred) {
+            not is_odd(pred)
+        }
+    }
+}
+
+theorem is_odd_suc(k: Nat) {
+    is_odd(k.suc) = not is_odd(k)
+}
+
+theorem is_odd_zero {
+    is_odd(Nat.0) = false
+}
+
+theorem is_odd_one {
+    is_odd(Nat.1) = true
+}
+
+theorem is_odd_two {
+    is_odd(Nat.2) = false
+}
+
+theorem is_odd_three {
+    is_odd(Nat.3) = true
+}
+
+theorem is_odd_four {
+    is_odd(Nat.4) = false
+}
+
+define all_odd(parts: List[Nat]) -> Bool {
+    match parts {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            is_odd(head) and all_odd(tail)
+        }
+    }
+}
+
+theorem partition_parts_at_most_n(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+define is_partition_at_most(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+theorem partition_at_most_char(parts: List[Nat], n: Nat) {
+    is_partition_at_most(parts, n) = is_partition(parts, n)
+}
+
+define is_partition_at_most_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_partition_at_most(parts, n)
+}
+
+define partition_at_most_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_partition_at_most_of_n(n))
+}
+
+theorem partition_at_most_set_contains_iff(n: Nat, parts: List[Nat]) {
+    partition_at_most_set(n).contains(parts) = is_partition(parts, n)
+}
+
+theorem partition_at_most_set_eq(n: Nat) {
+    partition_at_most_set(n) = partition_set(n)
+}
+
+theorem partition_at_most_set_finite(n: Nat) {
+    partition_at_most_set(n).is_finite
+}
+
+theorem p_counts_parts_at_most_n(n: Nat) {
+    partition_at_most_set(n).cardinality_is(p(n))
+}
+
+define is_odd_part_partition(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and all_odd(parts)
+}
+
+define is_distinct_part_partition(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and parts.is_unique
+}
+
+define is_odd_part_partition_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_odd_part_partition(parts, n)
+}
+
+define is_distinct_part_partition_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_distinct_part_partition(parts, n)
+}
+
+define odd_partition_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_odd_part_partition_of_n(n))
+}
+
+define distinct_partition_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_distinct_part_partition_of_n(n))
+}
+
+theorem odd_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    odd_partition_set(n).contains(parts) = is_odd_part_partition(parts, n)
+}
+
+theorem distinct_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    distinct_partition_set(n).contains(parts) = is_distinct_part_partition(parts, n)
+}
+
+theorem all_odd_31 {
+    all_odd(List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem all_odd_1111 {
+    all_odd(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem all_odd_4 {
+    all_odd(List.cons(Nat.4, List.nil[Nat])) = false
+}
+
+theorem all_odd_22 {
+    all_odd(List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat]))) = false
+}
+
+theorem all_odd_211 {
+    all_odd(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = false
+}
+
+theorem pair_nat_unique(a: Nat, b: Nat) {
+    a != b implies List.cons(a, List.cons(b, List.nil[Nat])).is_unique
+}
+
+theorem not_unique_22 {
+    not List.cons(Nat.2, List.cons(Nat.2, List.nil[Nat])).is_unique
+}
+
+theorem not_unique_211 {
+    not List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))).is_unique
+}
+
+theorem not_unique_1111 {
+    not List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))).is_unique
+}
+
+let odd_four_a: List[Nat] = List.cons(Nat.3, List.cons(Nat.1, List.nil[Nat]))
+
+let odd_four_b: List[Nat] = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+
+/// The odd-part partitions of four are exactly 3 + 1 and 1 + 1 + 1 + 1.
+theorem odd_four_members(l: List[Nat]) {
+    is_odd_part_partition(l, Nat.4) implies (l = odd_four_a or l = odd_four_b)
+}
+
+theorem odd_four_sound(l: List[Nat]) {
+    (l = odd_four_a or l = odd_four_b) implies is_odd_part_partition(l, Nat.4)
+}
+
+theorem odd_four_char(l: List[Nat]) {
+    is_odd_part_partition(l, Nat.4) = (l = odd_four_a or l = odd_four_b)
+}
+
+theorem distinct_four_members(l: List[Nat]) {
+    is_distinct_part_partition(l, Nat.4) implies (l = p4_a or l = p4_b)
+}
+
+theorem distinct_four_sound(l: List[Nat]) {
+    (l = p4_a or l = p4_b) implies is_distinct_part_partition(l, Nat.4)
+}
+
+theorem distinct_four_char(l: List[Nat]) {
+    is_distinct_part_partition(l, Nat.4) = (l = p4_a or l = p4_b)
+}
+
+let odd_four_list: List[List[Nat]] =
+    List.cons(odd_four_a, List.cons(odd_four_b, List.nil[List[Nat]]))
+
+/// The explicit list of the distinct-part partitions of four.
+
+let distinct_four_list: List[List[Nat]] =
+    List.cons(p4_a, List.cons(p4_b, List.nil[List[Nat]]))
+
+/// The odd-part partitions of four are exactly two in number.
+theorem odd_four_cardinality {
+    odd_partition_set(Nat.4).cardinality_is(Nat.2)
+}
+
+theorem distinct_four_cardinality {
+    distinct_partition_set(Nat.4).cardinality_is(Nat.2)
+}
+
+theorem euler_odd_distinct_four {
+    exists(k: Nat) {
+        odd_partition_set(Nat.4).cardinality_is(k) and distinct_partition_set(Nat.4).cardinality_is(k)
+    }
+}
+
+theorem p_grows_one_two {
+    p(Nat.1) < p(Nat.2)
+}
+
+theorem p_grows_two_three {
+    p(Nat.2) < p(Nat.3)
+}
+
+theorem p_grows_three_four {
+    p(Nat.3) < p(Nat.4)
+}
+
+theorem p_monotone_small {
+    p(Nat.1) < p(Nat.2) and p(Nat.2) < p(Nat.3) and p(Nat.3) < p(Nat.4)
+}
+
+define pentagonal_twice(k: Nat) -> Nat {
+    k * (Nat.3 * k - Nat.1)
+}
+
+theorem pentagonal_recurrence_four {
+    p(Nat.4) = p(Nat.3) + p(Nat.2)
+}
+
+theorem pentagonal_recurrence_four_diff {
+    p(Nat.4) - p(Nat.3) - p(Nat.2) = Nat.0
+}
+
+theorem lt_five_cases(a: Nat) {
+    a < Nat.5 implies (a = Nat.4 or a = Nat.3 or a = Nat.2 or a = Nat.1 or a = Nat.0)
+}
+
+theorem lt_six_cases(a: Nat) {
+    a < Nat.6 implies (a = Nat.5 or a = Nat.4 or a = Nat.3 or a = Nat.2 or a = Nat.1 or a = Nat.0)
+}
+
+theorem two_parts_five(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.5 implies (a = Nat.4 and b = Nat.1) or (a = Nat.3 and b = Nat.2)
+}
+
+theorem three_parts_five(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.5 implies (a = Nat.3 and b = Nat.1 and c = Nat.1) or (a = Nat.2 and b = Nat.2 and c = Nat.1)
+}
+
+theorem four_parts_five(a: Nat, b: Nat, c: Nat, d: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and b <= a and c <= b and d <= c and
+        a + b + c + d = Nat.5 implies a = Nat.2 and b = Nat.1 and c = Nat.1 and d = Nat.1
+}
+
+theorem five_parts_five(a: Nat, b: Nat, c: Nat, d: Nat, e: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and Nat.1 <= e and
+        b <= a and c <= b and d <= c and e <= d and
+        a + (b + (c + (d + e))) = Nat.5 implies a = Nat.1 and b = Nat.1 and c = Nat.1 and d = Nat.1 and e = Nat.1
+}
+
+let p5_a: List[Nat] = List.cons(Nat.5, List.nil[Nat])
+
+let p5_b: List[Nat] = List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))
+
+let p5_c: List[Nat] = List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))
+
+let p5_d: List[Nat] = List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+
+let p5_e: List[Nat] = List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))
+
+let p5_f: List[Nat] = List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))
+
+let p5_g: List[Nat] = List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))
+// ---------------------------------------------------------------------------
+// Small lemmas about positive lists of small sums, and about the parts of
+// non-increasing lists.
+// ---------------------------------------------------------------------------
+
+/// A positive list of sum zero is empty.
+theorem sum_zero_nil(t: List[Nat]) {
+    sum(t) = Nat.0 and all_positive(t) implies t = List.nil[Nat]
+}
+
+theorem sum_one_singleton(t: List[Nat]) {
+    sum(t) = Nat.1 and all_positive(t) implies t = List.cons(Nat.1, List.nil[Nat])
+}
+
+theorem sum_two_cases(t: List[Nat]) {
+    sum(t) = Nat.2 and all_positive(t) implies (t = List.cons(Nat.2, List.nil[Nat]) or t = List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))
+}
+
+theorem ni_tail_general(a: Nat, t: List[Nat]) {
+    non_increasing(List.cons(a, t)) implies non_increasing(t)
+}
+
+theorem parts_le_head(a: Nat, t: List[Nat], x: Nat) {
+    non_increasing(List.cons(a, t)) and t.contains(x) implies x <= a
+}
+
+let partitions_five: List[List[Nat]] =
+    List.cons(p5_a,
+        List.cons(p5_b,
+            List.cons(p5_c,
+                List.cons(p5_d,
+                    List.cons(p5_e,
+                        List.cons(p5_f,
+                            List.cons(p5_g, List.nil[List[Nat]])))))))
+
+/// Every partition of five occurs in the explicit list.
+theorem partitions_five_contains(l: List[Nat]) {
+    is_partition(l, Nat.5) implies partitions_five.contains(l)
+}
+
+theorem ni_41 {
+    non_increasing(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ni_32 {
+    non_increasing(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ni_311 {
+    non_increasing(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_221 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ni_2111 {
+    non_increasing(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem ni_11111 {
+    non_increasing(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
+}
+
+theorem ap_41 {
+    all_positive(List.cons(Nat.4, List.cons(Nat.1, List.nil[Nat]))) = true
+}
+
+theorem ap_32 {
+    all_positive(List.cons(Nat.3, List.cons(Nat.2, List.nil[Nat]))) = true
+}
+
+theorem ap_311 {
+    all_positive(List.cons(Nat.3, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_221 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.2, List.cons(Nat.1, List.nil[Nat])))) = true
+}
+
+theorem ap_2111 {
+    all_positive(List.cons(Nat.2, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat]))))) = true
+}
+
+theorem ap_11111 {
+    all_positive(List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.cons(Nat.1, List.nil[Nat])))))) = true
+}
+
+theorem partition_five_sound(l: List[Nat]) {
+    (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g) implies is_partition(l, Nat.5)
+}
+
+theorem partitions_five_membership(l: List[Nat]) {
+    partitions_five.contains(l) implies is_partition(l, Nat.5)
+}
+
+theorem partition_five_char(l: List[Nat]) {
+    is_partition(l, Nat.5) = (l = p5_a or l = p5_b or l = p5_c or l = p5_d or l = p5_e or l = p5_f or l = p5_g)
+}
+
+theorem not_contains_p5_a {
+    not List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).contains(p5_a)
+}
+
+theorem not_contains_p5_b {
+    not List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).contains(p5_b)
+}
+
+theorem not_contains_p5_c {
+    not List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).contains(p5_c)
+}
+
+theorem not_contains_p5_d {
+    not List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).contains(p5_d)
+}
+
+theorem not_contains_p5_e {
+    not List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).contains(p5_e)
+}
+
+theorem not_contains_p5_f {
+    not List.cons(p5_g, List.nil[List[Nat]]).contains(p5_f)
+}
+
+theorem p5_suffix_unique_6 {
+    List.cons(p5_g, List.nil[List[Nat]]).is_unique
+}
+
+theorem p5_suffix_unique_5 {
+    List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).is_unique
+}
+
+theorem p5_suffix_unique_4 {
+    List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).is_unique
+}
+
+theorem p5_suffix_unique_3 {
+    List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).is_unique
+}
+
+theorem p5_suffix_unique_2 {
+    List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).is_unique
+}
+
+theorem p5_suffix_unique_1 {
+    List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).is_unique
+}
+
+theorem p5_suffix_unique_0 {
+    List.cons(p5_a, List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))))).is_unique
+}
+
+theorem partitions_five_unique {
+    partitions_five.is_unique
+}
+
+theorem p_five {
+    p(Nat.5) = Nat.7
 }
 
 let finite_powerset[T](s: FiniteSet[T]) -> result: FiniteSet[FiniteSet[T]] satisfy {
