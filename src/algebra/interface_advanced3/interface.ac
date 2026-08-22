@@ -1,34 +1,3 @@
-theorem submodule_is_finitely_generated_of_closure_eq[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: Set[M], s: Submodule[R, M]
-) {
-    a.is_finite and s.carrier = carrier and submodule_closure(carrier, a) = s
-        implies submodule_is_finitely_generated(s)
-}
-
-theorem submodule_is_finitely_generated_of_eq[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M], t: Submodule[R, M]
-) {
-    submodule_is_finitely_generated(s) and s = t implies submodule_is_finitely_generated(t)
-}
-
-theorem submodule_closure_is_finitely_generated[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: Set[M]
-) {
-    a.is_finite implies submodule_is_finitely_generated(submodule_closure(carrier, a))
-}
-
-theorem submodule_is_finitely_generated_of_as_set_finite[R: Ring, M: AddCommGroup](
-    s: Submodule[R, M]
-) {
-    s.as_set.is_finite implies submodule_is_finitely_generated(s)
-}
-
-theorem submodule_closure_singleton_is_finitely_generated[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], a: M
-) {
-    submodule_is_finitely_generated(submodule_closure(carrier, Set[M].singleton(a)))
-}
-
 theorem submodule_closure_singleton_contains[R: Ring, M: AddCommGroup](
     carrier: Module[R, M], a: M
 ) {
@@ -931,6 +900,12 @@ theorem module_hom_image_contains_smul[R: Ring, M: AddCommGroup, N: AddCommGroup
     f: ModuleHom[R, M, N], r: R, a: N
 ) {
     module_hom_image(f).contains(a) implies module_hom_image(f).contains(f.dst.smul(r, a))
+}
+
+theorem module_hom_image_subset_full[R: Ring, M: AddCommGroup, N: AddCommGroup](
+    f: ModuleHom[R, M, N]
+) {
+    submodule_subset(module_hom_image(f), full_submodule(f.dst))
 }
 
 define is_semiring_hom[S: Semiring, T: Semiring](f: S -> T) -> Bool {
@@ -2309,4 +2284,25 @@ theorem maximal_ideal_not_contains_one[R: CommRing](m: MaximalIdeal[R]) {
 
 theorem maximal_ideal_contains_mul[R: CommRing](m: MaximalIdeal[R], a: R, b: R) {
     m.contains(a * b) implies m.contains(a) or m.contains(b)
+}
+
+theorem maximal_ideal_witness[R: CommRing](m: MaximalIdeal[R], other: R -> Bool) {
+    is_ideal(other) and ideal_subset(m.contains, other) and ideal_proper_constraint(other)
+        implies ideal_subset(other, m.contains)
+}
+
+let maximal_ideal_as_ideal[R: CommRing](m: MaximalIdeal[R]) -> result: Ideal[R] satisfy {
+    Ideal.new(m.contains) = Option.some(result)
+}
+
+let maximal_ideal_as_prime_ideal[R: CommRing](m: MaximalIdeal[R]) -> result: PrimeIdeal[R] satisfy {
+    PrimeIdeal.new(m.contains) = Option.some(result)
+}
+
+attributes PrimeIdeal[R: CommRing] {
+    /// Prime ideal extensionality from pointwise equality of membership.
+    let ext = prime_ideal_ext[R]
+
+    /// The bundled ideal obtained by forgetting the prime structure.
+    let as_ideal: PrimeIdeal[R] -> Ideal[R] = prime_ideal_as_ideal[R]
 }

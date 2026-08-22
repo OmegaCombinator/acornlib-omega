@@ -1,3 +1,62 @@
+theorem spec_vanishing_sum[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(i.sum(j)) = Spec[R].vanishing(i).intersection(Spec[R].vanishing(j))
+}
+
+theorem spec_of_maximal_point[R: CommRing](m: MaximalIdeal[R]) {
+    Spec[R].of_maximal(m).point = m.as_prime_ideal
+}
+
+theorem spec_vanishing_principal_contains_eq[R: CommRing](f: R, p: Spec[R]) {
+    Spec[R].vanishing(Ideal[R].principal(f)).contains(p) = p.point.contains(f)
+}
+
+theorem spec_vanishing_principal_zero[R: CommRing] {
+    Spec[R].vanishing(Ideal[R].principal(R.0)) = Set[Spec[R]].universal_set
+}
+
+theorem spec_vanishing_principal_one[R: CommRing] {
+    Spec[R].vanishing(Ideal[R].principal(R.1)) = Set[Spec[R]].empty_set
+}
+
+define spec_basic_open[R: CommRing](f: R) -> Set[Spec[R]] {
+    Spec[R].vanishing(Ideal[R].principal(f)).c
+}
+
+attributes Spec[R: CommRing] {
+    /// The distinguished open set `D(f)` complementary to `V(principal(f))`.
+    let basic_open: R -> Set[Spec[R]] = spec_basic_open[R]
+}
+
+theorem spec_basic_open_contains_eq[R: CommRing](f: R, p: Spec[R]) {
+    Spec[R].basic_open(f).contains(p) = not p.point.contains(f)
+}
+
+theorem spec_basic_open_zero[R: CommRing] {
+    Spec[R].basic_open(R.0) = Set[Spec[R]].empty_set
+}
+
+theorem spec_basic_open_one[R: CommRing] {
+    Spec[R].basic_open(R.1) = Set[Spec[R]].universal_set
+}
+
+theorem spec_vanishing_union_subset_inter[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(i).union(Spec[R].vanishing(j)).subset(Spec[R].vanishing(i.intersection(j)))
+}
+
+theorem spec_vanishing_inter_subset_union[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(i.intersection(j)).subset(
+        Spec[R].vanishing(i).union(Spec[R].vanishing(j)))
+}
+
+theorem spec_vanishing_union_eq_inter[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(i).union(Spec[R].vanishing(j)) =
+        Spec[R].vanishing(i.intersection(j))
+}
+
+theorem spec_basic_open_compl[R: CommRing](f: R) {
+    Spec[R].basic_open(f).c = Spec[R].vanishing(Ideal[R].principal(f))
+}
+
 theorem spec_vanishing_principal_compl[R: CommRing](f: R) {
     Spec[R].vanishing(Ideal[R].principal(f)).c = Spec[R].basic_open(f)
 }
@@ -1642,6 +1701,7 @@ theorem subsemiring_instance_lte_antisymm[S: Semiring] {
 instance Subsemiring[S: Semiring]: PartialOrder
 
 /// Subsemiring intersection gives the generic meet operation.
+
 instance Subsemiring[S: Semiring]: Meet {
     define meet(self, other: Subsemiring[S]) -> Subsemiring[S] {
         self.intersection(other)
@@ -2313,126 +2373,4 @@ theorem choose_well_founded_nonrecursive_solution_value[T, U](
     is_well_founded(r) implies
     choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default)(x) =
     value(x)
-}
-
-theorem choose_well_founded_nonrecursive_solution_default_independent[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    default1: U,
-    default2: U
-) {
-    is_well_founded(r) implies
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default1) =
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default2)
-}
-
-theorem nat_lt_relation_has_minimal(p: Nat -> Bool) {
-    (exists(x: Nat) { p(x) }) implies exists(m: Nat) {
-        p(m) and forall(y: Nat) {
-            nat_lt_relation(y, m) implies not p(y)
-        }
-    }
-}
-
-theorem exists_least_nat_witness(p: Nat -> Bool) {
-    (exists(x: Nat) { p(x) }) implies exists(m: Nat) {
-        is_least_nat_witness(p, m)
-    }
-}
-
-theorem least_nat_witness_le_of_witness(p: Nat -> Bool, m: Nat, n: Nat) {
-    is_least_nat_witness(p, m) and p(n) implies m <= n
-}
-
-theorem exists_least_nat_counterexample(p: Nat -> Bool) {
-    (exists(x: Nat) { not p(x) }) implies exists(m: Nat) {
-        is_least_nat_counterexample(p, m)
-    }
-}
-
-theorem least_nat_counterexample_le_of_counterexample(p: Nat -> Bool, m: Nat, n: Nat) {
-    is_least_nat_counterexample(p, m) and not p(n) implies m <= n
-}
-
-theorem nat_lt_relation_induction(p: Nat -> Bool) {
-    forall(n: Nat) {
-        (forall(k: Nat) { nat_lt_relation(k, n) implies p(k) }) implies p(n)
-    }
-    implies
-    forall(n: Nat) {
-        p(n)
-    }
-}
-
-theorem nat_lt_relation_induction_at(p: Nat -> Bool, n: Nat) {
-    forall(x: Nat) {
-        (forall(k: Nat) { nat_lt_relation(k, x) implies p(k) }) implies p(x)
-    }
-    implies
-    p(n)
-}
-
-theorem nat_recursive_solution_eq_at[U](
-    step: (Nat, Nat -> U) -> U,
-    f: Nat -> U,
-    g: Nat -> U,
-    n: Nat
-) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) and
-    is_nat_recursive_solution(step, g) implies
-    f(n) = g(n)
-}
-
-theorem nat_recursive_solution_eq[U](step: (Nat, Nat -> U) -> U, f: Nat -> U, g: Nat -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) and
-    is_nat_recursive_solution(step, g) implies
-    f = g
-}
-
-theorem nat_recursive_solution_exists_unique[U](step: (Nat, Nat -> U) -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    exists_unique(nat_recursive_solution_predicate(step))
-}
-
-theorem nat_recursive_solution_generic_exists_unique[U](step: (Nat, Nat -> U) -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    exists_unique(well_founded_recursive_solution_predicate(nat_lt_relation, step))
-}
-
-theorem choose_nat_recursive_solution_is_solution[U](step: (Nat, Nat -> U) -> U, default: U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    is_nat_recursive_solution(step, choose_nat_recursive_solution(step, default))
-}
-
-theorem choose_nat_recursive_solution_eq_solution[U](
-    step: (Nat, Nat -> U) -> U,
-    default: U,
-    f: Nat -> U
-) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) implies
-    choose_nat_recursive_solution(step, default) = f
-}
-
-theorem choose_nat_recursive_solution_default_independent[U](
-    step: (Nat, Nat -> U) -> U,
-    default1: U,
-    default2: U
-) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    choose_nat_recursive_solution(step, default1) = choose_nat_recursive_solution(step, default2)
 }

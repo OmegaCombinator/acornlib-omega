@@ -1,3 +1,39 @@
+theorem sub_add_rearrange[R: CommRing](x: R, y: R, p: R, q: R) {
+    (x - y) + (p - q) = (x + p) - (y + q)
+}
+
+theorem quat_norm_mul(x: Quat, y: Quat) {
+    quat_norm(quat_mul(x, y)) = quat_norm(x) * quat_norm(y)
+}
+
+theorem qmul_z_sub(z1: Complex, z2: Complex, w1: Complex, w2: Complex, z3: Complex, w3: Complex) {
+    qmul_z(z1 - z2, w1 - w2, z3, w3) =
+        qmul_z(z1, w1, z3, w3) - qmul_z(z2, w2, z3, w3)
+}
+
+theorem qmul_w_sub(z1: Complex, z2: Complex, w1: Complex, w2: Complex, z3: Complex, w3: Complex) {
+    qmul_w(z1 - z2, w1 - w2, z3, w3) =
+        qmul_w(z1, w1, z3, w3) - qmul_w(z2, w2, z3, w3)
+}
+
+theorem quat_mul_dist_sub(x: Quat, y: Quat, q: Quat) {
+    quat_mul(quat_sub(x, y), q) = quat_sub(quat_mul(x, q), quat_mul(y, q))
+}
+
+theorem quat_unit_dist_preserved(x: Quat, y: Quat, q: Quat) {
+    quat_norm(q) = Real.1 implies
+        quat_dist_sq(quat_mul(x, q), quat_mul(y, q)) = quat_dist_sq(x, y)
+}
+
+theorem quat_unit_dist_iff(x: Quat, y: Quat, q: Quat) {
+    quat_norm(q) = Real.1 implies
+        (quaternion_unit_distance(x, y) = quaternion_unit_distance(quat_mul(x, q), quat_mul(y, q)))
+}
+
+define quat_conj(x: Quat) -> Quat {
+    Quat.new(x.first.conj, -x.second)
+}
+
 theorem quat_mul_conj_first(x: Quat) {
     qmul_z(x.first, x.second, x.first.conj, -(x.second)) =
         Complex.from_real(quat_norm(x))
@@ -423,6 +459,7 @@ let grid_e3: Quat = Quat.new(Complex.new(Real.0, Real.0), Complex.new(Real.1, Re
 let grid_e4: Quat = Quat.new(Complex.new(Real.0, Real.0), Complex.new(Real.0, Real.1))
 
 /// The squared absolute value of the complex number (1, 0) is one.
+
 theorem complex_one_zero_abs_squared {
     Complex.new(Real.1, Real.0).abs_squared = Real.1
 }
@@ -614,85 +651,6 @@ theorem reduced_residue_first_power_sum_doubled(n: Nat) {
         reduced_residue_sum(n, id_summand) + reduced_residue_sum(n, id_summand) = n * n.totient
 }
 
-theorem congruence_class_contains_of_divides(cl: Pair[Nat, Nat], x: Int) {
-    Int.from_nat(cl.first).divides(x - Int.from_nat(cl.second))
-        implies congruence_class_contains(cl, x)
-}
-
-theorem int_gcd_from_nat(a: Nat, b: Nat) {
-    Int.from_nat(a).gcd(Int.from_nat(b)) = Int.from_nat(a.gcd(b))
-}
-
-theorem classes_meet_of_gcd_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
-    Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
-        Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
-        implies exists(x: Int) {
-            congruence_class_contains(cl1, x) and congruence_class_contains(cl2, x)
-        }
-}
-
-theorem gcd_not_divides_of_classes_disjoint(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
-    classes_disjoint(cl1, cl2)
-        implies not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
-            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
-}
-
-theorem classes_disjoint_iff_gcd_not_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
-    classes_disjoint(cl1, cl2)
-        = not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
-            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
-}
-
-define modulus_weight(m: Nat) -> Rat {
-    Rat.from_int(Int.from_nat(m)).inverse
-}
-
-define system_density(system: List[Pair[Nat, Nat]]) -> Rat {
-    match system {
-        List.nil {
-            Rat.0
-        }
-        List.cons(head, tail) {
-            modulus_weight(head.first) + system_density(tail)
-        }
-    }
-}
-
-theorem system_density_nil {
-    system_density(List.nil[Pair[Nat, Nat]]) = Rat.0
-}
-
-theorem system_density_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
-    system_density(List.cons(head, tail)) =
-        modulus_weight(head.first) + system_density(tail)
-}
-
-theorem modulus_weight_one {
-    modulus_weight(Nat.1) = Rat.1
-}
-
-theorem modulus_weight_zero {
-    modulus_weight(Nat.0) = Rat.0
-}
-
-theorem modulus_weight_nonnegative(m: Nat) {
-    not modulus_weight(m).is_negative
-}
-
-theorem system_density_cons_ge_tail(
-    head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]
-) {
-    system_density(tail) <= system_density(List.cons(head, tail))
-}
-
-theorem system_density_nonnegative(system: List[Pair[Nat, Nat]]) {
-    Rat.0 <= system_density(system)
-}
-
-theorem system_density_ge_one_of_modulus_one(tail: List[Pair[Nat, Nat]], r: Nat) {
-    Rat.1 <= system_density(List.cons(Pair.new(Nat.1, r), tail))
-}
-
 define classes_disjoint(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) -> Bool {
     forall(x: Int) {
         not (congruence_class_contains(cl1, x) and congruence_class_contains(cl2, x))
@@ -809,49 +767,6 @@ theorem disjoint_system_tail_excludes_head(
 ) {
     disjoint_system(List.cons(head, tail)) and covers_int(tail, x)
         implies not congruence_class_contains(head, x)
-}
-
-theorem meeting_classes_gcd_divides_residue_gap(
-    cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat], x: Int
-) {
-    congruence_class_contains(cl1, x) and congruence_class_contains(cl2, x)
-        implies Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
-            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
-}
-
-theorem classes_disjoint_of_gcd_not_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
-    not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
-        Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
-        implies classes_disjoint(cl1, cl2)
-}
-
-define system_lcm(system: List[Pair[Nat, Nat]]) -> Nat {
-    match system {
-        List.nil {
-            Nat.1
-        }
-        List.cons(head, tail) {
-            head.first.lcm(system_lcm(tail))
-        }
-    }
-}
-
-theorem system_lcm_nil {
-    system_lcm(List.nil[Pair[Nat, Nat]]) = Nat.1
-}
-
-theorem system_lcm_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
-    system_lcm(List.cons(head, tail)) = head.first.lcm(system_lcm(tail))
-}
-
-theorem all_moduli_divide_of_divides(
-    system: List[Pair[Nat, Nat]], k: Nat, m: Nat
-) {
-    all_moduli_divide(system, k) and k.divides(m) implies all_moduli_divide(system, m)
-}
-
-theorem all_moduli_divide_system_lcm(system: List[Pair[Nat, Nat]]) {
-    all_moduli_divide(system, system_lcm(system))
 }
 
 define all_moduli_divide(system: List[Pair[Nat, Nat]], m: Nat) -> Bool {
@@ -992,6 +907,128 @@ theorem distinct_moduli_tail(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
 theorem distinct_moduli_cons_intro(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
     not has_modulus(tail, head.first) and distinct_moduli(tail)
         implies distinct_moduli(List.cons(head, tail))
+}
+
+theorem meeting_classes_gcd_divides_residue_gap(
+    cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat], x: Int
+) {
+    congruence_class_contains(cl1, x) and congruence_class_contains(cl2, x)
+        implies Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
+            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
+}
+
+theorem classes_disjoint_of_gcd_not_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
+    not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
+        Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
+        implies classes_disjoint(cl1, cl2)
+}
+
+define system_lcm(system: List[Pair[Nat, Nat]]) -> Nat {
+    match system {
+        List.nil {
+            Nat.1
+        }
+        List.cons(head, tail) {
+            head.first.lcm(system_lcm(tail))
+        }
+    }
+}
+
+theorem system_lcm_nil {
+    system_lcm(List.nil[Pair[Nat, Nat]]) = Nat.1
+}
+
+theorem system_lcm_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_lcm(List.cons(head, tail)) = head.first.lcm(system_lcm(tail))
+}
+
+theorem all_moduli_divide_of_divides(
+    system: List[Pair[Nat, Nat]], k: Nat, m: Nat
+) {
+    all_moduli_divide(system, k) and k.divides(m) implies all_moduli_divide(system, m)
+}
+
+theorem all_moduli_divide_system_lcm(system: List[Pair[Nat, Nat]]) {
+    all_moduli_divide(system, system_lcm(system))
+}
+
+theorem congruence_class_contains_of_divides(cl: Pair[Nat, Nat], x: Int) {
+    Int.from_nat(cl.first).divides(x - Int.from_nat(cl.second))
+        implies congruence_class_contains(cl, x)
+}
+
+theorem int_gcd_from_nat(a: Nat, b: Nat) {
+    Int.from_nat(a).gcd(Int.from_nat(b)) = Int.from_nat(a.gcd(b))
+}
+
+theorem classes_meet_of_gcd_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
+    Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
+        Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
+        implies exists(x: Int) {
+            congruence_class_contains(cl1, x) and congruence_class_contains(cl2, x)
+        }
+}
+
+theorem gcd_not_divides_of_classes_disjoint(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
+    classes_disjoint(cl1, cl2)
+        implies not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
+            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
+}
+
+theorem classes_disjoint_iff_gcd_not_divides(cl1: Pair[Nat, Nat], cl2: Pair[Nat, Nat]) {
+    classes_disjoint(cl1, cl2)
+        = not Int.from_nat(cl1.first).gcd(Int.from_nat(cl2.first)).divides(
+            Int.from_nat(cl1.second) - Int.from_nat(cl2.second))
+}
+
+define modulus_weight(m: Nat) -> Rat {
+    Rat.from_int(Int.from_nat(m)).inverse
+}
+
+define system_density(system: List[Pair[Nat, Nat]]) -> Rat {
+    match system {
+        List.nil {
+            Rat.0
+        }
+        List.cons(head, tail) {
+            modulus_weight(head.first) + system_density(tail)
+        }
+    }
+}
+
+theorem system_density_nil {
+    system_density(List.nil[Pair[Nat, Nat]]) = Rat.0
+}
+
+theorem system_density_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_density(List.cons(head, tail)) =
+        modulus_weight(head.first) + system_density(tail)
+}
+
+theorem modulus_weight_one {
+    modulus_weight(Nat.1) = Rat.1
+}
+
+theorem modulus_weight_zero {
+    modulus_weight(Nat.0) = Rat.0
+}
+
+theorem modulus_weight_nonnegative(m: Nat) {
+    not modulus_weight(m).is_negative
+}
+
+theorem system_density_cons_ge_tail(
+    head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]
+) {
+    system_density(tail) <= system_density(List.cons(head, tail))
+}
+
+theorem system_density_nonnegative(system: List[Pair[Nat, Nat]]) {
+    Rat.0 <= system_density(system)
+}
+
+theorem system_density_ge_one_of_modulus_one(tail: List[Pair[Nat, Nat]], r: Nat) {
+    Rat.1 <= system_density(List.cons(Pair.new(Nat.1, r), tail))
 }
 
 define full_residue_system(m: Nat, k: Nat) -> List[Pair[Nat, Nat]] {
@@ -2224,8 +2261,4 @@ theorem positive_lt_unit_fraction_is_egyptian_with_lower_bound(q: Rat, prev: Nat
 theorem positive_lt_one_is_egyptian_with_lower_bound_two(q: Rat) {
     q.is_positive and q < Rat.1
         implies is_egyptian_fraction_with_lower_bound(q, Nat.2)
-}
-
-theorem positive_lt_one_is_egyptian(q: Rat) {
-    q.is_positive and q < Rat.1 implies is_egyptian_fraction(q)
 }

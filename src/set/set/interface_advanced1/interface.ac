@@ -2045,164 +2045,146 @@ theorem set_image_cardinality_is_of_injective[T, U](s: Set[T], f: T -> U, n: Nat
     is_injective_fn(f) and s.cardinality_is(n) implies set_image(s, f).cardinality_is(n)
 }
 
-define map_image_predicate[A, B](f: A -> B, p: A -> Bool, y: B) -> Bool {
-    exists(x: A) {
-        p(x) and y = f(x)
+define is_upper_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies f(point) <= bound
     }
 }
 
-define map_preimage_predicate[A, B](f: A -> B, q: B -> Bool, x: A) -> Bool {
-    q(f(x))
-}
-
-theorem map_image_predicate_of[A, B](f: A -> B, p: A -> Bool, x: A) {
-    p(x) implies map_image_predicate(f, p, f(x))
-}
-
-theorem map_image_predicate_witness[A, B](f: A -> B, p: A -> Bool, y: B) {
-    map_image_predicate(f, p, y) implies exists(x: A) {
-        p(x) and y = f(x)
+define is_lower_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies bound <= f(point)
     }
 }
 
-theorem monotone_image_lower_bound[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    a: A
-) {
-    is_monotone(f) and is_lower_bound(p, a)
-    implies is_lower_bound(map_image_predicate(f, p), f(a))
+define is_bounded_above_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_upper_bound_on(domain, f, bound)
+    }
 }
 
-theorem monotone_image_upper_bound[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    b: A
-) {
-    is_monotone(f) and is_upper_bound(p, b)
-    implies is_upper_bound(map_image_predicate(f, p), f(b))
+define is_bounded_below_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_lower_bound_on(domain, f, bound)
+    }
 }
 
-theorem antitone_image_lower_bound_to_upper_bound[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    a: A
-) {
-    is_antitone(f) and is_lower_bound(p, a)
-    implies is_upper_bound(map_image_predicate(f, p), f(a))
+define is_bounded_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    is_bounded_above_on(domain, f) and is_bounded_below_on(domain, f)
 }
 
-theorem antitone_image_upper_bound_to_lower_bound[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    b: A
-) {
-    is_antitone(f) and is_upper_bound(p, b)
-    implies is_lower_bound(map_image_predicate(f, p), f(b))
+define is_common_upper_bound_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    is_upper_bound_on(left, f, bound) and is_upper_bound_on(right, f, bound)
 }
 
-theorem monotone_image_least[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    a: A
-) {
-    is_monotone(f) and is_least(p, a)
-    implies is_least(map_image_predicate(f, p), f(a))
+define is_common_lower_bound_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    is_lower_bound_on(left, f, bound) and is_lower_bound_on(right, f, bound)
 }
 
-theorem monotone_image_greatest[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    b: A
-) {
-    is_monotone(f) and is_greatest(p, b)
-    implies is_greatest(map_image_predicate(f, p), f(b))
+define is_common_bounded_above_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_common_upper_bound_on(left, right, f, bound)
+    }
 }
 
-theorem antitone_image_least_to_greatest[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    a: A
-) {
-    is_antitone(f) and is_least(p, a)
-    implies is_greatest(map_image_predicate(f, p), f(a))
+define is_common_bounded_below_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_common_lower_bound_on(left, right, f, bound)
+    }
 }
 
-theorem antitone_image_greatest_to_least[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    b: A
-) {
-    is_antitone(f) and is_greatest(p, b)
-    implies is_least(map_image_predicate(f, p), f(b))
+define is_common_bounded_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    is_common_bounded_above_on(left, right, f) and is_common_bounded_below_on(left, right, f)
 }
 
-theorem monotone_image_bounded_below[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool
+theorem upper_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
 ) {
-    is_monotone(f) and is_bounded_below(p)
-    implies is_bounded_below(map_image_predicate(f, p))
+    is_upper_bound_on(domain, f, bound) and domain.contains(point) implies f(point) <= bound
 }
 
-theorem monotone_image_bounded_above[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool
+theorem lower_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
 ) {
-    is_monotone(f) and is_bounded_above(p)
-    implies is_bounded_above(map_image_predicate(f, p))
+    is_lower_bound_on(domain, f, bound) and domain.contains(point) implies bound <= f(point)
 }
 
-theorem antitone_image_bounded_below_to_bounded_above[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool
+theorem upper_bound_on_of_pointwise_le[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, bound: Value
 ) {
-    is_antitone(f) and is_bounded_below(p)
-    implies is_bounded_above(map_image_predicate(f, p))
+    (forall(point: Domain) { domain.contains(point) implies f(point) <= g(point) })
+    and is_upper_bound_on(domain, g, bound)
+    implies is_upper_bound_on(domain, f, bound)
 }
 
-theorem antitone_image_bounded_above_to_bounded_below[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool
+theorem lower_bound_on_of_pointwise_ge[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, bound: Value
 ) {
-    is_antitone(f) and is_bounded_above(p)
-    implies is_bounded_below(map_image_predicate(f, p))
+    (forall(point: Domain) { domain.contains(point) implies g(point) <= f(point) })
+    and is_lower_bound_on(domain, g, bound)
+    implies is_lower_bound_on(domain, f, bound)
 }
 
-theorem surjective_order_embedding_image_glb[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    a: A
+theorem bounded_above_on_of_pointwise_le[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value
 ) {
-    is_order_embedding(f) and is_surjective_fn(f) and is_glb(p, a)
-    implies is_glb(map_image_predicate(f, p), f(a))
+    (forall(point: Domain) { domain.contains(point) implies f(point) <= g(point) })
+    and is_bounded_above_on(domain, g)
+    implies is_bounded_above_on(domain, f)
 }
 
-theorem surjective_order_embedding_image_lub[A: PartialOrder, B: PartialOrder](
-    f: A -> B,
-    p: A -> Bool,
-    b: A
+theorem bounded_below_on_of_pointwise_ge[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value
 ) {
-    is_order_embedding(f) and is_surjective_fn(f) and is_lub(p, b)
-    implies is_lub(map_image_predicate(f, p), f(b))
+    (forall(point: Domain) { domain.contains(point) implies g(point) <= f(point) })
+    and is_bounded_below_on(domain, g)
+    implies is_bounded_below_on(domain, f)
 }
 
-theorem monotone_compose_upper_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
-    domain: Set[Domain],
-    f: Domain -> Value,
-    g: Value -> Target,
-    bound: Value
-) {
-    is_monotone(g) and is_upper_bound_on(domain, f, bound)
-    implies is_upper_bound_on(domain, compose(g, f), g(bound))
+define attains_maximum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_upper_bound_on(domain, f, f(point))
 }
 
-theorem monotone_compose_lower_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
-    domain: Set[Domain],
-    f: Domain -> Value,
-    g: Value -> Target,
-    bound: Value
-) {
-    is_monotone(g) and is_lower_bound_on(domain, f, bound)
-    implies is_lower_bound_on(domain, compose(g, f), g(bound))
+define attains_minimum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_lower_bound_on(domain, f, f(point))
+}
+
+define attains_maximum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_maximum_at(domain, f, point)
+    }
+}
+
+define attains_minimum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_minimum_at(domain, f, point)
+    }
 }

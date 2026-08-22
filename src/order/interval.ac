@@ -1453,14 +1453,14 @@ theorem right_open_interval_intersection_right[L: LinearOrder](a1: L, b1: L, a2:
 }
 
 /// True if `a` is a lower bound for the elements satisfying `p`.
-define is_lower_bound[L: LinearOrder](p: L -> Bool, a: L) -> Bool {
+define is_lower_bound_linear[L: LinearOrder](p: L -> Bool, a: L) -> Bool {
     forall(x: L) {
         p(x) implies a <= x
     }
 }
 
 /// True if `b` is an upper bound for the elements satisfying `p`.
-define is_upper_bound[L: LinearOrder](p: L -> Bool, b: L) -> Bool {
+define is_upper_bound_linear[L: LinearOrder](p: L -> Bool, b: L) -> Bool {
     forall(x: L) {
         p(x) implies x <= b
     }
@@ -1474,21 +1474,21 @@ define is_bounded_by_interval[L: LinearOrder](p: L -> Bool, a: L, b: L) -> Bool 
 }
 
 /// True if the elements satisfying `p` have a lower bound.
-define is_bounded_below[L: LinearOrder](p: L -> Bool) -> Bool {
+define is_bounded_below_linear[L: LinearOrder](p: L -> Bool) -> Bool {
     exists(a: L) {
-        is_lower_bound(p, a)
+        is_lower_bound_linear(p, a)
     }
 }
 
 /// True if the elements satisfying `p` have an upper bound.
-define is_bounded_above[L: LinearOrder](p: L -> Bool) -> Bool {
+define is_bounded_above_linear[L: LinearOrder](p: L -> Bool) -> Bool {
     exists(b: L) {
-        is_upper_bound(p, b)
+        is_upper_bound_linear(p, b)
     }
 }
 
 /// True if the elements satisfying `p` have both a lower and an upper bound.
-define is_bounded[L: LinearOrder](p: L -> Bool) -> Bool {
+define is_bounded_linear[L: LinearOrder](p: L -> Bool) -> Bool {
     exists(a: L, b: L) {
         is_bounded_by_interval(p, a, b)
     }
@@ -1496,10 +1496,10 @@ define is_bounded[L: LinearOrder](p: L -> Bool) -> Bool {
 
 /// A lower bound applies to any element satisfying the predicate.
 theorem lower_bound_step[L: LinearOrder](p: L -> Bool, a: L, x: L) {
-    is_lower_bound(p, a) and p(x) implies a <= x
+    is_lower_bound_linear(p, a) and p(x) implies a <= x
 } by {
-    if is_lower_bound(p, a) and p(x) {
-        is_lower_bound(p, a) = forall(y: L) {
+    if is_lower_bound_linear(p, a) and p(x) {
+        is_lower_bound_linear(p, a) = forall(y: L) {
             p(y) implies a <= y
         }
         a <= x
@@ -1508,10 +1508,10 @@ theorem lower_bound_step[L: LinearOrder](p: L -> Bool, a: L, x: L) {
 
 /// An upper bound applies to any element satisfying the predicate.
 theorem upper_bound_step[L: LinearOrder](p: L -> Bool, b: L, x: L) {
-    is_upper_bound(p, b) and p(x) implies x <= b
+    is_upper_bound_linear(p, b) and p(x) implies x <= b
 } by {
-    if is_upper_bound(p, b) and p(x) {
-        is_upper_bound(p, b) = forall(y: L) {
+    if is_upper_bound_linear(p, b) and p(x) {
+        is_upper_bound_linear(p, b) = forall(y: L) {
             p(y) implies y <= b
         }
         x <= b
@@ -1532,9 +1532,9 @@ theorem bounded_by_interval_step[L: LinearOrder](p: L -> Bool, a: L, b: L, x: L)
 
 /// Lower and upper bounds determine an interval bound.
 theorem bounds_imp_bounded_by_interval[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_lower_bound(p, a) and is_upper_bound(p, b) implies is_bounded_by_interval(p, a, b)
+    is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b) implies is_bounded_by_interval(p, a, b)
 } by {
-    if is_lower_bound(p, a) and is_upper_bound(p, b) {
+    if is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b) {
         forall(x: L) {
             if p(x) {
                 lower_bound_step(p, a, x)
@@ -1549,7 +1549,7 @@ theorem bounds_imp_bounded_by_interval[L: LinearOrder](p: L -> Bool, a: L, b: L)
 
 /// An interval bound determines a lower bound.
 theorem bounded_by_interval_imp_lower_bound[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) implies is_lower_bound(p, a)
+    is_bounded_by_interval(p, a, b) implies is_lower_bound_linear(p, a)
 } by {
     if is_bounded_by_interval(p, a, b) {
         forall(x: L) {
@@ -1564,7 +1564,7 @@ theorem bounded_by_interval_imp_lower_bound[L: LinearOrder](p: L -> Bool, a: L, 
 
 /// An interval bound determines an upper bound.
 theorem bounded_by_interval_imp_upper_bound[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) implies is_upper_bound(p, b)
+    is_bounded_by_interval(p, a, b) implies is_upper_bound_linear(p, b)
 } by {
     if is_bounded_by_interval(p, a, b) {
         forall(x: L) {
@@ -1579,25 +1579,25 @@ theorem bounded_by_interval_imp_upper_bound[L: LinearOrder](p: L -> Bool, a: L, 
 
 /// Being bounded by an interval is equivalent to having the corresponding lower and upper bounds.
 theorem bounded_by_interval_iff_bounds[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) = (is_lower_bound(p, a) and is_upper_bound(p, b))
+    is_bounded_by_interval(p, a, b) = (is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b))
 } by {
     if is_bounded_by_interval(p, a, b) {
         bounded_by_interval_imp_lower_bound(p, a, b)
-        is_lower_bound(p, a)
+        is_lower_bound_linear(p, a)
         bounded_by_interval_imp_upper_bound(p, a, b)
-        is_upper_bound(p, b)
-        is_lower_bound(p, a) and is_upper_bound(p, b)
+        is_upper_bound_linear(p, b)
+        is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b)
     }
-    if is_lower_bound(p, a) and is_upper_bound(p, b) {
+    if is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b) {
         bounds_imp_bounded_by_interval(p, a, b)
         is_bounded_by_interval(p, a, b)
     }
-    is_bounded_by_interval(p, a, b) = (is_lower_bound(p, a) and is_upper_bound(p, b))
+    is_bounded_by_interval(p, a, b) = (is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b))
 }
 
 /// The left endpoint is a lower bound for the corresponding closed interval.
 theorem closed_interval_lower_bound[L: LinearOrder](a: L, b: L) {
-    is_lower_bound(closed_interval(a, b), a)
+    is_lower_bound_linear(closed_interval(a, b), a)
 } by {
     forall(x: L) {
         if closed_interval(a, b, x) {
@@ -1609,7 +1609,7 @@ theorem closed_interval_lower_bound[L: LinearOrder](a: L, b: L) {
 
 /// The right endpoint is an upper bound for the corresponding closed interval.
 theorem closed_interval_upper_bound[L: LinearOrder](a: L, b: L) {
-    is_upper_bound(closed_interval(a, b), b)
+    is_upper_bound_linear(closed_interval(a, b), b)
 } by {
     forall(x: L) {
         if closed_interval(a, b, x) {
@@ -1630,7 +1630,7 @@ theorem closed_interval_bounded_by_self[L: LinearOrder](a: L, b: L) {
 
 /// The left endpoint is a lower bound for the corresponding open interval.
 theorem open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
-    is_lower_bound(open_interval(a, b), a)
+    is_lower_bound_linear(open_interval(a, b), a)
 } by {
     forall(x: L) {
         if open_interval(a, b, x) {
@@ -1644,7 +1644,7 @@ theorem open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
 
 /// The right endpoint is an upper bound for the corresponding open interval.
 theorem open_interval_upper_bound[L: LinearOrder](a: L, b: L) {
-    is_upper_bound(open_interval(a, b), b)
+    is_upper_bound_linear(open_interval(a, b), b)
 } by {
     forall(x: L) {
         if open_interval(a, b, x) {
@@ -1667,7 +1667,7 @@ theorem open_interval_bounded_by_closed_interval[L: LinearOrder](a: L, b: L) {
 
 /// The left endpoint is a lower bound for the corresponding left-open interval.
 theorem left_open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
-    is_lower_bound(left_open_interval(a, b), a)
+    is_lower_bound_linear(left_open_interval(a, b), a)
 } by {
     forall(x: L) {
         if left_open_interval(a, b, x) {
@@ -1681,7 +1681,7 @@ theorem left_open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
 
 /// The right endpoint is an upper bound for the corresponding left-open interval.
 theorem left_open_interval_upper_bound[L: LinearOrder](a: L, b: L) {
-    is_upper_bound(left_open_interval(a, b), b)
+    is_upper_bound_linear(left_open_interval(a, b), b)
 } by {
     forall(x: L) {
         if left_open_interval(a, b, x) {
@@ -1702,7 +1702,7 @@ theorem left_open_interval_bounded_by_closed_interval[L: LinearOrder](a: L, b: L
 
 /// The left endpoint is a lower bound for the corresponding right-open interval.
 theorem right_open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
-    is_lower_bound(right_open_interval(a, b), a)
+    is_lower_bound_linear(right_open_interval(a, b), a)
 } by {
     forall(x: L) {
         if right_open_interval(a, b, x) {
@@ -1714,7 +1714,7 @@ theorem right_open_interval_lower_bound[L: LinearOrder](a: L, b: L) {
 
 /// The right endpoint is an upper bound for the corresponding right-open interval.
 theorem right_open_interval_upper_bound[L: LinearOrder](a: L, b: L) {
-    is_upper_bound(right_open_interval(a, b), b)
+    is_upper_bound_linear(right_open_interval(a, b), b)
 } by {
     forall(x: L) {
         if right_open_interval(a, b, x) {
@@ -1737,141 +1737,141 @@ theorem right_open_interval_bounded_by_closed_interval[L: LinearOrder](a: L, b: 
 
 /// A closed interval is bounded below.
 theorem closed_interval_bounded_below[L: LinearOrder](a: L, b: L) {
-    is_bounded_below(closed_interval(a, b))
+    is_bounded_below_linear(closed_interval(a, b))
 } by {
     closed_interval_lower_bound(a, b)
     exists(x: L) {
-        x = a and is_lower_bound(closed_interval(a, b), x)
+        x = a and is_lower_bound_linear(closed_interval(a, b), x)
     }
-    is_bounded_below(closed_interval(a, b))
+    is_bounded_below_linear(closed_interval(a, b))
 }
 
 /// A closed interval is bounded above.
 theorem closed_interval_bounded_above[L: LinearOrder](a: L, b: L) {
-    is_bounded_above(closed_interval(a, b))
+    is_bounded_above_linear(closed_interval(a, b))
 } by {
     closed_interval_upper_bound(a, b)
     exists(x: L) {
-        x = b and is_upper_bound(closed_interval(a, b), x)
+        x = b and is_upper_bound_linear(closed_interval(a, b), x)
     }
-    is_bounded_above(closed_interval(a, b))
+    is_bounded_above_linear(closed_interval(a, b))
 }
 
 /// A closed interval is bounded.
 theorem closed_interval_bounded[L: LinearOrder](a: L, b: L) {
-    is_bounded(closed_interval(a, b))
+    is_bounded_linear(closed_interval(a, b))
 } by {
     closed_interval_bounded_by_self(a, b)
     exists(x: L, y: L) {
         x = a and y = b and is_bounded_by_interval(closed_interval(a, b), x, y)
     }
-    is_bounded(closed_interval(a, b))
+    is_bounded_linear(closed_interval(a, b))
 }
 
 /// An open interval is bounded below.
 theorem open_interval_bounded_below[L: LinearOrder](a: L, b: L) {
-    is_bounded_below(open_interval(a, b))
+    is_bounded_below_linear(open_interval(a, b))
 } by {
     open_interval_lower_bound(a, b)
     exists(x: L) {
-        x = a and is_lower_bound(open_interval(a, b), x)
+        x = a and is_lower_bound_linear(open_interval(a, b), x)
     }
-    is_bounded_below(open_interval(a, b))
+    is_bounded_below_linear(open_interval(a, b))
 }
 
 /// An open interval is bounded above.
 theorem open_interval_bounded_above[L: LinearOrder](a: L, b: L) {
-    is_bounded_above(open_interval(a, b))
+    is_bounded_above_linear(open_interval(a, b))
 } by {
     open_interval_upper_bound(a, b)
     exists(x: L) {
-        x = b and is_upper_bound(open_interval(a, b), x)
+        x = b and is_upper_bound_linear(open_interval(a, b), x)
     }
-    is_bounded_above(open_interval(a, b))
+    is_bounded_above_linear(open_interval(a, b))
 }
 
 /// An open interval is bounded.
 theorem open_interval_bounded[L: LinearOrder](a: L, b: L) {
-    is_bounded(open_interval(a, b))
+    is_bounded_linear(open_interval(a, b))
 } by {
     open_interval_bounded_by_closed_interval(a, b)
     exists(x: L, y: L) {
         x = a and y = b and is_bounded_by_interval(open_interval(a, b), x, y)
     }
-    is_bounded(open_interval(a, b))
+    is_bounded_linear(open_interval(a, b))
 }
 
 /// A left-open interval is bounded below.
 theorem left_open_interval_bounded_below[L: LinearOrder](a: L, b: L) {
-    is_bounded_below(left_open_interval(a, b))
+    is_bounded_below_linear(left_open_interval(a, b))
 } by {
     left_open_interval_lower_bound(a, b)
     exists(x: L) {
-        x = a and is_lower_bound(left_open_interval(a, b), x)
+        x = a and is_lower_bound_linear(left_open_interval(a, b), x)
     }
-    is_bounded_below(left_open_interval(a, b))
+    is_bounded_below_linear(left_open_interval(a, b))
 }
 
 /// A left-open interval is bounded above.
 theorem left_open_interval_bounded_above[L: LinearOrder](a: L, b: L) {
-    is_bounded_above(left_open_interval(a, b))
+    is_bounded_above_linear(left_open_interval(a, b))
 } by {
     left_open_interval_upper_bound(a, b)
     exists(x: L) {
-        x = b and is_upper_bound(left_open_interval(a, b), x)
+        x = b and is_upper_bound_linear(left_open_interval(a, b), x)
     }
-    is_bounded_above(left_open_interval(a, b))
+    is_bounded_above_linear(left_open_interval(a, b))
 }
 
 /// A left-open interval is bounded.
 theorem left_open_interval_bounded[L: LinearOrder](a: L, b: L) {
-    is_bounded(left_open_interval(a, b))
+    is_bounded_linear(left_open_interval(a, b))
 } by {
     left_open_interval_bounded_by_closed_interval(a, b)
     exists(x: L, y: L) {
         x = a and y = b and is_bounded_by_interval(left_open_interval(a, b), x, y)
     }
-    is_bounded(left_open_interval(a, b))
+    is_bounded_linear(left_open_interval(a, b))
 }
 
 /// A right-open interval is bounded below.
 theorem right_open_interval_bounded_below[L: LinearOrder](a: L, b: L) {
-    is_bounded_below(right_open_interval(a, b))
+    is_bounded_below_linear(right_open_interval(a, b))
 } by {
     right_open_interval_lower_bound(a, b)
     exists(x: L) {
-        x = a and is_lower_bound(right_open_interval(a, b), x)
+        x = a and is_lower_bound_linear(right_open_interval(a, b), x)
     }
-    is_bounded_below(right_open_interval(a, b))
+    is_bounded_below_linear(right_open_interval(a, b))
 }
 
 /// A right-open interval is bounded above.
 theorem right_open_interval_bounded_above[L: LinearOrder](a: L, b: L) {
-    is_bounded_above(right_open_interval(a, b))
+    is_bounded_above_linear(right_open_interval(a, b))
 } by {
     right_open_interval_upper_bound(a, b)
     exists(x: L) {
-        x = b and is_upper_bound(right_open_interval(a, b), x)
+        x = b and is_upper_bound_linear(right_open_interval(a, b), x)
     }
-    is_bounded_above(right_open_interval(a, b))
+    is_bounded_above_linear(right_open_interval(a, b))
 }
 
 /// A right-open interval is bounded.
 theorem right_open_interval_bounded[L: LinearOrder](a: L, b: L) {
-    is_bounded(right_open_interval(a, b))
+    is_bounded_linear(right_open_interval(a, b))
 } by {
     right_open_interval_bounded_by_closed_interval(a, b)
     exists(x: L, y: L) {
         x = a and y = b and is_bounded_by_interval(right_open_interval(a, b), x, y)
     }
-    is_bounded(right_open_interval(a, b))
+    is_bounded_linear(right_open_interval(a, b))
 }
 
 /// A lower bound remains a lower bound after moving it downward.
-theorem lower_bound_mono[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    a <= b and is_lower_bound(p, b) implies is_lower_bound(p, a)
+theorem lower_bound_mono_linear[L: LinearOrder](p: L -> Bool, a: L, b: L) {
+    a <= b and is_lower_bound_linear(p, b) implies is_lower_bound_linear(p, a)
 } by {
-    if a <= b and is_lower_bound(p, b) {
+    if a <= b and is_lower_bound_linear(p, b) {
         forall(x: L) {
             if p(x) {
                 lower_bound_step(p, b, x)
@@ -1884,10 +1884,10 @@ theorem lower_bound_mono[L: LinearOrder](p: L -> Bool, a: L, b: L) {
 }
 
 /// An upper bound remains an upper bound after moving it upward.
-theorem upper_bound_mono[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    a <= b and is_upper_bound(p, a) implies is_upper_bound(p, b)
+theorem upper_bound_mono_linear[L: LinearOrder](p: L -> Bool, a: L, b: L) {
+    a <= b and is_upper_bound_linear(p, a) implies is_upper_bound_linear(p, b)
 } by {
-    if a <= b and is_upper_bound(p, a) {
+    if a <= b and is_upper_bound_linear(p, a) {
         forall(x: L) {
             if p(x) {
                 upper_bound_step(p, a, x)
@@ -1905,13 +1905,13 @@ theorem bounded_by_interval_mono[L: LinearOrder](p: L -> Bool, a1: L, a2: L, b1:
 } by {
     if a1 <= a2 and b2 <= b1 and is_bounded_by_interval(p, a2, b2) {
         bounded_by_interval_imp_lower_bound(p, a2, b2)
-        is_lower_bound(p, a2)
-        lower_bound_mono(p, a1, a2)
-        is_lower_bound(p, a1)
+        is_lower_bound_linear(p, a2)
+        lower_bound_mono_linear(p, a1, a2)
+        is_lower_bound_linear(p, a1)
         bounded_by_interval_imp_upper_bound(p, a2, b2)
-        is_upper_bound(p, b2)
-        upper_bound_mono(p, b2, b1)
-        is_upper_bound(p, b1)
+        is_upper_bound_linear(p, b2)
+        upper_bound_mono_linear(p, b2, b1)
+        is_upper_bound_linear(p, b1)
         bounds_imp_bounded_by_interval(p, a1, b1)
         is_bounded_by_interval(p, a1, b1)
     }
@@ -1919,98 +1919,98 @@ theorem bounded_by_interval_mono[L: LinearOrder](p: L -> Bool, a1: L, a2: L, b1:
 
 /// A lower bound gives boundedness below.
 theorem lower_bound_imp_bounded_below[L: LinearOrder](p: L -> Bool, a: L) {
-    is_lower_bound(p, a) implies is_bounded_below(p)
+    is_lower_bound_linear(p, a) implies is_bounded_below_linear(p)
 } by {
-    if is_lower_bound(p, a) {
+    if is_lower_bound_linear(p, a) {
         exists(x: L) {
-            x = a and is_lower_bound(p, x)
+            x = a and is_lower_bound_linear(p, x)
         }
-        is_bounded_below(p)
+        is_bounded_below_linear(p)
     }
 }
 
 /// An upper bound gives boundedness above.
 theorem upper_bound_imp_bounded_above[L: LinearOrder](p: L -> Bool, b: L) {
-    is_upper_bound(p, b) implies is_bounded_above(p)
+    is_upper_bound_linear(p, b) implies is_bounded_above_linear(p)
 } by {
-    if is_upper_bound(p, b) {
+    if is_upper_bound_linear(p, b) {
         exists(x: L) {
-            x = b and is_upper_bound(p, x)
+            x = b and is_upper_bound_linear(p, x)
         }
-        is_bounded_above(p)
+        is_bounded_above_linear(p)
     }
 }
 
 /// Boundedness by an interval gives boundedness below.
 theorem bounded_by_interval_imp_bounded_below[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) implies is_bounded_below(p)
+    is_bounded_by_interval(p, a, b) implies is_bounded_below_linear(p)
 } by {
     if is_bounded_by_interval(p, a, b) {
         bounded_by_interval_imp_lower_bound(p, a, b)
-        is_lower_bound(p, a)
+        is_lower_bound_linear(p, a)
         lower_bound_imp_bounded_below(p, a)
-        is_bounded_below(p)
+        is_bounded_below_linear(p)
     }
 }
 
 /// Boundedness by an interval gives boundedness above.
 theorem bounded_by_interval_imp_bounded_above[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) implies is_bounded_above(p)
+    is_bounded_by_interval(p, a, b) implies is_bounded_above_linear(p)
 } by {
     if is_bounded_by_interval(p, a, b) {
         bounded_by_interval_imp_upper_bound(p, a, b)
-        is_upper_bound(p, b)
+        is_upper_bound_linear(p, b)
         upper_bound_imp_bounded_above(p, b)
-        is_bounded_above(p)
+        is_bounded_above_linear(p)
     }
 }
 
 /// An interval bound gives boundedness.
 theorem bounded_by_interval_imp_bounded[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_bounded_by_interval(p, a, b) implies is_bounded(p)
+    is_bounded_by_interval(p, a, b) implies is_bounded_linear(p)
 } by {
     if is_bounded_by_interval(p, a, b) {
         exists(x: L, y: L) {
             x = a and y = b and is_bounded_by_interval(p, x, y)
         }
-        is_bounded(p)
+        is_bounded_linear(p)
     }
 }
 
 /// Boundedness gives boundedness below.
 theorem bounded_imp_bounded_below[L: LinearOrder](p: L -> Bool) {
-    is_bounded(p) implies is_bounded_below(p)
+    is_bounded_linear(p) implies is_bounded_below_linear(p)
 } by {
-    if is_bounded(p) {
+    if is_bounded_linear(p) {
         let (a: L, b: L) satisfy {
             is_bounded_by_interval(p, a, b)
         }
         bounded_by_interval_imp_bounded_below(p, a, b)
-        is_bounded_below(p)
+        is_bounded_below_linear(p)
     }
 }
 
 /// Boundedness gives boundedness above.
 theorem bounded_imp_bounded_above[L: LinearOrder](p: L -> Bool) {
-    is_bounded(p) implies is_bounded_above(p)
+    is_bounded_linear(p) implies is_bounded_above_linear(p)
 } by {
-    if is_bounded(p) {
+    if is_bounded_linear(p) {
         let (a: L, b: L) satisfy {
             is_bounded_by_interval(p, a, b)
         }
         bounded_by_interval_imp_bounded_above(p, a, b)
-        is_bounded_above(p)
+        is_bounded_above_linear(p)
     }
 }
 
 /// Lower and upper bounds give boundedness.
 theorem bounds_imp_bounded[L: LinearOrder](p: L -> Bool, a: L, b: L) {
-    is_lower_bound(p, a) and is_upper_bound(p, b) implies is_bounded(p)
+    is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b) implies is_bounded_linear(p)
 } by {
-    if is_lower_bound(p, a) and is_upper_bound(p, b) {
+    if is_lower_bound_linear(p, a) and is_upper_bound_linear(p, b) {
         bounds_imp_bounded_by_interval(p, a, b)
         is_bounded_by_interval(p, a, b)
         bounded_by_interval_imp_bounded(p, a, b)
-        is_bounded(p)
+        is_bounded_linear(p)
     }
 }

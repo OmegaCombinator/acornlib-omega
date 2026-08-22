@@ -835,10 +835,6 @@ define list_subsets[A](items: List[A]) -> List[FiniteSet[A]] {
     }
 }
 
-define p(xs: List[A]) -> Bool {
-        forall(u: FiniteSet[A]) { list_subsets[A](xs).contains(u) implies u.subset_eq(FiniteSet.from_list[A](xs)) }
-    }
-
 theorem list_subsets_exact[A](items: List[A], t: FiniteSet[A]) { list_subsets[A](items).contains(t) = t.subset_eq(FiniteSet.from_list[A](items)) }
 
 theorem list_subsets_length[A](items: List[A]) {
@@ -861,6 +857,18 @@ theorem finite_powerset_from_list_exact[A](items: List[A]) {
 
 theorem finite_powerset_from_list_cardinality[A](items: List[A]) {
     items.is_unique implies finite_powerset_from_list[A](items).cardinality_is(Nat.2.pow(items.length))
+}
+
+theorem unique_cons_not_contains[T](head: T, tail: List[T]) {
+    List.cons(head, tail).is_unique implies not tail.contains(head)
+}
+
+theorem filter_preserves_unique[T](list: List[T], f: T -> Bool) {
+    list.is_unique implies list.filter(f).is_unique
+}
+
+theorem filter_add[T](left: List[T], right: List[T], f: T -> Bool) {
+    (left + right).filter(f) = left.filter(f) + right.filter(f)
 }
 
 define list_k_subsets[A](items: List[A], k: Nat) -> List[FiniteSet[A]] {
@@ -2201,7 +2209,7 @@ theorem filter_contains_iff[T](a: Multiset[T], pred: T -> Bool, item: T) {
     a.filter(pred).contains(item) = (a.contains(item) and pred(item))
 }
 
-theorem filter_add[T](a: Multiset[T], b: Multiset[T], pred: T -> Bool) {
+theorem multiset_filter_add[T](a: Multiset[T], b: Multiset[T], pred: T -> Bool) {
     (a + b).filter(pred) = a.filter(pred) + b.filter(pred)
 }
 
@@ -2241,11 +2249,11 @@ theorem insert_contains_iff[T](a: Multiset[T], item: T, x: T) {
     a.insert(item).contains(x) = (x = item or a.contains(x))
 }
 
-theorem add_contains_left[T](a: Multiset[T], b: Multiset[T], x: T) {
+theorem multiset_add_contains_left[T](a: Multiset[T], b: Multiset[T], x: T) {
     a.contains(x) implies (a + b).contains(x)
 }
 
-theorem add_contains_right[T](a: Multiset[T], b: Multiset[T], x: T) {
+theorem multiset_add_contains_right[T](a: Multiset[T], b: Multiset[T], x: T) {
     b.contains(x) implies (a + b).contains(x)
 }
 
@@ -2413,12 +2421,4 @@ theorem multiset_add_has_list_card_add[T](a: Multiset[T], b: Multiset[T], n: Nat
 
 define multiset_support_contains[T](m: Multiset[T], item: T) -> Bool {
     m.contains(item)
-}
-
-define multiset_support[T](m: Multiset[T]) -> Set[T] {
-    Set[T].new(multiset_support_contains(m))
-}
-
-theorem multiset_support_contains_eq[T](m: Multiset[T], item: T) {
-    multiset_support(m).contains(item) = m.contains(item)
 }

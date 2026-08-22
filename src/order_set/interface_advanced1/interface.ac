@@ -1,0 +1,2048 @@
+define is_upper_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies f(point) <= bound
+    }
+}
+
+define is_lower_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies bound <= f(point)
+    }
+}
+
+define is_bounded_above_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_upper_bound_on(domain, f, bound)
+    }
+}
+
+define is_bounded_below_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_lower_bound_on(domain, f, bound)
+    }
+}
+
+define is_bounded_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    is_bounded_above_on(domain, f) and is_bounded_below_on(domain, f)
+}
+
+theorem upper_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
+) {
+    is_upper_bound_on(domain, f, bound) and domain.contains(point) implies f(point) <= bound
+}
+
+theorem lower_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
+) {
+    is_lower_bound_on(domain, f, bound) and domain.contains(point) implies bound <= f(point)
+}
+
+define attains_maximum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_upper_bound_on(domain, f, f(point))
+}
+
+define attains_minimum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_lower_bound_on(domain, f, f(point))
+}
+
+define attains_maximum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_maximum_at(domain, f, point)
+    }
+}
+
+define attains_minimum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_minimum_at(domain, f, point)
+    }
+}
+
+theorem maximum_value_is_upper_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_maximum_at(domain, f, point) implies is_upper_bound_on(domain, f, f(point))
+}
+
+theorem minimum_value_is_lower_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_minimum_at(domain, f, point) implies is_lower_bound_on(domain, f, f(point))
+}
+
+theorem attains_maximum_imp_bounded_above[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    attains_maximum_on(domain, f) implies is_bounded_above_on(domain, f)
+}
+
+theorem attains_minimum_imp_bounded_below[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    attains_minimum_on(domain, f) implies is_bounded_below_on(domain, f)
+}
+
+theorem upper_bound_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    subset.subset(superset) and is_upper_bound_on(superset, f, bound)
+    implies is_upper_bound_on(subset, f, bound)
+}
+
+theorem lower_bound_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    subset.subset(superset) and is_lower_bound_on(superset, f, bound)
+    implies is_lower_bound_on(subset, f, bound)
+}
+
+define function_eq_on[Domain, Value](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies left(point) = right(point)
+    }
+}
+
+define function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies lower(point) <= upper(point)
+    }
+}
+
+define function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies lower(point) < upper(point)
+    }
+}
+
+define function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) -> Bool {
+    function_lte_on(domain, lower, middle) and function_lte_on(domain, middle, upper)
+}
+
+define function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) -> Bool {
+    function_lt_on(domain, lower, middle) and function_lt_on(domain, middle, upper)
+}
+
+theorem function_eq_on_apply[Domain, Value](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value, point: Domain
+) {
+    function_eq_on(domain, left, right) and domain.contains(point)
+    implies left(point) = right(point)
+}
+
+theorem function_eq_on_symm[Domain, Value](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) implies function_eq_on(domain, right, left)
+}
+
+theorem function_eq_on_trans[Domain, Value](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_eq_on(domain, g, h) implies function_eq_on(domain, f, h)
+}
+
+theorem function_eq_on_subset[Domain, Value](
+    subset: Set[Domain], superset: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    subset.subset(superset) and function_eq_on(superset, left, right)
+    implies function_eq_on(subset, left, right)
+}
+
+theorem function_lte_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, point: Domain
+) {
+    function_lte_on(domain, lower, upper) and domain.contains(point)
+    implies lower(point) <= upper(point)
+}
+
+theorem function_lt_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, point: Domain
+) {
+    function_lt_on(domain, lower, upper) and domain.contains(point)
+    implies lower(point) < upper(point)
+}
+
+theorem function_lte_on_refl[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    function_lte_on(domain, f, f)
+}
+
+theorem function_lte_on_of_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) implies function_lte_on(domain, left, right)
+}
+
+theorem function_lte_on_trans[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lte_on(domain, f, g) and function_lte_on(domain, g, h)
+    implies function_lte_on(domain, f, h)
+}
+
+theorem function_eq_on_of_lte_on_both[Domain, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_lte_on(domain, left, right) and function_lte_on(domain, right, left)
+    implies function_eq_on(domain, left, right)
+}
+
+theorem function_lte_on_congr_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lte_on(domain, g, h)
+    implies function_lte_on(domain, f, h)
+}
+
+theorem function_lte_on_congr_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lte_on(domain, f, g) and function_eq_on(domain, g, h)
+    implies function_lte_on(domain, f, h)
+}
+
+theorem function_lte_on_reflect_congr_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lte_on(domain, f, h)
+    implies function_lte_on(domain, g, h)
+}
+
+theorem function_lte_on_reflect_congr_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lte_on(domain, f, h) and function_eq_on(domain, g, h)
+    implies function_lte_on(domain, f, g)
+}
+
+theorem function_lte_on_congr[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value,
+    h: Domain -> Value, k: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lte_on(domain, g, h) and function_eq_on(domain, h, k)
+    implies function_lte_on(domain, f, k)
+}
+
+theorem function_lte_on_pair_of_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right)
+    implies function_lte_on(domain, left, right) and function_lte_on(domain, right, left)
+}
+
+theorem function_lt_on_trans[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lt_on(domain, f, g) and function_lt_on(domain, g, h)
+    implies function_lt_on(domain, f, h)
+}
+
+theorem function_lt_lte_on_trans[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lt_on(domain, f, g) and function_lte_on(domain, g, h)
+    implies function_lt_on(domain, f, h)
+}
+
+theorem function_lte_lt_on_trans[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lte_on(domain, f, g) and function_lt_on(domain, g, h)
+    implies function_lt_on(domain, f, h)
+}
+
+theorem function_lt_on_imp_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) implies function_lte_on(domain, lower, upper)
+}
+
+theorem function_lt_on_congr_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lt_on(domain, g, h)
+    implies function_lt_on(domain, f, h)
+}
+
+theorem function_lt_on_congr_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lt_on(domain, f, g) and function_eq_on(domain, g, h)
+    implies function_lt_on(domain, f, h)
+}
+
+theorem function_lt_on_reflect_congr_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lt_on(domain, f, h)
+    implies function_lt_on(domain, g, h)
+}
+
+theorem function_lt_on_reflect_congr_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, h: Domain -> Value
+) {
+    function_lt_on(domain, f, h) and function_eq_on(domain, g, h)
+    implies function_lt_on(domain, f, g)
+}
+
+theorem function_lt_on_congr[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value,
+    h: Domain -> Value, k: Domain -> Value
+) {
+    function_eq_on(domain, f, g) and function_lt_on(domain, g, h) and function_eq_on(domain, h, k)
+    implies function_lt_on(domain, f, k)
+}
+
+theorem function_between_on_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) implies function_lte_on(domain, lower, middle)
+}
+
+theorem function_between_on_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) implies function_lte_on(domain, middle, upper)
+}
+
+theorem function_strict_between_on_left[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) implies function_lt_on(domain, lower, middle)
+}
+
+theorem function_strict_between_on_right[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) implies function_lt_on(domain, middle, upper)
+}
+
+theorem function_between_on_of_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper)
+    implies function_between_on(domain, lower, middle, upper)
+}
+
+theorem function_between_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    subset.subset(superset) and function_between_on(superset, lower, middle, upper)
+    implies function_between_on(subset, lower, middle, upper)
+}
+
+theorem function_strict_between_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    subset.subset(superset) and function_strict_between_on(superset, lower, middle, upper)
+    implies function_strict_between_on(subset, lower, middle, upper)
+}
+
+theorem function_lte_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    subset.subset(superset) and function_lte_on(superset, lower, upper)
+    implies function_lte_on(subset, lower, upper)
+}
+
+theorem function_lt_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    subset.subset(superset) and function_lt_on(superset, lower, upper)
+    implies function_lt_on(subset, lower, upper)
+}
+
+theorem function_eq_on_union[Domain, Value](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, g: Domain -> Value
+) {
+    function_eq_on(left, f, g) and function_eq_on(right, f, g)
+    implies function_eq_on(left.union(right), f, g)
+}
+
+theorem function_eq_on_union_left[Domain, Value](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, g: Domain -> Value
+) {
+    function_eq_on(left.union(right), f, g) implies function_eq_on(left, f, g)
+}
+
+theorem function_eq_on_union_right[Domain, Value](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, g: Domain -> Value
+) {
+    function_eq_on(left.union(right), f, g) implies function_eq_on(right, f, g)
+}
+
+theorem function_lte_on_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(left, lower, upper) and function_lte_on(right, lower, upper)
+    implies function_lte_on(left.union(right), lower, upper)
+}
+
+theorem function_lte_on_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(left.union(right), lower, upper) implies function_lte_on(left, lower, upper)
+}
+
+theorem function_lte_on_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(left.union(right), lower, upper) implies function_lte_on(right, lower, upper)
+}
+
+theorem function_lt_on_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(left, lower, upper) and function_lt_on(right, lower, upper)
+    implies function_lt_on(left.union(right), lower, upper)
+}
+
+theorem function_lt_on_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(left.union(right), lower, upper) implies function_lt_on(left, lower, upper)
+}
+
+theorem function_lt_on_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(left.union(right), lower, upper) implies function_lt_on(right, lower, upper)
+}
+
+theorem function_between_on_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(left, lower, middle, upper) and function_between_on(right, lower, middle, upper)
+    implies function_between_on(left.union(right), lower, middle, upper)
+}
+
+theorem function_between_on_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(left.union(right), lower, middle, upper)
+    implies function_between_on(left, lower, middle, upper)
+}
+
+theorem function_between_on_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(left.union(right), lower, middle, upper)
+    implies function_between_on(right, lower, middle, upper)
+}
+
+theorem function_strict_between_on_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(left, lower, middle, upper)
+    and function_strict_between_on(right, lower, middle, upper)
+    implies function_strict_between_on(left.union(right), lower, middle, upper)
+}
+
+theorem function_strict_between_on_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(left.union(right), lower, middle, upper)
+    implies function_strict_between_on(left, lower, middle, upper)
+}
+
+theorem function_strict_between_on_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], lower: Domain -> Value,
+    middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(left.union(right), lower, middle, upper)
+    implies function_strict_between_on(right, lower, middle, upper)
+}
+
+theorem upper_bound_on_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, bound: Value
+) {
+    function_lte_on(domain, lower, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, lower, bound)
+}
+
+theorem lower_bound_on_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, bound: Value
+) {
+    function_lte_on(domain, lower, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, upper, bound)
+}
+
+theorem bounded_above_on_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower)
+}
+
+theorem bounded_below_on_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, upper)
+}
+
+theorem upper_bound_on_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, bound: Value
+) {
+    function_lt_on(domain, lower, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, lower, bound)
+}
+
+theorem lower_bound_on_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value, bound: Value
+) {
+    function_lt_on(domain, lower, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, upper, bound)
+}
+
+theorem bounded_above_on_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower)
+}
+
+theorem bounded_below_on_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, upper)
+}
+
+theorem bounded_above_on_pair_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower) and is_bounded_above_on(domain, upper)
+}
+
+theorem bounded_below_on_pair_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, lower) and is_bounded_below_on(domain, upper)
+}
+
+theorem bounded_above_on_middle_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, middle) and function_lte_on(domain, middle, upper) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, middle)
+}
+
+theorem bounded_below_on_middle_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, middle) and function_lte_on(domain, middle, upper) and
+    is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, middle)
+}
+
+theorem bounded_above_on_pair_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower) and is_bounded_above_on(domain, upper)
+}
+
+theorem bounded_below_on_pair_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, lower) and is_bounded_below_on(domain, upper)
+}
+
+theorem bounded_above_on_middle_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, middle) and function_lt_on(domain, middle, upper) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, middle)
+}
+
+theorem bounded_below_on_middle_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, middle) and function_lt_on(domain, middle, upper) and
+    is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, middle)
+}
+
+theorem bounded_on_lower_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower)
+}
+
+theorem bounded_on_upper_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_pair_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower) and is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_middle_of_function_lte_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lte_on(domain, lower, middle) and function_lte_on(domain, middle, upper) and
+    is_bounded_below_on(domain, lower) and is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, middle)
+}
+
+theorem bounded_on_lower_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower)
+}
+
+theorem bounded_on_upper_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_pair_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower) and is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_middle_of_function_lt_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_lt_on(domain, lower, middle) and function_lt_on(domain, middle, upper) and
+    is_bounded_below_on(domain, lower) and is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, middle)
+}
+
+theorem upper_bound_on_middle_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, middle, bound)
+}
+
+theorem lower_bound_on_middle_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, middle, bound)
+}
+
+theorem upper_bound_on_lower_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, lower, bound)
+}
+
+theorem lower_bound_on_upper_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, upper, bound)
+}
+
+theorem upper_bound_on_middle_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, middle, bound)
+}
+
+theorem lower_bound_on_middle_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, middle, bound)
+}
+
+theorem upper_bound_on_lower_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_upper_bound_on(domain, upper, bound)
+    implies is_upper_bound_on(domain, lower, bound)
+}
+
+theorem lower_bound_on_upper_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value,
+    upper: Domain -> Value, bound: Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_lower_bound_on(domain, lower, bound)
+    implies is_lower_bound_on(domain, upper, bound)
+}
+
+theorem bounded_above_on_middle_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, middle)
+}
+
+theorem bounded_below_on_middle_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, middle)
+}
+
+theorem bounded_above_on_lower_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower)
+}
+
+theorem bounded_below_on_upper_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, upper)
+}
+
+theorem bounded_on_middle_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, middle)
+}
+
+theorem bounded_on_lower_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower)
+}
+
+theorem bounded_on_upper_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_triple_of_function_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower) and is_bounded_on(domain, middle) and is_bounded_on(domain, upper)
+}
+
+theorem bounded_above_on_middle_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, middle)
+}
+
+theorem bounded_below_on_middle_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, middle)
+}
+
+theorem bounded_above_on_lower_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_above_on(domain, upper)
+    implies is_bounded_above_on(domain, lower)
+}
+
+theorem bounded_below_on_upper_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower)
+    implies is_bounded_below_on(domain, upper)
+}
+
+theorem bounded_on_middle_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, middle)
+}
+
+theorem bounded_on_lower_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower)
+}
+
+theorem bounded_on_upper_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, upper)
+}
+
+theorem bounded_on_triple_of_function_strict_between_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], lower: Domain -> Value, middle: Domain -> Value, upper: Domain -> Value
+) {
+    function_strict_between_on(domain, lower, middle, upper) and is_bounded_below_on(domain, lower) and
+    is_bounded_above_on(domain, upper)
+    implies is_bounded_on(domain, lower) and is_bounded_on(domain, middle) and is_bounded_on(domain, upper)
+}
+
+theorem upper_bound_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, bound: Value
+) {
+    function_eq_on(domain, original, replacement) and is_upper_bound_on(domain, original, bound)
+    implies is_upper_bound_on(domain, replacement, bound)
+}
+
+theorem lower_bound_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, bound: Value
+) {
+    function_eq_on(domain, original, replacement) and is_lower_bound_on(domain, original, bound)
+    implies is_lower_bound_on(domain, replacement, bound)
+}
+
+theorem upper_bound_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, bound: Value
+) {
+    function_eq_on(domain, original, replacement) and is_upper_bound_on(domain, replacement, bound)
+    implies is_upper_bound_on(domain, original, bound)
+}
+
+theorem lower_bound_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, bound: Value
+) {
+    function_eq_on(domain, original, replacement) and is_lower_bound_on(domain, replacement, bound)
+    implies is_lower_bound_on(domain, original, bound)
+}
+
+theorem bounded_above_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_above_on(domain, original)
+    implies is_bounded_above_on(domain, replacement)
+}
+
+theorem bounded_below_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_below_on(domain, original)
+    implies is_bounded_below_on(domain, replacement)
+}
+
+theorem bounded_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_on(domain, original)
+    implies is_bounded_on(domain, replacement)
+}
+
+theorem bounded_above_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_above_on(domain, replacement)
+    implies is_bounded_above_on(domain, original)
+}
+
+theorem bounded_below_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_below_on(domain, replacement)
+    implies is_bounded_below_on(domain, original)
+}
+
+theorem bounded_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_bounded_on(domain, replacement)
+    implies is_bounded_on(domain, original)
+}
+
+theorem attains_maximum_at_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, point: Domain
+) {
+    function_eq_on(domain, original, replacement) and attains_maximum_at(domain, original, point)
+    implies attains_maximum_at(domain, replacement, point)
+}
+
+theorem attains_minimum_at_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, point: Domain
+) {
+    function_eq_on(domain, original, replacement) and attains_minimum_at(domain, original, point)
+    implies attains_minimum_at(domain, replacement, point)
+}
+
+theorem attains_maximum_at_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, point: Domain
+) {
+    function_eq_on(domain, original, replacement) and attains_maximum_at(domain, replacement, point)
+    implies attains_maximum_at(domain, original, point)
+}
+
+theorem attains_minimum_at_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value, point: Domain
+) {
+    function_eq_on(domain, original, replacement) and attains_minimum_at(domain, replacement, point)
+    implies attains_minimum_at(domain, original, point)
+}
+
+theorem attains_maximum_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and attains_maximum_on(domain, original)
+    implies attains_maximum_on(domain, replacement)
+}
+
+theorem attains_minimum_on_of_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and attains_minimum_on(domain, original)
+    implies attains_minimum_on(domain, replacement)
+}
+
+theorem attains_maximum_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and attains_maximum_on(domain, replacement)
+    implies attains_maximum_on(domain, original)
+}
+
+theorem attains_minimum_on_reflect_function_eq_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and attains_minimum_on(domain, replacement)
+    implies attains_minimum_on(domain, original)
+}
+
+define closed_interval_set[L: LinearOrder](lower: L, upper: L) -> Set[L] {
+    Set[L].new(closed_interval(lower, upper))
+}
+
+define open_interval_set[L: LinearOrder](lower: L, upper: L) -> Set[L] {
+    Set[L].new(open_interval(lower, upper))
+}
+
+define left_open_interval_set[L: LinearOrder](lower: L, upper: L) -> Set[L] {
+    Set[L].new(left_open_interval(lower, upper))
+}
+
+define right_open_interval_set[L: LinearOrder](lower: L, upper: L) -> Set[L] {
+    Set[L].new(right_open_interval(lower, upper))
+}
+
+theorem closed_interval_set_contains_eq[L: LinearOrder](lower: L, upper: L, point: L) {
+    closed_interval_set(lower, upper).contains(point) = closed_interval(lower, upper, point)
+}
+
+theorem open_interval_set_contains_eq[L: LinearOrder](lower: L, upper: L, point: L) {
+    open_interval_set(lower, upper).contains(point) = open_interval(lower, upper, point)
+}
+
+theorem left_open_interval_set_contains_eq[L: LinearOrder](lower: L, upper: L, point: L) {
+    left_open_interval_set(lower, upper).contains(point) = left_open_interval(lower, upper, point)
+}
+
+theorem right_open_interval_set_contains_eq[L: LinearOrder](lower: L, upper: L, point: L) {
+    right_open_interval_set(lower, upper).contains(point) = right_open_interval(lower, upper, point)
+}
+
+theorem closed_interval_set_contains_lower[L: LinearOrder](lower: L, upper: L) {
+    lower <= upper implies closed_interval_set(lower, upper).contains(lower)
+}
+
+theorem closed_interval_set_contains_upper[L: LinearOrder](lower: L, upper: L) {
+    lower <= upper implies closed_interval_set(lower, upper).contains(upper)
+}
+
+theorem closed_interval_set_lower_le[L: LinearOrder](lower: L, upper: L, point: L) {
+    closed_interval_set(lower, upper).contains(point) implies lower <= point
+}
+
+theorem closed_interval_set_le_upper[L: LinearOrder](lower: L, upper: L, point: L) {
+    closed_interval_set(lower, upper).contains(point) implies point <= upper
+}
+
+theorem left_open_interval_set_contains_upper[L: LinearOrder](lower: L, upper: L) {
+    lower < upper implies left_open_interval_set(lower, upper).contains(upper)
+}
+
+theorem right_open_interval_set_contains_lower[L: LinearOrder](lower: L, upper: L) {
+    lower < upper implies right_open_interval_set(lower, upper).contains(lower)
+}
+
+theorem open_interval_set_lower_lt[L: LinearOrder](lower: L, upper: L, point: L) {
+    open_interval_set(lower, upper).contains(point) implies lower < point
+}
+
+theorem open_interval_set_lt_upper[L: LinearOrder](lower: L, upper: L, point: L) {
+    open_interval_set(lower, upper).contains(point) implies point < upper
+}
+
+theorem left_open_interval_set_lower_lt[L: LinearOrder](lower: L, upper: L, point: L) {
+    left_open_interval_set(lower, upper).contains(point) implies lower < point
+}
+
+theorem left_open_interval_set_le_upper[L: LinearOrder](lower: L, upper: L, point: L) {
+    left_open_interval_set(lower, upper).contains(point) implies point <= upper
+}
+
+theorem right_open_interval_set_lower_le[L: LinearOrder](lower: L, upper: L, point: L) {
+    right_open_interval_set(lower, upper).contains(point) implies lower <= point
+}
+
+theorem right_open_interval_set_lt_upper[L: LinearOrder](lower: L, upper: L, point: L) {
+    right_open_interval_set(lower, upper).contains(point) implies point < upper
+}
+
+theorem open_interval_set_subset_closed_interval_set[L: LinearOrder](lower: L, upper: L) {
+    open_interval_set(lower, upper).subset(closed_interval_set(lower, upper))
+}
+
+theorem left_open_interval_set_subset_closed_interval_set[L: LinearOrder](lower: L, upper: L) {
+    left_open_interval_set(lower, upper).subset(closed_interval_set(lower, upper))
+}
+
+theorem right_open_interval_set_subset_closed_interval_set[L: LinearOrder](lower: L, upper: L) {
+    right_open_interval_set(lower, upper).subset(closed_interval_set(lower, upper))
+}
+
+theorem open_interval_set_subset_left_open_interval_set[L: LinearOrder](lower: L, upper: L) {
+    open_interval_set(lower, upper).subset(left_open_interval_set(lower, upper))
+}
+
+theorem open_interval_set_subset_right_open_interval_set[L: LinearOrder](lower: L, upper: L) {
+    open_interval_set(lower, upper).subset(right_open_interval_set(lower, upper))
+}
+
+theorem closed_interval_set_subset_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies closed_interval_set(lower, upper).subset(closed_interval_set(outer_lower, outer_upper))
+}
+
+theorem open_interval_set_subset_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies open_interval_set(lower, upper).subset(open_interval_set(outer_lower, outer_upper))
+}
+
+theorem left_open_interval_set_subset_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies left_open_interval_set(lower, upper).subset(left_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem right_open_interval_set_subset_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies right_open_interval_set(lower, upper).subset(right_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem open_interval_set_subset_closed_interval_set_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies open_interval_set(lower, upper).subset(closed_interval_set(outer_lower, outer_upper))
+}
+
+theorem open_interval_set_subset_left_open_interval_set_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies open_interval_set(lower, upper).subset(left_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem open_interval_set_subset_right_open_interval_set_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies open_interval_set(lower, upper).subset(right_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem left_open_interval_set_subset_closed_interval_set_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies left_open_interval_set(lower, upper).subset(closed_interval_set(outer_lower, outer_upper))
+}
+
+theorem right_open_interval_set_subset_closed_interval_set_of_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper <= outer_upper
+    implies right_open_interval_set(lower, upper).subset(closed_interval_set(outer_lower, outer_upper))
+}
+
+theorem left_open_interval_set_subset_right_open_interval_set_of_upper_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper < outer_upper
+    implies left_open_interval_set(lower, upper).subset(right_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem right_open_interval_set_subset_left_open_interval_set_of_lower_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower < lower and upper <= outer_upper
+    implies right_open_interval_set(lower, upper).subset(left_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem closed_interval_set_subset_open_interval_set_of_strict_bounds[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower < lower and upper < outer_upper
+    implies closed_interval_set(lower, upper).subset(open_interval_set(outer_lower, outer_upper))
+}
+
+theorem closed_interval_set_subset_left_open_interval_set_of_lower_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower < lower and upper <= outer_upper
+    implies closed_interval_set(lower, upper).subset(left_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem closed_interval_set_subset_right_open_interval_set_of_upper_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper < outer_upper
+    implies closed_interval_set(lower, upper).subset(right_open_interval_set(outer_lower, outer_upper))
+}
+
+theorem left_open_interval_set_subset_open_interval_set_of_upper_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower <= lower and upper < outer_upper
+    implies left_open_interval_set(lower, upper).subset(open_interval_set(outer_lower, outer_upper))
+}
+
+theorem right_open_interval_set_subset_open_interval_set_of_lower_strict_bound[L: LinearOrder](
+    outer_lower: L, lower: L, upper: L, outer_upper: L
+) {
+    outer_lower < lower and upper <= outer_upper
+    implies right_open_interval_set(lower, upper).subset(open_interval_set(outer_lower, outer_upper))
+}
+
+theorem closed_interval_set_intersection_eq[L: LinearOrder](a1: L, b1: L, a2: L, b2: L) {
+    closed_interval_set(a1, b1).intersection(closed_interval_set(a2, b2)) =
+    closed_interval_set(a1.max(a2), b1.min(b2))
+}
+
+theorem open_interval_set_intersection_eq[L: LinearOrder](a1: L, b1: L, a2: L, b2: L) {
+    open_interval_set(a1, b1).intersection(open_interval_set(a2, b2)) =
+    open_interval_set(a1.max(a2), b1.min(b2))
+}
+
+theorem left_open_interval_set_intersection_eq[L: LinearOrder](a1: L, b1: L, a2: L, b2: L) {
+    left_open_interval_set(a1, b1).intersection(left_open_interval_set(a2, b2)) =
+    left_open_interval_set(a1.max(a2), b1.min(b2))
+}
+
+theorem right_open_interval_set_intersection_eq[L: LinearOrder](a1: L, b1: L, a2: L, b2: L) {
+    right_open_interval_set(a1, b1).intersection(right_open_interval_set(a2, b2)) =
+    right_open_interval_set(a1.max(a2), b1.min(b2))
+}
+
+define is_monotone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    forall(left: Domain, right: Domain) {
+        domain.contains(left) and domain.contains(right) and left <= right implies f(left) <= f(right)
+    }
+}
+
+define is_antitone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    forall(left: Domain, right: Domain) {
+        domain.contains(left) and domain.contains(right) and left <= right implies f(right) <= f(left)
+    }
+}
+
+define is_strict_monotone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    forall(left: Domain, right: Domain) {
+        domain.contains(left) and domain.contains(right) and left < right implies f(left) < f(right)
+    }
+}
+
+define is_strict_antitone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    forall(left: Domain, right: Domain) {
+        domain.contains(left) and domain.contains(right) and left < right implies f(right) < f(left)
+    }
+}
+
+theorem monotone_on_apply[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left: Domain, right: Domain
+) {
+    is_monotone_on(domain, f) and domain.contains(left) and domain.contains(right) and left <= right
+    implies f(left) <= f(right)
+}
+
+theorem antitone_on_apply[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left: Domain, right: Domain
+) {
+    is_antitone_on(domain, f) and domain.contains(left) and domain.contains(right) and left <= right
+    implies f(right) <= f(left)
+}
+
+theorem strict_monotone_on_apply[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left: Domain, right: Domain
+) {
+    is_strict_monotone_on(domain, f) and domain.contains(left) and domain.contains(right) and left < right
+    implies f(left) < f(right)
+}
+
+theorem strict_antitone_on_apply[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left: Domain, right: Domain
+) {
+    is_strict_antitone_on(domain, f) and domain.contains(left) and domain.contains(right) and left < right
+    implies f(right) < f(left)
+}
+
+theorem monotone_on_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_monotone_on(domain, original)
+    implies is_monotone_on(domain, replacement)
+}
+
+theorem antitone_on_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_antitone_on(domain, original)
+    implies is_antitone_on(domain, replacement)
+}
+
+theorem strict_monotone_on_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_strict_monotone_on(domain, original)
+    implies is_strict_monotone_on(domain, replacement)
+}
+
+theorem strict_antitone_on_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_strict_antitone_on(domain, original)
+    implies is_strict_antitone_on(domain, replacement)
+}
+
+theorem monotone_on_reflect_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_monotone_on(domain, replacement)
+    implies is_monotone_on(domain, original)
+}
+
+theorem antitone_on_reflect_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_antitone_on(domain, replacement)
+    implies is_antitone_on(domain, original)
+}
+
+theorem strict_monotone_on_reflect_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_strict_monotone_on(domain, replacement)
+    implies is_strict_monotone_on(domain, original)
+}
+
+theorem strict_antitone_on_reflect_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    function_eq_on(domain, original, replacement) and is_strict_antitone_on(domain, replacement)
+    implies is_strict_antitone_on(domain, original)
+}
+
+theorem monotone_on_of_monotone[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_monotone(f) implies is_monotone_on(domain, f)
+}
+
+theorem antitone_on_of_antitone[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_antitone(f) implies is_antitone_on(domain, f)
+}
+
+theorem strict_monotone_on_of_strict_monotone[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_strict_monotone(f) implies is_strict_monotone_on(domain, f)
+}
+
+theorem strict_antitone_on_of_strict_antitone[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_strict_antitone(f) implies is_strict_antitone_on(domain, f)
+}
+
+theorem monotone_on_of_monotone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_monotone(original) and function_eq_on(domain, original, replacement)
+    implies is_monotone_on(domain, replacement)
+}
+
+theorem antitone_on_of_antitone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_antitone(original) and function_eq_on(domain, original, replacement)
+    implies is_antitone_on(domain, replacement)
+}
+
+theorem strict_monotone_on_of_strict_monotone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_monotone(original) and function_eq_on(domain, original, replacement)
+    implies is_strict_monotone_on(domain, replacement)
+}
+
+theorem strict_antitone_on_of_strict_antitone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_antitone(original) and function_eq_on(domain, original, replacement)
+    implies is_strict_antitone_on(domain, replacement)
+}
+
+theorem monotone_on_pair_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) and is_monotone_on(domain, left)
+    implies is_monotone_on(domain, left) and is_monotone_on(domain, right)
+}
+
+theorem antitone_on_pair_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) and is_antitone_on(domain, left)
+    implies is_antitone_on(domain, left) and is_antitone_on(domain, right)
+}
+
+theorem strict_monotone_on_pair_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) and is_strict_monotone_on(domain, left)
+    implies is_strict_monotone_on(domain, left) and is_strict_monotone_on(domain, right)
+}
+
+theorem strict_antitone_on_pair_of_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], left: Domain -> Value, right: Domain -> Value
+) {
+    function_eq_on(domain, left, right) and is_strict_antitone_on(domain, left)
+    implies is_strict_antitone_on(domain, left) and is_strict_antitone_on(domain, right)
+}
+
+theorem identity_monotone_on[Domain: PartialOrder](domain: Set[Domain]) {
+    is_monotone_on(domain, identity_fn[Domain])
+}
+
+theorem identity_strict_monotone_on[Domain: PartialOrder](domain: Set[Domain]) {
+    is_strict_monotone_on(domain, identity_fn[Domain])
+}
+
+theorem constant_monotone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], value: Value
+) {
+    is_monotone_on(domain, constant[Domain, Value](value))
+}
+
+theorem constant_antitone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], value: Value
+) {
+    is_antitone_on(domain, constant[Domain, Value](value))
+}
+
+theorem monotone_compose_monotone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_monotone(outer) and is_monotone_on(domain, inner) implies is_monotone_on(domain, compose(outer, inner))
+}
+
+theorem antitone_compose_monotone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_antitone(outer) and is_monotone_on(domain, inner) implies is_antitone_on(domain, compose(outer, inner))
+}
+
+theorem monotone_compose_antitone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_monotone(outer) and is_antitone_on(domain, inner) implies is_antitone_on(domain, compose(outer, inner))
+}
+
+theorem antitone_compose_antitone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_antitone(outer) and is_antitone_on(domain, inner) implies is_monotone_on(domain, compose(outer, inner))
+}
+
+theorem strict_monotone_compose_strict_monotone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_monotone(outer) and is_strict_monotone_on(domain, inner)
+    implies is_strict_monotone_on(domain, compose(outer, inner))
+}
+
+theorem strict_antitone_compose_strict_monotone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_antitone(outer) and is_strict_monotone_on(domain, inner)
+    implies is_strict_antitone_on(domain, compose(outer, inner))
+}
+
+theorem strict_monotone_compose_strict_antitone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_monotone(outer) and is_strict_antitone_on(domain, inner)
+    implies is_strict_antitone_on(domain, compose(outer, inner))
+}
+
+theorem strict_antitone_compose_strict_antitone_on[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_antitone(outer) and is_strict_antitone_on(domain, inner)
+    implies is_strict_monotone_on(domain, compose(outer, inner))
+}
+
+theorem monotone_on_compose_monotone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_monotone_on(set_image(domain, inner), outer) and is_monotone_on(domain, inner)
+    implies is_monotone_on(domain, compose(outer, inner))
+}
+
+theorem antitone_on_compose_monotone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_antitone_on(set_image(domain, inner), outer) and is_monotone_on(domain, inner)
+    implies is_antitone_on(domain, compose(outer, inner))
+}
+
+theorem monotone_on_compose_antitone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_monotone_on(set_image(domain, inner), outer) and is_antitone_on(domain, inner)
+    implies is_antitone_on(domain, compose(outer, inner))
+}
+
+theorem antitone_on_compose_antitone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_antitone_on(set_image(domain, inner), outer) and is_antitone_on(domain, inner)
+    implies is_monotone_on(domain, compose(outer, inner))
+}
+
+theorem strict_monotone_on_compose_strict_monotone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_monotone_on(set_image(domain, inner), outer) and is_strict_monotone_on(domain, inner)
+    implies is_strict_monotone_on(domain, compose(outer, inner))
+}
+
+theorem strict_antitone_on_compose_strict_monotone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_antitone_on(set_image(domain, inner), outer) and is_strict_monotone_on(domain, inner)
+    implies is_strict_antitone_on(domain, compose(outer, inner))
+}
+
+theorem strict_monotone_on_compose_strict_antitone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_monotone_on(set_image(domain, inner), outer) and is_strict_antitone_on(domain, inner)
+    implies is_strict_antitone_on(domain, compose(outer, inner))
+}
+
+theorem strict_antitone_on_compose_strict_antitone_on_image[Domain: PartialOrder, Middle: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], outer: Middle -> Value, inner: Domain -> Middle
+) {
+    is_strict_antitone_on(set_image(domain, inner), outer) and is_strict_antitone_on(domain, inner)
+    implies is_strict_monotone_on(domain, compose(outer, inner))
+}
+
+theorem strict_monotone_on_imp_monotone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_strict_monotone_on(domain, f) implies is_monotone_on(domain, f)
+}
+
+theorem strict_antitone_on_imp_antitone_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    is_strict_antitone_on(domain, f) implies is_antitone_on(domain, f)
+}
+
+theorem monotone_on_of_strict_monotone_on_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_monotone_on(domain, original) and function_eq_on(domain, original, replacement)
+    implies is_monotone_on(domain, replacement)
+}
+
+theorem antitone_on_of_strict_antitone_on_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_antitone_on(domain, original) and function_eq_on(domain, original, replacement)
+    implies is_antitone_on(domain, replacement)
+}
+
+theorem monotone_on_of_strict_monotone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_monotone(original) and function_eq_on(domain, original, replacement)
+    implies is_monotone_on(domain, replacement)
+}
+
+theorem antitone_on_of_strict_antitone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
+    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
+) {
+    is_strict_antitone(original) and function_eq_on(domain, original, replacement)
+    implies is_antitone_on(domain, replacement)
+}
+
+theorem monotone_on_subset[Domain: PartialOrder, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_monotone_on(superset, f) implies is_monotone_on(subset, f)
+}
+
+theorem antitone_on_subset[Domain: PartialOrder, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_antitone_on(superset, f) implies is_antitone_on(subset, f)
+}
+
+theorem strict_monotone_on_subset[Domain: PartialOrder, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_strict_monotone_on(superset, f) implies is_strict_monotone_on(subset, f)
+}
+
+theorem strict_antitone_on_subset[Domain: PartialOrder, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_strict_antitone_on(superset, f) implies is_strict_antitone_on(subset, f)
+}
+
+theorem monotone_on_closed_interval_upper_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(closed_interval_set(lower, upper), f, f(upper))
+}
+
+theorem monotone_on_closed_interval_lower_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(closed_interval_set(lower, upper), f, f(lower))
+}
+
+theorem monotone_on_closed_interval_bounded_above[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(closed_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_closed_interval_bounded_below[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(closed_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_closed_interval_bounded[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(closed_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem monotone_on_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem monotone_on_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_left_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(left_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem monotone_on_left_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(left_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem monotone_on_left_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_left_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_left_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_right_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(right_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem monotone_on_right_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(right_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem monotone_on_right_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_right_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_right_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_closed_interval_upper_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(closed_interval_set(lower, upper), f, f(lower))
+}
+
+theorem antitone_on_closed_interval_lower_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(closed_interval_set(lower, upper), f, f(upper))
+}
+
+theorem antitone_on_closed_interval_bounded_above[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(closed_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_closed_interval_bounded_below[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(closed_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_closed_interval_bounded[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(closed_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem antitone_on_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem antitone_on_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_left_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(left_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem antitone_on_left_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(left_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem antitone_on_left_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_left_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_left_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_right_open_interval_upper_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_upper_bound_on(right_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem antitone_on_right_open_interval_lower_bound_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_lower_bound_on(right_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem antitone_on_right_open_interval_bounded_above_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_above_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_right_open_interval_bounded_below_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_below_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_right_open_interval_bounded_from_closed_interval[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies is_bounded_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_closed_interval_attains_maximum_at_upper[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies attains_maximum_at(closed_interval_set(lower, upper), f, upper)
+}
+
+theorem monotone_on_closed_interval_attains_minimum_at_lower[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies attains_minimum_at(closed_interval_set(lower, upper), f, lower)
+}
+
+theorem monotone_on_closed_interval_attains_maximum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies attains_maximum_on(closed_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_closed_interval_attains_minimum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
+    implies attains_minimum_on(closed_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_closed_interval_attains_maximum_at_lower[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies attains_maximum_at(closed_interval_set(lower, upper), f, lower)
+}
+
+theorem antitone_on_closed_interval_attains_minimum_at_upper[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies attains_minimum_at(closed_interval_set(lower, upper), f, upper)
+}
+
+theorem antitone_on_closed_interval_attains_maximum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies attains_maximum_on(closed_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_closed_interval_attains_minimum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower <= upper and is_antitone_on(closed_interval_set(lower, upper), f)
+    implies attains_minimum_on(closed_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_left_open_interval_upper_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(left_open_interval_set(lower, upper), f)
+    implies is_upper_bound_on(left_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem monotone_on_left_open_interval_attains_maximum_at_upper[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(left_open_interval_set(lower, upper), f)
+    implies attains_maximum_at(left_open_interval_set(lower, upper), f, upper)
+}
+
+theorem monotone_on_left_open_interval_attains_maximum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(left_open_interval_set(lower, upper), f)
+    implies attains_maximum_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_left_open_interval_bounded_above[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(left_open_interval_set(lower, upper), f)
+    implies is_bounded_above_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_right_open_interval_lower_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(right_open_interval_set(lower, upper), f)
+    implies is_lower_bound_on(right_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem monotone_on_right_open_interval_attains_minimum_at_lower[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(right_open_interval_set(lower, upper), f)
+    implies attains_minimum_at(right_open_interval_set(lower, upper), f, lower)
+}
+
+theorem monotone_on_right_open_interval_attains_minimum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(right_open_interval_set(lower, upper), f)
+    implies attains_minimum_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem monotone_on_right_open_interval_bounded_below[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_monotone_on(right_open_interval_set(lower, upper), f)
+    implies is_bounded_below_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_left_open_interval_lower_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(left_open_interval_set(lower, upper), f)
+    implies is_lower_bound_on(left_open_interval_set(lower, upper), f, f(upper))
+}
+
+theorem antitone_on_left_open_interval_attains_minimum_at_upper[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(left_open_interval_set(lower, upper), f)
+    implies attains_minimum_at(left_open_interval_set(lower, upper), f, upper)
+}
+
+theorem antitone_on_left_open_interval_attains_minimum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(left_open_interval_set(lower, upper), f)
+    implies attains_minimum_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_left_open_interval_bounded_below[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(left_open_interval_set(lower, upper), f)
+    implies is_bounded_below_on(left_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_right_open_interval_upper_bound[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(right_open_interval_set(lower, upper), f)
+    implies is_upper_bound_on(right_open_interval_set(lower, upper), f, f(lower))
+}
+
+theorem antitone_on_right_open_interval_attains_maximum_at_lower[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(right_open_interval_set(lower, upper), f)
+    implies attains_maximum_at(right_open_interval_set(lower, upper), f, lower)
+}
+
+theorem antitone_on_right_open_interval_attains_maximum[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(right_open_interval_set(lower, upper), f)
+    implies attains_maximum_on(right_open_interval_set(lower, upper), f)
+}
+
+theorem antitone_on_right_open_interval_bounded_above[Domain: LinearOrder, Value: PartialOrder](
+    lower: Domain, upper: Domain, f: Domain -> Value
+) {
+    lower < upper and is_antitone_on(right_open_interval_set(lower, upper), f)
+    implies is_bounded_above_on(right_open_interval_set(lower, upper), f)
+}

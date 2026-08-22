@@ -1,3 +1,23 @@
+instance PointwiseFunction[T, A: CommMonoid]: CommMonoid
+
+/// Typeclass formulation of left distributivity for pointwise multiplication.
+
+theorem pointwise_function_semiring_distrib_left_law[T, A: Semiring](
+    f: PointwiseFunction[T, A],
+    g: PointwiseFunction[T, A],
+    h: PointwiseFunction[T, A]
+) {
+    Mul.mul(f, Add.add(g, h)) = Add.add(Mul.mul(f, g), Mul.mul(f, h))
+}
+
+theorem pointwise_function_semiring_distrib_right_law[T, A: Semiring](
+    f: PointwiseFunction[T, A],
+    g: PointwiseFunction[T, A],
+    h: PointwiseFunction[T, A]
+) {
+    Mul.mul(Add.add(f, g), h) = Add.add(Mul.mul(f, h), Mul.mul(g, h))
+}
+
 theorem pointwise_function_semiring_mul_zero_right_law[T, A: Semiring](f: PointwiseFunction[T, A]) {
     Mul.mul(f, Zero.0[PointwiseFunction[T, A]]) = Zero.0[PointwiseFunction[T, A]]
 }
@@ -1664,6 +1684,7 @@ instance IdealQuotient[R: CommRing, i: Ideal[R]]: AddGroup
 instance IdealQuotient[R: CommRing, i: Ideal[R]]: AddCommGroup
 
 /// Typeclass multiplication on the quotient ring is associative.
+
 theorem ideal_quotient_type_mul_assoc_law[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i], y: IdealQuotient[R, i], z: IdealQuotient[R, i]) {
     Mul.mul(x, Mul.mul(y, z)) = Mul.mul(Mul.mul(x, y), z)
 }
@@ -1695,6 +1716,7 @@ instance IdealQuotient[R: CommRing, i: Ideal[R]]: Monoid
 instance IdealQuotient[R: CommRing, i: Ideal[R]]: CommMonoid
 
 /// Typeclass multiplication distributes over typeclass addition on the left.
+
 theorem ideal_quotient_type_mul_add_law[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i], y: IdealQuotient[R, i], z: IdealQuotient[R, i]) {
     Mul.mul(x, Add.add(y, z)) = Add.add(Mul.mul(x, y), Mul.mul(x, z))
 }
@@ -1721,6 +1743,7 @@ instance IdealQuotient[R: CommRing, i: Ideal[R]]: Ring
 
 instance IdealQuotient[R: CommRing, i: Ideal[R]]: CommRing
 /// The canonical projection preserves the ring one.
+
 theorem ideal_quotient_mk_type_one[R: CommRing](i: Ideal[R]) {
     ideal_quotient_mk_type(i, R.1) = One.1[IdealQuotient[R, i]]
 }
@@ -2226,6 +2249,46 @@ theorem ideal_quotient_lift_neg[R: CommRing, S: CommRing](
     -ideal_quotient_lift(i, f, ideal_quotient_project(i, a))
 }
 
+define alternating_sign[R: Ring](n: Nat) -> R {
+    match n {
+        Nat.zero {
+            R.1
+        }
+        Nat.suc(k) {
+            -alternating_sign[R](k)
+        }
+    }
+}
+
+theorem alternating_sign_zero[R: Ring] {
+    alternating_sign[R](Nat.0) = R.1
+}
+
+theorem alternating_sign_suc[R: Ring](n: Nat) {
+    alternating_sign[R](n.suc) = -alternating_sign[R](n)
+}
+
+theorem alternating_sign_suc_mul[R: Ring](n: Nat) {
+    alternating_sign[R](n.suc) = -R.1 * alternating_sign[R](n)
+}
+
+theorem alternating_sign_eq_neg_one_pow[R: Ring](n: Nat) {
+    alternating_sign[R](n) = (-R.1).pow(n)
+}
+
+theorem alternating_sign_parity[R: Ring](n: Nat) {
+    (Nat.2.divides(n) implies alternating_sign[R](n) = R.1) and
+    (not Nat.2.divides(n) implies alternating_sign[R](n) = -R.1)
+}
+
+theorem geometric_sum[R: Ring](a: R, n: Nat) {
+    (a + -R.1) * sum(map(n.range, a.pow)) = a.pow(n) + -R.1
+}
+
+theorem geometric_sum_sub_one[R: Ring](a: R, n: Nat) {
+    (a - R.1) * sum(map(n.range, a.pow)) = a.pow(n) - R.1
+}
+
 theorem bundled_ideal_subset_contains_at[R: CommRing](a: Ideal[R], b: Ideal[R], x: R) {
     bundled_ideal_subset(a, b) and a.contains(x) implies b.contains(x)
 }
@@ -2426,63 +2489,4 @@ theorem spec_vanishing_sum_subset_inter[R: CommRing](i: Ideal[R], j: Ideal[R]) {
 
 theorem spec_vanishing_inter_subset_sum[R: CommRing](i: Ideal[R], j: Ideal[R]) {
     Spec[R].vanishing(i).intersection(Spec[R].vanishing(j)).subset(Spec[R].vanishing(i.sum(j)))
-}
-
-theorem spec_vanishing_sum[R: CommRing](i: Ideal[R], j: Ideal[R]) {
-    Spec[R].vanishing(i.sum(j)) = Spec[R].vanishing(i).intersection(Spec[R].vanishing(j))
-}
-
-theorem spec_of_maximal_point[R: CommRing](m: MaximalIdeal[R]) {
-    Spec[R].of_maximal(m).point = m.as_prime_ideal
-}
-
-theorem spec_vanishing_principal_contains_eq[R: CommRing](f: R, p: Spec[R]) {
-    Spec[R].vanishing(Ideal[R].principal(f)).contains(p) = p.point.contains(f)
-}
-
-theorem spec_vanishing_principal_zero[R: CommRing] {
-    Spec[R].vanishing(Ideal[R].principal(R.0)) = Set[Spec[R]].universal_set
-}
-
-theorem spec_vanishing_principal_one[R: CommRing] {
-    Spec[R].vanishing(Ideal[R].principal(R.1)) = Set[Spec[R]].empty_set
-}
-
-define spec_basic_open[R: CommRing](f: R) -> Set[Spec[R]] {
-    Spec[R].vanishing(Ideal[R].principal(f)).c
-}
-
-attributes Spec[R: CommRing] {
-    /// The distinguished open set `D(f)` complementary to `V(principal(f))`.
-    let basic_open: R -> Set[Spec[R]] = spec_basic_open[R]
-}
-
-theorem spec_basic_open_contains_eq[R: CommRing](f: R, p: Spec[R]) {
-    Spec[R].basic_open(f).contains(p) = not p.point.contains(f)
-}
-
-theorem spec_basic_open_zero[R: CommRing] {
-    Spec[R].basic_open(R.0) = Set[Spec[R]].empty_set
-}
-
-theorem spec_basic_open_one[R: CommRing] {
-    Spec[R].basic_open(R.1) = Set[Spec[R]].universal_set
-}
-
-theorem spec_vanishing_union_subset_inter[R: CommRing](i: Ideal[R], j: Ideal[R]) {
-    Spec[R].vanishing(i).union(Spec[R].vanishing(j)).subset(Spec[R].vanishing(i.intersection(j)))
-}
-
-theorem spec_vanishing_inter_subset_union[R: CommRing](i: Ideal[R], j: Ideal[R]) {
-    Spec[R].vanishing(i.intersection(j)).subset(
-        Spec[R].vanishing(i).union(Spec[R].vanishing(j)))
-}
-
-theorem spec_vanishing_union_eq_inter[R: CommRing](i: Ideal[R], j: Ideal[R]) {
-    Spec[R].vanishing(i).union(Spec[R].vanishing(j)) =
-        Spec[R].vanishing(i.intersection(j))
-}
-
-theorem spec_basic_open_compl[R: CommRing](f: R) {
-    Spec[R].basic_open(f).c = Spec[R].vanishing(Ideal[R].principal(f))
 }
