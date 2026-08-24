@@ -1,15 +1,3 @@
-theorem range_indexed_intersection_monotone[K](n: Nat, a: Nat -> Set[K],
-    b: Nat -> Set[K]) {
-    (forall(i: Nat) { i < n implies a(i).subset(b(i)) }) implies
-    range_indexed_intersection(n, a).subset(range_indexed_intersection(n, b))
-}
-
-theorem range_indexed_union_complement_eq_intersection_complement[K](n: Nat,
-    family: Nat -> Set[K]) {
-    range_indexed_union(n, function(i: Nat) { family(i).c }) =
-    range_indexed_intersection(n, family).c
-}
-
 theorem range_indexed_intersection_complement_eq_union_complement[K](n: Nat,
     family: Nat -> Set[K]) {
     range_indexed_intersection(n, function(i: Nat) { family(i).c }) =
@@ -603,6 +591,58 @@ theorem set_cardinality_has_exact_unique_list[K](s: Set[K], n: Nat) {
 
 theorem set_image_cardinality_is_of_injective[T, U](s: Set[T], f: T -> U, n: Nat) {
     is_injective_fn(f) and s.cardinality_is(n) implies set_image(s, f).cardinality_is(n)
+}
+
+theorem compl_eq_of_partition[K](u: Set[K], v: Set[K]) {
+    u.intersection(v) = Set[K].empty_set and u.union(v) = Set[K].universal_set
+        implies v = u.c
+}
+
+theorem compl_eq_of_partition_left[K](u: Set[K], v: Set[K]) {
+    u.intersection(v) = Set[K].empty_set and u.union(v) = Set[K].universal_set
+        implies u = v.c
+}
+
+theorem disjoint_imp_not_both[K](u: Set[K], v: Set[K], z: K) {
+    u.is_disjoint(v) implies not (u.contains(z) and v.contains(z))
+}
+
+theorem compl_eq_of_disjoint_cover[K](u: Set[K], v: Set[K]) {
+    u.is_disjoint(v) and u.union(v) = Set[K].universal_set implies v = u.c
+}
+
+theorem compl_eq_of_disjoint_cover_left[K](u: Set[K], v: Set[K]) {
+    u.is_disjoint(v) and u.union(v) = Set[K].universal_set implies u = v.c
+}
+
+theorem compl_empty_imp_universal[K](s: Set[K]) {
+    s.c = Set[K].empty_set implies s = Set[K].universal_set
+}
+
+define is_equivalence_class[T](r: (T, T) -> Bool, c: Set[T]) -> Bool {
+    exists(a: T) {
+        c = equivalence_class(r, a)
+    }
+}
+
+structure QuotientOver[T] {
+    /// The equivalence relation whose classes form this quotient element.
+    qrel: QuotientRelation[T]
+
+    /// The equivalence class represented by this quotient element.
+    carrier: Set[T]
+} constraint {
+    is_equivalence_class(qrel.rel, carrier)
+}
+
+structure Quotient[T] {
+    /// The equivalence relation whose classes form this quotient.
+    rel: (T, T) -> Bool
+
+    /// The equivalence class represented by this quotient element.
+    carrier: Set[T]
+} constraint {
+    is_equivalence(rel) and is_equivalence_class(rel, carrier)
 }
 
 theorem equivalence_class_is_equivalence_class[T](r: (T, T) -> Bool, a: T) {
@@ -2861,49 +2901,4 @@ theorem antitone_on_of_strict_antitone_on_and_function_eq_on[Domain: PartialOrde
 ) {
     is_strict_antitone_on(domain, original) and function_eq_on(domain, original, replacement)
     implies is_antitone_on(domain, replacement)
-}
-
-theorem monotone_on_of_strict_monotone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
-    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
-) {
-    is_strict_monotone(original) and function_eq_on(domain, original, replacement)
-    implies is_monotone_on(domain, replacement)
-}
-
-theorem antitone_on_of_strict_antitone_and_function_eq_on[Domain: PartialOrder, Value: PartialOrder](
-    domain: Set[Domain], original: Domain -> Value, replacement: Domain -> Value
-) {
-    is_strict_antitone(original) and function_eq_on(domain, original, replacement)
-    implies is_antitone_on(domain, replacement)
-}
-
-theorem monotone_on_subset[Domain: PartialOrder, Value: PartialOrder](
-    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
-) {
-    subset.subset(superset) and is_monotone_on(superset, f) implies is_monotone_on(subset, f)
-}
-
-theorem antitone_on_subset[Domain: PartialOrder, Value: PartialOrder](
-    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
-) {
-    subset.subset(superset) and is_antitone_on(superset, f) implies is_antitone_on(subset, f)
-}
-
-theorem strict_monotone_on_subset[Domain: PartialOrder, Value: PartialOrder](
-    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
-) {
-    subset.subset(superset) and is_strict_monotone_on(superset, f) implies is_strict_monotone_on(subset, f)
-}
-
-theorem strict_antitone_on_subset[Domain: PartialOrder, Value: PartialOrder](
-    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
-) {
-    subset.subset(superset) and is_strict_antitone_on(superset, f) implies is_strict_antitone_on(subset, f)
-}
-
-theorem monotone_on_closed_interval_upper_bound[Domain: LinearOrder, Value: PartialOrder](
-    lower: Domain, upper: Domain, f: Domain -> Value
-) {
-    lower <= upper and is_monotone_on(closed_interval_set(lower, upper), f)
-    implies is_upper_bound_on(closed_interval_set(lower, upper), f, f(upper))
 }
