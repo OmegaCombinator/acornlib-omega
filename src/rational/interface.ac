@@ -9,7 +9,7 @@ from algebra_core import Zero, One, AddSemigroup, AddCommSemigroup,
     AddMonoid, AddCommMonoid, AddGroup, AddCommGroup
 from relation import is_reflexive, is_transitive, is_antisymmetric
 from order import PartialOrder
-from algebra import Pair
+from pair import Pair
 from function import inverse_fn, is_injective_fn, is_surjective_fn
 from integer import Semiring
 from algebra import SemiringHom, is_semiring_hom
@@ -25,10 +25,6 @@ from ordered_field import OrderedField
 
 numerals Nat
 numerals Int
-theorem sub_suc_on_bounded_diagonal(d: Nat, a: Nat) {
-    a.suc <= d implies d - a = (d - a.suc).suc
-}
-
 define is_reduced(a: Int, b: Int) -> Bool {
     b > Int.0 and a.gcd(b) = Int.1
 }
@@ -44,46 +40,11 @@ structure Rat {
 numerals Rat
 
 
-instance Rat: Zero {
-    let 0: Rat = rat_zero
-}
-
-instance Rat: Meet {
-    define meet(self, other: Rat) -> Rat {
-        self.min(other)
-    }
-}
-
-instance Rat: Join {
-    define join(self, other: Rat) -> Rat {
-        self.max(other)
-    }
-}
-
-attributes Rat {
-    /// The quotient of two rational numbers.
-    /// Division by zero is defined to yield zero.
-    define div(self, other: Rat) -> Rat {
-        self * other.inverse
-    }
-
-    /// The rational formed by appending a digit to this rational in base 10.
-    define read(self, other: Rat) -> Rat { Rat.10 * self + other }
-}
-
 theorem denom_one_is_reduced(a: Int) {
     is_reduced(a, Int.1)
 }
 
 let Option.some(rat_zero) = Rat.new(Int.0, Int.1)
-
-theorem zero_num {
-    Rat.0.num = Int.0
-}
-
-theorem zero_denom {
-    Rat.0.denom = Int.1
-}
 
 theorem denom_nonzero(r: Rat) {
     r.denom != Int.0
@@ -96,6 +57,265 @@ let rat_from_int(n: Int) -> r: Rat satisfy {
 attributes Rat {
     /// Converts an integer to a rational number.
     let from_int = rat_from_int
+}
+
+attributes Rat {
+    /// Converts a natural number to a rational number.
+    let from_nat: Nat -> Rat = function(n: Nat) {
+        Rat.from_int(Int.from_nat(n))
+    }
+}
+
+theorem constraint_yields_new(a: Int, b: Int) {
+    Rat.constraint(a, b) implies exists(r: Rat) {
+        Option.some(r) = Rat.new(a, b)
+    }
+}
+
+theorem from_int_num(n: Int) {
+    Rat.from_int(n).num = n
+}
+
+theorem from_int_denom(n: Int) {
+    Rat.from_int(n).denom = Int.1
+}
+
+define cross_equals(a: Int, b: Int, c: Int, d: Int) -> Bool {
+    b != Int.0 and d != Int.0 and a * d = c * b
+}
+
+theorem cross_equals_trans(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int) {
+    cross_equals(a, b, c, d) and cross_equals(c, d, e, f) implies cross_equals(a, b, e, f)
+}
+
+theorem cross_eq_imp_eq(r1: Rat, r2: Rat) {
+    cross_equals(r1.num, r1.denom, r2.num, r2.denom) implies r1 = r2
+}
+
+let neg(a: Rat) -> b: Rat satisfy {
+    Rat.new(-a.num, a.denom) = Option.some(b)
+}
+
+instance Rat: Neg {
+    let neg = neg
+}
+
+theorem neg_is_reduced(r: Rat) {
+    is_reduced(-r.num, r.denom)
+}
+
+theorem neg_num(r: Rat) {
+    r.neg.num = -r.num
+}
+
+theorem neg_denom(r: Rat) {
+    r.neg.denom = r.denom
+}
+
+theorem from_int_cancel(a: Int, b: Int) {
+    Rat.from_int(a) = Rat.from_int(b) implies a = b
+}
+
+define int_zigzag(n: Nat) -> Int {
+    match n {
+        Nat.zero {
+            Int.0
+        }
+        Nat.suc(pred) {
+            match int_zigzag(pred) {
+                Int.from_nat(k) {
+                    Int.neg_suc(k)
+                }
+                Int.neg_suc(k) {
+                    Int.from_nat(k.suc)
+                }
+            }
+        }
+    }
+}
+
+theorem int_zigzag_suc_of_from_nat(n: Nat, k: Nat) {
+    int_zigzag(n) = Int.from_nat(k) implies int_zigzag(n.suc) = Int.neg_suc(k)
+}
+
+theorem int_zigzag_suc_of_neg_suc(n: Nat, k: Nat) {
+    int_zigzag(n) = Int.neg_suc(k) implies int_zigzag(n.suc) = Int.from_nat(k.suc)
+}
+
+define int_zigzag_hits_pair(k: Nat) -> Bool {
+    exists(nonneg_idx: Nat) {
+        int_zigzag(nonneg_idx) = Int.from_nat(k)
+    } and exists(neg_idx: Nat) {
+        int_zigzag(neg_idx) = Int.neg_suc(k)
+    }
+}
+
+theorem int_zigzag_hits_pair_zero {
+    int_zigzag_hits_pair(Nat.0)
+}
+
+theorem int_zigzag_hits_pair_step(k: Nat) {
+    int_zigzag_hits_pair(k) implies int_zigzag_hits_pair(k.suc)
+}
+
+theorem int_zigzag_hits_pair_all(k: Nat) {
+    int_zigzag_hits_pair(k)
+}
+
+theorem int_zigzag_surjective {
+    is_surjective_fn(int_zigzag)
+}
+
+theorem int_zigzag_has_preimage(z: Int) {
+    exists(n: Nat) {
+        int_zigzag(n) = z
+    }
+}
+
+define nat_pair_next(pair: Pair[Nat, Nat]) -> Pair[Nat, Nat] {
+    match pair.second {
+        Nat.zero {
+            Pair.new(Nat.0, pair.first.suc)
+        }
+        Nat.suc(pred) {
+            Pair.new(pair.first.suc, pred)
+        }
+    }
+}
+
+define nat_pair_zigzag(n: Nat) -> Pair[Nat, Nat] {
+    match n {
+        Nat.zero {
+            Pair.new(Nat.0, Nat.0)
+        }
+        Nat.suc(pred) {
+            nat_pair_next(nat_pair_zigzag(pred))
+        }
+    }
+}
+
+theorem nat_pair_next_zero_second(a: Nat) {
+    nat_pair_next(Pair.new(a, Nat.0)) = Pair.new(Nat.0, a.suc)
+}
+
+theorem nat_pair_next_suc_second(a: Nat, b: Nat) {
+    nat_pair_next(Pair.new(a, b.suc)) = Pair.new(a.suc, b)
+}
+
+define nat_pair_zigzag_hits_pair(a: Nat, b: Nat) -> Bool {
+    exists(n: Nat) {
+        nat_pair_zigzag(n) = Pair.new(a, b)
+    }
+}
+
+theorem nat_pair_zigzag_hits_pair_transport(a: Nat, b: Nat, c: Nat, d: Nat) {
+    a = c and b = d and nat_pair_zigzag_hits_pair(a, b) implies
+        nat_pair_zigzag_hits_pair(c, d)
+}
+
+theorem nat_pair_zigzag_hits_zero_zero {
+    nat_pair_zigzag_hits_pair(Nat.0, Nat.0)
+}
+
+theorem nat_pair_zigzag_hit_step_down(a: Nat, b: Nat) {
+    nat_pair_zigzag_hits_pair(a, b.suc) implies
+        nat_pair_zigzag_hits_pair(a.suc, b)
+}
+
+theorem nat_pair_zigzag_hit_next_diagonal(d: Nat) {
+    nat_pair_zigzag_hits_pair(d, Nat.0) implies
+        nat_pair_zigzag_hits_pair(Nat.0, d.suc)
+}
+
+theorem nat_pair_zigzag_diagonal_from_zero(d: Nat, a: Nat) {
+    nat_pair_zigzag_hits_pair(Nat.0, d) and a <= d implies
+        nat_pair_zigzag_hits_pair(a, d - a)
+}
+
+theorem nat_pair_zigzag_hits(a: Nat, b: Nat) {
+    nat_pair_zigzag_hits_pair(a, b)
+}
+
+theorem nat_pair_zigzag_surjective {
+    is_surjective_fn(nat_pair_zigzag)
+}
+
+theorem nat_pair_zigzag_has_preimage(pair: Pair[Nat, Nat]) {
+    exists(n: Nat) {
+        nat_pair_zigzag(n) = pair
+    }
+}
+
+define int_nat_pair_of_nat_pair(pair: Pair[Nat, Nat]) -> Pair[Int, Nat] {
+    Pair.new(int_zigzag(pair.first), pair.second)
+}
+
+theorem int_nat_pair_of_nat_pair_new(n: Nat, d: Nat) {
+    int_nat_pair_of_nat_pair(Pair.new(n, d)) = Pair.new(int_zigzag(n), d)
+}
+
+theorem int_nat_pair_of_nat_pair_surjective {
+    is_surjective_fn(int_nat_pair_of_nat_pair)
+}
+
+define int_nat_pair_zigzag(n: Nat) -> Pair[Int, Nat] {
+    int_nat_pair_of_nat_pair(nat_pair_zigzag(n))
+}
+
+theorem int_nat_pair_zigzag_surjective {
+    is_surjective_fn(int_nat_pair_zigzag)
+}
+
+theorem int_nat_pair_zigzag_has_preimage(target: Pair[Int, Nat]) {
+    exists(n: Nat) {
+        int_nat_pair_zigzag(n) = target
+    }
+}
+
+theorem positive_int_eq_from_nat_suc(a: Int) {
+    a.is_positive implies exists(n: Nat) {
+        a = Int.from_nat(n.suc)
+    }
+}
+
+theorem rational_numbers_are_denumerable {
+    exists(enumeration: Nat -> Rat) {
+        is_surjective_fn(enumeration)
+    }
+}
+
+theorem int_from_nat_injective(a: Nat, b: Nat) {
+    Int.from_nat(a) = Int.from_nat(b) implies a = b
+}
+
+theorem rat_from_nat_injective {
+    is_injective_fn(Rat.from_nat)
+}
+
+theorem rational_numbers_have_countably_infinite_enumeration {
+    exists(enumeration: Nat -> Rat) {
+        is_surjective_fn(enumeration)
+    } and exists(encoding: Rat -> Nat) {
+        is_injective_fn(encoding)
+    } and exists(embedding: Nat -> Rat) {
+        is_injective_fn(embedding)
+    }
+}
+
+theorem int_to_rat_is_injective {
+    is_injective_fn(Rat.from_int)
+}
+
+theorem rat_eq_imp_cross_equals(r: Rat, s: Rat) {
+    r = s implies cross_equals(r.num, r.denom, s.num, s.denom)
+}
+
+theorem rat_eq_iff_cross_equals(r: Rat, s: Rat) {
+    (r = s) = cross_equals(r.num, r.denom, s.num, s.denom)
+}
+
+instance Rat: Zero {
+    let 0: Rat = rat_zero
 }
 
 instance Rat: One {
@@ -133,24 +353,6 @@ attributes Rat {
     }
 }
 
-instance Rat: LTE {
-    define lte(self, other: Rat) -> Bool {
-        (other - self).is_positive or self = other
-    }
-}
-
-instance Rat: PartialOrder
-
-instance Rat: LinearOrder
-
-instance Rat: MeetSemilattice
-
-instance Rat: JoinSemilattice
-
-instance Rat: Lattice
-
-instance Rat: DistribLattice
-
 attributes Rat {
     /// The absolute value of a rational number.
     define abs(self) -> Rat {
@@ -162,48 +364,20 @@ attributes Rat {
     }
 }
 
-attributes Rat {
-    /// True if the absolute difference between two rationals is less than epsilon.
-    define is_close(self, other: Rat, eps: Rat) -> Bool {
-        (self - other).abs < eps
-    }
+theorem zero_num {
+    Rat.0.num = Int.0
 }
 
-attributes Rat {
-    /// Converts a natural number to a rational number.
-    let from_nat: Nat -> Rat = function(n: Nat) {
-        Rat.from_int(Int.from_nat(n))
-    }
+theorem zero_denom {
+    Rat.0.denom = Int.1
 }
 
 theorem denom_positive(r: Rat) {
     r.denom.is_positive
 }
 
-theorem constraint_yields_new(a: Int, b: Int) {
-    Rat.constraint(a, b) implies exists(r: Rat) {
-        Option.some(r) = Rat.new(a, b)
-    }
-}
-
 theorem from_int_zero {
     Rat.from_int(Int.0) = Rat.0
-}
-
-theorem from_int_num(n: Int) {
-    Rat.from_int(n).num = n
-}
-
-theorem from_int_denom(n: Int) {
-    Rat.from_int(n).denom = Int.1
-}
-
-define cross_equals(a: Int, b: Int, c: Int, d: Int) -> Bool {
-    b != Int.0 and d != Int.0 and a * d = c * b
-}
-
-theorem cross_equals_trans(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int) {
-    cross_equals(a, b, c, d) and cross_equals(c, d, e, f) implies cross_equals(a, b, e, f)
 }
 
 let reduce(a: Int, b: Int) -> r: Rat satisfy {
@@ -214,16 +388,16 @@ let reduce(a: Int, b: Int) -> r: Rat satisfy {
     }
 }
 
+instance Rat: Mul {
+    define mul(self, other: Rat) -> Rat {
+        reduce(self.num * other.num, self.denom * other.denom)
+    }
+}
+
 instance Rat: Add {
     define add(self, other: Rat) -> Rat {
         reduce(self.num * other.denom + other.num * self.denom,
                self.denom * other.denom)
-    }
-}
-
-instance Rat: Mul {
-    define mul(self, other: Rat) -> Rat {
-        reduce(self.num * other.num, self.denom * other.denom)
     }
 }
 
@@ -241,37 +415,55 @@ instance Rat: AddMonoid
 
 instance Rat: AddCommMonoid
 
+instance Rat: AddGroup
+
+instance Rat: AddCommGroup
+
+instance Rat: LTE {
+    define lte(self, other: Rat) -> Bool {
+        (other - self).is_positive or self = other
+    }
+}
+
+instance Rat: PartialOrder
+
 instance Rat: Semigroup
 
 instance Rat: Monoid
 
 instance Rat: Semiring
 
+instance Rat: Ring
+
 instance Rat: CommSemigroup
 
 instance Rat: CommMonoid
 
-theorem cross_eq_imp_eq(r1: Rat, r2: Rat) {
-    cross_equals(r1.num, r1.denom, r2.num, r2.denom) implies r1 = r2
-}
-
-let neg(a: Rat) -> b: Rat satisfy {
-    Rat.new(-a.num, a.denom) = Option.some(b)
-}
-
-instance Rat: Neg {
-    let neg = neg
-}
-
-instance Rat: AddGroup
-
-instance Rat: AddCommGroup
-
-instance Rat: Ring
-
 instance Rat: CommRing
 
 instance Rat: Field
+
+instance Rat: LinearOrder
+
+instance Rat: Meet {
+    define meet(self, other: Rat) -> Rat {
+        self.min(other)
+    }
+}
+
+instance Rat: Join {
+    define join(self, other: Rat) -> Rat {
+        self.max(other)
+    }
+}
+
+instance Rat: MeetSemilattice
+
+instance Rat: JoinSemilattice
+
+instance Rat: Lattice
+
+instance Rat: DistribLattice
 
 instance Rat: AddLeftOrderedGroup
 
@@ -279,20 +471,26 @@ instance Rat: AddOrderedGroup
 
 instance Rat: OrderedField
 
+attributes Rat {
+    /// The quotient of two rational numbers.
+    /// Division by zero is defined to yield zero.
+    define div(self, other: Rat) -> Rat {
+        self * other.inverse
+    }
+
+    /// The rational formed by appending a digit to this rational in base 10.
+    define read(self, other: Rat) -> Rat { Rat.10 * self + other }
+}
+
+attributes Rat {
+    /// True if the absolute difference between two rationals is less than epsilon.
+    define is_close(self, other: Rat, eps: Rat) -> Bool {
+        (self - other).abs < eps
+    }
+}
+
 theorem reduce_idempotent(r: Rat) {
     reduce(r.num, r.denom) = r
-}
-
-theorem neg_is_reduced(r: Rat) {
-    is_reduced(-r.num, r.denom)
-}
-
-theorem neg_num(r: Rat) {
-    r.neg.num = -r.num
-}
-
-theorem neg_denom(r: Rat) {
-    r.neg.denom = r.denom
 }
 
 theorem add_zero_right(a: Rat) {
@@ -305,10 +503,6 @@ theorem add_zero_left(a: Rat) {
 
 theorem add_comm(a: Rat, b: Rat) {
     a + b = b + a
-}
-
-theorem from_int_cancel(a: Int, b: Int) {
-    Rat.from_int(a) = Rat.from_int(b) implies a = b
 }
 
 theorem mul_comm(a: Rat, b: Rat) {
@@ -541,6 +735,10 @@ theorem lte_antisymm(a: Rat, b: Rat) {
 
 theorem rat_is_antisymmetric {
     is_antisymmetric(Rat.lte)
+}
+
+theorem pos_imp_zero_lt(a: Rat) {
+    Rat.0 < a implies a.is_positive
 }
 
 theorem zero_lt_imp_pos(a: Rat) {
@@ -985,120 +1183,8 @@ define rat_pair_enum(pair: Pair[Int, Nat]) -> Rat {
     reduce(pair.first, Int.from_nat(pair.second.suc))
 }
 
-define int_zigzag(n: Nat) -> Int {
-    match n {
-        Nat.zero {
-            Int.0
-        }
-        Nat.suc(pred) {
-            match int_zigzag(pred) {
-                Int.from_nat(k) {
-                    Int.neg_suc(k)
-                }
-                Int.neg_suc(k) {
-                    Int.from_nat(k.suc)
-                }
-            }
-        }
-    }
-}
-
-theorem int_zigzag_suc_of_from_nat(n: Nat, k: Nat) {
-    int_zigzag(n) = Int.from_nat(k) implies int_zigzag(n.suc) = Int.neg_suc(k)
-}
-
-theorem int_zigzag_suc_of_neg_suc(n: Nat, k: Nat) {
-    int_zigzag(n) = Int.neg_suc(k) implies int_zigzag(n.suc) = Int.from_nat(k.suc)
-}
-
-define int_zigzag_hits_pair(k: Nat) -> Bool {
-    exists(nonneg_idx: Nat) {
-        int_zigzag(nonneg_idx) = Int.from_nat(k)
-    } and exists(neg_idx: Nat) {
-        int_zigzag(neg_idx) = Int.neg_suc(k)
-    }
-}
-
-theorem int_zigzag_hits_pair_zero {
-    int_zigzag_hits_pair(Nat.0)
-}
-
-theorem int_zigzag_hits_pair_step(k: Nat) {
-    int_zigzag_hits_pair(k) implies int_zigzag_hits_pair(k.suc)
-}
-
-theorem int_zigzag_hits_pair_all(k: Nat) {
-    int_zigzag_hits_pair(k)
-}
-
-theorem int_zigzag_surjective {
-    is_surjective_fn(int_zigzag)
-}
-
-theorem int_zigzag_has_preimage(z: Int) {
-    exists(n: Nat) {
-        int_zigzag(n) = z
-    }
-}
-
-define nat_pair_next(pair: Pair[Nat, Nat]) -> Pair[Nat, Nat] {
-    match pair.second {
-        Nat.zero {
-            Pair.new(Nat.0, pair.first.suc)
-        }
-        Nat.suc(pred) {
-            Pair.new(pair.first.suc, pred)
-        }
-    }
-}
-
-define nat_pair_zigzag(n: Nat) -> Pair[Nat, Nat] {
-    match n {
-        Nat.zero {
-            Pair.new(Nat.0, Nat.0)
-        }
-        Nat.suc(pred) {
-            nat_pair_next(nat_pair_zigzag(pred))
-        }
-    }
-}
-
-theorem nat_pair_next_zero_second(a: Nat) {
-    nat_pair_next(Pair.new(a, Nat.0)) = Pair.new(Nat.0, a.suc)
-}
-
-theorem nat_pair_next_suc_second(a: Nat, b: Nat) {
-    nat_pair_next(Pair.new(a, b.suc)) = Pair.new(a.suc, b)
-}
-
-define nat_pair_zigzag_hits_pair(a: Nat, b: Nat) -> Bool {
-    exists(n: Nat) {
-        nat_pair_zigzag(n) = Pair.new(a, b)
-    }
-}
-
-theorem nat_pair_zigzag_hits_pair_transport(a: Nat, b: Nat, c: Nat, d: Nat) {
-    a = c and b = d and nat_pair_zigzag_hits_pair(a, b) implies
-        nat_pair_zigzag_hits_pair(c, d)
-}
-
-theorem nat_pair_zigzag_hits_zero_zero {
-    nat_pair_zigzag_hits_pair(Nat.0, Nat.0)
-}
-
-theorem nat_pair_zigzag_hit_step_down(a: Nat, b: Nat) {
-    nat_pair_zigzag_hits_pair(a, b.suc) implies
-        nat_pair_zigzag_hits_pair(a.suc, b)
-}
-
-theorem nat_pair_zigzag_hit_next_diagonal(d: Nat) {
-    nat_pair_zigzag_hits_pair(d, Nat.0) implies
-        nat_pair_zigzag_hits_pair(Nat.0, d.suc)
-}
-
-theorem nat_pair_zigzag_diagonal_from_zero(d: Nat, a: Nat) {
-    nat_pair_zigzag_hits_pair(Nat.0, d) and a <= d implies
-        nat_pair_zigzag_hits_pair(a, d - a)
+theorem sub_suc_on_bounded_diagonal(d: Nat, a: Nat) {
+    a.suc <= d implies d - a = (d - a.suc).suc
 }
 
 define nat_pair_zigzag_hits_diagonal(d: Nat) -> Bool {
@@ -1124,46 +1210,6 @@ theorem nat_pair_zigzag_hits_diagonal_all(d: Nat) {
     nat_pair_zigzag_hits_diagonal(d)
 }
 
-theorem nat_pair_zigzag_hits(a: Nat, b: Nat) {
-    nat_pair_zigzag_hits_pair(a, b)
-}
-
-theorem nat_pair_zigzag_surjective {
-    is_surjective_fn(nat_pair_zigzag)
-}
-
-theorem nat_pair_zigzag_has_preimage(pair: Pair[Nat, Nat]) {
-    exists(n: Nat) {
-        nat_pair_zigzag(n) = pair
-    }
-}
-
-define int_nat_pair_of_nat_pair(pair: Pair[Nat, Nat]) -> Pair[Int, Nat] {
-    Pair.new(int_zigzag(pair.first), pair.second)
-}
-
-theorem int_nat_pair_of_nat_pair_new(n: Nat, d: Nat) {
-    int_nat_pair_of_nat_pair(Pair.new(n, d)) = Pair.new(int_zigzag(n), d)
-}
-
-theorem int_nat_pair_of_nat_pair_surjective {
-    is_surjective_fn(int_nat_pair_of_nat_pair)
-}
-
-define int_nat_pair_zigzag(n: Nat) -> Pair[Int, Nat] {
-    int_nat_pair_of_nat_pair(nat_pair_zigzag(n))
-}
-
-theorem int_nat_pair_zigzag_surjective {
-    is_surjective_fn(int_nat_pair_zigzag)
-}
-
-theorem int_nat_pair_zigzag_has_preimage(target: Pair[Int, Nat]) {
-    exists(n: Nat) {
-        int_nat_pair_zigzag(n) = target
-    }
-}
-
 theorem from_nat_positive_eq_suc(k: Nat) {
     Int.from_nat(k).is_positive implies exists(n: Nat) {
         Int.from_nat(k) = Int.from_nat(n.suc)
@@ -1172,12 +1218,6 @@ theorem from_nat_positive_eq_suc(k: Nat) {
 
 theorem neg_suc_not_positive(k: Nat) {
     not Int.neg_suc(k).is_positive
-}
-
-theorem positive_int_eq_from_nat_suc(a: Int) {
-    a.is_positive implies exists(n: Nat) {
-        a = Int.from_nat(n.suc)
-    }
 }
 
 theorem rat_pair_enum_new(num: Int, denom_pred: Nat) {
@@ -1209,32 +1249,8 @@ theorem rat_zigzag_has_preimage(r: Rat) {
     }
 }
 
-theorem rational_numbers_are_denumerable {
-    exists(enumeration: Nat -> Rat) {
-        is_surjective_fn(enumeration)
-    }
-}
-
-theorem int_from_nat_injective(a: Nat, b: Nat) {
-    Int.from_nat(a) = Int.from_nat(b) implies a = b
-}
-
-theorem rat_from_nat_injective {
-    is_injective_fn(Rat.from_nat)
-}
-
 theorem rat_zigzag_inverse_injective {
     is_injective_fn(inverse_fn(rat_zigzag))
-}
-
-theorem rational_numbers_have_countably_infinite_enumeration {
-    exists(enumeration: Nat -> Rat) {
-        is_surjective_fn(enumeration)
-    } and exists(encoding: Rat -> Nat) {
-        is_injective_fn(encoding)
-    } and exists(embedding: Nat -> Rat) {
-        is_injective_fn(embedding)
-    }
 }
 
 theorem from_int_add(a: Int, b: Int) {
@@ -1271,10 +1287,6 @@ theorem int_to_rat_hom_hom {
 
 theorem int_to_rat_hom_apply(a: Int) {
     int_to_rat_hom.hom(a) = Rat.from_int(a)
-}
-
-theorem int_to_rat_is_injective {
-    is_injective_fn(Rat.from_int)
 }
 
 theorem int_zero_iff_rat_zero(a: Int) {
@@ -1622,14 +1634,6 @@ theorem rat_denom_positive_iff(r: Rat) {
 
 theorem rat_denom_positive_imp_nonzero(r: Rat) {
     r.denom.is_positive implies r.denom != Int.0
-}
-
-theorem rat_eq_imp_cross_equals(r: Rat, s: Rat) {
-    r = s implies cross_equals(r.num, r.denom, s.num, s.denom)
-}
-
-theorem rat_eq_iff_cross_equals(r: Rat, s: Rat) {
-    (r = s) = cross_equals(r.num, r.denom, s.num, s.denom)
 }
 
 theorem reduce_cross_equals(a: Int, b: Int) {

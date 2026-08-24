@@ -1,200 +1,883 @@
-define nonneg_seq(a: Nat -> Real) -> Bool {
-    forall(n: Nat) {
-        not a(n).is_negative
+theorem injective_on_pointwise_neg(f: Real -> Real, a: Real, b: Real) {
+    injective_on(f, a, b) implies injective_on(pointwise_neg(f), a, b)
+}
+
+theorem increasing_on_values_imp_args_lt(f: Real -> Real, a: Real, b: Real, x: Real, y: Real) {
+    increasing_on(f, a, b) and
+    closed_interval_set(a, b).contains(x) and closed_interval_set(a, b).contains(y) and
+    f(x) < f(y)
+    implies x < y
+}
+
+theorem closed_interval_set_contains_of_bounds(a: Real, b: Real, x: Real) {
+    a <= x and x <= b implies closed_interval_set(a, b).contains(x)
+}
+
+define disconnecting_triple(s: Set[Real], x: Real, y: Real, z: Real) -> Bool {
+    s.contains(x) and s.contains(y) and x < y and x <= z and z <= y and not s.contains(z)
+}
+
+define is_connected_real_set(s: Set[Real]) -> Bool {
+    forall(x: Real, y: Real, z: Real) {
+        not disconnecting_triple(s, x, y, z)
     }
 }
 
-theorem nonneg_imp_partial_increasing(a: Nat -> Real) {
-    nonneg_seq(a) implies is_increasing(partial(a))
+theorem disconnecting_triple_contains_left(s: Set[Real], x: Real, y: Real, z: Real) {
+    disconnecting_triple(s, x, y, z) implies s.contains(x)
 }
 
-theorem increasing_from_nonneg_start(a: Nat -> Real) {
-    not a(Nat.0).is_negative and is_increasing(a) implies nonneg_seq(a)
+theorem disconnecting_triple_not_contains_middle(s: Set[Real], x: Real, y: Real, z: Real) {
+    disconnecting_triple(s, x, y, z) implies not s.contains(z)
 }
 
-theorem nonneg_partial_nonneg(a: Nat -> Real) {
-    nonneg_seq(a) implies
-    nonneg_seq(partial(a))
+theorem empty_set_is_connected {
+    is_connected_real_set(Set[Real].empty_set)
 }
 
-theorem partial_nonneg(f: Nat -> Real, n: Nat) {
-    is_lower_bound(f, Real.0) implies partial(f, n) >= Real.0
+theorem universal_set_is_connected {
+    is_connected_real_set(Set[Real].universal_set)
 }
 
-theorem nonneg_pow(r: Real) {
-    0 <= r implies nonneg_seq(r.pow)
+theorem connected_real_set_contains_between(s: Set[Real], x: Real, y: Real, z: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x < y and x <= z and z <= y
+    implies s.contains(z)
 }
 
-theorem pos_geom_has_upper_bound(r: Real) {
-    0 <= r and r < 1 implies
-    exists(ub: Real) {
-        is_upper_bound(partial(r.pow), ub)
+theorem connected_intersection_between_left(s: Set[Real], t: Set[Real], x: Real, y: Real, z: Real) {
+    is_connected_real_set(s) and s.intersection(t).contains(x) and s.intersection(t).contains(y) and
+    x < y and x <= z and z <= y implies s.contains(z)
+}
+
+theorem connected_intersection_between_right(s: Set[Real], t: Set[Real], x: Real, y: Real, z: Real) {
+    is_connected_real_set(t) and s.intersection(t).contains(x) and s.intersection(t).contains(y) and
+    x < y and x <= z and z <= y implies t.contains(z)
+}
+
+theorem intersection_of_connected_real_sets_is_connected(s: Set[Real], t: Set[Real]) {
+    is_connected_real_set(s) and is_connected_real_set(t) implies is_connected_real_set(s.intersection(t))
+}
+
+theorem singleton_real_set_is_connected(a: Real) {
+    is_connected_real_set(Set[Real].singleton(a))
+}
+
+theorem connected_real_set_of_eq(s: Set[Real], t: Set[Real]) {
+    s = t and is_connected_real_set(s) implies is_connected_real_set(t)
+}
+
+theorem connected_real_set_of_eq_rev(s: Set[Real], t: Set[Real]) {
+    s = t and is_connected_real_set(t) implies is_connected_real_set(s)
+}
+
+define is_order_convex_real_set(s: Set[Real]) -> Bool {
+    forall(x: Real, y: Real, z: Real) {
+        s.contains(x) and s.contains(y) and x <= z and z <= y implies s.contains(z)
     }
 }
 
-theorem pos_geom_converges(r: Real) {
-    0 <= r and r < 1 implies converges(partial(r.pow))
+theorem order_convex_real_set_contains_between(s: Set[Real], x: Real, y: Real, z: Real) {
+    is_order_convex_real_set(s) and s.contains(x) and s.contains(y) and x <= z and z <= y
+    implies s.contains(z)
 }
 
-theorem abs_pow(r: Real, n: Nat) {
-    r.abs.pow(n) = r.pow(n).abs
+theorem connected_real_set_contains_between_le(s: Set[Real], x: Real, y: Real, z: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x <= z and z <= y
+    implies s.contains(z)
 }
 
-theorem abs_geom_comm(r: Real) {
-    compose(Real.abs, r.pow) = r.abs.pow
+theorem order_convex_real_set_is_connected(s: Set[Real]) {
+    is_order_convex_real_set(s) implies is_connected_real_set(s)
 }
 
-theorem geom_converges(r: Real) {
-    r.abs < 1 implies converges(partial(r.pow))
+theorem connected_real_set_contains_closed_interval_between(s: Set[Real], x: Real, y: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x <= y
+    implies closed_interval_set(x, y).subset(s)
 }
 
-theorem partial_tail_decomp(a: Nat -> Real, m: Nat) {
-    converges(partial(a)) implies
-    limit(partial(a)) = partial(a, m) + limit(partial(tail(a, m)))
+theorem connected_real_set_contains_open_interval_between(s: Set[Real], x: Real, y: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x <= y
+    implies open_interval_set(x, y).subset(s)
 }
 
-theorem pow_tail(r: Real) {
-    tail(r.pow, Nat.1) = mul_seq(r, r.pow)
+theorem connected_real_set_contains_left_open_interval_between(s: Set[Real], x: Real, y: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x <= y
+    implies left_open_interval_set(x, y).subset(s)
 }
 
-theorem partial_one(a: Nat -> Real) {
-    partial(a, Nat.1) = a(Nat.0)
+theorem connected_real_set_contains_right_open_interval_between(s: Set[Real], x: Real, y: Real) {
+    is_connected_real_set(s) and s.contains(x) and s.contains(y) and x <= y
+    implies right_open_interval_set(x, y).subset(s)
 }
 
-theorem geom_series_no_div(r: Real) {
-    r.abs < 1 implies
-    1 + r * limit(partial(r.pow)) = limit(partial(r.pow))
-}
-
-define delta(v: Real, a: Nat, k: Nat) -> Real {
-    if k = a {
-        v
-    } else {
-        Real.0
+define is_bounded_interval_real_set(s: Set[Real]) -> Bool {
+    exists(a: Real, b: Real) {
+        s = closed_interval_set(a, b) or
+        s = open_interval_set(a, b) or
+        s = left_open_interval_set(a, b) or
+        s = right_open_interval_set(a, b)
     }
 }
 
-theorem delta_before(v: Real, a: Nat, k: Nat) {
-    k < a implies delta(v, a, k) = Real.0
-}
-
-theorem delta_at(v: Real, a: Nat) {
-    delta(v, a, a) = v
-}
-
-theorem delta_after(v: Real, a: Nat, k: Nat) {
-    k > a implies delta(v, a, k) = Real.0
-}
-
-define delta_seq(v: Real, a: Nat) -> (Nat -> Real) {
-    function(k: Nat) {
-        delta(v, a, k)
+theorem set_not_lower_bound_witness(s: Set[Real], bound: Real) {
+    not is_set_lower_bound(s, bound) implies exists(x: Real) {
+        s.contains(x) and not bound <= x
     }
 }
 
-theorem partial_delta_before(v: Real, a: Nat, n: Nat) {
-    n <= a implies partial(delta_seq(v, a), n) = Real.0
-}
-
-theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
-    a < n implies partial(delta_seq(v, a), n) = v
-}
-
-theorem delta_partial_converges(v: Real, a: Nat) {
-    converges_to(partial(delta_seq(v, a)), v)
-}
-
-theorem delta_abs_commute(v: Real, a: Nat, k: Nat) {
-    delta(v, a, k).abs = delta(v.abs, a, k)
-}
-
-theorem delta_absolutely_converges(v: Real, a: Nat) {
-    converges(partial(compose(Real.abs, delta_seq(v, a))))
-}
-
-theorem partial_sum_split_tail(a: Nat -> Real, m: Nat, n: Nat) {
-    partial(a, m + n) = partial(a, m) + partial(tail(a, m), n)
-}
-
-theorem tail_partial_sum_sub(a: Nat -> Real, m: Nat, n: Nat) {
-    partial(tail(a, m), n) = partial(a, m + n) - partial(a, m)
-}
-
-theorem partial_sums_seq_lte(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(a, b) implies seq_lte(partial(a), partial(b))
-}
-
-theorem series_comparison_converges(a: Nat -> Real, b: Nat -> Real) {
-    is_lower_bound(a, Real.0)
-    and seq_lte(a, b)
-    and converges(partial(b))
-    implies converges(partial(a))
-}
-
-theorem nonnegative_series_partials_monotone(a: Nat -> Real) {
-    is_lower_bound(a, Real.0) implies is_monotone(partial(a))
-}
-
-theorem series_limit_split_tail(a: Nat -> Real, m: Nat) {
-    converges(partial(a)) implies
-    limit(partial(a)) = partial(a, m) + limit(partial(tail(a, m)))
-}
-
-define pointwise_le[T](f: T -> Real, g: T -> Real) -> Bool {
-    forall(t: T) { f(t) <= g(t) }
-}
-
-theorem pointwise_le_at[T](f: T -> Real, g: T -> Real, t: T) {
-    pointwise_le(f, g) implies f(t) <= g(t)
-}
-
-theorem list_map_sum_le_cons[T](head: T, tail: List[T], f: T -> Real, g: T -> Real) {
-    sum[Real](map(tail, f)) <= sum[Real](map(tail, g)) and f(head) <= g(head)
-        implies sum[Real](map(List.cons(head, tail), f)) <= sum[Real](map(List.cons(head, tail), g))
-}
-
-define list_map_term[T](items: List[T], f: T -> Real, index: Nat) -> Real {
-    match items.get_idx(index) {
-        Option.none {
-            Real.0
-        }
-        Option.some(item) {
-            f(item)
-        }
-    }
-}
-
-theorem list_map_sum_le[T](items: List[T], f: T -> Real, g: T -> Real) {
-    pointwise_le(f, g) implies sum[Real](map(items, f)) <= sum[Real](map(items, g))
-}
-
-theorem finite_set_sum_le[T](s: FiniteSet[T], f: T -> Real, g: T -> Real) {
-    pointwise_le(f, g) implies finite_set_sum(s, f) <= finite_set_sum(s, g)
-}
-
-theorem finite_set_sum_nonneg[T](s: FiniteSet[T], f: T -> Real) {
-    (forall(item: T) { Real.0 <= f(item) }) implies Real.0 <= finite_set_sum(s, f)
-}
-
-theorem finite_set_sum_eq_of_pointwise_on_set[T, A: AddCommMonoid](
-    s: FiniteSet[T], f: T -> A, g: T -> A
+theorem order_convex_between_inf_sup(
+    s: Set[Real], l: Real, u: Real, x: Real
 ) {
-    (forall(x: T) { s.contains(x) implies f(x) = g(x) }) implies
-        finite_set_sum(s, f) = finite_set_sum(s, g)
+    is_order_convex_real_set(s) and is_set_infimum(s, l) and is_set_supremum(s, u) and
+    l < x and x < u
+    implies s.contains(x)
 }
 
-theorem finite_set_sum_eq_of_function_eq_global[T, A: AddCommMonoid](
-    s: FiniteSet[T], f: T -> A, g: T -> A
+theorem order_convex_subset_closed_interval_inf_sup(
+    s: Set[Real], l: Real, u: Real, x: Real
 ) {
-    f = g implies finite_set_sum(s, f) = finite_set_sum(s, g)
+    is_set_infimum(s, l) and is_set_supremum(s, u) and s.contains(x)
+    implies closed_interval_set(l, u).contains(x)
+}
+
+theorem order_convex_bounded_real_set_is_interval(s: Set[Real], l: Real, u: Real) {
+    is_order_convex_real_set(s) and is_set_infimum(s, l) and is_set_supremum(s, u)
+    implies is_bounded_interval_real_set(s)
+}
+
+theorem singleton_difference_subset_of_subset(s: Set[Real], t: Set[Real], x: Real) {
+    s.subset(t) implies s.difference(Set[Real].singleton(x)).subset(t.difference(Set[Real].singleton(x)))
+}
+
+theorem union_singleton_difference_member_cases(s: Set[Real], t: Set[Real], x: Real, y: Real) {
+    s.union(t).difference(Set[Real].singleton(x)).contains(y) implies
+        s.difference(Set[Real].singleton(x)).contains(y) or
+        t.difference(Set[Real].singleton(x)).contains(y)
+}
+
+theorem complement_union_eq_intersection_complements(s: Set[Real], t: Set[Real]) {
+    s.union(t).c = s.c.intersection(t.c)
+}
+
+theorem real_set_difference_eq_intersection_complement(s: Set[Real], t: Set[Real]) {
+    s.difference(t) = s.intersection(t.c)
+}
+
+theorem real_difference_eq_intersection_complement(s: Set[Real], t: Set[Real]) {
+    s.difference(t) = s.intersection(t.c)
+}
+
+theorem clopen_real_sets_difference_union_contains_eq(s: Set[Real], t: Set[Real], x: Real) {
+    s.difference(t).union(t.difference(s)).contains(x) =
+        ((s.contains(x) and not t.contains(x)) or (t.contains(x) and not s.contains(x)))
+}
+
+theorem clopen_real_sets_symmetric_difference_comm(s: Set[Real], t: Set[Real]) {
+    s.difference(t).union(t.difference(s)) = t.difference(s).union(s.difference(t))
+}
+
+define open_upper_ray_contains(lower: Real, x: Real) -> Bool {
+    lower < x
+}
+
+define open_lower_ray_contains(upper: Real, x: Real) -> Bool {
+    x < upper
+}
+
+define closed_upper_ray_contains(lower: Real, x: Real) -> Bool {
+    lower <= x
+}
+
+define closed_lower_ray_contains(upper: Real, x: Real) -> Bool {
+    x <= upper
+}
+
+define open_upper_ray(lower: Real) -> Set[Real] {
+    Set[Real].new(open_upper_ray_contains(lower))
+}
+
+define open_lower_ray(upper: Real) -> Set[Real] {
+    Set[Real].new(open_lower_ray_contains(upper))
+}
+
+define closed_upper_ray(lower: Real) -> Set[Real] {
+    Set[Real].new(closed_upper_ray_contains(lower))
+}
+
+define closed_lower_ray(upper: Real) -> Set[Real] {
+    Set[Real].new(closed_lower_ray_contains(upper))
+}
+
+theorem open_upper_ray_contains_eq(lower: Real, x: Real) {
+    open_upper_ray(lower).contains(x) = (lower < x)
+}
+
+theorem open_lower_ray_contains_eq(upper: Real, x: Real) {
+    open_lower_ray(upper).contains(x) = (x < upper)
+}
+
+theorem closed_upper_ray_contains_eq(lower: Real, x: Real) {
+    closed_upper_ray(lower).contains(x) = (lower <= x)
+}
+
+theorem closed_lower_ray_contains_eq(upper: Real, x: Real) {
+    closed_lower_ray(upper).contains(x) = (x <= upper)
+}
+
+theorem closed_upper_ray_eq_complement_open_lower_ray(lower: Real) {
+    closed_upper_ray(lower) = open_lower_ray(lower).c
+}
+
+theorem closed_lower_ray_eq_complement_open_upper_ray(upper: Real) {
+    closed_lower_ray(upper) = open_upper_ray(upper).c
+}
+
+theorem eventual_lb_iff_seq_eventually_in_closed_upper_ray(a: Nat -> Real, lb: Real) {
+    eventual_lb(a, lb) = seq_eventually_in_real_set(closed_upper_ray(lb), a)
+}
+
+theorem eventual_ub_iff_seq_eventually_in_closed_lower_ray(a: Nat -> Real, ub: Real) {
+    eventual_ub(a, ub) = seq_eventually_in_real_set(closed_lower_ray(ub), a)
+}
+
+theorem eventual_lb_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat, lb: Real) {
+    eventual_lb(a, lb) and tends_to_infinity(f) implies eventual_lb(compose(a, f), lb)
+}
+
+theorem eventual_ub_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat, ub: Real) {
+    eventual_ub(a, ub) and tends_to_infinity(f) implies eventual_ub(compose(a, f), ub)
+}
+
+theorem eventual_lb_subsequence(a: Nat -> Real, f: Nat -> Nat, lb: Real) {
+    eventual_lb(a, lb) and is_subsequence_index(f) implies eventual_lb(subsequence(a, f), lb)
+}
+
+theorem eventual_ub_subsequence(a: Nat -> Real, f: Nat -> Nat, ub: Real) {
+    eventual_ub(a, ub) and is_subsequence_index(f) implies eventual_ub(subsequence(a, f), ub)
+}
+
+theorem seq_in_real_set_converges_to_external_point_imp_frequently_punctured(
+    s: Set[Real], a: Nat -> Real, x: Real
+) {
+    seq_in_real_set(s, a) and not s.contains(x)
+    implies seq_frequently_in_real_set(s.difference(Set[Real].singleton(x)), a)
+}
+
+theorem open_interval_set_eq_open_ray_intersection(lower: Real, upper: Real) {
+    open_interval_set(lower, upper) = open_upper_ray(lower).intersection(open_lower_ray(upper))
+}
+
+theorem closed_interval_set_eq_closed_ray_intersection(lower: Real, upper: Real) {
+    closed_interval_set(lower, upper) = closed_upper_ray(lower).intersection(closed_lower_ray(upper))
+}
+
+theorem left_open_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    left_open_interval_set(lower, upper) = open_upper_ray(lower).intersection(closed_lower_ray(upper))
+}
+
+theorem right_open_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    right_open_interval_set(lower, upper) = closed_upper_ray(lower).intersection(open_lower_ray(upper))
+}
+
+theorem open_upper_ray_is_connected(lower: Real) {
+    is_connected_real_set(open_upper_ray(lower))
+}
+
+theorem open_lower_ray_is_connected(upper: Real) {
+    is_connected_real_set(open_lower_ray(upper))
+}
+
+theorem closed_upper_ray_is_connected(lower: Real) {
+    is_connected_real_set(closed_upper_ray(lower))
+}
+
+theorem closed_lower_ray_is_connected(upper: Real) {
+    is_connected_real_set(closed_lower_ray(upper))
+}
+
+theorem open_interval_set_is_connected(lower: Real, upper: Real) {
+    is_connected_real_set(open_interval_set(lower, upper))
+}
+
+theorem closed_interval_set_is_connected(lower: Real, upper: Real) {
+    is_connected_real_set(closed_interval_set(lower, upper))
+}
+
+theorem left_open_interval_set_is_connected(lower: Real, upper: Real) {
+    is_connected_real_set(left_open_interval_set(lower, upper))
+}
+
+theorem right_open_interval_set_is_connected(lower: Real, upper: Real) {
+    is_connected_real_set(right_open_interval_set(lower, upper))
+}
+
+theorem function_extensionality_on_range(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(k: Nat) { k < n implies f(k) = g(k) })
+    implies
+    partial(f, n) = partial(g, n)
+}
+
+theorem from_nat_2_lt_3 {
+    from_nat[Real](Nat.2) < from_nat[Real](Nat.3)
+}
+
+define seq_mul(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) * b(n)
+}
+
+define geom_square_coeff_seq(n: Nat) -> Real {
+    from_nat[Real](n.suc)
+}
+
+define binom_series_coeff(k: Nat, n: Nat) -> Real {
+    from_nat[Real]((n + k).binom(k))
+}
+
+define binom_row_coeff(m: Nat, n: Nat) -> Real {
+    from_nat[Real](m.binom(n))
+}
+
+theorem from_nat_partial(f: Nat -> Nat, n: Nat) {
+    from_nat[Real](partial(f, n)) = partial(compose(from_nat[Real], f), n)
+}
+
+theorem binom_series_sums(k: Nat, m: Nat) {
+    partial(binom_series_coeff(k), m.suc) = binom_series_coeff(k.suc, m)
+}
+
+theorem touch_real_from_nat_instance(k: Nat) {
+    from_nat[Real](k) = Real.from_rat(Rat.from_nat(k))
+}
+
+theorem from_nat_real_suc_lte_of_nat_lte(m: Nat, n: Nat) {
+    m <= n implies from_nat[Real](m.suc) <= from_nat[Real](n.suc)
+}
+
+theorem factorial_real_lte_suc(n: Nat) {
+    Real.from_rat(Rat.from_nat(n.factorial)) <= Real.from_rat(Rat.from_nat(n.suc.factorial))
+}
+
+theorem partial_le_range(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(i: Nat) { i < n implies f(i) <= g(i) }) implies partial(f, n) <= partial(g, n)
+}
+
+define const_real_fn(c: Real) -> (Nat -> Real) {
+    function(i: Nat) { c }
+}
+
+define neg_fn(f: Nat -> Real) -> (Nat -> Real) {
+    function(i: Nat) { -f(i) }
+}
+
+theorem partial_neg(f: Nat -> Real, n: Nat) {
+    partial(neg_fn(f), n) = -partial(f, n)
+}
+
+define seq_tends_to_infinity(a: Nat -> Real) -> Bool {
+    forall(b: Real) {
+        exists(n0: Nat) {
+            forall(n: Nat) {
+                n0 <= n implies b < a(n)
+            }
+        }
+    }
+}
+
+define seq_tends_to_neg_infinity(a: Nat -> Real) -> Bool {
+    forall(b: Real) {
+        exists(n0: Nat) {
+            forall(n: Nat) {
+                n0 <= n implies a(n) < b
+            }
+        }
+    }
+}
+
+theorem from_nat_seq_tends_to_infinity {
+    seq_tends_to_infinity(from_nat[Real])
+}
+
+define bounded_above_on_prefix(f: Real -> Real, lower: Real, x: Real) -> Bool {
+    exists(bound: Real) {
+        forall(y: Real) {
+            closed_interval_set(lower, x).contains(y) implies f(y) <= bound
+        }
+    }
+}
+
+define bounded_prefix_contains(f: Real -> Real, a: Real, b: Real, x: Real) -> Bool {
+    a <= x and x <= b and bounded_above_on_prefix(f, a, x)
+}
+
+define bounded_prefix_set(f: Real -> Real, a: Real, b: Real) -> Set[Real] {
+    Set[Real].new(bounded_prefix_contains(f, a, b))
+}
+
+theorem bounded_prefix_set_contains_eq(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) = bounded_prefix_contains(f, a, b, x)
+}
+
+theorem bounded_prefix_contains_lower(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies bounded_prefix_set(f, a, b).contains(a)
+}
+
+theorem bounded_prefix_set_is_nonempty(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies is_nonempty(bounded_prefix_set(f, a, b))
+}
+
+theorem bounded_prefix_set_upper_bound(f: Real -> Real, a: Real, b: Real) {
+    is_set_upper_bound(bounded_prefix_set(f, a, b), b)
+}
+
+theorem bounded_prefix_set_has_upper_bound(f: Real -> Real, a: Real, b: Real) {
+    has_upper_bound(bounded_prefix_set(f, a, b))
+}
+
+theorem bounded_prefix_set_supremum_exists(f: Real -> Real, a: Real, b: Real) {
+    a <= b implies exists(t: Real) {
+        is_set_supremum(bounded_prefix_set(f, a, b), t)
+    }
+}
+
+theorem bounded_prefix_member_in_interval(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) implies a <= x and x <= b
+}
+
+theorem bounded_prefix_member_bound(f: Real -> Real, a: Real, b: Real, x: Real) {
+    bounded_prefix_set(f, a, b).contains(x) implies exists(bound: Real) {
+        forall(y: Real) {
+            closed_interval_set(a, x).contains(y) implies f(y) <= bound
+        }
+    }
+}
+
+define is_peak(a: Nat -> Real, m: Nat) -> Bool {
+    forall(k: Nat) {
+        m < k implies a(k) <= a(m)
+    }
+}
+
+theorem peak_later_le(a: Nat -> Real, m: Nat, k: Nat) {
+    is_peak(a, m) and m < k implies a(k) <= a(m)
+}
+
+theorem not_peak_imp_later_strict(a: Nat -> Real, x: Nat) {
+    (not is_peak(a, x)) implies exists(k: Nat) { x < k and a(x) < a(k) }
+}
+
+let peak_after(a: Nat -> Real, x: Nat) -> y: Nat satisfy {
+    (exists(z: Nat) { x < z and is_peak(a, z) }) implies (x < y and is_peak(a, y))
+}
+
+let strict_after(a: Nat -> Real, x: Nat) -> y: Nat satisfy {
+    (exists(z: Nat) { x < z and a(x) < a(z) }) implies (x < y and a(x) < a(y))
+}
+
+theorem peak_after_spec(a: Nat -> Real, x: Nat) {
+    (exists(z: Nat) { x < z and is_peak(a, z) })
+    implies (x < peak_after(a, x) and is_peak(a, peak_after(a, x)))
+}
+
+theorem strict_after_spec(a: Nat -> Real, x: Nat) {
+    (exists(z: Nat) { x < z and a(x) < a(z) })
+    implies (x < strict_after(a, x) and a(x) < a(strict_after(a, x)))
+}
+
+theorem unbounded_peaks_subsequence(a: Nat -> Real) {
+    (forall(m: Nat) { exists(p: Nat) { m < p and is_peak(a, p) } })
+    implies exists(f: Nat -> Nat) {
+        is_subsequence_index(f) and is_decreasing_seq(subsequence(a, f))
+    }
+}
+
+theorem no_peaks_subsequence(a: Nat -> Real) {
+    (exists(m0: Nat) { forall(p: Nat) { m0 < p implies not is_peak(a, p) } })
+    implies exists(f: Nat -> Nat) {
+        is_subsequence_index(f) and is_increasing(subsequence(a, f))
+    }
+}
+
+theorem image_upper_bound(f: Real -> Real, x: Real, y: Real, ub: Real) {
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= ub })
+    implies
+    is_set_upper_bound(interval_image(f, x, y), ub)
+}
+
+define partition_g_values(g: Real -> Real, p: Nat -> Real, i: Nat) -> Real {
+    g(p(i))
+}
+
+theorem from_nat_lte_mono(m: Nat, n: Nat) {
+    m <= n implies from_nat[Real](m) <= from_nat[Real](n)
+}
+
+define pointwise_apply(f: Real -> Real, x: Nat -> Real, i: Nat) -> Real {
+    f(x(i))
+}
+
+define weighted_point_sum(w: Nat -> Real, x: Nat -> Real, n: Nat) -> Real {
+    partial(pointwise_product(w, x), n)
+}
+
+define weighted_value_sum(f: Real -> Real, w: Nat -> Real, x: Nat -> Real, n: Nat) -> Real {
+    partial(pointwise_product(w, pointwise_apply(f, x)), n)
+}
+
+define jensen_point_in_interval_at(a: Real, b: Real, x: Nat -> Real, i: Nat) -> Bool {
+    a <= x(i) and x(i) <= b
+}
+
+define jensen_points_in_interval(a: Real, b: Real, x: Nat -> Real, n: Nat) -> Bool {
+    forall(i: Nat) {
+        i < n implies jensen_point_in_interval_at(a, b, x, i)
+    }
+}
+
+theorem jensen_points_in_interval_apply(a: Real, b: Real, x: Nat -> Real, n: Nat, i: Nat) {
+    jensen_points_in_interval(a, b, x, n) and i < n implies a <= x(i) and x(i) <= b
+}
+
+theorem jensen_points_in_interval_restrict(a: Real, b: Real, x: Nat -> Real, n: Nat) {
+    jensen_points_in_interval(a, b, x, n.suc) implies jensen_points_in_interval(a, b, x, n)
+}
+
+define quotient_fn(f: Real -> Real, g: Real -> Real, x: Real) -> Real {
+    f(x) / g(x)
+}
+
+define div_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) / b(n)
+}
+
+define iterated_derivative(f: Real -> Real, dfs: Nat -> Real -> Real, k: Nat, x: Real) -> Real {
+    dfs(k, x)
+}
+
+theorem partial_two_sum(f: Nat -> Real) {
+    partial(f, Nat.2) = f(Nat.0) + f(Nat.1)
+}
+
+theorem partial_three_sum(f: Nat -> Real) {
+    partial(f, Nat.3) = f(Nat.0) + f(Nat.1) + f(Nat.2)
+}
+
+theorem partial_four_sum(f: Nat -> Real) {
+    partial(f, Nat.4) = f(Nat.0) + f(Nat.1) + f(Nat.2) + f(Nat.3)
+}
+
+theorem taylor_partial_neg(f: Nat -> Real, n: Nat) {
+    partial(pointwise_neg(f), n) = -partial(f, n)
+}
+
+theorem two_mul_ge_one_step(k: Nat) {
+    Nat.2 * k.suc >= Nat.1
+}
+
+define alt_term(a: Nat -> Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * a(n)
+}
+
+theorem tail_decreasing_seq(a: Nat -> Real, k: Nat) {
+    is_decreasing_seq(a) implies is_decreasing_seq(tail(a, k))
+}
+
+theorem tail_lower_bound_seq(a: Nat -> Real, k: Nat, lb: Real) {
+    is_lower_bound(a, lb) implies is_lower_bound(tail(a, k), lb)
+}
+
+theorem tail_zero_at(a: Nat -> Real, k: Nat) {
+    tail(a, k)(Nat.0) = a(k)
+}
+
+define alt_even_ub_pred(c: Nat -> Real, k: Nat) -> Bool {
+    partial(alt_term(c), Nat.2 * k) <= c(Nat.0) - c(Nat.2 * k)
+}
+
+define even_subseq(f: Nat -> Real, k: Nat) -> Real {
+    f(Nat.2 * k)
+}
+
+define odd_subseq(f: Nat -> Real, k: Nat) -> Real {
+    f(Nat.2 * k + Nat.1)
+}
+
+define row_pair_sum(x: Real, y: Real, n: Nat, k: Nat) -> Real {
+    binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k) + binomial_term[Real](x, y, Nat.2 * n + Nat.1, Nat.2 * k + Nat.1)
+}
+
+theorem const_self_lb(m: Real, a: Real, b: Real) {
+    forall(t: Real) { interval_contains(a, b, t) implies m <= constant[Real, Real](m, t) }
+}
+
+theorem const_le_fn(f: Real -> Real, x0: Real, x: Real, c: Real) {
+    (forall(t: Real) { interval_contains(x0, x, t) implies c <= f(t) })
+    implies forall(t: Real) { interval_contains(x0, x, t) implies constant[Real, Real](c, t) <= f(t) }
+}
+
+theorem fn_le_const(f: Real -> Real, x0: Real, x: Real, c2: Real) {
+    (forall(t: Real) { interval_contains(x0, x, t) implies f(t) <= c2 })
+    implies forall(t: Real) { interval_contains(x0, x, t) implies f(t) <= constant[Real, Real](c2, t) }
+}
+
+theorem strict_lb_imp_lb(f: Real -> Real, x0: Real, x: Real, c: Real) {
+    (forall(t: Real) { interval_contains(x0, x, t) implies c < f(t) })
+    implies forall(t: Real) { interval_contains(x0, x, t) implies c <= f(t) }
+}
+
+theorem strict_ub_imp_ub(f: Real -> Real, x0: Real, x: Real, c: Real) {
+    (forall(t: Real) { interval_contains(x0, x, t) implies f(t) < c })
+    implies forall(t: Real) { interval_contains(x0, x, t) implies f(t) <= c }
+}
+
+theorem interior_constant_cell_point(f: Real -> Real, a: Real, b: Real, c: Real, x: Real, y: Real) {
+    a <= x and x < y and y <= b and
+    (forall(t: Real) { a < t and t < b implies f(t) = c })
+    implies
+    exists(t: Real) {
+        interval_contains(x, y, t) and f(t) = c
+    }
+}
+
+theorem negate_negate_set_eq(s: Set[Real]) {
+    negate_set(negate_set(s)) = s
+}
+
+theorem set_infimum_le_lower_bound(s: Set[Real], inf: Real, b: Real) {
+    is_set_infimum(s, inf) and is_set_lower_bound(s, b) implies b <= inf
+}
+
+theorem set_bound_above_infimum_not_lower(s: Set[Real], inf: Real, bound: Real) {
+    is_set_infimum(s, inf) and inf < bound implies not is_set_lower_bound(s, bound)
+}
+
+theorem not_lt_and_ne_imp_gt(x: Real, y: Real) {
+    not x < y and x != y implies y < x
+}
+
+define family_at(f: Nat -> Real -> Real, t: Real, j: Nat) -> Real {
+    f(j)(t)
+}
+
+define partial_of_family(f: Nat -> Real -> Real, m: Nat, t: Real) -> Real {
+    partial[Real](family_at(f, t), m)
+}
+
+define partial_x_fn(f: Real -> Real -> Real, y: Real, x: Real) -> Real {
+    f(x, y)
+}
+
+define partial_y_fn(f: Real -> Real -> Real, x: Real, y: Real) -> Real {
+    f(x, y)
+}
+
+theorem nondecreasing_on_endpoint_extrema(f: Real -> Real, a: Real, b: Real, x: Real) {
+    nondecreasing_on(f, a, b) and closed_interval_set(a, b).contains(x)
+    implies f(a) <= f(x) and f(x) <= f(b)
+}
+
+theorem nonincreasing_on_endpoint_extrema(f: Real -> Real, a: Real, b: Real, x: Real) {
+    nonincreasing_on(f, a, b) and closed_interval_set(a, b).contains(x)
+    implies f(x) <= f(a) and f(b) <= f(x)
+}
+
+define f_inv_pred(f: Real -> Real, a: Real, b: Real, y: Real, x: Real) -> Bool {
+    closed_interval_set(a, b).contains(x) and f(x) = y
+}
+
+theorem f_inv_pred_contains_eq(f: Real -> Real, a: Real, b: Real, y: Real, x: Real) {
+    f_inv_pred(f, a, b, y, x) = (closed_interval_set(a, b).contains(x) and f(x) = y)
+}
+
+define f_inv_of(f: Real -> Real, a: Real, b: Real, y: Real) -> Real {
+    choose_or_default(f_inv_pred(f, a, b, y), a)
+}
+
+define function_sequence_value(f: Nat -> Real -> Real, x: Real, n: Nat) -> Real {
+    f(n, x)
+}
+
+define even_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.2)
+}
+
+define odd_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.1)
+}
+
+define odd_shifted_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.3)
+}
+
+theorem even_term_eq(k: Nat) {
+    even_term(k) = from_nat[Real](Nat.2 * k + Nat.2)
+}
+
+theorem odd_term_eq(k: Nat) {
+    odd_term(k) = from_nat[Real](Nat.2 * k + Nat.1)
+}
+
+theorem odd_shifted_term_eq(k: Nat) {
+    odd_shifted_term(k) = from_nat[Real](Nat.2 * k + Nat.3)
+}
+
+define ps_diff_coeff(a: Nat -> Real, n: Nat) -> Real {
+    Real.from_rat(Rat.from_nat(n.suc)) * a(n.suc)
+}
+
+let add(a: Real, b: Real) -> c: Real satisfy {
+    Real.new(add_gt(a, b)) = Option.some(c)
+}
+
+instance Real: Add {
+    let add = add
+}
+
+instance Real: AddSemigroup
+
+instance Real: AddCommSemigroup
+
+define add_gt(z1: Real, z2: Real, r: Rat) -> Bool {
+    exists(r1: Rat, r2: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and r = r1 + r2
+    }
+}
+
+theorem add_gt_symm(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies add_gt(z2, z1, r)
+}
+
+theorem add_gt_is_cut(z1: Real, z2: Real) {
+    is_cut(add_gt(z1, z2))
+}
+
+theorem add_gt_is_lower(z1: Real, z2: Real) {
+    is_lower(add_gt(z1, z2))
+}
+
+theorem add_gt_has_no_greatest(z1: Real, z2: Real) {
+    not has_greatest(add_gt(z1, z2))
+}
+
+theorem add_gt_is_dedekind_cut(z1: Real, z2: Real) {
+    is_dedekind_cut(add_gt(z1, z2))
+}
+
+theorem add_gt_rat(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    z1.gt_rat(r1) and z2.gt_rat(r2) implies (z1 + z2).gt_rat(r1 + r2)
+}
+
+theorem add_comm(a: Real, b: Real) {
+    a + b = b + a
+}
+
+theorem gt_rat_adding_three(z1: Real, z2: Real, z3: Real, q: Rat) {
+    (z1 + z2 + z3).gt_rat(q) implies exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    }
+}
+
+theorem gt_rat_adding_three_converse(z1: Real, z2: Real, z3: Real, q: Rat) {
+    exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    } implies (z1 + z2 + z3).gt_rat(q)
+}
+
+theorem add_assoc(a: Real, b: Real, c: Real) {
+    a + b + c = a + (b + c)
+}
+
+theorem add_gt_trans(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    add_gt(z1, z2, r1) and r1 > r2 implies add_gt(z1, z2, r2)
+}
+
+theorem add_gt_imp_gt_from_rat(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies z1 + z2 > Real.from_rat(r)
+}
+
+theorem gt_from_rat_imp_add_gt(z1: Real, z2: Real, r: Rat) {
+    z1 + z2 > Real.from_rat(r) implies add_gt(z1, z2, r)
+}
+
+theorem add_gt_from_rat_imp_rat_add_gt(p: Rat, q: Rat, r: Rat) {
+    add_gt(Real.from_rat(p), Real.from_rat(q), r) implies p + q > r
+}
+
+theorem rat_add_gt_imp_add_gt_from_rat(p: Rat, q: Rat, r: Rat) {
+    p + q > r implies add_gt(Real.from_rat(p), Real.from_rat(q), r)
+}
+
+theorem add_from_rat(p: Rat, q: Rat) {
+    Real.from_rat(p) + Real.from_rat(q) = Real.from_rat(p + q)
+}
+
+theorem lte_add_right(a: Real, b: Real, c: Real) {
+    a <= b implies a + c <= b + c
+}
+
+theorem lte_add_left(a: Real, b: Real, c: Real) {
+    a <= b implies c + a <= c + b
+}
+
+theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+theorem lt_add_converse(a: Real, b: Real, c: Real) {
+    a + c < b + c implies a < b
+}
+
+theorem add_lt_lt(a: Real, b: Real, c: Real, d: Real) {
+    a < b and c < d implies a + c < b + d
+}
+
+theorem add_from_int(m: Int, n: Int) {
+    Real.from_int(m) + Real.from_int(n) = Real.from_int(m + n)
+}
+
+theorem lt_add_pos_int(a: Real, n: Int) {
+    n.is_positive implies a < a + Real.from_int(n)
+}
+
+theorem lt_add_pos_rat(a: Real, r: Rat) {
+    r.is_positive implies a < a + Real.from_rat(r)
+}
+
+theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
+    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
+}
+
+theorem lt_add_rat_left(a: Real, b: Real, r: Rat) {
+    a < b implies Real.from_rat(r) + a < Real.from_rat(r) + b
+}
+
+theorem lt_add_right(a: Real, b: Real, c: Real) {
+    a < b implies a + c < b + c
+}
+
+theorem lt_add_left(a: Real, b: Real, c: Real) {
+    a < b implies c + a < c + b
+}
+
+theorem lt_add_cancel_right(a: Real, b: Real, c: Real) {
+    a + c = b + c implies a = b
+}
+
+theorem lt_add_cancel_left(a: Real, b: Real, c: Real) {
+    c + a = c + b implies a = b
+}
+
+theorem rat_window(a: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        Real.from_rat(r) < a and a < Real.from_rat(r + eps)
+    }
+}
+
+theorem neg_distrib(a: Real, b: Real) {
+    -(a + b) = -a + -b
 }
 
 theorem finite_set_sum_pointwise_add[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A, g: T -> A) {
     finite_set_sum(s, add_fn(f, g)) = finite_set_sum(s, f) + finite_set_sum(s, g)
-}
-
-theorem finite_set_sum_insert_right[T, A: AddCommMonoid](s: FiniteSet[T], item: T, f: T -> A) {
-    not s.contains(item) implies finite_set_sum(fs_insert(s, item), f) = finite_set_sum(s, f) + f(item)
 }
 
 theorem finite_set_sum_disjoint_union_commuted[T, A: AddCommMonoid](
@@ -202,359 +885,6 @@ theorem finite_set_sum_disjoint_union_commuted[T, A: AddCommMonoid](
 ) {
     a.is_disjoint(b) implies
         finite_set_sum(fs_union(a, b), f) = finite_set_sum(b, f) + finite_set_sum(a, f)
-}
-
-theorem finite_set_sum_scalar_mul_right_form[T, S: Semiring](c: S, s: FiniteSet[T], f: T -> S) {
-    finite_set_sum(s, mul_fn(c, f)) = c * finite_set_sum(s, f)
-}
-
-theorem finite_set_product_contains_iff_components[T, U](
-    a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]
-) {
-    finite_set_product(a, b).contains(p) iff (a.contains(p.first) and b.contains(p.second))
-}
-
-theorem finite_set_product_contains_of_components[T, U](
-    a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]
-) {
-    a.contains(p.first) and b.contains(p.second) implies finite_set_product(a, b).contains(p)
-}
-
-theorem finite_set_product_contains_first[T, U](a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]) {
-    finite_set_product(a, b).contains(p) implies a.contains(p.first)
-}
-
-theorem finite_set_product_contains_second[T, U](a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]) {
-    finite_set_product(a, b).contains(p) implies b.contains(p.second)
-}
-
-theorem finite_set_product_subset_left[T, U](a: FiniteSet[T], a_target: FiniteSet[T], b: FiniteSet[U]) {
-    a.subset_eq(a_target) implies finite_set_product(a, b).subset_eq(finite_set_product(a_target, b))
-}
-
-theorem finite_set_product_subset_right[T, U](a: FiniteSet[T], b: FiniteSet[U], b_target: FiniteSet[U]) {
-    b.subset_eq(b_target) implies finite_set_product(a, b).subset_eq(finite_set_product(a, b_target))
-}
-
-theorem finite_set_sum_product_fubini_rows_rev[T, U, A: AddCommMonoid](
-    a: FiniteSet[T], b: FiniteSet[U], f: Pair[T, U] -> A
-) {
-    finite_set_sum(a, function(x: T) { finite_set_sum(b, function(y: U) { f(Pair.new(x, y)) }) }) =
-        finite_set_sum(finite_set_product(a, b), f)
-}
-
-theorem finite_set_product_row_fn_apply[T, U, A](f: Pair[T, U] -> A, x: T, y: U) {
-    finite_set_product_row_fn(f, x, y) = f(Pair.new(x, y))
-}
-
-theorem finite_set_sum_nonnegative_of_pointwise[T](s: FiniteSet[T], f: T -> Real) {
-    (forall(item: T) { Real.0 <= f(item) }) implies Real.0 <= finite_set_sum(s, f)
-}
-
-theorem finite_set_sum_monotone_of_pointwise_le[T](s: FiniteSet[T], f: T -> Real, g: T -> Real) {
-    pointwise_le(f, g) implies finite_set_sum(s, f) <= finite_set_sum(s, g)
-}
-
-theorem pointwise_le_intro[T](f: T -> Real, g: T -> Real) {
-    (forall(t: T) { f(t) <= g(t) }) implies pointwise_le(f, g)
-}
-
-theorem pointwise_le_iff_forall[T](f: T -> Real, g: T -> Real) {
-    pointwise_le(f, g) iff forall(t: T) { f(t) <= g(t) }
-}
-
-theorem pointwise_le_elim[T](f: T -> Real, g: T -> Real, t: T) {
-    pointwise_le(f, g) implies f(t) <= g(t)
-}
-
-define prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
-    a(n) * b(n)
-}
-
-theorem abs_le_abs_add_eps(x: Real, y: Real, eps: Real) {
-    x.is_close(y, eps) implies x.abs <= y.abs + eps
-}
-
-theorem mul_le_lt_of_nonneg_pos(a: Real, b: Real, c: Real, d: Real) {
-    a <= b and c < d
-    and not a.is_negative and not c.is_negative
-    and b.is_positive and d.is_positive
-    implies
-    a * c < b * d
-}
-
-theorem mul_close_from_close(a1: Real, a2: Real, b1: Real, b2: Real,
-                              a_eps: Real, b_eps: Real,
-                              a_bound: Real, b_bound: Real) {
-    a1.is_close(a2, a_eps) and b1.is_close(b2, b_eps)
-    and a1.abs <= a_bound and b2.abs <= b_bound
-    and a_bound.is_positive and b_bound.is_positive
-    and a_eps.is_positive and b_eps.is_positive
-    implies
-    (a1 * b1).is_close(a2 * b2, a_bound * b_eps + a_eps * b_bound)
-}
-
-theorem limit_prod_seq(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    converges_to(prod_seq(a, b), limit(a) * limit(b))
-}
-
-theorem prod_seq_converges(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    converges(prod_seq(a, b))
-}
-
-theorem limit_of_prod(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and converges(b)
-    implies
-    limit(prod_seq(a, b)) = limit(a) * limit(b)
-}
-
-define is_bounded_seq(a: Nat -> Real) -> Bool {
-    exists(bound: Real) {
-        forall(n: Nat) {
-            a(n).abs < bound
-        }
-    }
-}
-
-theorem real_strict_upper_bound_pair(a: Real, b: Real) {
-    exists(c: Real) {
-        a < c and b < c
-    }
-}
-
-theorem finite_seq_real_abs_bounded(a: Nat -> Real, n: Nat) {
-    exists(bound: Real) {
-        forall(i: Nat) {
-            i <= n implies a(i).abs < bound
-        }
-    }
-}
-
-theorem converges_to_imp_bounded_seq(a: Nat -> Real, x: Real) {
-    converges_to(a, x) implies is_bounded_seq(a)
-}
-
-theorem converges_imp_bounded_seq(a: Nat -> Real) {
-    converges(a) implies is_bounded_seq(a)
-}
-
-define same_limit(a: Nat -> Real, b: Nat -> Real) -> Bool {
-    converges(a) and converges(b) and limit(a) = limit(b)
-}
-
-define vanishes(a: Nat -> Real) -> Bool {
-    converges(a) and limit(a) = Real.0
-}
-
-define abs_seq(a: Nat -> Real, n: Nat) -> Real {
-    a(n).abs
-}
-
-theorem same_limit_refl(a: Nat -> Real) {
-    converges(a) implies same_limit(a, a)
-}
-
-theorem same_limit_symm(a: Nat -> Real, b: Nat -> Real) {
-    same_limit(a, b) implies same_limit(b, a)
-}
-
-theorem same_limit_trans(a: Nat -> Real, b: Nat -> Real, c: Nat -> Real) {
-    same_limit(a, b) and same_limit(b, c) implies same_limit(a, c)
-}
-
-theorem abs_abs_sub_le_abs_sub(a: Real, b: Real) {
-    (a.abs - b.abs).abs <= (a - b).abs
-}
-
-theorem abs_abs(a: Real) {
-    a.abs.abs = a.abs
-}
-
-theorem abs_close_of_close(a: Real, b: Real, eps: Real) {
-    a.is_close(b, eps) implies a.abs.is_close(b.abs, eps)
-}
-
-theorem limit_abs_seq(a: Nat -> Real) {
-    converges(a) implies converges_to(abs_seq(a), limit(a).abs)
-}
-
-theorem same_limit_add_seq(a: Nat -> Real, b: Nat -> Real, c: Nat -> Real, d: Nat -> Real) {
-    same_limit(a, b) and same_limit(c, d)
-    implies same_limit(add_seq(a, c), add_seq(b, d))
-}
-
-theorem same_limit_prod_seq(a: Nat -> Real, b: Nat -> Real, c: Nat -> Real, d: Nat -> Real) {
-    same_limit(a, b) and same_limit(c, d)
-    implies same_limit(prod_seq(a, c), prod_seq(b, d))
-}
-
-theorem same_limit_abs_seq(a: Nat -> Real, b: Nat -> Real) {
-    same_limit(a, b) implies same_limit(abs_seq(a), abs_seq(b))
-}
-
-theorem vanishes_abs_seq(a: Nat -> Real) {
-    vanishes(a) implies vanishes(abs_seq(a))
-}
-
-theorem vanishes_of_abs_lte_abs(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(abs_seq(a), abs_seq(b)) and vanishes(b)
-    implies vanishes(a)
-}
-
-theorem same_limit_add_vanish_right(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and vanishes(b)
-    implies same_limit(add_seq(a, b), a)
-}
-
-theorem vanishes_prod_seq(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and vanishes(b)
-    implies vanishes(prod_seq(a, b))
-}
-
-theorem same_limit_imp_vanishes(a: Nat -> Real, b: Nat -> Real) {
-    same_limit(a, b) implies vanishes(add_seq(a, neg_seq(b)))
-}
-
-theorem vanishes_squeeze(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(const_seq(Real.0), a) and seq_lte(a, b) and vanishes(b)
-    implies vanishes(a)
-}
-
-theorem squeeze_theorem(a: Nat -> Real, b: Nat -> Real, c: Nat -> Real) {
-    seq_lte(a, b) and seq_lte(b, c) and same_limit(a, c)
-    implies same_limit(a, b)
-}
-
-define tends_to_infinity(f: Nat -> Nat) -> Bool {
-    forall(big_n: Nat) {
-        exists(m: Nat) {
-            forall(n: Nat) {
-                m <= n implies big_n <= f(n)
-            }
-        }
-    }
-}
-
-define is_nondecreasing_nat(f: Nat -> Nat) -> Bool {
-    forall(i: Nat, j: Nat) {
-        i <= j implies f(i) <= f(j)
-    }
-}
-
-theorem monotone_is_nondecreasing_nat(f: Nat -> Nat) {
-    is_monotone(f) implies is_nondecreasing_nat(f)
-}
-
-define is_unbounded(f: Nat -> Nat) -> Bool {
-    forall(bound: Nat) {
-        exists(n: Nat) {
-            bound < f(n)
-        }
-    }
-}
-
-theorem nondecreasing_unbounded_tends_to_infinity(f: Nat -> Nat) {
-    is_nondecreasing_nat(f) and is_unbounded(f)
-    implies
-    tends_to_infinity(f)
-}
-
-theorem monotone_unbounded_tends_to_infinity(f: Nat -> Nat) {
-    is_monotone(f) and is_unbounded(f)
-    implies
-    tends_to_infinity(f)
-}
-
-theorem converges_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and tends_to_infinity(f)
-    implies
-    converges_to(compose(a, f), limit(a))
-}
-
-theorem converges_compose_nondecreasing_unbounded(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_nondecreasing_nat(f) and is_unbounded(f)
-    implies
-    converges_to(compose(a, f), limit(a))
-}
-
-theorem converges_compose_monotone_unbounded(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_monotone(f) and is_unbounded(f)
-    implies
-    converges_to(compose(a, f), limit(a))
-}
-
-define is_subsequence_index(f: Nat -> Nat) -> Bool {
-    is_monotone(f) and is_unbounded(f)
-}
-
-define subsequence(a: Nat -> Real, f: Nat -> Nat, n: Nat) -> Real {
-    compose(a, f)(n)
-}
-
-theorem subsequence_index_is_monotone(f: Nat -> Nat) {
-    is_subsequence_index(f) implies is_monotone(f)
-}
-
-theorem subsequence_index_is_unbounded(f: Nat -> Nat) {
-    is_subsequence_index(f) implies is_unbounded(f)
-}
-
-theorem subsequence_index_of_monotone_unbounded(f: Nat -> Nat) {
-    is_monotone(f) and is_unbounded(f) implies is_subsequence_index(f)
-}
-
-theorem subsequence_index_tends_to_infinity(f: Nat -> Nat) {
-    is_subsequence_index(f) implies tends_to_infinity(f)
-}
-
-theorem subsequence_eq_compose(a: Nat -> Real, f: Nat -> Nat) {
-    subsequence(a, f) = compose(a, f)
-}
-
-theorem converges_subsequence(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    converges_to(subsequence(a, f), limit(a))
-}
-
-theorem subsequence_converges(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    converges(subsequence(a, f))
-}
-
-theorem limit_subsequence(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    limit(subsequence(a, f)) = limit(a)
-}
-
-theorem subsequence_same_limit_left(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    same_limit(subsequence(a, f), a)
-}
-
-theorem subsequence_same_limit_right(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    same_limit(a, subsequence(a, f))
-}
-
-theorem mul_nondecreasing(k: Nat) {
-    Nat.1 <= k implies is_nondecreasing_nat(k.mul)
-}
-
-theorem mul_monotone(k: Nat) {
-    Nat.1 <= k implies is_monotone(k.mul)
-}
-
-theorem mul_unbounded(k: Nat) {
-    Nat.1 <= k implies is_unbounded(k.mul)
 }
 
 theorem add_nondecreasing(k: Nat) {
@@ -569,1009 +899,8 @@ theorem add_unbounded(k: Nat) {
     is_unbounded(k.add)
 }
 
-theorem mul_subsequence_index(k: Nat) {
-    Nat.1 <= k implies is_subsequence_index(k.mul)
-}
-
 theorem add_subsequence_index(k: Nat) {
     is_subsequence_index(k.add)
-}
-
-theorem double_subsequence_index {
-    is_subsequence_index(Nat.2.mul)
-}
-
-theorem suc_subsequence_index {
-    is_subsequence_index(Nat.suc)
-}
-
-theorem converges_compose_mul(a: Nat -> Real, k: Nat) {
-    converges(a) and Nat.1 <= k
-    implies
-    converges_to(compose(a, k.mul), limit(a))
-}
-
-theorem converges_compose_add(a: Nat -> Real, k: Nat) {
-    converges(a)
-    implies
-    converges_to(compose(a, k.add), limit(a))
-}
-
-theorem converges_compose_double(a: Nat -> Real) {
-    converges(a)
-    implies
-    converges_to(compose(a, Nat.2.mul), limit(a))
-}
-
-theorem converges_compose_suc(a: Nat -> Real) {
-    converges(a)
-    implies
-    converges_to(compose(a, Nat.suc), limit(a))
-}
-
-theorem converges_subsequence_mul(a: Nat -> Real, k: Nat) {
-    converges(a) and Nat.1 <= k
-    implies
-    converges_to(subsequence(a, k.mul), limit(a))
-}
-
-theorem converges_subsequence_add(a: Nat -> Real, k: Nat) {
-    converges(a)
-    implies
-    converges_to(subsequence(a, k.add), limit(a))
-}
-
-theorem converges_subsequence_double(a: Nat -> Real) {
-    converges(a)
-    implies
-    converges_to(subsequence(a, Nat.2.mul), limit(a))
-}
-
-theorem converges_subsequence_suc(a: Nat -> Real) {
-    converges(a)
-    implies
-    converges_to(subsequence(a, Nat.suc), limit(a))
-}
-
-theorem subsequence_converges_to_limit(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    converges_to(subsequence(a, f), limit(a))
-}
-
-theorem subsequence_of_convergent_converges(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    converges(subsequence(a, f))
-}
-
-theorem subsequence_limit_eq_original(a: Nat -> Real, f: Nat -> Nat) {
-    converges(a) and is_subsequence_index(f)
-    implies
-    limit(subsequence(a, f)) = limit(a)
-}
-
-theorem abs_of_vanishing_vanishes(a: Nat -> Real) {
-    vanishes(a) implies vanishes(abs_seq(a))
-}
-
-theorem vanishes_by_squeeze(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(const_seq(Real.0), a) and seq_lte(a, b) and vanishes(b)
-    implies vanishes(a)
-}
-
-theorem vanishes_by_abs_domination(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(abs_seq(a), abs_seq(b)) and vanishes(b)
-    implies vanishes(a)
-}
-
-theorem same_limit_add_vanishing(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and vanishes(b)
-    implies same_limit(add_seq(a, b), a)
-}
-
-define abs_fn(a: Nat -> Real) -> (Nat -> Real) {
-    function(n: Nat) { a(n).abs }
-}
-
-define filter_seq(f: Nat -> Real, p: Nat -> Bool, n: Nat) -> Real {
-    if p(n) { f(n) } else { Real.0 }
-}
-
-define mask(f: Nat -> Real, s: Set[Nat], n: Nat) -> Real {
-    filter_seq(f, s.contains, n)
-}
-
-define mask_seq_sum(a: Nat -> Real, s: Nat -> Set[Nat], i: Nat) -> Real {
-    limit(partial(mask(a, s(i))))
-}
-
-define absolutely_converges(a: Nat -> Real) -> Bool {
-    converges(partial(abs_fn(a)))
-}
-
-theorem abs_fn_zero(n: Nat) {
-    abs_fn(constant[Nat, Real](Real.0))(n) = Real.0
-}
-
-theorem abs_fn_nonneg(a: Nat -> Real, n: Nat) {
-    abs_fn(a)(n) >= Real.0
-}
-
-theorem abs_fn_scalar_mul(c: Real, a: Nat -> Real, n: Nat) {
-    abs_fn(mul_fn(c, a))(n) = c.abs * abs_fn(a)(n)
-}
-
-theorem abs_fn_eq_compose(a: Nat -> Real, n: Nat) {
-    abs_fn(a)(n) = compose(Real.abs, a)(n)
-}
-
-theorem abs_fn_prod_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) {
-    abs_fn(prod_seq(a, b))(n) = abs_fn(a)(n) * abs_fn(b)(n)
-}
-
-define partial_diff(f: Nat -> Real, m: Nat, n: Nat) -> Real {
-    partial(f, n) - partial(f, m)
-}
-
-define tail_limit_diff(f: Nat -> Real, m: Nat) -> Real {
-    limit(partial(f)) - partial(f, m)
-}
-
-define sub_seq(s: Nat -> Real, t: Nat -> Real, n: Nat) -> Real {
-    s(n) - t(n)
-}
-
-define abs_diff_seq(s: Nat -> Real, t: Nat -> Real, n: Nat) -> Real {
-    sub_seq(s, t, n).abs
-}
-
-define vanishing_diff(s: Nat -> Real, t: Nat -> Real) -> Bool {
-    vanishes(abs_diff_seq(s, t))
-}
-
-theorem vanishes_of_abs_seq(a: Nat -> Real) {
-    vanishes(abs_seq(a))
-    implies
-    vanishes(a)
-}
-
-theorem vanishes_neg_seq(a: Nat -> Real) {
-    vanishes(a)
-    implies
-    vanishes(neg_seq(a))
-}
-
-theorem vanishes_congr_left(a: Nat -> Real, b: Nat -> Real) {
-    a = b and vanishes(b)
-    implies
-    vanishes(a)
-}
-
-theorem neg_seq_sub_seq_eq(s: Nat -> Real, t: Nat -> Real) {
-    neg_seq(sub_seq(s, t)) = sub_seq(t, s)
-}
-
-theorem abs_seq_sub_seq_eq_abs_diff_left(s: Nat -> Real, t: Nat -> Real) {
-    abs_seq(sub_seq(s, t)) = abs_diff_seq(s, t)
-}
-
-theorem abs_seq_sub_seq_eq_abs_diff_right(s: Nat -> Real, t: Nat -> Real) {
-    abs_seq(sub_seq(t, s)) = abs_diff_seq(s, t)
-}
-
-theorem vanishing_diff_abs_eq(s: Nat -> Real, t: Nat -> Real) {
-    vanishing_diff(s, t)
-    implies
-    vanishes(sub_seq(t, s))
-}
-
-theorem limit_preserved_by_vanishing_diff(s: Nat -> Real, t: Nat -> Real) {
-    converges(s) and vanishing_diff(s, t)
-    implies
-    converges(t) and limit(s) = limit(t)
-}
-
-theorem absolutely_converges_imp_converges(a: Nat -> Real) {
-    absolutely_converges(a) implies converges(partial(a))
-}
-
-theorem absolutely_converges_scalar_mul(c: Real, a: Nat -> Real) {
-    absolutely_converges(a) implies absolutely_converges(mul_fn(c, a))
-}
-
-theorem absolutely_converges_mul_bounded(a: Nat -> Real, b: Nat -> Real) {
-    absolutely_converges(a)
-    and has_upper_bound_seq(abs_fn(b))
-    implies
-    absolutely_converges(prod_seq(a, b))
-}
-
-theorem absolutely_converges_add(a: Nat -> Real, b: Nat -> Real) {
-    absolutely_converges(a) and absolutely_converges(b)
-    implies
-    absolutely_converges(add_fn(a, b))
-}
-
-theorem absolutely_converges_filter_seq(a: Nat -> Real, p: Nat -> Bool) {
-    absolutely_converges(a)
-    implies
-    absolutely_converges(filter_seq(a, p))
-}
-
-theorem absolutely_converges_mask(a: Nat -> Real, s: Set[Nat]) {
-    absolutely_converges(a)
-    implies
-    absolutely_converges(mask(a, s))
-}
-
-theorem absolutely_converges_comparison(a: Nat -> Real, b: Nat -> Real) {
-    is_lower_bound(b, Real.0)
-    and seq_lte(abs_fn(a), b)
-    and converges(partial(b))
-    implies
-    absolutely_converges(a)
-}
-
-theorem tail_diff_converges(a: Nat -> Real, m: Nat) {
-    absolutely_converges(a)
-    implies
-    converges_to(partial_diff(abs_fn(a), m), tail_limit_diff(abs_fn(a), m))
-}
-
-theorem abs_conv_tail_bound(a: Nat -> Real, eps: Real) {
-    absolutely_converges(a) and eps.is_positive
-    implies
-    exists(big_n: Nat) {
-        forall(n: Nat, m: Nat) {
-            big_n <= n and n <= m
-            implies
-            partial(abs_fn(a), m) - partial(abs_fn(a), n) < eps
-        }
-    }
-}
-
-theorem abs_conv_tail_sum_small(a: Nat -> Real, eps: Real) {
-    absolutely_converges(a) and eps.is_positive
-    implies
-    exists(big_n: Nat) {
-        tail_limit_diff(abs_fn(a), big_n) < eps
-    }
-}
-
-theorem abs_fn_tail_comm(a: Nat -> Real, n: Nat) {
-    abs_fn(tail(a, n)) = tail(abs_fn(a), n)
-}
-
-theorem abs_conv_tail_imp_abs_conv(a: Nat -> Real, n: Nat) {
-    absolutely_converges(tail(a, n)) implies absolutely_converges(a)
-}
-
-theorem mask_disjoint_add(f: Nat -> Real, s1: Set[Nat], s2: Set[Nat], u: Set[Nat]) {
-    s1.is_disjoint(s2) and u = s1.union(s2)
-    implies
-    add_fn(mask(f, s1), mask(f, s2)) = mask(f, u)
-}
-
-theorem mask_disjoint_union_sum(f: Nat -> Real, s1: Set[Nat], s2: Set[Nat], u: Set[Nat]) {
-    absolutely_converges(f) and s1.is_disjoint(s2) and u = s1.union(s2)
-    implies
-    limit(partial(mask(f, u))) = limit(partial(mask(f, s1))) + limit(partial(mask(f, s2)))
-}
-
-theorem abs_fn_mask(f: Nat -> Real, s: Set[Nat]) {
-    abs_fn(mask(f, s)) = mask(abs_fn(f), s)
-}
-
-theorem mask_abs_sum_superset(f: Nat -> Real, s1: Set[Nat], s2: Set[Nat]) {
-    absolutely_converges(f) and s1.superset(s2)
-    implies
-    limit(partial(mask(abs_fn(f), s1))) >= limit(partial(mask(abs_fn(f), s2)))
-}
-
-theorem mask_abs_sum_subset(f: Nat -> Real, s1: Set[Nat], s2: Set[Nat]) {
-    absolutely_converges(f) and s1.subset(s2)
-    implies
-    limit(partial(mask(abs_fn(f), s1))) <= limit(partial(mask(abs_fn(f), s2)))
-}
-
-theorem partial_mask_from_eq(a: Nat -> Real, n: Nat, m: Nat) {
-    n <= m
-    implies
-    partial(mask(a, nat_from(n)), m) = partial(a, m) - partial(a, n)
-}
-
-theorem mask_from_eq_tail(a: Nat -> Real, n: Nat) {
-    absolutely_converges(a)
-    implies
-    limit(partial(mask(abs_fn(a), nat_from(n)))) = tail_limit_diff(abs_fn(a), n)
-}
-
-theorem mask_bounded_by_tail(a: Nat -> Real, s: Set[Nat], n: Nat) {
-    absolutely_converges(a) and set_lower_bound(s, n)
-    implies
-    limit(partial(mask(abs_fn(a), s))) <= tail_limit_diff(abs_fn(a), n)
-}
-
-theorem map_compose_helper(f: Nat -> Real, n: Nat) {
-    map(map(n.range, f), Real.abs) = map(n.range, compose(Real.abs, f))
-}
-
-theorem partial_abs_fn_eq(a: Nat -> Real, n: Nat) {
-    partial(abs_fn(a), n) = sum(map(map(n.range, a), Real.abs))
-}
-
-theorem abs_limit_le_abs_series(a: Nat -> Real) {
-    absolutely_converges(a)
-    implies
-    limit(partial(a)).abs <= limit(partial(abs_fn(a)))
-}
-
-theorem decreasing_empty_intersection_mask_vanishes(a: Nat -> Real, s: Nat -> Set[Nat]) {
-    absolutely_converges(a)
-    and is_decreasing(s)
-    and seq_intersection(s).is_empty
-    implies
-    vanishes(mask_seq_sum(a, s))
-}
-
-theorem increasing_universal_union_mask_limit(a: Nat -> Real, s: Nat -> Set[Nat]) {
-    absolutely_converges(a)
-    and is_increasing(s)
-    and seq_union(s) = Set[Nat].universal_set
-    implies
-    converges_to(mask_seq_sum(a, s), limit(partial(a)))
-}
-
-theorem mask_singleton_zero_after(a: Nat -> Real, n: Nat, m: Nat) {
-    n < m
-    implies
-    mask(a, Set[Nat].singleton(n), m) = Real.0
-}
-
-define point_mass(a: Nat -> Real, n: Nat, i: Nat) -> Real {
-    if i = n { a(n) } else { Real.0 }
-}
-
-theorem partial_point_mass(a: Nat -> Real, n: Nat) {
-    partial(point_mass(a, n), n.suc) = a(n)
-}
-
-theorem mask_singleton_eq_point_mass(a: Nat -> Real, n: Nat, i: Nat) {
-    mask(a, Set[Nat].singleton(n), i) = point_mass(a, n, i)
-}
-
-theorem mask_singleton_base_case(a: Nat -> Real, n: Nat) {
-    partial(mask(a, Set[Nat].singleton(n)), n.suc) = a(n)
-}
-
-theorem mask_singleton_eventually_constant(a: Nat -> Real, n: Nat, m: Nat) {
-    n.suc <= m
-    implies
-    partial(mask(a, Set[Nat].singleton(n)), m) = a(n)
-}
-
-theorem mask_singleton_limit(a: Nat -> Real, n: Nat) {
-    limit(partial(mask(a, Set[Nat].singleton(n)))) = a(n)
-}
-
-theorem partial_constant_zero(n: Nat) {
-    partial(constant[Nat, Real](Real.0), n) = Real.0
-}
-
-theorem partial_constant_zero_is_constant {
-    partial(constant[Nat, Real](Real.0)) = constant[Nat, Real](Real.0)
-}
-
-theorem partial_compose_eq_mask_sum(a: Nat -> Real, p: Nat -> Nat, k: Nat) {
-    absolutely_converges(a) and is_injective(p)
-    implies
-    partial(compose(a, p), k) = limit(partial(mask(a, image_of_range(p, k))))
-}
-
-theorem riemann_rearrangement_absolutely_converges(a: Nat -> Real, p: Nat -> Nat) {
-    absolutely_converges(a) and is_bijection(p)
-    implies
-    absolutely_converges(compose(a, p))
-}
-
-theorem riemann_rearrangement_theorem(a: Nat -> Real, p: Nat -> Nat) {
-    absolutely_converges(a) and is_bijection(p)
-    implies
-    converges_to(partial(compose(a, p)), limit(partial(a)))
-}
-
-theorem bounded_seq_positive_bound(a: Nat -> Real) {
-    is_bounded_seq(a) implies exists(bound: Real) {
-        bound.is_positive and forall(n: Nat) {
-            a(n).abs < bound
-        }
-    }
-}
-
-theorem const_seq_bounded(c: Real) {
-    is_bounded_seq(const_seq(c))
-}
-
-theorem convergent_seq_bounded(a: Nat -> Real) {
-    converges(a) implies is_bounded_seq(a)
-}
-
-theorem converges_to_seq_bounded(a: Nat -> Real, x: Real) {
-    converges_to(a, x) implies is_bounded_seq(a)
-}
-
-theorem bounded_neg_seq(a: Nat -> Real) {
-    is_bounded_seq(a) implies is_bounded_seq(neg_seq(a))
-}
-
-theorem bounded_abs_seq(a: Nat -> Real) {
-    is_bounded_seq(a) implies is_bounded_seq(abs_seq(a))
-}
-
-theorem bounded_of_abs_lte_abs(a: Nat -> Real, b: Nat -> Real) {
-    seq_lte(abs_seq(a), abs_seq(b)) and is_bounded_seq(b) implies is_bounded_seq(a)
-}
-
-theorem bounded_mul_seq(c: Real, a: Nat -> Real) {
-    is_bounded_seq(a) implies is_bounded_seq(mul_seq(c, a))
-}
-
-theorem bounded_add_seq(a: Nat -> Real, b: Nat -> Real) {
-    is_bounded_seq(a) and is_bounded_seq(b) implies is_bounded_seq(add_seq(a, b))
-}
-
-theorem bounded_prod_seq(a: Nat -> Real, b: Nat -> Real) {
-    is_bounded_seq(a) and is_bounded_seq(b) implies is_bounded_seq(prod_seq(a, b))
-}
-
-theorem vanishes_mul_seq(c: Real, a: Nat -> Real) {
-    vanishes(a) implies vanishes(mul_seq(c, a))
-}
-
-theorem vanishes_add_seq(a: Nat -> Real, b: Nat -> Real) {
-    vanishes(a) and vanishes(b) implies vanishes(add_seq(a, b))
-}
-
-theorem convergent_mul_vanishing_seq(a: Nat -> Real, b: Nat -> Real) {
-    converges(a) and vanishes(b) implies vanishes(prod_seq(a, b))
-}
-
-theorem vanishing_mul_convergent_seq(a: Nat -> Real, b: Nat -> Real) {
-    vanishes(a) and converges(b) implies vanishes(prod_seq(a, b))
-}
-
-theorem prod_seq_comm(a: Nat -> Real, b: Nat -> Real) {
-    prod_seq(a, b) = prod_seq(b, a)
-}
-
-theorem tail_bounds_imp_converges_to(q: Nat -> Real, x: Real) {
-    (forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            tail_bound(q, x, n, eps)
-        }
-    }) implies converges_to(q, x)
-}
-
-theorem converges_to_zero_imp_vanishes(q: Nat -> Real) {
-    converges_to(q, Real.0) implies vanishes(q)
-}
-
-theorem bounded_mul_vanishing_seq_tail_bound(a: Nat -> Real, b: Nat -> Real) {
-    is_bounded_seq(a) and vanishes(b) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            tail_bound(prod_seq(a, b), Real.0, n, eps)
-        }
-    }
-}
-
-theorem bounded_mul_vanishing_seq(a: Nat -> Real, b: Nat -> Real) {
-    is_bounded_seq(a) and vanishes(b) implies vanishes(prod_seq(a, b))
-}
-
-theorem vanishing_mul_bounded_seq(a: Nat -> Real, b: Nat -> Real) {
-    vanishes(a) and is_bounded_seq(b) implies vanishes(prod_seq(a, b))
-}
-
-define recip_rat_seq(a: Nat -> Rat, n: Nat) -> Rat {
-    a(n).inverse
-}
-
-instance Real: Inverse {
-    define inverse(self) -> Real {
-        if self = Real.0 {
-            Real.0
-        } else {
-            limit_rat(recip_rat_seq(rat_seq(self)))
-        }
-    }
-}
-
-instance Real: Field
-
-instance Real: OrderedField
-
-theorem neg_recip_rat_seq(a: Nat -> Rat) {
-    neg_rat_seq(recip_rat_seq(a)) = recip_rat_seq(neg_rat_seq(a))
-}
-
-theorem recip_rat_seq_pos_converges(a: Nat -> Rat, b: Real) {
-    converges_to(lift_seq(a), b) and b.is_positive
-    implies converges(lift_seq(recip_rat_seq(a)))
-}
-
-theorem recip_rat_seq_converges(a: Nat -> Rat, b: Real) {
-    converges_to(lift_seq(a), b) and b != Real.0
-    implies converges(lift_seq(recip_rat_seq(a)))
-}
-
-define eventually_nonzero(a: Nat -> Real) -> Bool {
-    exists(n: Nat) {
-        forall(i: Nat) {
-            n <= i implies a(i) != Real.0
-        }
-    }
-}
-
-theorem pos_imp_eventually_nonzero(a: Nat -> Real) {
-    converges(a) and limit(a).is_positive
-    implies eventually_nonzero(a)
-}
-
-theorem nonzero_imp_eventually_nonzero(a: Nat -> Real) {
-    converges(a) and limit(a) != Real.0
-    implies eventually_nonzero(a)
-}
-
-theorem mul_inverse(a: Real) {
-    a != Real.0 implies a * a.inverse = Real.1
-}
-
-theorem zero_inverse {
-    Real.0.inverse = Real.0
-}
-
-theorem zero_is_different_than_one {
-    Real.0 != Real.1
-}
-
-theorem real_no_zero_divisors(a: Real, b: Real) {
-    a * b = Real.0 implies a = Real.0 or b = Real.0
-}
-
-theorem mul_left_cancel(a: Real, b: Real, c: Real) {
-    a = b * c and b != Real.0 implies a / b = c
-}
-
-theorem div_le_of_mul_le(a: Real, b: Real, c: Real) {
-    a * b <= c and b > Real.0
-    implies
-    a <= c / b
-}
-
-theorem mul_le_mul_pos_right(a: Real, b: Real, c: Real) {
-    a <= b and c > Real.0
-    implies
-    a * c <= b * c
-}
-
-theorem mul_le_mul_pos_left(a: Real, b: Real, c: Real) {
-    a <= b and c > Real.0
-    implies
-    c * a <= c * b
-}
-
-theorem div_lt_mul_pos(a: Real, b: Real, c: Real) {
-    a / b < c and b > Real.0
-    implies
-    a < b * c
-}
-
-theorem mul_div_cancel(b: Real, c: Real) {
-    c != Real.0
-    implies
-    c * (b / c) = b
-}
-
-theorem mul_inverse_comm(a: Real, b: Real, c: Real) {
-    a * (b * c) = b * (a * c)
-}
-
-theorem div_mul_cancel_right(a: Real, b: Real) {
-    a != Real.0 and b != Real.0
-    implies
-    a / (b * a) = Real.1 / b
-}
-
-theorem div_mul_cancel_left(a: Real, b: Real) {
-    a != Real.0
-    implies
-    (a * b) / a = b
-}
-
-theorem div_cancel_common(a: Real, b: Real, c: Real) {
-    b != Real.0 and c != Real.0
-    implies
-    (a * b) / (c * b) = a / c
-}
-
-theorem prod_eq_to_div_eq(a: Real, b: Real, c: Real, d: Real) {
-    a * b = c * d and b != Real.0 and d != Real.0
-    implies
-    a / d = c / b
-}
-
-theorem inverse_div(a: Real, b: Real) {
-    a != Real.0 and b != Real.0
-    implies
-    (a / b).inverse = b / a
-}
-
-theorem mul_div(a: Real, b: Real, c: Real, d: Real) {
-    b != Real.0 and d != Real.0
-    implies
-    (a / b) * (c / d) = (a * c) / (b * d)
-}
-
-theorem div_by_fraction(a: Real, b: Real, c: Real, d: Real) {
-    c != Real.0 and d != Real.0
-    implies
-    (a / b) / (c / d) = (a / b) * (d / c)
-}
-
-theorem div_div(a: Real, b: Real, c: Real, d: Real) {
-    b != Real.0 and c != Real.0 and d != Real.0
-    implies
-    (a / b) / (c / d) = (a * d) / (b * c)
-}
-
-theorem geom_series(r: Real) {
-    r.abs < 1 implies
-    limit(partial(r.pow)) = 1 / (1 - r)
-}
-
-define rat_condition(f: Rat -> Real, delta: Rat, eps: Real) -> Bool {
-    forall(r1: Rat, r2: Rat) {
-        r1.is_close(r2, delta) implies f(r1).is_close(f(r2), eps)
-    }
-}
-
-define rat_uniform(f: Rat -> Real) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Rat) {
-            delta.is_positive and rat_condition(f, delta, eps)
-        }
-    }
-}
-
-theorem uniform_imp_seq(f: Rat -> Real, q: Nat -> Rat) {
-    rat_uniform(f) and converges(lift_seq(q))
-    implies
-    converges(compose(f, q))
-}
-
-define uniform_condition(f: Real -> Real, delta: Real, eps: Real) -> Bool {
-    forall(r1: Real, r2: Real) {
-        r1.is_close(r2, delta) implies f(r1).is_close(f(r2), eps)
-    }
-}
-
-define uniform(f: Real -> Real) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and uniform_condition(f, delta, eps)
-        }
-    }
-}
-
-theorem uniform_witness(f: Real -> Real, eps: Real) {
-    uniform(f) and eps.is_positive implies exists(delta: Real) {
-        delta.is_positive and uniform_condition(f, delta, eps)
-    }
-}
-
-theorem converges_imp_close_tail_bound(a: Nat -> Real, eps: Real) {
-    converges(a) and eps.is_positive implies exists(n: Nat) {
-        forall(i: Nat) {
-            n <= i implies a(i).is_close(limit(a), eps)
-        }
-    }
-}
-
-theorem uniform_condition_exists(g: Real -> Real, eps: Real, delta: Real) {
-    eps.is_positive and delta.is_positive and uniform_condition(g, delta, eps)
-    implies
-    exists(delta2: Real) {
-        delta2.is_positive and uniform_condition(g, delta2, eps)
-    }
-}
-
-theorem limit_compose_uniform(f: Real -> Real, a: Nat -> Real) {
-    uniform(f) and converges(a)
-    implies
-    converges_to(compose(f, a), f(limit(a)))
-}
-
-theorem limit_compose_rat_uniform(f: Rat -> Real, a: Nat -> Rat, r: Rat) {
-    rat_uniform(f)
-    and converges_to(lift_seq(a), Real.from_rat(r))
-    implies
-    converges_to(compose(f, a), f(r))
-}
-
-define lift_uc(f: Rat -> Real, x: Real) -> Real {
-    limit(compose(f, rat_seq(x)))
-}
-
-theorem lift_fixes_rats(f: Rat -> Real, r: Rat) {
-    rat_uniform(f)
-    implies
-    lift_uc(f, Real.from_rat(r)) = f(r)
-}
-
-theorem lift_uniform_is_uniform(f: Rat -> Real) {
-    rat_uniform(f)
-    implies
-    uniform(lift_uc(f))
-}
-
-theorem positive_real_has_close_rat(x: Real, delta: Real) {
-    delta.is_positive implies exists(r: Rat) {
-        Real.from_rat(r).is_close(x, delta)
-    }
-}
-
-theorem uniform_ne_imp_rat_ne(f: Real -> Real, g: Real -> Real) {
-    uniform(f) and uniform(g) and f != g implies
-    exists(r: Rat) {
-        f(Real.from_rat(r)) != g(Real.from_rat(r))
-    }
-}
-
-define rat_increasing(f: Rat -> Real) -> Bool {
-    forall(r1: Rat, r2: Rat) {
-        r1 < r2 implies f(r1) < f(r2)
-    }
-}
-
-define increasing(f: Real -> Real) -> Bool {
-    forall(x: Real, y: Real) {
-        x < y implies f(x) < f(y)
-    }
-}
-
-theorem uni_cond_imp_rat_cond(f: Real -> Real, delta: Rat, eps: Real) {
-    uniform_condition(f, Real.from_rat(delta), eps)
-    implies
-    rat_condition(compose(f, Real.from_rat), delta, eps)
-}
-
-theorem uniform_imp_rat_uniform(f: Real -> Real) {
-    uniform(f)
-    implies
-    rat_uniform(compose(f, Real.from_rat))
-}
-
-theorem tighten_uc(f: Real -> Real, delta1: Real, delta2: Real, eps: Real) {
-    delta1.is_positive and delta2.is_positive and
-    uniform_condition(f, delta1, eps) and delta2 < delta1
-    implies
-    uniform_condition(f, delta2, eps)
-}
-
-theorem add_real_eps_between(a: Real, b: Real) {
-    a < b implies
-    exists(eps: Real) {
-        eps.is_positive and a + eps < b
-    }
-}
-
-theorem lift_inc_is_inc(f: Rat -> Real) {
-    rat_uniform(f) and rat_increasing(f)
-    implies
-    increasing(lift_uc(f))
-}
-
-theorem constant_has_rat_uniform_witness(f: Rat -> Real, eps: Real) {
-    is_constant(f) and eps.is_positive implies exists(delta: Rat) {
-        delta.is_positive and rat_condition(f, delta, eps)
-    }
-}
-
-theorem constant_is_rat_uniform(f: Rat -> Real) {
-    is_constant(f)
-    implies
-    rat_uniform(f)
-}
-
-theorem constant_has_uniform_witness(f: Real -> Real, eps: Real) {
-    is_constant(f) and eps.is_positive implies exists(delta: Real) {
-        delta.is_positive and uniform_condition(f, delta, eps)
-    }
-}
-
-theorem constant_is_uniform(f: Real -> Real) {
-    is_constant(f)
-    implies
-    uniform(f)
-}
-
-theorem lift_constant_is_constant(f: Rat -> Real) {
-    is_constant(f)
-    implies
-    is_constant(lift_uc(f))
-}
-
-theorem compose_uniform(f: Real -> Real, g: Real -> Real) {
-    uniform(f) and uniform(g)
-    implies
-    uniform(compose(f, g))
-}
-
-theorem rat_mul_uniform(r: Rat) {
-    rat_uniform(compose(Real.from_rat, r.mul))
-}
-
-theorem close_add(a: Real, b: Real, c: Real, eps: Real) {
-    a.is_close(b, eps)
-    implies
-    (a + c).is_close(b + c, eps)
-}
-
-theorem add_real_uniform(x: Real) {
-    uniform(x.add)
-}
-
-theorem neg_uniform {
-    uniform(Real.neg)
-}
-
-define add_fns[T](f: T -> Real, g: T -> Real, t: T) -> Real {
-    f(t) + g(t)
-}
-
-theorem add_fns_uniform(f: Real -> Real, g: Real -> Real) {
-    uniform(f) and uniform(g)
-    implies
-    uniform(add_fns(f, g))
-}
-
-define continuous2_condition(f: (Real, Real) -> Real, x: Real, y: Real, delta: Real, eps: Real) -> Bool {
-    forall(x1: Real, y1: Real) {
-        x1.is_close(x, delta) and y1.is_close(y, delta) implies
-        f(x1, y1).is_close(f(x, y), eps)
-    }
-}
-
-define continuous2_at(f: (Real, Real) -> Real, x: Real, y: Real) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and
-            continuous2_condition(f, x, y, delta, eps)
-        }
-    }
-}
-
-define continuous2(f: (Real, Real) -> Real) -> Bool {
-    forall(x: Real, y: Real) {
-        continuous2_at(f, x, y)
-    }
-}
-
-theorem add_continuous2 {
-    continuous2(Real.add)
-}
-
-define continuous_condition(f: Real -> Real, x: Real, delta: Real, eps: Real) -> Bool {
-    forall(x1: Real) {
-        x1.is_close(x, delta) implies
-        f(x1).is_close(f(x), eps)
-    }
-}
-
-define continuous_at(f: Real -> Real, x: Real) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and continuous_condition(f, x, delta, eps)
-        }
-    }
-}
-
-define continuous(f: Real -> Real) -> Bool {
-    forall(x: Real) {
-        continuous_at(f, x)
-    }
-}
-
-theorem uniform_imp_continuous(f: Real -> Real) {
-    uniform(f)
-    implies
-    continuous(f)
-}
-
-theorem continuous_condition_imp_continuous_at(f: Real -> Real, x: Real) {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and continuous_condition(f, x, delta, eps)
-        }
-    }
-    implies
-    continuous_at(f, x)
-}
-
-theorem compose_continuous_at(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(g, x) and continuous_at(f, g(x))
-    implies
-    continuous_at(compose(f, g), x)
-}
-
-theorem compose_continuous(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g)
-    implies
-    continuous(compose(f, g))
-}
-
-theorem add_fns_continuous_at(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(f, x) and continuous_at(g, x)
-    implies
-    continuous_at(add_fns(f, g), x)
-}
-
-theorem add_fns_continuous(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g)
-    implies
-    continuous(add_fns(f, g))
-}
-
-theorem continuous_at_intro(f: Real -> Real, x: Real) {
-    forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and continuous_condition(f, x, delta, eps)
-        }
-    } implies continuous_at(f, x)
-}
-
-theorem continuous_intro(f: Real -> Real) {
-    forall(x: Real) {
-        continuous_at(f, x)
-    } implies continuous(f)
-}
-
-theorem continuous_imp_continuous_at(f: Real -> Real, x: Real) {
-    continuous(f) implies continuous_at(f, x)
-}
-
-theorem continuous_at_delta(f: Real -> Real, x: Real, eps: Real) {
-    continuous_at(f, x) and eps.is_positive implies exists(delta: Real) {
-        delta.is_positive and continuous_condition(f, x, delta, eps)
-    }
-}
-
-theorem constant_function_is_uniform(c: Real) {
-    uniform(constant[Real, Real](c))
-}
-
-theorem constant_function_is_continuous(c: Real) {
-    continuous(constant[Real, Real](c))
-}
-
-theorem constant_function_is_continuous_at(c: Real, x: Real) {
-    continuous_at(constant[Real, Real](c), x)
-}
-
-theorem continuous_condition_compose(
-    f: Real -> Real, g: Real -> Real, x: Real, eta: Real, delta: Real, eps: Real
-) {
-    continuous_condition(f, g(x), eta, eps) and continuous_condition(g, x, delta, eta)
-    implies continuous_condition(compose(f, g), x, delta, eps)
-}
-
-theorem continuous_at_compose(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(g, x) and continuous_at(f, g(x)) implies continuous_at(compose(f, g), x)
-}
-
-theorem continuous_compose(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g) implies continuous(compose(f, g))
 }
 
 define const_add_left(c: Real, f: Real -> Real, x: Real) -> Real {
@@ -1590,1081 +919,1402 @@ theorem add_fns_constant_right_eq(f: Real -> Real, c: Real) {
     add_fns[Real](f, constant[Real, Real](c)) = const_add_right(f, c)
 }
 
-theorem continuous_at_const_add_left(c: Real, f: Real -> Real, x: Real) {
-    continuous_at(f, x)
-    implies continuous_at(const_add_left(c, f), x)
+define shift_fn(f: Real -> Real, h: Real, x: Real) -> Real {
+    f(x + h)
 }
 
-theorem continuous_const_add_left(c: Real, f: Real -> Real) {
-    continuous(f) implies continuous(const_add_left(c, f))
+theorem real_from_rat_fn_add(p: Rat, q: Rat) {
+    real_from_rat_fn(p + q) = real_from_rat_fn(p) + real_from_rat_fn(q)
 }
 
-theorem continuous_at_const_add_right(f: Real -> Real, c: Real, x: Real) {
-    continuous_at(f, x)
-    implies continuous_at(const_add_right(f, c), x)
+define add_fn_2(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, i: Nat, j: Nat) -> Real {
+    f(i, j) + g(i, j)
 }
 
-theorem continuous_const_add_right(f: Real -> Real, c: Real) {
-    continuous(f) implies continuous(const_add_right(f, c))
+define shift_rows(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(offset + i, j)
 }
 
-theorem continuous_at_local_abs_bound(f: Real -> Real, x: Real) {
-    continuous_at(f, x) implies exists(delta: Real, bound: Real) {
-        delta.is_positive and bound.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y).abs <= bound
+define shift_cols(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(i, offset + j)
+}
+
+theorem rectangular_sum_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(add_fn_2(f, g), m, n)
+    =
+    rectangular_sum(f, m, n) + rectangular_sum(g, m, n)
+}
+
+theorem rectangular_sum_extend_row(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(f, m.suc, n) = rectangular_sum(f, m, n) + row_sum(f, n, m)
+}
+
+theorem rectangular_sum_extend_col(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(f, m, n.suc) = rectangular_sum(f, m, n) + col_sum(f, m, n)
+}
+
+theorem rectangular_sum_split_rows(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: Nat) {
+    rectangular_sum(f, m1 + m2, n)
+    =
+    rectangular_sum(f, m1, n) + rectangular_sum(shift_rows(f, m1), m2, n)
+}
+
+theorem rectangular_sum_split_cols(f: (Nat, Nat) -> Real, m: Nat, n1: Nat, n2: Nat) {
+    rectangular_sum(f, m, n1 + n2)
+    =
+    rectangular_sum(f, m, n1) + rectangular_sum(shift_cols(f, n1), m, n2)
+}
+
+theorem shift_rows_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_rows(shift_rows(f, k1), k2, i, j) = shift_rows(f, k1 + k2, i, j)
+}
+
+theorem shift_cols_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_cols(shift_cols(f, k1), k2, i, j) = shift_cols(f, k1 + k2, i, j)
+}
+
+theorem shift_rows_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
+    shift_rows(add_fn_2(f, g), k, i, j) = add_fn_2(shift_rows(f, k), shift_rows(g, k), i, j)
+}
+
+theorem shift_cols_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
+    shift_cols(add_fn_2(f, g), k, i, j) = add_fn_2(shift_cols(f, k), shift_cols(g, k), i, j)
+}
+
+theorem shift_rows_cols_commute(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_rows(shift_cols(f, k2), k1, i, j) = shift_cols(shift_rows(f, k1), k2, i, j)
+}
+
+theorem rectangular_sum_succ_rows(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(f, m.suc, n) = rectangular_sum(f, m, n) + row_sum(f, n, m)
+}
+
+theorem rectangular_sum_succ_cols(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(f, m, n.suc) = rectangular_sum(f, m, n) + col_sum(f, m, n)
+}
+
+theorem rectangular_sum_add_distrib(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, m: Nat, n: Nat) {
+    rectangular_sum(add_fn_2(f, g), m, n) = rectangular_sum(f, m, n) + rectangular_sum(g, m, n)
+}
+
+theorem rectangular_sum_rows_split_at(f: (Nat, Nat) -> Real, m1: Nat, m2: Nat, n: Nat) {
+    rectangular_sum(f, m1 + m2, n)
+    =
+    rectangular_sum(f, m1, n) + rectangular_sum(shift_rows(f, m1), m2, n)
+}
+
+theorem rectangular_sum_cols_split_at(f: (Nat, Nat) -> Real, m: Nat, n1: Nat, n2: Nat) {
+    rectangular_sum(f, m, n1 + n2)
+    =
+    rectangular_sum(f, m, n1) + rectangular_sum(shift_cols(f, n1), m, n2)
+}
+
+theorem seq_eventually_in_real_set_shift_add(s: Set[Real], a: Nat -> Real, k: Nat) {
+    seq_eventually_in_real_set(s, a) implies seq_eventually_in_real_set(s, compose(a, k.add))
+}
+
+theorem seq_eventually_in_real_set_tail_subsequence(s: Set[Real], a: Nat -> Real, k: Nat) {
+    seq_eventually_in_real_set(s, a) implies seq_eventually_in_real_set(s, subsequence(a, k.add))
+}
+
+theorem seq_eventually_equal_real_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    seq_eventually_equal_real(a, b) implies
+    seq_eventually_equal_real(compose(a, k.add), compose(b, k.add))
+}
+
+theorem seq_eventually_equal_real_tail_subsequence(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    seq_eventually_equal_real(a, b) implies
+    seq_eventually_equal_real(subsequence(a, k.add), subsequence(b, k.add))
+}
+
+theorem real_partial_interval_sum(f: Nat -> Real, a: Nat, b: Nat) {
+    a <= b implies partial(f, b) = partial(f, a) + sum(map(a.until(b), f))
+}
+
+theorem real_partial_interval_sum_comm(f: Nat -> Real, a: Nat, b: Nat) {
+    a <= b implies sum(map(a.until(b), f)) + partial(f, a) = partial(f, b)
+}
+
+theorem real_partial_interval_suc(f: Nat -> Real, n: Nat) {
+    partial(f, n.suc) = partial(f, n) + sum(map(n.until(n.suc), f))
+}
+
+theorem real_partial_range_take_drop_sum(f: Nat -> Real, n: Nat, k: Nat) {
+    partial(f, n) = sum(map(list_take(n.range, k), f)) + sum(map(n.range.drop(k), f))
+}
+
+define setwise_add_contains(s: Set[Real], t: Set[Real], x: Real) -> Bool {
+    exists(a: Real, b: Real) {
+        s.contains(a) and t.contains(b) and x = a + b
+    }
+}
+
+define setwise_add(s: Set[Real], t: Set[Real]) -> Set[Real] {
+    Set[Real].new(setwise_add_contains(s, t))
+}
+
+theorem setwise_add_contains_iff(s: Set[Real], t: Set[Real], x: Real) {
+    setwise_add(s, t).contains(x) = setwise_add_contains(s, t, x)
+}
+
+theorem setwise_add_membership(s: Set[Real], t: Set[Real], a: Real, b: Real) {
+    s.contains(a) and t.contains(b)
+    implies
+    setwise_add(s, t).contains(a + b)
+}
+
+theorem supremum_setwise_add(s: Set[Real], t: Set[Real], sup_s: Real, sup_t: Real) {
+    is_set_supremum(s, sup_s) and is_set_supremum(t, sup_t)
+    implies
+    is_set_supremum(setwise_add(s, t), sup_s + sup_t)
+}
+
+theorem rectangular_sum_succ_row(f: (Nat, Nat) -> Real, k: Nat, n: Nat) {
+    rectangular_sum(f, k.suc, n) = rectangular_sum(f, k, n) + row_sum(f, n, k)
+}
+
+theorem rectangular_sum_succ_col(f: (Nat, Nat) -> Real, m: Nat, k: Nat) {
+    rectangular_sum(f, m, k.suc) = rectangular_sum(f, m, k) + col_sum(f, m, k)
+}
+
+theorem eventual_lb_shift_add(a: Nat -> Real, k: Nat, lb: Real) {
+    eventual_lb(a, lb) implies eventual_lb(compose(a, k.add), lb)
+}
+
+theorem eventual_ub_shift_add(a: Nat -> Real, k: Nat, ub: Real) {
+    eventual_ub(a, ub) implies eventual_ub(compose(a, k.add), ub)
+}
+
+theorem eventual_lb_tail_subsequence(a: Nat -> Real, k: Nat, lb: Real) {
+    eventual_lb(a, lb) implies eventual_lb(subsequence(a, k.add), lb)
+}
+
+theorem eventual_ub_tail_subsequence(a: Nat -> Real, k: Nat, ub: Real) {
+    eventual_ub(a, ub) implies eventual_ub(subsequence(a, k.add), ub)
+}
+
+theorem partial_split(g: Nat -> Real, n: Nat, k: Nat) {
+    partial(g, n + k) = partial(g, n) + partial(shift_fn(g, n), k)
+}
+
+theorem pascal_sub_form(n: Nat, k: Nat) {
+    Nat.0 < k and k <= n implies
+        n.binom(k) = (n - Nat.1).binom(k - Nat.1) + (n - Nat.1).binom(k)
+}
+
+define fib_pair(n: Nat) -> Pair[Nat, Nat] {
+    match n {
+        Nat.zero {
+            Pair.new(Nat.0, Nat.1)
+        }
+        Nat.suc(k) {
+            let p: Pair[Nat, Nat] = fib_pair(k)
+            Pair.new(p.second, p.first + p.second)
         }
     }
 }
 
-theorem continuous_local_abs_bound(f: Real -> Real, x: Real) {
-    continuous(f) implies exists(delta: Real, bound: Real) {
-        delta.is_positive and bound.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y).abs <= bound
+define fib(n: Nat) -> Nat {
+    fib_pair(n).first
+}
+
+define fib_seq(n: Nat) -> Real {
+    from_nat[Real](fib(n))
+}
+
+theorem fib_pair_suc(k: Nat) {
+    fib_pair(k.suc) = Pair.new(fib_pair(k).second, fib_pair(k).first + fib_pair(k).second)
+}
+
+theorem fib_pair_zero {
+    fib_pair(Nat.0) = Pair.new(Nat.0, Nat.1)
+}
+
+theorem fib_pair_second_suc(k: Nat) {
+    fib_pair(k).second = fib(k.suc)
+}
+
+theorem fib_zero {
+    fib(Nat.0) = Nat.0
+}
+
+theorem fib_one {
+    fib(Nat.1) = Nat.1
+}
+
+theorem fib_suc_suc(j: Nat) {
+    fib(j.suc.suc) = fib(j.suc) + fib(j)
+}
+
+theorem fib_two {
+    fib(Nat.2) = Nat.1
+}
+
+theorem partial_split_even(f: Nat -> Real, n: Nat) {
+    partial(f, Nat.2 * n.suc) = partial(even_subseq(f), n.suc) + partial(odd_subseq(f), n.suc)
+}
+
+theorem add_swap_outers(a: Real, b: Real, c: Real, d: Real) {
+    a + b + c + d = a + d + b + c
+}
+
+theorem partial_split_odd(f: Nat -> Real, n: Nat) {
+    partial(f, Nat.2 * n + Nat.1) = partial(even_subseq(f), n.suc) + partial(odd_subseq(f), n)
+}
+
+theorem add_cancel_mid(a: Real, b: Real, c: Real) {
+    (a + b) + -b = a
+}
+
+theorem add_swap_cancel(a: Real, b: Real) {
+    (a + b) + -a = b
+}
+
+theorem real_add_two_lower(a: Real, b: Real, u: Real, v: Real) {
+    a >= u and b >= v implies a + b >= u + v
+}
+
+theorem partial_add_shift_real(f: Nat -> Real, n: Nat, m: Nat) {
+    partial(f, n + m) = partial(f, n) + partial(function(k: Nat) { f(n + k) }, m)
+}
+
+instance Real: Zero {
+    let 0: Real = Real.from_rat(Rat.0)
+}
+
+instance Real: One {
+    let 1: Real = Real.from_rat(Rat.1)
+}
+
+instance Real: AddMonoid
+
+instance Real: AddCommMonoid
+
+instance Real: AddGroup
+
+instance Real: AddCommGroup
+
+instance Real: AddLeftOrderedGroup
+
+instance Real: AddOrderedGroup
+
+attributes Real {
+    /// True if this real number is positive (greater than zero).
+    define is_positive(self) -> Bool {
+        self.gt_rat(Rat.0)
+    }
+
+    /// True if this real number is negative (less than zero).
+    define is_negative(self) -> Bool {
+        self != Real.0 and not self.is_positive
+    }
+}
+
+attributes Real {
+    /// The absolute value of this real number.
+    define abs(self) -> Real {
+        if self.is_negative {
+            -self
+        } else {
+            self
+        }
+    }
+
+    /// The sign of this real number as a unit value (`-1` for negative, `1` for non-negative).
+    define unit_sign(self) -> Real {
+        if self.is_negative {
+            -Real.1
+        } else {
+            Real.1
         }
     }
 }
 
-theorem continuous_condition_apply_local(
-    f: Real -> Real, x: Real, delta: Real, eps: Real, y: Real
-) {
-    continuous_condition(f, x, delta, eps) and y.is_close(x, delta)
-    implies f(y).is_close(f(x), eps)
-}
-
-theorem lt_target_neighborhood_apply(
-    f: Real -> Real, x: Real, target: Real, delta: Real, y: Real
-) {
-    (forall(z: Real) {
-        z.is_close(x, delta) implies f(z) < target
-    }) and y.is_close(x, delta) implies f(y) < target
-}
-
-theorem target_lt_neighborhood_apply(
-    f: Real -> Real, x: Real, target: Real, delta: Real, y: Real
-) {
-    (forall(z: Real) {
-        z.is_close(x, delta) implies target < f(z)
-    }) and y.is_close(x, delta) implies target < f(y)
-}
-
-theorem continuous_at_of_continuous_local(f: Real -> Real, x: Real) {
-    continuous(f) implies continuous_at(f, x)
-}
-
-theorem continuous_at_lt_target_neighborhood(f: Real -> Real, x: Real, target: Real) {
-    continuous_at(f, x) and f(x) < target implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y) < target
-        }
+attributes Real {
+    /// True if this real number is within `eps` of the other real number.
+    define is_close(self, other: Real, eps: Real) -> Bool {
+        (self - other).abs < eps
     }
 }
 
-theorem continuous_lt_target_neighborhood(f: Real -> Real, x: Real, target: Real) {
-    continuous(f) and f(x) < target implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y) < target
-        }
+theorem zero_not_positive {
+    not Real.0.is_positive
+}
+
+theorem pos_gt_zero(a: Real) {
+    a.is_positive implies a > Real.0
+}
+
+theorem gt_zero_imp_pos(a: Real) {
+    a > Real.0 implies a.is_positive
+}
+
+theorem neg_lt_zero(a: Real) {
+    a.is_negative implies a < Real.0
+}
+
+theorem lt_zero_imp_neg(a: Real) {
+    a < Real.0 implies a.is_negative
+}
+
+theorem add_from_rat_zero(r: Rat) {
+    Real.from_rat(r) + Real.0 = Real.from_rat(r)
+}
+
+theorem add_zero_right(a: Real) {
+    a + Real.0 = a
+}
+
+theorem add_zero_left(a: Real) {
+    Real.0 + a = a
+}
+
+theorem real_neg_imp_rat_neg(r: Rat) {
+    Real.from_rat(r).is_negative implies r.is_negative
+}
+
+theorem lt_add_one(a: Real) {
+    a < a + Real.1
+}
+
+theorem lt_add_pos(a: Real, b: Real) {
+    b.is_positive implies a < a + b
+}
+
+theorem add_rat_eps_between(a: Real, b: Real) {
+    a < b implies exists(eps: Rat) {
+        eps.is_positive and a + Real.from_rat(eps) < b
     }
 }
 
-theorem continuous_at_target_lt_neighborhood(f: Real -> Real, x: Real, target: Real) {
-    continuous_at(f, x) and target < f(x) implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies target < f(y)
-        }
+theorem lt_rat_neg(a: Real, r: Rat) {
+    a < Real.from_rat(-r) implies -a > Real.from_rat(r)
+}
+
+theorem gt_rat_neg(a: Real, r: Rat) {
+    a > Real.from_rat(-r) implies -a < Real.from_rat(r)
+}
+
+theorem lt_swap_neg(a: Real, b: Real) {
+    a < b implies -b < -a
+}
+
+theorem neg_lt_swap_neg(a: Real, b: Real) {
+    -a < b implies -b < a
+}
+
+theorem neg_zero {
+    -Real.0 = Real.0
+}
+
+theorem neg_pos_is_neg(a: Real) {
+    a.is_positive implies (-a).is_negative
+}
+
+theorem neg_neg_is_pos(a: Real) {
+    (-a).is_negative implies a.is_positive
+}
+
+theorem gt_add_neg(a: Real, b: Real) {
+    b.is_negative implies a > a + b
+}
+
+theorem add_neg_lte_zero(a: Real) {
+    a + -a <= Real.0
+}
+
+theorem add_neg_gte_zero(a: Real) {
+    a + -a >= Real.0
+}
+
+theorem add_neg_eq_zero(a: Real) {
+    a + -a = Real.0
+}
+
+theorem pos_imp_eq_abs(a: Real) {
+    a.is_positive implies a = a.abs
+}
+
+theorem sub_cancels(a: Real, b: Real) {
+    a + b - b = a
+}
+
+theorem sub_moves_sides(a: Real, b: Real, c: Real) {
+    a + b = c implies a = c - b
+}
+
+theorem lte_abs(a: Real) {
+    a <= a.abs
+}
+
+theorem abs_neg(a: Real) {
+    (-a).abs = a.abs
+}
+
+theorem abs_not_neg(a: Real) {
+    not a.abs.is_negative
+}
+
+theorem min_pos_pos(a: Real, b: Real) {
+    a.is_positive and b.is_positive
+    implies
+    a.min(b).is_positive
+}
+
+theorem max_pos_pos(a: Real, b: Real) {
+    a.is_positive and b.is_positive
+    implies
+    a.max(b).is_positive
+}
+
+theorem abs_gte_zero(a: Real) {
+    a.abs >= Real.0
+}
+
+theorem abs_from_rat(p: Rat) {
+    Real.from_rat(p).abs = Real.from_rat(p.abs)
+}
+
+theorem close_imp_eps_pos(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies eps.is_positive
+}
+
+theorem close_comm(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies b.is_close(a, eps)
+}
+
+theorem close_imp_bounds(a: Real, b: Real, eps: Real) {
+    a.is_close(b, eps) implies b - eps < a and a < b + eps and a > b - eps and b < a + eps
+}
+
+theorem bounds_imp_close(a: Real, b: Real, eps: Real) {
+    b - eps < a and a < b + eps implies a.is_close(b, eps)
+}
+
+theorem sum_bounds_imp_close(a: Real, b: Real, eps: Real) {
+    b < a + eps and a < b + eps implies a.is_close(b, eps)
+}
+
+theorem self_close(a: Real, eps: Real) {
+    eps.is_positive implies a.is_close(a, eps)
+}
+
+theorem close_rats_imp_close_reals(q: Rat, r: Rat, eps: Rat) {
+    q.is_close(r, eps) implies Real.from_rat(q).is_close(Real.from_rat(r), Real.from_rat(eps))
+}
+
+theorem close_reals_imp_close_rats(q: Rat, r: Rat, eps: Rat) {
+    Real.from_rat(q).is_close(Real.from_rat(r), Real.from_rat(eps))
+    implies q.is_close(r, eps)
+}
+
+theorem rat_approx_exists(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        x.is_close(Real.from_rat(r), Real.from_rat(eps))
     }
 }
 
-theorem continuous_target_lt_neighborhood(f: Real -> Real, x: Real, target: Real) {
-    continuous(f) and target < f(x) implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies target < f(y)
-        }
+theorem rat_upper(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        not x.is_close(Real.from_rat(r), Real.from_rat(eps)) and x < Real.from_rat(r)
     }
 }
 
-theorem continuous_at_negative_neighborhood(f: Real -> Real, x: Real) {
-    continuous_at(f, x) and f(x) < Real.0 implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y) < Real.0
-        }
+theorem rat_lower(x: Real, eps: Rat) {
+    eps.is_positive implies exists(r: Rat) {
+        not x.is_close(Real.from_rat(r), Real.from_rat(eps)) and Real.from_rat(r) < x
     }
 }
 
-theorem continuous_at_positive_neighborhood(f: Real -> Real, x: Real) {
-    continuous_at(f, x) and Real.0 < f(x) implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies Real.0 < f(y)
-        }
+theorem rat_intersect(a: Real, b: Real, c: Real, d: Real, e: Real) {
+    a.is_close(b, c) and a.is_close(d, e)
+    implies
+    exists(r: Rat) {
+        Real.from_rat(r).is_close(b, c) and Real.from_rat(r).is_close(d, e)
     }
 }
 
-theorem continuous_negative_neighborhood(f: Real -> Real, x: Real) {
-    continuous(f) and f(x) < Real.0 implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies f(y) < Real.0
-        }
+theorem swap_minus_plus(a: Real, b: Real, c: Real) {
+    a + b - c = a - c + b
+}
+
+define cauchy_bound(q: Nat -> Real, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).is_close(q(j), eps)
     }
 }
 
-theorem continuous_positive_neighborhood(f: Real -> Real, x: Real) {
-    continuous(f) and Real.0 < f(x) implies exists(delta: Real) {
-        delta.is_positive and forall(y: Real) {
-            y.is_close(x, delta) implies Real.0 < f(y)
-        }
-    }
-}
-
-theorem continuous_at_pointwise_neg(f: Real -> Real, x: Real) {
-    continuous_at(f, x) implies continuous_at(pointwise_neg(f), x)
-}
-
-theorem continuous_pointwise_neg(f: Real -> Real) {
-    continuous(f) implies continuous(pointwise_neg(f))
-}
-
-theorem continuous_condition_pointwise_add(
-    f: Real -> Real, g: Real -> Real, x: Real,
-    delta: Real, delta_f: Real, delta_g: Real, eps2: Real, eps: Real
-) {
-    delta < delta_f and delta < delta_g and eps2 + eps2 < eps
-    and continuous_condition(f, x, delta_f, eps2)
-    and continuous_condition(g, x, delta_g, eps2)
-    implies continuous_condition(pointwise_add(f, g), x, delta, eps)
-}
-
-theorem continuous_at_pointwise_add(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(f, x) and continuous_at(g, x) implies continuous_at(pointwise_add(f, g), x)
-}
-
-theorem continuous_pointwise_add(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g) implies continuous(pointwise_add(f, g))
-}
-
-theorem continuous_at_pointwise_sub(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(f, x) and continuous_at(g, x)
-    implies continuous_at(pointwise_add(f, pointwise_neg(g)), x)
-}
-
-theorem continuous_pointwise_sub(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g) implies continuous(pointwise_add(f, pointwise_neg(g)))
-}
-
-define const_sub_left(c: Real, f: Real -> Real, x: Real) -> Real {
-    c - f(x)
-}
-
-define const_sub_right(f: Real -> Real, c: Real, x: Real) -> Real {
-    f(x) - c
-}
-
-theorem const_sub_left_eq_const_add_left_neg(c: Real, f: Real -> Real) {
-    const_sub_left(c, f) = const_add_left(c, pointwise_neg[Real, Real](f))
-}
-
-theorem const_sub_right_eq_const_add_right_neg(f: Real -> Real, c: Real) {
-    const_sub_right(f, c) = const_add_right(f, -c)
-}
-
-theorem continuous_at_const_sub_left(c: Real, f: Real -> Real, x: Real) {
-    continuous_at(f, x)
-    implies continuous_at(const_sub_left(c, f), x)
-}
-
-theorem continuous_const_sub_left(c: Real, f: Real -> Real) {
-    continuous(f) implies continuous(const_sub_left(c, f))
-}
-
-theorem continuous_at_const_sub_right(f: Real -> Real, c: Real, x: Real) {
-    continuous_at(f, x)
-    implies continuous_at(const_sub_right(f, c), x)
-}
-
-theorem continuous_const_sub_right(f: Real -> Real, c: Real) {
-    continuous(f) implies continuous(const_sub_right(f, c))
-}
-
-define pointwise_abs(f: Real -> Real, x: Real) -> Real {
-    f(x).abs
-}
-
-theorem continuous_at_pointwise_abs(f: Real -> Real, x: Real) {
-    continuous_at(f, x) implies continuous_at(pointwise_abs(f), x)
-}
-
-theorem continuous_pointwise_abs(f: Real -> Real) {
-    continuous(f) implies continuous(pointwise_abs(f))
-}
-
-theorem continuous_at_pointwise_mul(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(f, x) and continuous_at(g, x)
-    implies continuous_at(pointwise_mul[Real, Real](f, g), x)
-}
-
-theorem continuous_pointwise_mul(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g) implies continuous(pointwise_mul[Real, Real](f, g))
-}
-
-theorem identity_function_is_uniform {
-    uniform(identity_fn[Real])
-}
-
-theorem identity_function_is_continuous {
-    continuous(identity_fn[Real])
-}
-
-theorem continuous_at_preserves_sequence_limit(f: Real -> Real, a: Nat -> Real, x: Real) {
-    continuous_at(f, x) and converges_to(a, x) implies converges_to(compose(f, a), f(x))
-}
-
-theorem continuous_function_preserves_sequence_limit(f: Real -> Real, a: Nat -> Real, x: Real) {
-    continuous(f) and converges_to(a, x) implies converges_to(compose(f, a), f(x))
-}
-
-theorem uniform_condition_maps_close(f: Real -> Real, x: Real, y: Real, delta: Real, eps: Real) {
-    uniform_condition(f, delta, eps) and x.is_close(y, delta) implies f(x).is_close(f(y), eps)
-}
-
-theorem uniform_condition_preserves_cauchy_bound(f: Real -> Real, a: Nat -> Real,
-    n: Nat, delta: Real, eps: Real) {
-    uniform_condition(f, delta, eps) and cauchy_bound(a, n, delta)
-        implies cauchy_bound(compose(f, a), n, eps)
-}
-
-theorem uniform_preserves_converges(f: Real -> Real, a: Nat -> Real) {
-    uniform(f) and converges(a) implies converges(compose(f, a))
-}
-
-theorem uniform_preserves_cauchy_seq(f: Real -> Real, a: Nat -> Real) {
-    uniform(f) and is_cauchy_seq(a) implies is_cauchy_seq(compose(f, a))
-}
-
-define square_real(x: Real) -> Real {
-    x * x
-}
-
-theorem square_real_eq_pointwise_mul_identity {
-    square_real = pointwise_mul[Real, Real](identity_fn[Real], identity_fn[Real])
-}
-
-theorem continuous_at_square_real(x: Real) {
-    continuous_at(square_real, x)
-}
-
-theorem continuous_square_real {
-    continuous(square_real)
-}
-
-define cube_real(x: Real) -> Real {
-    x * x * x
-}
-
-theorem cube_real_eq_pointwise_mul_square_identity {
-    cube_real = pointwise_mul[Real, Real](square_real, identity_fn[Real])
-}
-
-theorem continuous_at_cube_real(x: Real) {
-    continuous_at(cube_real, x)
-}
-
-theorem continuous_cube_real {
-    continuous(cube_real)
-}
-
-define quartic_real(x: Real) -> Real {
-    x * x * x * x
-}
-
-theorem quartic_real_eq_pointwise_mul_cube_identity {
-    quartic_real = pointwise_mul[Real, Real](cube_real, identity_fn[Real])
-}
-
-theorem continuous_at_quartic_real(x: Real) {
-    continuous_at(quartic_real, x)
-}
-
-theorem continuous_quartic_real {
-    continuous(quartic_real)
-}
-
-define sub_fns(f: Real -> Real, g: Real -> Real, x: Real) -> Real {
-    f(x) - g(x)
-}
-
-theorem sub_fns_eq_add_fns_neg(f: Real -> Real, g: Real -> Real) {
-    sub_fns(f, g) = add_fns[Real](f, pointwise_neg[Real, Real](g))
-}
-
-theorem sub_fns_continuous_at(f: Real -> Real, g: Real -> Real, x: Real) {
-    continuous_at(f, x) and continuous_at(g, x)
-    implies continuous_at(sub_fns(f, g), x)
-}
-
-theorem sub_fns_continuous(f: Real -> Real, g: Real -> Real) {
-    continuous(f) and continuous(g)
-    implies continuous(sub_fns(f, g))
-}
-
-theorem forall_elim[T](p: T -> Bool, x: T) {
-    (forall(y: T) { p(y) }) implies p(x)
-}
-
-define difference_quotient(f: Real -> Real, x0: Real, x: Real) -> Real {
-    (f(x) - f(x0)) / (x - x0)
-}
-
-define has_derivative_at(f: Real -> Real, x0: Real, d: Real) -> Bool {
+define converges(q: Nat -> Real) -> Bool {
     forall(eps: Real) {
-        eps.is_positive implies exists(delta: Real) {
-            delta.is_positive and forall(x: Real) {
-                x != x0 and x.is_close(x0, delta)
-                implies difference_quotient(f, x0, x).is_close(d, eps)
-            }
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_bound(q, n, eps)
         }
     }
 }
 
-define differentiable_at(f: Real -> Real, x0: Real) -> Bool {
-    exists(d: Real) {
-        has_derivative_at(f, x0, d)
+theorem cauchy_gt_something(q: Nat -> Real) {
+    converges(q) implies exists(r: Rat) {
+        cauchy_gt_rat(q, r)
     }
 }
 
-theorem sub_ne_zero_of_ne(x: Real, x0: Real) {
-    x != x0 implies x - x0 != Real.0
-}
-
-theorem exists_punctured_close_point(x0: Real, delta: Real) {
-    delta.is_positive implies exists(x: Real) {
-        x != x0 and x.is_close(x0, delta)
+theorem cauchy_gt_not_everything(q: Nat -> Real) {
+    converges(q) implies exists(r: Rat) {
+        not cauchy_gt_rat(q, r)
     }
 }
 
-theorem derivative_values_close_from_same_witness(
-    q: Real, d1: Real, d2: Real, eps: Real
-) {
-    q.is_close(d1, eps) and q.is_close(d2, eps) implies d1.is_close(d2, eps + eps)
+theorem cauchy_gt_is_cut(q: Nat -> Real) {
+    converges(q) implies is_cut(cauchy_gt_rat(q))
 }
 
-theorem has_derivative_at_delta(f: Real -> Real, x0: Real, d: Real, eps: Real) {
-    has_derivative_at(f, x0, d) and eps.is_positive implies exists(delta: Real) {
-        delta.is_positive and forall(x: Real) {
-            x != x0 and x.is_close(x0, delta)
-            implies difference_quotient(f, x0, x).is_close(d, eps)
+theorem cauchy_gt_is_lower(q: Nat -> Real) {
+    converges(q) implies is_lower(cauchy_gt_rat(q))
+}
+
+theorem cauchy_gt_has_no_greatest(q: Nat -> Real) {
+    converges(q) implies not has_greatest(cauchy_gt_rat(q))
+}
+
+theorem cauchy_gt_is_dedekind_cut(q: Nat -> Real) {
+    converges(q) implies is_dedekind_cut(cauchy_gt_rat(q))
+}
+
+theorem limit_exists(q: Nat -> Real) {
+    exists(lim: Real) {
+        if converges(q) {
+            Real.new(cauchy_gt_rat(q)) = Option.some(lim)
+        } else {
+            lim = Real.0
         }
     }
 }
 
-theorem difference_quotient_constant_eq_zero(c: Real, x0: Real, x: Real) {
-    x != x0 implies difference_quotient(constant[Real, Real](c), x0, x) = Real.0
-}
-
-theorem difference_quotient_identity_eq_one(x0: Real, x: Real) {
-    x != x0 implies difference_quotient(identity_fn[Real], x0, x) = Real.1
-}
-
-theorem constant_has_derivative_at(c: Real, x0: Real) {
-    has_derivative_at(constant[Real, Real](c), x0, Real.0)
-}
-
-theorem identity_has_derivative_at(x0: Real) {
-    has_derivative_at(identity_fn[Real], x0, Real.1)
-}
-
-theorem has_derivative_at_unique(f: Real -> Real, x0: Real, d1: Real, d2: Real) {
-    has_derivative_at(f, x0, d1) and has_derivative_at(f, x0, d2) implies d1 = d2
-}
-
-theorem constant_differentiable_at(c: Real, x0: Real) {
-    differentiable_at(constant[Real, Real](c), x0)
-}
-
-theorem identity_differentiable_at(x0: Real) {
-    differentiable_at(identity_fn[Real], x0)
-}
-
-theorem div_mul_cancel_denominator(a: Real, b: Real) {
-    b != Real.0 implies (a / b) * b = a
-}
-
-theorem difference_quotient_mul_increment(f: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies difference_quotient(f, x0, x) * (x - x0) = f(x) - f(x0)
-}
-
-theorem derivative_difference_quotient_local_abs_bound(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies exists(delta: Real, bound: Real) {
-        delta.is_positive and bound.is_positive and forall(x: Real) {
-            x != x0 and x.is_close(x0, delta)
-            implies difference_quotient(f, x0, x).abs <= bound
-        }
-    }
-}
-
-theorem bounded_difference_quotient_close(
-    f: Real -> Real, x0: Real, x: Real, delta: Real, bound: Real, eps: Real
-) {
-    x != x0 and x.is_close(x0, delta) and delta.is_positive and bound.is_positive
-    and bound * delta < eps
-    and difference_quotient(f, x0, x).abs <= bound
-    implies f(x).is_close(f(x0), eps)
-}
-
-theorem derivative_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(f, x0)
-}
-
-theorem differentiable_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(f, x0)
-}
-
-theorem close_eq_left(a: Real, b: Real, c: Real, eps: Real) {
-    a = b and a.is_close(c, eps) implies b.is_close(c, eps)
-}
-
-theorem abs_add_one_pos(a: Real) {
-    (a.abs + Real.1).is_positive
-}
-
-theorem abs_lte_abs_add_one(a: Real) {
-    a.abs <= a.abs + Real.1
-}
-
-theorem sub_sub_telescope(a: Real, b: Real, c: Real) {
-    a - b + (b - c) = a - c
-}
-
-theorem scalar_close_wide(c: Real, a: Real, b: Real, eps: Real) {
-    a.is_close(b, eps) and eps.is_positive
-    implies (c * a).is_close(c * b, (c.abs + Real.1) * eps)
-}
-
-theorem product_diff_split(fx: Real, gx: Real, fx0: Real, gx0: Real) {
-    fx * gx - fx0 * gx0 = fx * (gx - gx0) + gx0 * (fx - fx0)
-}
-
-theorem scalar_div(c: Real, a: Real, b: Real) {
-    (c * a) / b = c * (a / b)
-}
-
-theorem div_add_distrib(a: Real, b: Real, c: Real) {
-    c != Real.0 implies (a + b) / c = a / c + b / c
-}
-
-theorem difference_quotient_pointwise_mul(f: Real -> Real, g: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies difference_quotient(pointwise_mul(f, g), x0, x) =
-        f(x) * difference_quotient(g, x0, x) + g(x0) * difference_quotient(f, x0, x)
-}
-
-theorem product_split_difference_quotient_close(
-    f: Real -> Real, g: Real -> Real, x0: Real, x: Real,
-    df: Real, dg: Real,
-    f_bound: Real, dg_bound: Real, g_bound: Real,
-    eps_small: Real, eps: Real
-) {
-    x != x0 and
-    f(x).is_close(f(x0), eps_small) and
-    difference_quotient(g, x0, x).is_close(dg, eps_small) and
-    difference_quotient(f, x0, x).is_close(df, eps_small) and
-    f(x).abs <= f_bound and dg.abs <= dg_bound and
-    f_bound.is_positive and dg_bound.is_positive and g_bound = g(x0).abs + Real.1 and
-    eps_small.is_positive and
-    (f_bound * eps_small + eps_small * dg_bound) + g_bound * eps_small < eps
-    implies
-    (f(x) * difference_quotient(g, x0, x) + g(x0) * difference_quotient(f, x0, x)).is_close(
-        f(x0) * dg + g(x0) * df,
-        eps
-    )
-}
-
-theorem derivative_pointwise_mul(f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg)
-    implies has_derivative_at(pointwise_mul(f, g), x0, f(x0) * dg + g(x0) * df)
-}
-
-theorem differentiable_pointwise_mul(f: Real -> Real, g: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) and differentiable_at(g, x0)
-    implies differentiable_at(pointwise_mul(f, g), x0)
-}
-
-theorem derivative_pointwise_square(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(pointwise_mul(f, f), x0, f(x0) * d + f(x0) * d)
-}
-
-theorem differentiable_pointwise_square(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(f, f), x0)
-}
-
-define chain_difference_factor(g: Real -> Real, y0: Real, dg: Real, y: Real) -> Real {
-    if y = y0 {
-        dg
+let limit(q: Nat -> Real) -> lim: Real satisfy {
+    if converges(q) {
+        Real.new(cauchy_gt_rat(q)) = Option.some(lim)
     } else {
-        difference_quotient(g, y0, y)
+        lim = Real.0
     }
 }
 
-theorem chain_difference_factor_at_base(g: Real -> Real, y0: Real, dg: Real) {
-    chain_difference_factor(g, y0, dg, y0) = dg
+theorem lt_limit_imp_lb(q: Nat -> Real, lb: Real) {
+    converges(q) and lb < limit(q) implies eventual_lb(q, lb)
 }
 
-theorem chain_difference_factor_off_base(g: Real -> Real, y0: Real, dg: Real, y: Real) {
-    y != y0 implies chain_difference_factor(g, y0, dg, y) = difference_quotient(g, y0, y)
+theorem lb_lte_limit(q: Nat -> Real, lb: Real) {
+    converges(q) and eventual_lb(q, lb) implies lb <= limit(q)
 }
 
-theorem difference_quotient_eq_zero_of_value_eq(f: Real -> Real, x0: Real, x: Real) {
-    x != x0 and f(x) = f(x0) implies difference_quotient(f, x0, x) = Real.0
+theorem eq_converges(q: Nat -> Real, a: Real) {
+    eventual_eq(q, a) implies converges(q)
 }
 
-theorem derivative_close_apply(f: Real -> Real, x0: Real, d: Real, delta: Real, eps: Real, x: Real) {
-    (forall(y: Real) {
-        y != x0 and y.is_close(x0, delta)
-        implies difference_quotient(f, x0, y).is_close(d, eps)
-    }) and x != x0 and x.is_close(x0, delta)
-    implies difference_quotient(f, x0, x).is_close(d, eps)
+theorem ub_imp_limit_lte(q: Nat -> Real, ub: Real) {
+    converges(q) and eventual_ub(q, ub) implies limit(q) <= ub
 }
 
-theorem difference_quotient_compose_nonzero_inner(
-    f: Real -> Real, g: Real -> Real, x0: Real, x: Real
-) {
-    x != x0 and f(x) != f(x0) implies
-    difference_quotient(g, f(x0), f(x)) * difference_quotient(f, x0, x) =
-        difference_quotient(compose(g, f), x0, x)
+theorem cauchy_imp_lb(q: Nat -> Real, n: Nat, eps: Real) {
+    cauchy_bound(q, n, eps) implies eventual_lb(q, q(n) - eps)
 }
 
-theorem difference_quotient_compose_factor(
-    f: Real -> Real, g: Real -> Real, x0: Real, x: Real, dg: Real
-) {
-    x != x0 implies
-    difference_quotient(compose(g, f), x0, x) =
-        chain_difference_factor(g, f(x0), dg, f(x)) * difference_quotient(f, x0, x)
+theorem cauch_imp_ub(q: Nat -> Real, n: Nat, eps: Real) {
+    cauchy_bound(q, n, eps) implies eventual_ub(q, q(n) + eps)
 }
 
-theorem chain_difference_factor_close(
-    f: Real -> Real, g: Real -> Real, x0: Real, dg: Real,
-    delta_outer: Real, eps: Real, x: Real
-) {
-    has_derivative_at(g, f(x0), dg) and f(x).is_close(f(x0), delta_outer)
-    and delta_outer.is_positive and eps.is_positive
-    and forall(y: Real) {
-        y != f(x0) and y.is_close(f(x0), delta_outer)
-        implies difference_quotient(g, f(x0), y).is_close(dg, eps)
-    }
-    implies chain_difference_factor(g, f(x0), dg, f(x)).is_close(dg, eps)
+theorem lt_imp_minus_pos(a: Real, b: Real) {
+    a < b implies (b - a).is_positive
 }
 
-theorem chain_product_close(
-    f: Real -> Real, g: Real -> Real, x0: Real, x: Real,
-    df: Real, dg: Real, eps_small: Real, eps: Real,
-    factor_bound: Real, df_bound: Real
-) {
-    chain_difference_factor(g, f(x0), dg, f(x)).is_close(dg, eps_small) and
-    difference_quotient(f, x0, x).is_close(df, eps_small) and
-    chain_difference_factor(g, f(x0), dg, f(x)).abs <= factor_bound and
-    df.abs <= df_bound and factor_bound.is_positive and df_bound.is_positive and
-    eps_small.is_positive and
-    factor_bound * eps_small + eps_small * df_bound < eps
+theorem from_rat_pos(r: Rat) {
+    r.is_positive implies Real.from_rat(r).is_positive
+}
+
+theorem sub_lte(a: Real, b: Real, c: Real) {
+    a - c <= b implies a <= b + c
+}
+
+theorem limit_lt_imp_ub(q: Nat -> Real, ub: Real) {
+    converges(q) and limit(q) < ub implies eventual_ub(q, ub)
+}
+
+theorem limit_in_union(seq: Nat -> Real, a: Real, b: Real) {
+    converges(seq) and a < b and (forall(k: Nat) { seq(k) <= a or b <= seq(k) })
     implies
-    (chain_difference_factor(g, f(x0), dg, f(x)) * difference_quotient(f, x0, x)).is_close(dg * df, eps)
+    limit(seq) <= a or b <= limit(seq)
 }
 
-theorem derivative_compose(f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, f(x0), dg)
-    implies has_derivative_at(compose(g, f), x0, dg * df)
+theorem eq_imp_limit(q: Nat -> Real, a: Real) {
+    eventual_eq(q, a) implies limit(q) = a
 }
 
-theorem differentiable_compose(f: Real -> Real, g: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) and differentiable_at(g, f(x0))
-    implies differentiable_at(compose(g, f), x0)
-}
-
-theorem square_real_has_derivative_at(x0: Real) {
-    has_derivative_at(square_real, x0, x0 * Real.1 + x0 * Real.1)
-}
-
-theorem square_real_differentiable_at(x0: Real) {
-    differentiable_at(square_real, x0)
-}
-
-theorem cube_real_has_derivative_at(x0: Real) {
-    has_derivative_at(
-        cube_real,
-        x0,
-        square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem cube_real_differentiable_at(x0: Real) {
-    differentiable_at(cube_real, x0)
-}
-
-theorem derivative_square_real_compose(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(compose(square_real, f), x0, (f(x0) * Real.1 + f(x0) * Real.1) * d)
-}
-
-theorem derivative_cube_real_compose(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        compose(cube_real, f),
-        x0,
-        (square_real(f(x0)) * Real.1 + f(x0) * (f(x0) * Real.1 + f(x0) * Real.1)) * d
-    )
-}
-
-theorem differentiable_square_real_compose(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(compose(square_real, f), x0)
-}
-
-theorem differentiable_cube_real_compose(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(compose(cube_real, f), x0)
-}
-
-theorem derivative_square_real_after_square_real(x0: Real) {
-    has_derivative_at(
-        compose(square_real, square_real),
-        x0,
-        (square_real(x0) * Real.1 + square_real(x0) * Real.1) * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem derivative_square_real_after_cube_real(x0: Real) {
-    has_derivative_at(
-        compose(square_real, cube_real),
-        x0,
-        (cube_real(x0) * Real.1 + cube_real(x0) * Real.1) *
-        (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1))
-    )
-}
-
-theorem derivative_cube_real_after_square_real(x0: Real) {
-    has_derivative_at(
-        compose(cube_real, square_real),
-        x0,
-        (
-            square_real(square_real(x0)) * Real.1 +
-            square_real(x0) * (square_real(x0) * Real.1 + square_real(x0) * Real.1)
-        ) * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem derivative_cube_real_after_cube_real(x0: Real) {
-    has_derivative_at(
-        compose(cube_real, cube_real),
-        x0,
-        (
-            square_real(cube_real(x0)) * Real.1 +
-            cube_real(x0) * (cube_real(x0) * Real.1 + cube_real(x0) * Real.1)
-        ) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1))
-    )
-}
-
-theorem differentiable_square_real_after_square_real(x0: Real) {
-    differentiable_at(compose(square_real, square_real), x0)
-}
-
-theorem differentiable_square_real_after_cube_real(x0: Real) {
-    differentiable_at(compose(square_real, cube_real), x0)
-}
-
-theorem differentiable_cube_real_after_square_real(x0: Real) {
-    differentiable_at(compose(cube_real, square_real), x0)
-}
-
-theorem differentiable_cube_real_after_cube_real(x0: Real) {
-    differentiable_at(compose(cube_real, cube_real), x0)
-}
-
-theorem derivative_square_real_mul(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_mul(square_real, f),
-        x0,
-        square_real(x0) * d + f(x0) * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem derivative_mul_square_real(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_mul(f, square_real),
-        x0,
-        f(x0) * (x0 * Real.1 + x0 * Real.1) + square_real(x0) * d
-    )
-}
-
-theorem derivative_cube_real_mul(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_mul(cube_real, f),
-        x0,
-        cube_real(x0) * d + f(x0) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1))
-    )
-}
-
-theorem derivative_mul_cube_real(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_mul(f, cube_real),
-        x0,
-        f(x0) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1)) + cube_real(x0) * d
-    )
-}
-
-theorem differentiable_square_real_mul(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(square_real, f), x0)
-}
-
-theorem differentiable_mul_square_real(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(f, square_real), x0)
-}
-
-theorem differentiable_cube_real_mul(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(cube_real, f), x0)
-}
-
-theorem differentiable_mul_cube_real(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(f, cube_real), x0)
-}
-
-theorem derivative_square_real_mul_cube_real(x0: Real) {
-    has_derivative_at(
-        pointwise_mul(square_real, cube_real),
-        x0,
-        square_real(x0) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1)) +
-        cube_real(x0) * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem differentiable_square_real_mul_cube_real(x0: Real) {
-    differentiable_at(pointwise_mul(square_real, cube_real), x0)
-}
-
-theorem derivative_square_real_mul_square_real(x0: Real) {
-    has_derivative_at(
-        pointwise_mul(square_real, square_real),
-        x0,
-        square_real(x0) * (x0 * Real.1 + x0 * Real.1) +
-        square_real(x0) * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem derivative_cube_real_mul_cube_real(x0: Real) {
-    has_derivative_at(
-        pointwise_mul(cube_real, cube_real),
-        x0,
-        cube_real(x0) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1)) +
-        cube_real(x0) * (square_real(x0) * Real.1 + x0 * (x0 * Real.1 + x0 * Real.1))
-    )
-}
-
-theorem differentiable_square_real_mul_square_real(x0: Real) {
-    differentiable_at(pointwise_mul(square_real, square_real), x0)
-}
-
-theorem differentiable_cube_real_mul_cube_real(x0: Real) {
-    differentiable_at(pointwise_mul(cube_real, cube_real), x0)
-}
-
-theorem derivative_square_real_compose_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(compose(square_real, f), x0)
-}
-
-theorem differentiable_square_real_compose_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(compose(square_real, f), x0)
-}
-
-theorem derivative_cube_real_compose_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(compose(cube_real, f), x0)
-}
-
-theorem differentiable_cube_real_compose_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(compose(cube_real, f), x0)
-}
-
-theorem derivative_square_real_mul_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(pointwise_mul(square_real, f), x0)
-}
-
-theorem derivative_mul_square_real_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(pointwise_mul(f, square_real), x0)
-}
-
-theorem derivative_cube_real_mul_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(pointwise_mul(cube_real, f), x0)
-}
-
-theorem derivative_mul_cube_real_continuous_at(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies continuous_at(pointwise_mul(f, cube_real), x0)
-}
-
-theorem differentiable_square_real_mul_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(pointwise_mul(square_real, f), x0)
-}
-
-theorem differentiable_mul_square_real_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(pointwise_mul(f, square_real), x0)
-}
-
-theorem differentiable_cube_real_mul_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(pointwise_mul(cube_real, f), x0)
-}
-
-theorem differentiable_mul_cube_real_continuous_at(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies continuous_at(pointwise_mul(f, cube_real), x0)
-}
-
-theorem derivative_pointwise_mul_three_left(
-    f: Real -> Real, g: Real -> Real, h: Real -> Real,
-    x0: Real, df: Real, dg: Real, dh: Real
-) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg) and has_derivative_at(h, x0, dh)
-    implies has_derivative_at(
-        pointwise_mul(pointwise_mul(f, g), h),
-        x0,
-        pointwise_mul(f, g, x0) * dh + h(x0) * (f(x0) * dg + g(x0) * df)
-    )
-}
-
-theorem derivative_pointwise_mul_three_right(
-    f: Real -> Real, g: Real -> Real, h: Real -> Real,
-    x0: Real, df: Real, dg: Real, dh: Real
-) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg) and has_derivative_at(h, x0, dh)
-    implies has_derivative_at(
-        pointwise_mul(f, pointwise_mul(g, h)),
-        x0,
-        f(x0) * (g(x0) * dh + h(x0) * dg) + pointwise_mul(g, h, x0) * df
-    )
-}
-
-theorem differentiable_pointwise_mul_three_left(
-    f: Real -> Real, g: Real -> Real, h: Real -> Real, x0: Real
-) {
-    differentiable_at(f, x0) and differentiable_at(g, x0) and differentiable_at(h, x0)
-    implies differentiable_at(pointwise_mul(pointwise_mul(f, g), h), x0)
-}
-
-theorem differentiable_pointwise_mul_three_right(
-    f: Real -> Real, g: Real -> Real, h: Real -> Real, x0: Real
-) {
-    differentiable_at(f, x0) and differentiable_at(g, x0) and differentiable_at(h, x0)
-    implies differentiable_at(pointwise_mul(f, pointwise_mul(g, h)), x0)
-}
-
-theorem derivative_pointwise_cube(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_mul(pointwise_mul(f, f), f),
-        x0,
-        pointwise_mul(f, f, x0) * d + f(x0) * (f(x0) * d + f(x0) * d)
-    )
-}
-
-theorem differentiable_pointwise_cube(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(pointwise_mul(f, f), f), x0)
-}
-
-theorem identity_square_has_derivative_at(x0: Real) {
-    has_derivative_at(pointwise_mul(identity_fn[Real], identity_fn[Real]), x0, x0 * Real.1 + x0 * Real.1)
-}
-
-theorem identity_square_differentiable_at(x0: Real) {
-    differentiable_at(pointwise_mul(identity_fn[Real], identity_fn[Real]), x0)
-}
-
-theorem identity_cube_has_derivative_at(x0: Real) {
-    has_derivative_at(
-        pointwise_mul(pointwise_mul(identity_fn[Real], identity_fn[Real]), identity_fn[Real]),
-        x0,
-        pointwise_mul(identity_fn[Real], identity_fn[Real], x0) * Real.1 +
-        x0 * (x0 * Real.1 + x0 * Real.1)
-    )
-}
-
-theorem identity_cube_differentiable_at(x0: Real) {
-    differentiable_at(pointwise_mul(pointwise_mul(identity_fn[Real], identity_fn[Real]), identity_fn[Real]), x0)
-}
-
-theorem neg_div(a: Real, b: Real) {
-    (-a) / b = -(a / b)
-}
-
-theorem sub_add_distrib(a: Real, b: Real, c: Real, d: Real) {
-    (a + b) - (c + d) = (a - c) + (b - d)
-}
-
-theorem neg_sub_neg(a: Real, b: Real) {
-    -a - -b = -(a - b)
-}
-
-theorem difference_quotient_pointwise_neg(f: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies
-    difference_quotient(pointwise_neg(f), x0, x) = -difference_quotient(f, x0, x)
-}
-
-theorem difference_quotient_pointwise_add(f: Real -> Real, g: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies
-    difference_quotient(pointwise_add(f, g), x0, x) =
-        difference_quotient(f, x0, x) + difference_quotient(g, x0, x)
-}
-
-theorem derivative_pointwise_neg(f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d) implies has_derivative_at(pointwise_neg(f), x0, -d)
-}
-
-theorem derivative_pointwise_add(f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg)
-    implies has_derivative_at(pointwise_add(f, g), x0, df + dg)
-}
-
-theorem differentiable_pointwise_neg(f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_neg(f), x0)
-}
-
-theorem differentiable_pointwise_add(f: Real -> Real, g: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) and differentiable_at(g, x0)
-    implies differentiable_at(pointwise_add(f, g), x0)
-}
-
-theorem derivative_pointwise_sub(f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg)
-    implies has_derivative_at(pointwise_add(f, pointwise_neg(g)), x0, df + -dg)
-}
-
-theorem differentiable_pointwise_sub(f: Real -> Real, g: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) and differentiable_at(g, x0)
-    implies differentiable_at(pointwise_add(f, pointwise_neg(g)), x0)
-}
-
-theorem scalar_mul_close(c: Real, a: Real, b: Real, eps2: Real, eps: Real) {
-    eps.is_positive and a.is_close(b, eps2) and c.abs * eps2 < eps
-    implies (c * a).is_close(c * b, eps)
-}
-
-theorem mul_div_left(c: Real, a: Real, b: Real) {
-    (c * a) / b = c * (a / b)
-}
-
-theorem difference_quotient_pointwise_const_mul(c: Real, f: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies difference_quotient(pointwise_mul(constant[Real, Real](c), f), x0, x) =
-        c * difference_quotient(f, x0, x)
-}
-
-theorem difference_quotient_pointwise_mul_const(c: Real, f: Real -> Real, x0: Real, x: Real) {
-    x != x0 implies difference_quotient(pointwise_mul(f, constant[Real, Real](c)), x0, x) =
-        difference_quotient(f, x0, x) * c
-}
-
-theorem derivative_pointwise_const_mul(c: Real, f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(pointwise_mul(constant[Real, Real](c), f), x0, c * d)
-}
-
-theorem derivative_pointwise_mul_const(c: Real, f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(pointwise_mul(f, constant[Real, Real](c)), x0, d * c)
-}
-
-theorem differentiable_pointwise_const_mul(c: Real, f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(constant[Real, Real](c), f), x0)
-}
-
-theorem differentiable_pointwise_mul_const(c: Real, f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(pointwise_mul(f, constant[Real, Real](c)), x0)
-}
-
-theorem derivative_pointwise_affine(c: Real, b: Real, f: Real -> Real, x0: Real, d: Real) {
-    has_derivative_at(f, x0, d)
-    implies has_derivative_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](c), f), constant[Real, Real](b)),
-        x0,
-        c * d
-    )
-}
-
-theorem differentiable_pointwise_affine(c: Real, b: Real, f: Real -> Real, x0: Real) {
-    differentiable_at(f, x0) implies differentiable_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](c), f), constant[Real, Real](b)),
-        x0
-    )
-}
-
-theorem derivative_pointwise_linear_combination(
-    a: Real, b: Real, f: Real -> Real, g: Real -> Real, x0: Real, df: Real, dg: Real
-) {
-    has_derivative_at(f, x0, df) and has_derivative_at(g, x0, dg)
-    implies has_derivative_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](a), f), pointwise_mul(constant[Real, Real](b), g)),
-        x0,
-        a * df + b * dg
-    )
-}
-
-theorem differentiable_pointwise_linear_combination(
-    a: Real, b: Real, f: Real -> Real, g: Real -> Real, x0: Real
-) {
-    differentiable_at(f, x0) and differentiable_at(g, x0)
-    implies differentiable_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](a), f), pointwise_mul(constant[Real, Real](b), g)),
-        x0
-    )
-}
-
-theorem affine_identity_has_derivative_at(c: Real, b: Real, x0: Real) {
-    has_derivative_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
-        x0,
-        c
-    )
-}
-
-theorem affine_identity_differentiable_at(c: Real, b: Real, x0: Real) {
-    differentiable_at(
-        pointwise_add(pointwise_mul(constant[Real, Real](c), identity_fn[Real]), constant[Real, Real](b)),
-        x0
-    )
-}
-
-define is_derivative_fn(f: Real -> Real, df: Real -> Real) -> Bool {
-    forall(x: Real) {
-        has_derivative_at(f, x, df(x))
+define tail_bound(q: Nat -> Real, a: Real, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat) {
+        n <= i implies q(i).is_close(a, eps)
     }
 }
 
-define differentiable_everywhere(f: Real -> Real) -> Bool {
-    forall(x: Real) {
-        differentiable_at(f, x)
+theorem tail_bound_implies_is_close(q: Nat -> Real, a: Real, n: Nat, eps: Real, i: Nat) {
+    tail_bound(q, a, n, eps) and n <= i implies q(i).is_close(a, eps)
+}
+
+define converges_to(q: Nat -> Real, a: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            tail_bound(q, a, n, eps)
+        }
     }
 }
 
-theorem differentiable_everywhere_at(f: Real -> Real, x: Real) {
-    differentiable_everywhere(f) implies differentiable_at(f, x)
+theorem lt_converges_to_imp_lb(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, b) and a < b implies eventual_lb(q, a)
 }
 
-theorem is_derivative_fn_iff(f: Real -> Real, df: Real -> Real) {
-    is_derivative_fn(f, df) = forall(x: Real) {
-        has_derivative_at(f, x, df(x))
+theorem gt_converges_to_imp_ub(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, b) and a > b implies eventual_ub(q, a)
+}
+
+theorem eps_lt_half(a: Real) {
+    a.is_positive implies exists(b: Real) {
+        b.is_positive and b + b < a
     }
 }
 
-theorem is_derivative_fn_at(f: Real -> Real, df: Real -> Real, x: Real) {
-    is_derivative_fn(f, df) implies has_derivative_at(f, x, df(x))
+theorem add_gt_imp_gt_sub(a: Real, b: Real, c: Real) {
+    a + b > c implies a > c - b
 }
 
-theorem is_derivative_fn_imp_differentiable_everywhere(f: Real -> Real, df: Real -> Real) {
-    is_derivative_fn(f, df) implies differentiable_everywhere(f)
+theorem sub_either_order(a: Real, b: Real, c: Real) {
+    a - b - c = a - c - b
 }
 
-theorem is_derivative_fn_imp_differentiable_at(f: Real -> Real, df: Real -> Real, x: Real) {
-    is_derivative_fn(f, df) implies differentiable_at(f, x)
+theorem sub_both_eq_sub_add(a: Real, b: Real, c: Real) {
+    a - b - c = a - (b + c)
 }
 
-theorem derivative_fn_value_unique(
-    f: Real -> Real, df: Real -> Real, x: Real, d: Real
-) {
-    is_derivative_fn(f, df) and has_derivative_at(f, x, d) implies df(x) = d
+theorem is_close_triangle(a: Real, b: Real, c: Real, ace: Real, bce: Real) {
+    a.is_close(c, ace) and b.is_close(c, bce)
+    implies
+    a.is_close(b, ace + bce)
 }
 
-theorem derivative_fn_constant(c: Real) {
-    is_derivative_fn(constant[Real, Real](c), constant[Real, Real](Real.0))
+theorem converges_to_imp_converges(q: Nat -> Real, a: Real) {
+    converges_to(q, a) implies converges(q)
+}
+
+theorem sub_lt_is_gt(a: Real, b: Real, c: Real) {
+    b < c implies a - b > a - c
+}
+
+theorem smaller_pos(a: Real) {
+    a.is_positive implies exists(b: Real) {
+        b.is_positive and b < a
+    }
+}
+
+theorem converges_imp_converges_to(q: Nat -> Real) {
+    converges(q) implies converges_to(q, limit(q))
+}
+
+theorem converges_to_unique_one_way(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, a) and converges_to(q, b) implies not a < b
+}
+
+theorem converges_to_unique(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, a) and converges_to(q, b) implies a = b
+}
+
+theorem limit_unique(q: Nat -> Real, a: Real, b: Real) {
+    converges_to(q, a) and converges_to(q, b) implies a = b
+}
+
+theorem converges_to_is_convergent(q: Nat -> Real, a: Real) {
+    converges_to(q, a) implies converges(q)
+}
+
+theorem eventual_eq_converges(q: Nat -> Real, a: Real) {
+    eventual_eq(q, a) implies converges(q)
+}
+
+theorem eventual_eq_limit(q: Nat -> Real, a: Real) {
+    eventual_eq(q, a) implies limit(q) = a
+}
+
+theorem convergent_converges_to_limit(q: Nat -> Real) {
+    converges(q) implies converges_to(q, limit(q))
+}
+
+let rat_approx(x: Real, eps: Rat) -> r: Rat satisfy {
+    eps.is_positive implies
+    x.is_close(Real.from_rat(r), Real.from_rat(eps))
+}
+
+define rat_seq(x: Real, n: Nat) -> Rat {
+    rat_approx(x, iop(n))
+}
+
+theorem rat_seq_is_close(x: Real, n: Nat) {
+    x.is_close(Real.from_rat(rat_seq(x, n)), Real.from_rat(iop(n)))
+}
+
+theorem abs_lt_imp_close_to_zero(x: Real, eps: Real) {
+    x.abs < eps implies x.is_close(Real.0, eps)
+}
+
+theorem iop_limit {
+    converges_to(lift_seq(iop), Real.0)
+}
+
+theorem half_pos_is_pos(a: Real, b: Real) {
+    b.is_positive and a + a = b
+    implies
+    a.is_positive
+}
+
+theorem add_close(a1: Real, b1: Real, a2: Real, b2: Real, a_eps: Real, b_eps: Real) {
+    a1.is_close(a2, a_eps) and b1.is_close(b2, b_eps)
+    implies
+    (a1 + b1).is_close(a2 + b2, a_eps + b_eps)
+}
+
+theorem limit_add_seq(a: Nat -> Real, b: Nat -> Real) {
+    converges(a) and converges(b)
+    implies
+    converges_to(add_seq(a, b), limit(a) + limit(b))
+}
+
+theorem lift_rat_seq_close(x: Real, n: Nat) {
+    lift_seq(rat_seq(x))(n).is_close(x, Real.from_rat(iop(n)))
+}
+
+theorem rat_seq_converges_to(x: Real) {
+    converges_to(lift_seq(rat_seq(x)), x)
+}
+
+theorem rat_close_to_both_lt(x: Real, y: Real, eps: Real) {
+    x.is_close(y, eps) and x < y implies
+    exists(r: Rat) {
+        x.is_close(Real.from_rat(r), eps)
+        and
+        y.is_close(Real.from_rat(r), eps)
+    }
+}
+
+theorem rat_close(x: Real, y: Real, eps: Real) {
+    x.is_close(y, eps) implies
+    exists(r: Rat) {
+        x.is_close(Real.from_rat(r), eps)
+        and
+        y.is_close(Real.from_rat(r), eps)
+    }
+}
+
+theorem lift_rat_seq_converges(x: Real) {
+    converges(lift_seq(rat_seq(x)))
+}
+
+define seq_close(a: Nat -> Real, b: Nat -> Real, eps: Real) -> Bool {
+    exists(n: Nat) {
+        forall(i: Nat) {
+            n <= i implies a(i).is_close(b(i), eps)
+        }
+    }
+}
+
+theorem convergent_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real) {
+    eps.is_positive and converges(a) and converges(b) and limit(a) = limit(b)
+    implies
+    seq_close(a, b, eps)
+}
+
+theorem only_abs_zero_eq_zero(x: Real) {
+    x.abs = Real.0 implies x = Real.0
+}
+
+theorem close_limit_imp_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real) {
+    converges(a) and converges(b) and limit(a).is_close(limit(b), eps)
+    implies
+    seq_close(a, b, eps)
+}
+
+theorem close_and_lt_imp_close(x: Real, y: Real, eps1: Real, eps2: Real) {
+    x.is_close(y, eps1) and eps1 < eps2 implies x.is_close(y, eps2)
+}
+
+theorem find_less_than_a_third(x: Real) {
+    x.is_positive implies
+    exists(eps: Real) {
+        eps.is_positive and eps + eps + eps < x
+    }
+}
+
+define limit_rat(a: Nat -> Rat) -> Real {
+    limit(lift_seq(a))
+}
+
+instance Real: Mul {
+    define mul(self, other: Real) -> Real {
+        limit_rat(mul_rat_seq(rat_seq(self), rat_seq(other)))
+    }
+}
+
+instance Real: Semigroup
+
+instance Real: Monoid
+
+instance Real: Semiring
+
+instance Real: Ring
+
+instance Real: CommSemigroup
+
+instance Real: CommMonoid
+
+instance Real: CommRing
+
+instance Real: IntegralDomain
+
+theorem neq_imp_abs_diff_pos(x: Real, y: Real) {
+    x != y implies (x - y).abs.is_positive
+}
+
+theorem eps_smaller_than_both(eps1: Real, eps2: Real) {
+    eps1.is_positive and eps2.is_positive implies
+    exists(eps3: Real) {
+        eps3.is_positive and eps3 < eps1 and eps3 < eps2
+    }
+}
+
+define eq_seq(a: Nat -> Rat, b: Nat -> Rat) -> Bool {
+    converges(lift_seq(a)) and converges_to(lift_seq(b), limit_rat(a))
+}
+
+theorem eq_seq_symm(a: Nat -> Rat, b: Nat -> Rat) {
+    eq_seq(a, b) implies eq_seq(b, a)
+}
+
+theorem add_rat_seq_is_add(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    converges_to(lift_seq(add_rat_seq(a, b)), limit_rat(a) + limit_rat(b))
+}
+
+theorem neg_is_close(x: Real, y: Real, eps: Real) {
+    x.is_close(y, eps) implies
+    (-x).is_close(-y, eps)
+}
+
+theorem neg_seq_converges(a: Nat -> Rat) {
+    converges(lift_seq(a)) implies
+    converges_to(lift_seq(neg_rat_seq(a)), -limit_rat(a))
+}
+
+theorem converges_imp_bounded(a: Nat -> Rat) {
+    converges(lift_seq(a))
+    implies
+    exists(b: Rat) {
+        forall(i: Nat) {
+            a(i) < b
+        }
+    }
+}
+
+theorem converges_imp_abs_bounded(a: Nat -> Rat) {
+    converges(lift_seq(a))
+    implies
+    exists(b: Rat) {
+        forall(i: Nat) {
+            a(i).abs < b
+        }
+    }
+}
+
+theorem diff_pos_imp_lt(a: Real, b: Real) {
+    (b - a).is_positive implies a < b
+}
+
+theorem smaller_rat_eps(eps: Real) {
+    eps.is_positive implies
+    exists(reps: Rat) {
+        reps.is_positive and Real.from_rat(reps) < eps
+    }
+}
+
+theorem mul_rat_seq_converges(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    converges(lift_seq(mul_rat_seq(a, b)))
+}
+
+theorem const_rat_converges_to_rat(a: Rat) {
+    converges_to(lift_seq(const_rat_seq(a)), Real.from_rat(a))
+}
+
+theorem zero_rat_seq_is_zero {
+    converges_to(lift_seq(zero_rat_seq), Real.0)
+}
+
+theorem neg_rat_seq_well_def(a: Nat -> Rat, b: Nat -> Rat) {
+    eq_seq(a, b) implies
+    eq_seq(neg_rat_seq(a), neg_rat_seq(b))
+}
+
+theorem add_rat_seq_well_def(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat, d: Nat -> Rat) {
+    eq_seq(a, c) and eq_seq(b, d)
+    implies
+    eq_seq(add_rat_seq(a, b), add_rat_seq(c, d))
+}
+
+theorem sub_rat_seq_is_sub(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    converges_to(lift_seq(sub_rat_seq(a, b)), limit_rat(a) - limit_rat(b))
+}
+
+theorem sub_rat_seq_well_def(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat, d: Nat -> Rat) {
+    eq_seq(a, c) and eq_seq(b, d)
+    implies
+    eq_seq(sub_rat_seq(a, b), sub_rat_seq(c, d))
+}
+
+theorem sub_zero_imp_eq(x: Real, y: Real) {
+    x - y = Real.0 implies x = y
+}
+
+theorem sub_eq_zero_imp_eq(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b)) and eq_seq(sub_rat_seq(a, b), zero_rat_seq) implies
+    eq_seq(a, b)
+}
+
+theorem self_eq(a: Nat -> Rat) {
+    converges(lift_seq(a)) implies
+    eq_seq(a, a)
+}
+
+theorem converges_to_zero_imp_eq_seq_zero(a: Nat -> Rat) {
+    converges_to(lift_seq(a), Real.0)
+    implies
+    eq_seq(a, zero_rat_seq)
+}
+
+theorem eq_seq_zero_imp_converges_to_zero(a: Nat -> Rat) {
+    eq_seq(a, zero_rat_seq)
+    implies
+    converges_to(lift_seq(a), Real.0)
+}
+
+theorem mul_zero_rat_seq(a: Nat -> Rat, z: Nat -> Rat) {
+    converges(lift_seq(a)) and eq_seq(z, zero_rat_seq)
+    implies
+    eq_seq(mul_rat_seq(a, z), zero_rat_seq)
+}
+
+theorem sub_rat_eq_imp_sub_zero(a: Nat -> Rat, b: Nat -> Rat) {
+    eq_seq(a, b) implies
+    eq_seq(sub_rat_seq(a, b), zero_rat_seq)
+}
+
+theorem sub_rat_sub_zero_imp_eq(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b)) and eq_seq(sub_rat_seq(a, b), zero_rat_seq)
+    implies
+    eq_seq(a, b)
+}
+
+theorem mul_right_well_def(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat) {
+    eq_seq(b, c) and converges(lift_seq(a))
+    implies
+    eq_seq(mul_rat_seq(a, b), mul_rat_seq(a, c))
+}
+
+theorem mul_left_well_def(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat) {
+    eq_seq(a, b) and converges(lift_seq(c))
+    implies
+    eq_seq(mul_rat_seq(a, c), mul_rat_seq(b, c))
+}
+
+theorem eq_seq_trans(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat) {
+    eq_seq(a, b) and eq_seq(b, c)
+    implies
+    eq_seq(a, c)
+}
+
+theorem mul_rat_eq_seq(a: Nat -> Rat, b: Nat -> Rat, c: Nat -> Rat, d: Nat -> Rat) {
+    eq_seq(a, c) and eq_seq(b, d)
+    implies
+    eq_seq(mul_rat_seq(a, b), mul_rat_seq(c, d))
+}
+
+define is_cauchy_seq_at(a: Nat -> Real, eps: Real) -> Bool {
+    eps.is_positive implies exists(n: Nat) {
+        forall(i: Nat, j: Nat) {
+            n <= i and n <= j implies a(i).is_close(a(j), eps)
+        }
+    }
+}
+
+theorem is_cauchy_seq_at_intro(a: Nat -> Real, eps: Real) {
+    (eps.is_positive implies exists(n: Nat) {
+        forall(i: Nat, j: Nat) {
+            n <= i and n <= j implies a(i).is_close(a(j), eps)
+        }
+    }) implies is_cauchy_seq_at(a, eps)
+}
+
+define is_cauchy_seq(a: Nat -> Real) -> Bool {
+    forall(eps: Real) {
+        is_cauchy_seq_at(a, eps)
+    }
+}
+
+theorem is_cauchy_seq_intro(a: Nat -> Real) {
+    (forall(eps: Real) { is_cauchy_seq_at(a, eps) }) implies is_cauchy_seq(a)
+}
+
+theorem cauchy_bound_all_indices(a: Nat -> Real, n: Nat, eps: Real) {
+    cauchy_bound(a, n, eps) implies forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies a(i).is_close(a(j), eps)
+    }
+}
+
+theorem cauchy_bound_indices(a: Nat -> Real, n: Nat, eps: Real, i: Nat, j: Nat) {
+    cauchy_bound(a, n, eps) and n <= i and n <= j implies a(i).is_close(a(j), eps)
+}
+
+theorem cauchy_imp_converges(a: Nat -> Real) {
+    is_cauchy_seq(a) implies converges(a)
+}
+
+theorem converges_imp_cauchy_bound(a: Nat -> Real, eps: Real) {
+    converges(a) and eps.is_positive implies exists(n: Nat) {
+        cauchy_bound(a, n, eps)
+    }
+}
+
+theorem converges_imp_explicit_tail(a: Nat -> Real, eps: Real) {
+    converges(a) and eps.is_positive implies exists(n: Nat) {
+        forall(i: Nat, j: Nat) {
+            n <= i and n <= j implies a(i).is_close(a(j), eps)
+        }
+    }
+}
+
+theorem converges_imp_cauchy_seq(a: Nat -> Real) {
+    converges(a) implies is_cauchy_seq(a)
+}
+
+theorem converges_to_imp_cauchy(a: Nat -> Real, x: Real) {
+    converges_to(a, x) implies is_cauchy_seq(a)
+}
+
+theorem cauchy_imp_converges_to_limit(a: Nat -> Real) {
+    is_cauchy_seq(a) implies converges_to(a, limit(a))
+}
+
+theorem cauchy_imp_exists_limit(a: Nat -> Real) {
+    is_cauchy_seq(a) implies exists(x: Real) {
+        converges_to(a, x)
+    }
+}
+
+theorem cauchy_iff_exists_limit_forward(a: Nat -> Real) {
+    is_cauchy_seq(a) implies exists(x: Real) {
+        converges_to(a, x)
+    }
+}
+
+theorem cauchy_iff_exists_limit_backward(a: Nat -> Real) {
+    (exists(x: Real) { converges_to(a, x) }) implies is_cauchy_seq(a)
+}
+
+theorem real_mul_comm(x: Real, y: Real) {
+    x * y = y * x
+}
+
+theorem mul3_as_seq(x: Real, y: Real, z: Real) {
+    x * y * z = limit_rat(mul_rat_seq(mul_rat_seq(rat_seq(x), rat_seq(y)), rat_seq(z)))
+}
+
+theorem mul_assoc(x: Real, y: Real, z: Real) {
+    x * (y * z) = (x * y) * z
+}
+
+theorem limit_rat_rat_seq(x: Real) {
+    x = limit_rat(rat_seq(x))
+}
+
+theorem limit_definition_of_add(x: Real, y: Real) {
+    x + y = limit_rat(add_rat_seq(rat_seq(x), rat_seq(y)))
+}
+
+theorem eq_seq_rat_seq_limit(a: Nat -> Rat) {
+    converges(lift_seq(a)) implies
+    eq_seq(a, rat_seq(limit_rat(a)))
+}
+
+theorem eq_seq_imp_limit_rat_eq(a: Nat -> Rat, b: Nat -> Rat) {
+    eq_seq(a, b) implies
+    limit_rat(a) = limit_rat(b)
+}
+
+theorem limit_rat_add(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    limit_rat(add_rat_seq(a, b)) = limit_rat(a) + limit_rat(b)
+}
+
+theorem mul_distrib_right(x: Real, y: Real, z: Real) {
+    x * (y + z) = x * y + x * z
+}
+
+theorem mul_distrib_left(x: Real, y: Real, z: Real) {
+    (x + y) * z = x * z + y * z
+}
+
+theorem limit_rat_mul_rat_seq(a: Nat -> Rat, b: Nat -> Rat) {
+    converges(lift_seq(a)) and converges(lift_seq(b))
+    implies
+    limit_rat(mul_rat_seq(a, b)) = limit_rat(a) * limit_rat(b)
+}
+
+theorem limit_rat_const_rat_seq(r: Rat) {
+    limit_rat(const_rat_seq(r)) = Real.from_rat(r)
+}
+
+theorem mul_one_right(x: Real) {
+    x * Real.1 = x
+}
+
+theorem mul_one_left(x: Real) {
+    Real.1 * x = x
+}
+
+theorem mul_zero_right(x: Real) {
+    x * Real.0 = Real.0
+}
+
+theorem mul_zero_left(x: Real) {
+    Real.0 * x = Real.0
+}
+
+theorem mul_neg_one_left(x: Real) {
+    -Real.1 * x = -x
+}
+
+theorem mul_neg_one_right(x: Real) {
+    x * -Real.1 = -x
+}
+
+theorem mul_neg_left(x: Real, y: Real) {
+    -x * y = -(x * y)
+}
+
+theorem mul_neg_right(x: Real, y: Real) {
+    x * -y = -(x * y)
+}
+
+theorem mul_sub_distrib_right(x: Real, y: Real, z: Real) {
+    x * (y - z) = x * y - x * z
+}
+
+theorem mul_sub_distrib_left(x: Real, y: Real, z: Real) {
+    (x - y) * z = x * z - y * z
+}
+
+theorem pos_lte_imp_pos(x: Real, y: Real) {
+    x.is_positive and x <= y implies
+    y.is_positive
+}
+
+theorem mul_pos_pos(x: Real, y: Real) {
+    x.is_positive and y.is_positive
+    implies
+    (x * y).is_positive
+}
+
+theorem mul_neg_pos(x: Real, y: Real) {
+    x.is_negative and y.is_positive
+    implies
+    (x * y).is_negative
+}
+
+theorem mul_pos_neg(x: Real, y: Real) {
+    x.is_positive and y.is_negative
+    implies
+    (x * y).is_negative
+}
+
+theorem mul_neg_neg(x: Real, y: Real) {
+    x.is_negative and y.is_negative
+    implies
+    (x * y).is_positive
+}
+
+theorem mul_nonneg_nonneg(x: Real, y: Real) {
+    not x.is_negative and not y.is_negative
+    implies
+    not (x * y).is_negative
+}
+
+theorem mul_nonneg(a: Real, b: Real) {
+    a >= Real.0 and b >= Real.0 implies a * b >= Real.0
+}
+
+theorem square_nonneg(x: Real) {
+    x * x >= Real.0
+}
+
+theorem lt_mul_pos_right(x: Real, y: Real, z: Real) {
+    z.is_positive and x < y implies
+    x * z < y * z
+}
+
+theorem lt_mul_pos_left(x: Real, y: Real, z: Real) {
+    z.is_positive and x < y implies
+    z * x < z * y
+}
+
+theorem lte_mul_nonneg_right(x: Real, y: Real, z: Real) {
+    not z.is_negative and x <= y implies
+    x * z <= y * z
+}
+
+theorem lte_mul_nonneg_left(x: Real, y: Real, z: Real) {
+    not z.is_negative and x <= y implies
+    z * x <= z * y
+}
+
+theorem mul_le_mul_nonneg(a: Real, b: Real, c: Real, d: Real) {
+    a >= Real.0 and b >= Real.0 and c >= Real.0 and d >= Real.0 and a <= c and b <= d
+    implies
+    a * b <= c * d
+}
+
+theorem lt_mul_neg_right(x: Real, y: Real, z: Real) {
+    z.is_negative and x < y implies
+    y * z < x * z
+}
+
+theorem lt_mul_neg_left(x: Real, y: Real, z: Real) {
+    z.is_negative and x < y implies
+    z * y < z * x
+}
+
+theorem add_neg_neg(x: Real, y: Real) {
+    x.is_negative and y.is_negative implies (x + y).is_negative
+}
+
+theorem zero_lte_imp_non_neg(x: Real) {
+    Real.0 <= x implies not x.is_negative
+}
+
+theorem non_neg_imp_zero_lte(x: Real) {
+    not x.is_negative implies Real.0 <= x
+}
+
+theorem mul_from_rat(a: Rat, b: Rat) {
+    Real.from_rat(a) * Real.from_rat(b) = Real.from_rat(a * b)
+}
+
+theorem gt_pos_is_pos(a: Real, b: Real) {
+    a.is_positive and a < b implies b.is_positive
+}
+
+theorem exists_small_mul(a: Real, b: Real) {
+    not a.is_negative and b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and a * c < b
+    }
+}
+
+theorem exists_small_mul_variant(a: Real, b: Real) {
+    b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and a.abs * c < b
+    }
+}
+
+theorem exists_small_mul_variant_2(a: Real, b: Real) {
+    a.is_positive and b.is_positive implies
+    exists(c: Real) {
+        c.is_positive and c * a < b
+    }
+}
+
+theorem mul_abs(a: Real, b: Real) {
+    a.abs * b.abs = (a * b).abs
+}
+
+theorem square_zero_imp_zero(a: Real) {
+    a * a = Real.0 implies a = Real.0
+}
+
+define dist_sq(p: Point4, q: Point4) -> Real {
+    (p.a - q.a) * (p.a - q.a) + (p.b - q.b) * (p.b - q.b) +
+    (p.c - q.c) * (p.c - q.c) + (p.d - q.d) * (p.d - q.d)
+}
+
+define points_unit_distance4(p: Point4, q: Point4) -> Bool {
+    dist_sq(p, q) = Real.1
+}
+
+theorem neg_lte(a: Real, b: Real) {
+    -a <= b implies -b <= a
+}
+
+theorem monotone_is_increasing(a: Nat -> Real) {
+    is_monotone(a) implies is_increasing(a)
+}
+
+theorem increasing_is_monotone(a: Nat -> Real) {
+    is_increasing(a) implies is_monotone(a)
+}
+
+theorem increasing_iff_monotone(a: Nat -> Real) {
+    is_increasing(a) = is_monotone(a)
+}
+
+theorem distant_monotone(a: Nat -> Real, m: Nat, n: Nat) {
+    is_monotone(a) and m <= n implies a(m) <= a(n)
+}
+
+theorem increasing_convergent_bounded_by_limit(a: Nat -> Real) {
+    is_increasing(a) and converges(a)
+    implies is_upper_bound(a, limit(a))
+}
+
+theorem monotone_convergence_principle(a: Nat -> Real, b: Real) {
+    is_increasing(a) and is_upper_bound(a, b) implies converges(a)
+}
+
+theorem increasing_bounded_above_converges(a: Nat -> Real) {
+    is_increasing(a) and has_upper_bound_seq(a) implies converges(a)
+}
+
+theorem monotone_bounded_above_converges(a: Nat -> Real, b: Real) {
+    is_monotone(a) and is_upper_bound(a, b) implies converges(a)
+}
+
+theorem monotone_has_upper_bound_converges(a: Nat -> Real) {
+    is_monotone(a) and has_upper_bound_seq(a) implies converges(a)
+}
+
+theorem monotone_convergent_bounded_by_limit(a: Nat -> Real) {
+    is_monotone(a) and converges(a) implies is_upper_bound(a, limit(a))
+}
+
+theorem nonneg_partial_increasing(a: Nat -> Real) {
+    is_lower_bound(a, Real.0) implies is_increasing(partial(a))
+}
+
+theorem nonneg_partial_monotone(a: Nat -> Real) {
+    is_lower_bound(a, Real.0) implies is_monotone(partial(a))
+}
+
+theorem partial_monotone(a: Nat -> Real, n: Nat) {
+    is_lower_bound(a, Real.0) implies partial(a, n) <= partial(a, n.suc)
+}
+
+theorem nonneg_partial_bounded_above(a: Nat -> Real) {
+    is_lower_bound(a, Real.0) and converges(partial(a))
+    implies is_upper_bound(partial(a), limit(partial(a)))
 }

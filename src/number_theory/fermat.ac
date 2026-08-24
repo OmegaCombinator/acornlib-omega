@@ -1,4 +1,4 @@
-from combinatorics import binom, binomial_term, binomial, choose_zero, choose_n
+from combinatorics import binom, nat_binomial_term, nat_binomial, choose_zero, choose_n
 from nat import Nat
 from number_theory.factorisation import prime_does_not_divide_one
 from integer import gcd_of_prime
@@ -306,13 +306,13 @@ theorem divides_partial_nat(d: Nat, f: Nat -> Nat, n: Nat) {
 /// of (a + b).pow(p).
 theorem prime_divides_binomial_term_middle(p: Nat, a: Nat, b: Nat, k: Nat) {
     p.is_prime and Nat.0 < k and k < p
-        implies p.divides(binomial_term(a, b, p, k))
+        implies p.divides(nat_binomial_term(a, b, p, k))
 } by {
     if p.is_prime and Nat.0 < k and k < p {
         prime_divides_binom(p, k)
         p.divides(p.binom(k))
-        // binomial_term(a, b, p, k) = p.binom(k) * a.pow(k) * b.pow(p - k)
-        binomial_term(a, b, p, k) = p.binom(k) * a.pow(k) * b.pow(p - k)
+        // nat_binomial_term(a, b, p, k) = p.binom(k) * a.pow(k) * b.pow(p - k)
+        nat_binomial_term(a, b, p, k) = p.binom(k) * a.pow(k) * b.pow(p - k)
         divides_mul(p.binom(k), a.pow(k), p)
         p.divides(p.binom(k) * a.pow(k))
         divides_mul(p.binom(k) * a.pow(k), b.pow(p - k), p)
@@ -322,32 +322,32 @@ theorem prime_divides_binomial_term_middle(p: Nat, a: Nat, b: Nat, k: Nat) {
 
 /// The k=0 term of (a + b).pow(p) expansion equals b.pow(p).
 theorem binomial_term_left_boundary(a: Nat, b: Nat, p: Nat) {
-    binomial_term(a, b, p, Nat.0) = b.pow(p)
+    nat_binomial_term(a, b, p, Nat.0) = b.pow(p)
 } by {
     choose_zero(p)
     p.binom(Nat.0) = Nat.1
     exp_zero(a)
     a.pow(Nat.0) = Nat.1
     p - Nat.0 = p
-    binomial_term(a, b, p, Nat.0) = Nat.1 * Nat.1 * b.pow(p)
+    nat_binomial_term(a, b, p, Nat.0) = Nat.1 * Nat.1 * b.pow(p)
 }
 
 /// The k=p term of (a + b).pow(p) expansion equals a.pow(p).
 theorem binomial_term_right_boundary(a: Nat, b: Nat, p: Nat) {
-    binomial_term(a, b, p, p) = a.pow(p)
+    nat_binomial_term(a, b, p, p) = a.pow(p)
 } by {
     choose_n(p)
     p.binom(p) = Nat.1
     p - p = Nat.0
     exp_zero(b)
     b.pow(Nat.0) = Nat.1
-    binomial_term(a, b, p, p) = Nat.1 * a.pow(p) * Nat.1
+    nat_binomial_term(a, b, p, p) = Nat.1 * a.pow(p) * Nat.1
 }
 
 /// Helper: each shifted-index binomial term in the middle is divisible by p.
 theorem shifted_binom_term_div(p: Nat, a: Nat, b: Nat, k: Nat) {
     p.is_prime and k < p - Nat.1
-        implies p.divides(compose(binomial_term(a, b, p), Nat.suc)(k))
+        implies p.divides(compose(nat_binomial_term(a, b, p), Nat.suc)(k))
 } by {
     if p.is_prime and k < p - Nat.1 {
         Nat.1 < p
@@ -360,9 +360,9 @@ theorem shifted_binom_term_div(p: Nat, a: Nat, b: Nat, k: Nat) {
         k.suc < pp.suc
         k.suc < p
         prime_divides_binomial_term_middle(p, a, b, k.suc)
-        p.divides(binomial_term(a, b, p, k.suc))
-        compose(binomial_term(a, b, p), Nat.suc)(k) = binomial_term(a, b, p, k.suc)
-        p.divides(compose(binomial_term(a, b, p), Nat.suc)(k))
+        p.divides(nat_binomial_term(a, b, p, k.suc))
+        compose(nat_binomial_term(a, b, p), Nat.suc)(k) = nat_binomial_term(a, b, p, k.suc)
+        p.divides(compose(nat_binomial_term(a, b, p), Nat.suc)(k))
     }
 }
 
@@ -370,16 +370,16 @@ theorem shifted_binom_term_div(p: Nat, a: Nat, b: Nat, k: Nat) {
 /// divisible by p.
 theorem prime_divides_binomial_middle(p: Nat, a: Nat, b: Nat) {
     p.is_prime implies
-        p.divides(partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p - Nat.1))
+        p.divides(partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1))
 } by {
     if p.is_prime {
         forall(k: Nat) {
             if k < p - Nat.1 {
                 shifted_binom_term_div(p, a, b, k)
-                p.divides(compose(binomial_term(a, b, p), Nat.suc)(k))
+                p.divides(compose(nat_binomial_term(a, b, p), Nat.suc)(k))
             }
         }
-        divides_partial_nat(p, compose(binomial_term(a, b, p), Nat.suc), p - Nat.1)
+        divides_partial_nat(p, compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1)
     }
 }
 
@@ -389,7 +389,7 @@ theorem prime_divides_binomial_middle(p: Nat, a: Nat, b: Nat) {
 theorem binomial_pow_split(a: Nat, b: Nat, p: Nat) {
     Nat.1 < p implies
         (a + b).pow(p) =
-            b.pow(p) + partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p - Nat.1) + a.pow(p)
+            b.pow(p) + partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1) + a.pow(p)
 } by {
     if Nat.1 < p {
         suc_sub_two_eq_sub_one(p)
@@ -398,19 +398,19 @@ theorem binomial_pow_split(a: Nat, b: Nat, p: Nat) {
         p.suc - Nat.1 = p
         suc_geq_two(p)
         p.suc >= Nat.2
-        binomial(a, b, p)
-        (a + b).pow(p) = partial[Nat](binomial_term(a, b, p), p.suc)
-        partial_split_first_last[Nat](binomial_term(a, b, p), p.suc)
-        partial[Nat](binomial_term(a, b, p), p.suc) =
-            binomial_term(a, b, p, Nat.0) + partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p.suc - Nat.2) + binomial_term(a, b, p, p.suc - Nat.1)
-        partial[Nat](binomial_term(a, b, p), p.suc) =
-            binomial_term(a, b, p, Nat.0) + partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p - Nat.1) + binomial_term(a, b, p, p)
+        nat_binomial(a, b, p)
+        (a + b).pow(p) = partial[Nat](nat_binomial_term(a, b, p), p.suc)
+        partial_split_first_last[Nat](nat_binomial_term(a, b, p), p.suc)
+        partial[Nat](nat_binomial_term(a, b, p), p.suc) =
+            nat_binomial_term(a, b, p, Nat.0) + partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p.suc - Nat.2) + nat_binomial_term(a, b, p, p.suc - Nat.1)
+        partial[Nat](nat_binomial_term(a, b, p), p.suc) =
+            nat_binomial_term(a, b, p, Nat.0) + partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1) + nat_binomial_term(a, b, p, p)
         binomial_term_left_boundary(a, b, p)
-        binomial_term(a, b, p, Nat.0) = b.pow(p)
+        nat_binomial_term(a, b, p, Nat.0) = b.pow(p)
         binomial_term_right_boundary(a, b, p)
-        binomial_term(a, b, p, p) = a.pow(p)
-        partial[Nat](binomial_term(a, b, p), p.suc) =
-            b.pow(p) + partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p - Nat.1) + a.pow(p)
+        nat_binomial_term(a, b, p, p) = a.pow(p)
+        partial[Nat](nat_binomial_term(a, b, p), p.suc) =
+            b.pow(p) + partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1) + a.pow(p)
     }
 }
 
@@ -434,7 +434,7 @@ theorem freshmans_dream(p: Nat, a: Nat, b: Nat) {
     if p.is_prime {
         Nat.1 < p
         binomial_pow_split(a, b, p)
-        let middle: Nat = partial[Nat](compose(binomial_term(a, b, p), Nat.suc), p - Nat.1)
+        let middle: Nat = partial[Nat](compose(nat_binomial_term(a, b, p), Nat.suc), p - Nat.1)
         (a + b).pow(p) = b.pow(p) + middle + a.pow(p)
         prime_divides_binomial_middle(p, a, b)
         p.divides(middle)
