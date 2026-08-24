@@ -1,108 +1,3 @@
-theorem continuous_image_compact[X: TopologicalSpace, Y: TopologicalSpace](
-    f: X -> Y,
-    s: Set[X]
-) {
-    is_continuous(f) and is_compact[X](s) implies is_compact[Y](set_image(s, f))
-}
-
-define cover_adjoin_complement[T](s: Set[T], c: Set[T] -> Bool, u: Set[T]) -> Bool {
-    c(u) or u = s.c
-}
-
-theorem cover_adjoin_complement_open_sets[T: TopologicalSpace](s: Set[T], c: Set[T] -> Bool) {
-    is_closed[T](s) and (forall(u: Set[T]) { c(u) implies T.is_open(u) })
-        implies forall(u: Set[T]) { cover_adjoin_complement[T](s, c, u) implies T.is_open(u) }
-}
-
-theorem cover_adjoin_complement_is_open_cover_of_superset[T: TopologicalSpace](
-    s: Set[T],
-    k: Set[T],
-    c: Set[T] -> Bool
-) {
-    is_closed[T](s) and is_open_cover[T](c, s)
-        implies is_open_cover[T](cover_adjoin_complement[T](s, c), k)
-}
-
-define cover_restrict_to_family[T](c: Set[T] -> Bool, items: List[Set[T]]) -> List[Set[T]] {
-    items.filter(c)
-}
-
-theorem cover_restrict_to_family_is_subfamily[T](c: Set[T] -> Bool, items: List[Set[T]]) {
-    is_subfamily[T](c, cover_restrict_to_family[T](c, items))
-}
-
-theorem cover_restrict_to_family_covers_closed_member[T](
-    s: Set[T],
-    c: Set[T] -> Bool,
-    items: List[Set[T]],
-    x: T
-) {
-    is_subfamily[T](cover_adjoin_complement[T](s, c), items) and s.contains(x)
-        and list_union_of_sets[T](items).contains(x)
-        implies list_union_of_sets[T](cover_restrict_to_family[T](c, items)).contains(x)
-}
-
-theorem cover_restrict_to_family_finite_subcover[T](
-    s: Set[T],
-    c: Set[T] -> Bool,
-    items: List[Set[T]]
-) {
-    is_subfamily[T](cover_adjoin_complement[T](s, c), items)
-        and s.subset(list_union_of_sets[T](items))
-        implies exists(filtered: List[Set[T]]) {
-            is_subfamily[T](c, filtered) and s.subset(list_union_of_sets[T](filtered))
-        }
-}
-
-theorem closed_subset_of_compact_is_compact[T: TopologicalSpace](s: Set[T], k: Set[T]) {
-    s.subset(k) and is_closed[T](s) and is_compact[T](k) implies is_compact[T](s)
-}
-
-theorem closed_subset_of_compact_union_is_compact[T: TopologicalSpace](
-    s: Set[T],
-    a: Set[T],
-    b: Set[T]
-) {
-    is_closed[T](s) and s.subset(a.union(b)) and is_compact[T](a) and is_compact[T](b)
-        implies is_compact[T](s)
-}
-
-theorem closed_subset_of_continuous_image_compact[X: TopologicalSpace, Y: TopologicalSpace](
-    f: X -> Y,
-    k: Set[X],
-    s: Set[Y]
-) {
-    is_continuous[X, Y](f) and is_compact[X](k) and is_closed[Y](s)
-        and s.subset(set_image[X, Y](k, f)) implies is_compact[Y](s)
-}
-
-theorem cover_restrict_to_family_finite_subcover_of_subset[T](
-    s: Set[T],
-    closed: Set[T],
-    c: Set[T] -> Bool,
-    items: List[Set[T]]
-) {
-    s.subset(closed) and is_subfamily[T](cover_adjoin_complement[T](closed, c), items)
-        and s.subset(list_union_of_sets[T](items))
-        implies exists(filtered: List[Set[T]]) {
-            is_subfamily[T](c, filtered) and s.subset(list_union_of_sets[T](filtered))
-        }
-}
-
-theorem cover_adjoin_complement_is_open_cover_of_subspace_closed_subset_ambient[T: TopologicalSpace](
-    carrier: Set[T],
-    s: Set[T],
-    closed: Set[T],
-    c: Set[T] -> Bool
-) {
-    is_closed[T](closed) and is_open_cover[T](c, s) and s = closed.intersection(carrier)
-        implies is_open_cover[T](cover_adjoin_complement[T](closed, c), carrier)
-}
-
-theorem compact_of_subspace_closed_subset[T: TopologicalSpace](carrier: Set[T], s: Set[T]) {
-    is_compact[T](carrier) and is_closed_in_subspace[T](carrier, s) implies is_compact[T](s)
-}
-
 theorem compact_inter_closed_is_compact[T: TopologicalSpace](carrier: Set[T], closed: Set[T]) {
     is_compact[T](carrier) and is_closed[T](closed) implies is_compact[T](carrier.intersection(closed))
 }
@@ -759,11 +654,6 @@ define is_unbounded(f: Nat -> Nat) -> Bool {
     }
 }
 
-theorem metric_subsequence_tendsto[M: MetricSpace](q: Nat -> M, f: Nat -> Nat, a: M) {
-    is_monotone(f) and is_unbounded(f) and tendsto_metric(q, a)
-    implies tendsto_metric(compose(q, f), a)
-}
-
 theorem intermediate_value_on_closed_interval(f: Real -> Real, a: Real, b: Real, t: Real) {
     continuous(f) and a <= b and f(a) <= t and t <= f(b)
     implies exists(c: Real) { a <= c and c <= b and f(c) = t }
@@ -771,6 +661,73 @@ theorem intermediate_value_on_closed_interval(f: Real -> Real, a: Real, b: Real,
 
 theorem heine_borel_closed_interval_is_compact(a: Real, b: Real) {
     is_compact[Real](closed_interval_set(a, b))
+}
+
+theorem nat_zero_lte(n: Nat) {
+    Nat.0 <= n
+}
+
+theorem real_lte_upper_bound_pair(a: Real, b: Real) {
+    exists(c: Real) {
+        a <= c and b <= c
+    }
+}
+
+theorem sub_sub_cancel(a: Real, b: Real, c: Real) {
+    (a - b) - (a - c) = c - b
+}
+
+theorem sub_minus_sub(a: Real, b: Real) {
+    a - (a - b) = b
+}
+
+theorem add_sub_cancel(a: Real, b: Real) {
+    a + (b - a) = b
+}
+
+define sequence_range_contains[M](q: Nat -> M, x: M) -> Bool {
+    exists(n: Nat) { q(n) = x }
+}
+
+define sequence_range[M](q: Nat -> M) -> Set[M] {
+    Set[M].new(sequence_range_contains(q))
+}
+
+theorem sequence_range_contains_eq[M](q: Nat -> M, x: M) {
+    sequence_range(q).contains(x) = sequence_range_contains(q, x)
+}
+
+theorem sequence_range_contains_iff[M](q: Nat -> M, x: M) {
+    sequence_range_contains(q, x) = exists(n: Nat) { q(n) = x }
+}
+
+theorem metric_subsequence_tendsto[M: MetricSpace](q: Nat -> M, f: Nat -> Nat, a: M) {
+    is_monotone(f) and is_unbounded(f) and tendsto_metric(q, a)
+    implies tendsto_metric(compose(q, f), a)
+}
+
+theorem cauchy_metric_seq_is_bounded[M: MetricSpace](q: Nat -> M) {
+    is_cauchy_metric(q) implies is_bounded(sequence_range(q))
+}
+
+theorem tendsto_metric_seq_is_bounded[M: MetricSpace](q: Nat -> M, a: M) {
+    tendsto_metric(q, a) implies is_bounded(sequence_range(q))
+}
+
+theorem tendsto_metric_in_closed_set[M: MetricSpace](s: Set[M], q: Nat -> M, a: M) {
+    is_closed_metric(s) and (forall(n: Nat) { s.contains(q(n)) }) and tendsto_metric(q, a)
+    implies s.contains(a)
+}
+
+theorem tendsto_metric_in_closed_interval(q: Nat -> Real, l: Real, lo: Real, hi: Real) {
+    (forall(n: Nat) { closed_interval_set(lo, hi).contains(q(n)) })
+    and tendsto_metric(q, l)
+    implies closed_interval_set(lo, hi).contains(l)
+}
+
+theorem closed_set_in_complete_space_has_limit_in_set[M: CompleteMetricSpace](s: Set[M], q: Nat -> M) {
+    is_closed_metric(s) and (forall(n: Nat) { s.contains(q(n)) }) and is_cauchy_metric(q)
+    implies exists(a: M) { s.contains(a) and tendsto_metric(q, a) }
 }
 
 theorem real_is_open_imp_is_open_metric(s: Set[Real]) {

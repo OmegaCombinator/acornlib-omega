@@ -1,307 +1,378 @@
-theorem filter_preserves_permutation[T](a: List[T], b: List[T], pred: T -> Bool) {
-    is_permutation(a, b) implies is_permutation(a.filter(pred), b.filter(pred))
+define gt_at[T: LinearOrder](xs: List[T], i: Nat, j: Nat) -> Bool {
+    lt_at(xs, j, i)
 }
 
-theorem permutation_filter_length[T](a: List[T], b: List[T], pred: T -> Bool) {
-    is_permutation(a, b) implies a.filter(pred).length = b.filter(pred).length
+define mono_chain[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat) -> Bool {
+    forall(a: Nat, b: Nat) {
+        a < b and b < k implies
+            w(a) < w(b) and w(b) < xs.length and cmp(w(a), w(b))
+    }
 }
 
-theorem permutation_preserves_contains[T](a: List[T], b: List[T], item: T) {
-    is_permutation(a, b) implies a.contains(item) = b.contains(item)
+define chain_geq_from[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat, k: Nat) -> Bool {
+    exists(w: Nat -> Nat) {
+        w(0) = i and mono_chain(xs, w, cmp, k)
+    }
 }
 
-theorem permutation_filter_contains[T](a: List[T], b: List[T], pred: T -> Bool, item: T) {
-    is_permutation(a, b) implies a.filter(pred).contains(item) = b.filter(pred).contains(item)
+define chain_geq[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, k: Nat) -> Bool {
+    exists(w: Nat -> Nat) {
+        mono_chain(xs, w, cmp, k)
+    }
 }
 
-theorem unique_permutation_filter_preserves_unique[T](a: List[T], b: List[T], pred: T -> Bool) {
-    a.is_unique and b.is_unique and is_permutation(a, b) implies
-        a.filter(pred).is_unique and b.filter(pred).is_unique and
-        is_permutation(a.filter(pred), b.filter(pred))
+theorem mono_chain_zero[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool) {
+    mono_chain(xs, w, cmp, Nat.0)
 }
 
-theorem remove_elem_count_self_zero[T](items: List[T], elem: T) {
-    items.remove_elem(elem).count(elem) = Nat.0
+theorem mono_chain_one[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool) {
+    mono_chain(xs, w, cmp, Nat.1)
 }
 
-theorem remove_elem_count_other[T](items: List[T], elem: T, item: T) {
-    item != elem implies items.remove_elem(elem).count(item) = items.count(item)
+theorem mono_chain_apply[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, a: Nat, b: Nat) {
+    mono_chain(xs, w, cmp, k) and a < b and b < k implies
+    w(a) < w(b) and w(b) < xs.length and cmp(w(a), w(b))
 }
 
-theorem remove_elem_preserves_permutation[T](a: List[T], b: List[T], elem: T) {
-    is_permutation(a, b) implies is_permutation(a.remove_elem(elem), b.remove_elem(elem))
+theorem mono_chain_mono[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, m: Nat) {
+    mono_chain(xs, w, cmp, m) and k <= m implies mono_chain(xs, w, cmp, k)
 }
 
-theorem remove_elem_permutation_length[T](a: List[T], b: List[T], elem: T) {
-    is_permutation(a, b) implies a.remove_elem(elem).length = b.remove_elem(elem).length
+theorem chain_geq_from_zero[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) {
+    chain_geq_from(xs, cmp, i, Nat.0)
 }
 
-define list_take[T](items: List[T], n: Nat) -> List[T] {
-    match n {
+theorem chain_geq_from_one[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) {
+    i < xs.length implies chain_geq_from(xs, cmp, i, Nat.1)
+}
+
+theorem get_idx_cons_zero[T](head: T, tail: List[T]) {
+    List.cons(head, tail).get_idx(0) = Option.some(head)
+}
+
+theorem get_idx_cons_suc[T](head: T, tail: List[T], i: Nat) {
+    List.cons(head, tail).get_idx(i.suc) = tail.get_idx(i)
+}
+
+theorem option_some_eq_iff[T](x: T, y: T) {
+    (Option.some(x) = Option.some(y)) = (x = y)
+}
+
+theorem value_at_cons_zero[T](head: T, tail: List[T], v: T) {
+    value_at(List.cons(head, tail), 0, v) = (head = v)
+}
+
+theorem value_at_cons_suc[T](head: T, tail: List[T], i: Nat, v: T) {
+    value_at(List.cons(head, tail), i.suc, v) = value_at(tail, i, v)
+}
+
+theorem value_at_det[T](xs: List[T], i: Nat, x: T, y: T) {
+    value_at(xs, i, x) and value_at(xs, i, y) implies x = y
+}
+
+theorem lt_at_of_values[T: LinearOrder](xs: List[T], i: Nat, j: Nat, x: T, y: T) {
+    value_at(xs, i, x) and value_at(xs, j, y) and x < y implies lt_at(xs, i, j)
+}
+
+theorem lt_at_trans[T: LinearOrder](xs: List[T], i: Nat, j: Nat, m: Nat) {
+    lt_at(xs, i, j) and lt_at(xs, j, m) implies lt_at(xs, i, m)
+}
+
+theorem lt_at_trans_forall[T: LinearOrder](xs: List[T]) {
+    forall(u: Nat, v: Nat, m: Nat) {
+        lt_at(xs, u, v) and lt_at(xs, v, m) implies lt_at(xs, u, m)
+    }
+}
+
+theorem gt_at_trans_forall[T: LinearOrder](xs: List[T]) {
+    forall(u: Nat, v: Nat, m: Nat) {
+        gt_at(xs, u, v) and gt_at(xs, v, m) implies gt_at(xs, u, m)
+    }
+}
+
+theorem get_idx_some_of_lt[T](xs: List[T], i: Nat) {
+    i < xs.length implies exists(x: T) {
+        xs.get_idx(i) = Option.some(x)
+    }
+}
+
+theorem chain_length_bound[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat) {
+    w(0) = i and i < xs.length and mono_chain(xs, w, cmp, k) implies k <= xs.length
+}
+
+define prepend_pos(i: Nat, w: Nat -> Nat) -> Nat -> Nat {
+    function(a: Nat) {
+        if a = 0 {
+            i
+        } else {
+            w(a - 1)
+        }
+    }
+}
+
+theorem prepend_pos_zero(i: Nat, w: Nat -> Nat) {
+    prepend_pos(i, w)(0) = i
+}
+
+theorem prepend_pos_suc(i: Nat, w: Nat -> Nat, a: Nat) {
+    prepend_pos(i, w)(a.suc) = w(a)
+}
+
+theorem prepend_head_case_one[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a = Nat.0 and b = Nat.1 and i < j and j < xs.length and cmp(i, j) and w(0) = j
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    cmp(prepend_pos(i, w)(a), prepend_pos(i, w)(b))
+}
+
+theorem prepend_head_case_ge_two[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat, b0: Nat) {
+    a = Nat.0 and b = b0.suc and b0 != Nat.0 and b < k.suc and i < j and j < xs.length and
+    cmp(i, j) and w(0) = j and mono_chain(xs, w, cmp, k) and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    cmp(prepend_pos(i, w)(a), prepend_pos(i, w)(b))
+}
+
+theorem prepend_suc_case[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat, a0: Nat, b0: Nat) {
+    a = a0.suc and b = b0.suc and a0 < b0 and b0 < k and mono_chain(xs, w, cmp, k)
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    cmp(prepend_pos(i, w)(a), prepend_pos(i, w)(b))
+}
+
+theorem prepend_head_any_case[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a = Nat.0 and i < j and j < xs.length and cmp(i, j) and w(0) = j and
+    mono_chain(xs, w, cmp, k) and a < b and b < k.suc and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    cmp(prepend_pos(i, w)(a), prepend_pos(i, w)(b))
+}
+
+theorem prepend_suc_any_case[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a != Nat.0 and i < j and j < xs.length and cmp(i, j) and w(0) = j and
+    mono_chain(xs, w, cmp, k) and a < b and b < k.suc and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    cmp(prepend_pos(i, w)(a), prepend_pos(i, w)(b))
+}
+
+theorem mono_chain_prepend[T: LinearOrder](xs: List[T], w: Nat -> Nat, cmp: Nat -> Nat -> Bool, k: Nat, i: Nat, j: Nat) {
+    i < j and j < xs.length and cmp(i, j) and w(0) = j and mono_chain(xs, w, cmp, k) and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies mono_chain(xs, prepend_pos(i, w), cmp, k.suc)
+}
+
+theorem chain_geq_from_prepend[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat, j: Nat, k: Nat) {
+    i < j and j < xs.length and cmp(i, j) and chain_geq_from(xs, cmp, j, k) and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies chain_geq_from(xs, cmp, i, k.suc)
+}
+
+theorem chain_geq_upper_bound[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) {
+    i < xs.length implies is_upper_bound_of(chain_geq_from(xs, cmp, i), xs.length)
+}
+
+let chain_val[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) -> m: Nat satisfy {
+    (i < xs.length and is_max(chain_geq_from(xs, cmp, i), m)) or
+    (not i < xs.length and m = Nat.0)
+}
+
+theorem chain_val_apply[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) {
+    i < xs.length implies is_max(chain_geq_from(xs, cmp, i), chain_val(xs, cmp, i))
+}
+
+theorem chain_val_geq_one[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat) {
+    i < xs.length implies Nat.1 <= chain_val(xs, cmp, i)
+}
+
+theorem chain_val_step[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat, j: Nat) {
+    i < j and j < xs.length and cmp(i, j) and
+    (forall(u: Nat, v: Nat, m: Nat) { cmp(u, v) and cmp(v, m) implies cmp(u, m) })
+    implies chain_val(xs, cmp, j).suc <= chain_val(xs, cmp, i)
+}
+
+theorem chain_val_bound[T: LinearOrder](xs: List[T], cmp: Nat -> Nat -> Bool, i: Nat, k: Nat) {
+    i < xs.length and not chain_geq(xs, cmp, k.suc) implies chain_val(xs, cmp, i) <= k
+}
+
+theorem value_at_imp_contains[T](xs: List[T], i: Nat, x: T) {
+    value_at(xs, i, x) implies xs.contains(x)
+}
+
+theorem count_ge_one_of_value_at[T](xs: List[T], i: Nat, x: T) {
+    value_at(xs, i, x) implies xs.count(x) >= Nat.1
+}
+
+theorem count_ge_two_of_two_positions[T](xs: List[T], i: Nat, j: Nat, x: T) {
+    value_at(xs, i, x) and value_at(xs, j, x) and i != j implies xs.count(x) >= Nat.2
+}
+
+theorem is_unique_distinct_values[T](xs: List[T], i: Nat, j: Nat) {
+    xs.is_unique and i < xs.length and j < xs.length and i != j implies
+    not exists(x: T) { value_at(xs, i, x) and value_at(xs, j, x) }
+}
+
+theorem lt_at_total[T: LinearOrder](xs: List[T], i: Nat, j: Nat) {
+    xs.is_unique and i < j and j < xs.length implies lt_at(xs, i, j) or lt_at(xs, j, i)
+}
+
+define esz_pair[T: LinearOrder](xs: List[T], i: Nat) -> Pair[Nat, Nat] {
+    Pair.new(chain_val(xs, lt_at(xs), i), chain_val(xs, gt_at(xs), i))
+}
+
+define esz_pair_fn[T: LinearOrder](xs: List[T], idx: Nat) -> Pair[Nat, Nat] {
+    esz_pair(xs, idx)
+}
+
+theorem esz_pair_first[T: LinearOrder](xs: List[T], i: Nat) {
+    esz_pair(xs, i).first = chain_val(xs, lt_at(xs), i)
+}
+
+theorem esz_pair_second[T: LinearOrder](xs: List[T], i: Nat) {
+    esz_pair(xs, i).second = chain_val(xs, gt_at(xs), i)
+}
+
+define shift_one(a: Nat) -> Nat {
+    a + 1
+}
+
+define box_pair(r: Nat, b: Nat) -> Pair[Nat, Nat] {
+    Pair.new(r, shift_one(b))
+}
+
+define pair_boxes(r: Nat, s: Nat) -> List[Pair[Nat, Nat]] {
+    match r {
         Nat.zero {
-            List.nil[T]
+            List.nil[Pair[Nat, Nat]]
         }
-        Nat.suc(pred) {
-            match items {
-                List.nil {
-                    List.nil[T]
-                }
-                List.cons(head, tail) {
-                    List.cons(head, list_take(tail, pred))
-                }
-            }
+        Nat.suc(p) {
+            pair_boxes(p, s) + map(s.range, box_pair(r))
         }
     }
 }
 
-theorem list_take_zero[T](items: List[T]) {
-    list_take(items, Nat.0) = List.nil[T]
+theorem shift_one_pred(a: Nat) {
+    Nat.1 <= a implies shift_one(a - 1) = a
 }
 
-theorem list_take_nil[T](n: Nat) {
-    list_take(List.nil[T], n) = List.nil[T]
+theorem pred_lt_of_lte(a: Nat, b: Nat) {
+    Nat.1 <= a and a <= b implies a - 1 < b
 }
 
-theorem list_drop_nil[T](n: Nat) {
-    List.nil[T].drop(n) = List.nil[T]
+theorem pair_boxes_length(r: Nat, s: Nat) {
+    pair_boxes(r, s).length = r * s
 }
 
-theorem list_take_cons_suc[T](head: T, tail: List[T], n: Nat) {
-    list_take(List.cons(head, tail), n.suc) = List.cons(head, list_take(tail, n))
+theorem pair_boxes_contains(r: Nat, s: Nat, a: Nat, b: Nat) {
+    Nat.1 <= a and a <= r and Nat.1 <= b and b <= s implies
+    pair_boxes(r, s).contains(Pair.new(a, b))
 }
 
-theorem list_drop_cons_suc[T](head: T, tail: List[T], n: Nat) {
-    List.cons(head, tail).drop(n.suc) = tail.drop(n)
+theorem esz_prepend_head_any_case_lt[T: LinearOrder](xs: List[T], w: Nat -> Nat, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a = Nat.0 and i < j and j < xs.length and lt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, lt_at(xs), k) and a < b and b < k.suc
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    lt_at(xs, prepend_pos(i, w)(a), prepend_pos(i, w)(b))
 }
 
-theorem list_take_append_drop[T](items: List[T], n: Nat) {
-    list_take(items, n) + items.drop(n) = items
+theorem esz_prepend_suc_any_case_lt[T: LinearOrder](xs: List[T], w: Nat -> Nat, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a != Nat.0 and i < j and j < xs.length and lt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, lt_at(xs), k) and a < b and b < k.suc
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    lt_at(xs, prepend_pos(i, w)(a), prepend_pos(i, w)(b))
 }
 
-theorem list_take_length_at_most[T](items: List[T], n: Nat) {
-    list_take(items, n).length <= items.length
+theorem esz_chain_extend_lt[T: LinearOrder](xs: List[T], i: Nat, j: Nat, w: Nat -> Nat) {
+    i < j and j < xs.length and lt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, lt_at(xs), chain_val(xs, lt_at(xs), j))
+    implies chain_geq_from(xs, lt_at(xs), i, chain_val(xs, lt_at(xs), j).suc)
 }
 
-theorem list_take_contains_imp_contains[T](items: List[T], n: Nat, x: T) {
-    list_take(items, n).contains(x) implies items.contains(x)
+theorem esz_chain_prepend_lt[T: LinearOrder](xs: List[T], w: Nat -> Nat, i: Nat, j: Nat) {
+    i < j and j < xs.length and lt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, lt_at(xs), chain_val(xs, lt_at(xs), j)) and
+    (forall(u: Nat, v: Nat, m: Nat) { lt_at(xs, u, v) and lt_at(xs, v, m) implies lt_at(xs, u, m) })
+    implies mono_chain(xs, prepend_pos(i, w), lt_at(xs), chain_val(xs, lt_at(xs), j).suc)
 }
 
-theorem list_drop_length_nil[T](items: List[T]) {
-    items.drop(items.length) = List.nil[T]
+theorem esz_prepend_head_any_case_gt[T: LinearOrder](xs: List[T], w: Nat -> Nat, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a = Nat.0 and i < j and j < xs.length and gt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, gt_at(xs), k) and a < b and b < k.suc
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    gt_at(xs, prepend_pos(i, w)(a), prepend_pos(i, w)(b))
 }
 
-theorem list_take_length[T](items: List[T]) {
-    list_take(items, items.length) = items
+theorem esz_prepend_suc_any_case_gt[T: LinearOrder](xs: List[T], w: Nat -> Nat, k: Nat, i: Nat, j: Nat, a: Nat, b: Nat) {
+    a != Nat.0 and i < j and j < xs.length and gt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, gt_at(xs), k) and a < b and b < k.suc
+    implies
+    prepend_pos(i, w)(a) < prepend_pos(i, w)(b) and
+    prepend_pos(i, w)(b) < xs.length and
+    gt_at(xs, prepend_pos(i, w)(a), prepend_pos(i, w)(b))
 }
 
-theorem list_range_length(n: Nat) {
-    n.range.length = n
+theorem esz_chain_extend_gt[T: LinearOrder](xs: List[T], i: Nat, j: Nat, w: Nat -> Nat) {
+    i < j and j < xs.length and gt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, gt_at(xs), chain_val(xs, gt_at(xs), j))
+    implies chain_geq_from(xs, gt_at(xs), i, chain_val(xs, gt_at(xs), j).suc)
 }
 
-theorem list_range_contains_iff_lt(n: Nat, x: Nat) {
-    n.range.contains(x) = (x < n)
+theorem esz_chain_prepend_gt[T: LinearOrder](xs: List[T], w: Nat -> Nat, i: Nat, j: Nat) {
+    i < j and j < xs.length and gt_at(xs, i, j) and w(0) = j and
+    mono_chain(xs, w, gt_at(xs), chain_val(xs, gt_at(xs), j)) and
+    (forall(u: Nat, v: Nat, m: Nat) { gt_at(xs, u, v) and gt_at(xs, v, m) implies gt_at(xs, u, m) })
+    implies mono_chain(xs, prepend_pos(i, w), gt_at(xs), chain_val(xs, gt_at(xs), j).suc)
 }
 
-theorem list_range_is_unique(n: Nat) {
-    n.range.is_unique
+theorem esz_pair_distinct_lt[T: LinearOrder](xs: List[T], i: Nat, j: Nat) {
+    xs.is_unique and i < j and j < xs.length and lt_at(xs, i, j) implies
+    esz_pair(xs, i) != esz_pair(xs, j)
 }
 
-define shift_range_list(a: Nat, xs: List[Nat]) -> List[Nat] {
-    map(xs, function(x: Nat) { a + x })
+theorem esz_pair_distinct_gt[T: LinearOrder](xs: List[T], i: Nat, j: Nat) {
+    xs.is_unique and i < j and j < xs.length and gt_at(xs, i, j) implies
+    esz_pair(xs, i) != esz_pair(xs, j)
 }
 
-define list_nat_length(xs: List[Nat]) -> Nat {
-    xs.length
+theorem esz_pair_distinct[T: LinearOrder](xs: List[T], i: Nat, j: Nat) {
+    xs.is_unique and i < j and j < xs.length implies esz_pair(xs, i) != esz_pair(xs, j)
 }
 
-theorem shift_range_list_length(a: Nat, xs: List[Nat]) {
-    shift_range_list(a, xs).length = xs.length
-}
-
-theorem map_shift_range_list_length(a: Nat, blocks: List[List[Nat]]) {
-    map(map(blocks, shift_range_list(a)), list_nat_length) = map(blocks, list_nat_length)
-}
-
-define ranges(items: List[Nat]) -> List[List[Nat]] {
-    match items {
-        List.nil {
-            List.nil[List[Nat]]
-        }
-        List.cons(a, tail) {
-            List.cons(a.range, map(ranges(tail), shift_range_list(a)))
-        }
-    }
-}
-
-theorem ranges_length(items: List[Nat]) {
-    map(ranges(items), list_nat_length) = items
-}
-
-theorem sum_map_add_split[T, A: AddCommMonoid](left: List[T], right: List[T], f: T -> A) {
-    sum(map(left + right, f)) = sum(map(left, f)) + sum(map(right, f))
-}
-
-theorem sum_map_add_split_comm[T, A: AddCommMonoid](left: List[T], right: List[T], f: T -> A) {
-    sum(map(right, f)) + sum(map(left, f)) = sum(map(left + right, f))
-}
-
-theorem sum_map_take_drop[T, A: AddCommMonoid](items: List[T], n: Nat, f: T -> A) {
-    sum(map(items, f)) = sum(map(list_take(items, n), f)) + sum(map(items.drop(n), f))
-}
-
-theorem sum_map_take_drop_comm[T, A: AddCommMonoid](items: List[T], n: Nat, f: T -> A) {
-    sum(map(items.drop(n), f)) + sum(map(list_take(items, n), f)) = sum(map(items, f))
-}
-
-theorem sum_map_take_length[T, A: AddCommMonoid](items: List[T], f: T -> A) {
-    sum(map(list_take(items, items.length), f)) = sum(map(items, f))
-}
-
-theorem sum_map_drop_length[T, A: AddCommMonoid](items: List[T], f: T -> A) {
-    sum(map(items.drop(items.length), f)) = A.0
-}
-
-theorem partial_interval_sum[A: AddCommMonoid](f: Nat -> A, a: Nat, b: Nat) {
-    a <= b implies partial(f, b) = partial(f, a) + sum(map(a.until(b), f))
-}
-
-theorem partial_interval_sum_comm[A: AddCommMonoid](f: Nat -> A, a: Nat, b: Nat) {
-    a <= b implies sum(map(a.until(b), f)) + partial(f, a) = partial(f, b)
-}
-
-theorem partial_add_offset_sum[A: AddCommMonoid](f: Nat -> A, a: Nat, k: Nat) {
-    partial(f, a + k) = partial(f, a) + sum(map(a.until(a + k), f))
-}
-
-theorem partial_add_offset_sum_comm[A: AddCommMonoid](f: Nat -> A, a: Nat, k: Nat) {
-    sum(map(a.until(a + k), f)) + partial(f, a) = partial(f, a + k)
-}
-
-theorem partial_interval_suc[A: AddCommMonoid](f: Nat -> A, n: Nat) {
-    partial(f, n.suc) = partial(f, n) + sum(map(n.until(n.suc), f))
-}
-
-theorem partial_range_take_drop_sum[A: AddCommMonoid](f: Nat -> A, n: Nat, k: Nat) {
-    partial(f, n) = sum(map(list_take(n.range, k), f)) + sum(map(n.range.drop(k), f))
-}
-
-theorem sum_map_take_range_length[A: AddCommMonoid](f: Nat -> A, n: Nat) {
-    sum(map(list_take(n.range, n), f)) = partial(f, n)
-}
-
-theorem sum_map_drop_range_length[A: AddCommMonoid](f: Nat -> A, n: Nat) {
-    sum(map(n.range.drop(n), f)) = A.0
-}
-
-theorem reverse_nil[T] {
-    reverse(List.nil[T]) = List.nil[T]
-}
-
-theorem reverse_singleton[T](item: T) {
-    reverse(List.singleton(item)) = List.singleton(item)
-}
-
-theorem reverse_cons_eq_append[T](head: T, tail: List[T]) {
-    reverse(List.cons(head, tail)) = reverse(tail) + List.singleton(head)
-}
-
-theorem reverse_append_item[T](items: List[T], item: T) {
-    reverse(items.append(item)) = List.cons(item, reverse(items))
-}
-
-theorem reverse_append_singleton[T](items: List[T], item: T) {
-    reverse(items + List.singleton(item)) = List.cons(item, reverse(items))
-}
-
-theorem reverse_eq_nil_imp_nil[T](items: List[T]) {
-    reverse(items) = List.nil[T] implies items = List.nil[T]
-}
-
-theorem reverse_nil_of_eq_nil[T](items: List[T]) {
-    items = List.nil[T] implies reverse(items) = List.nil[T]
-}
-
-theorem reverse_eq_nil_iff[T](items: List[T]) {
-    (reverse(items) = List.nil[T]) = (items = List.nil[T])
-}
-
-theorem list_drop_contains_imp_contains[T](items: List[T], n: Nat, x: T) {
-    items.drop(n).contains(x) implies items.contains(x)
-}
-
-theorem list_take_drop_length_add[T](items: List[T], n: Nat) {
-    list_take(items, n).length + items.drop(n).length = items.length
-}
-
-theorem list_drop_length_at_most[T](items: List[T], n: Nat) {
-    items.drop(n).length <= items.length
-}
-
-theorem list_take_drop_count_add[T](items: List[T], n: Nat, x: T) {
-    list_take(items, n).count(x) + items.drop(n).count(x) = items.count(x)
-}
-
-theorem list_take_drop_filter_add[T](items: List[T], n: Nat, pred: T -> Bool) {
-    list_take(items, n).filter(pred) + items.drop(n).filter(pred) = items.filter(pred)
-}
-
-theorem list_take_filter_contains_imp_filter_contains[T](items: List[T], n: Nat,
-    pred: T -> Bool, x: T) {
-    list_take(items, n).filter(pred).contains(x) implies items.filter(pred).contains(x)
-}
-
-theorem list_drop_filter_contains_imp_filter_contains[T](items: List[T], n: Nat,
-    pred: T -> Bool, x: T) {
-    items.drop(n).filter(pred).contains(x) implies items.filter(pred).contains(x)
-}
-
-theorem list_take_drop_map_add[T, U](items: List[T], n: Nat, f: T -> U) {
-    map[T, U](list_take(items, n), f) + map[T, U](items.drop(n), f) = map[T, U](items, f)
-}
-
-theorem list_take_drop_sum_add[A: AddCommMonoid](items: List[A], n: Nat) {
-    sum[A](list_take(items, n)) + sum[A](items.drop(n)) = sum[A](items)
-}
-
-theorem list_take_drop_sum_map_add[T, A: AddCommMonoid](items: List[T], n: Nat,
-    f: T -> A) {
-    sum[A](map[T, A](list_take(items, n), f)) + sum[A](map[T, A](items.drop(n), f)) =
-        sum[A](map[T, A](items, f))
-}
-
-theorem list_take_drop_product_mul[A: CommMonoid](items: List[A], n: Nat) {
-    product[A](list_take(items, n)) * product[A](items.drop(n)) = product[A](items)
-}
-
-theorem list_take_drop_fold_right_monoid_mul[T, A: Monoid](items: List[T], n: Nat,
-    f: T -> A) {
-    fold_right_monoid[T, A](list_take(items, n), f) *
-        fold_right_monoid[T, A](items.drop(n), f) = fold_right_monoid[T, A](items, f)
-}
-
-theorem unique_cons_head_not_in_tail[T](head: T, tail: List[T]) {
-    List.cons(head, tail).is_unique implies not tail.contains(head)
-}
-
-theorem unique_cons_head_fresh[T](head: T, tail: List[T], item: T) {
-    List.cons(head, tail).is_unique and tail.contains(item) implies head != item
-}
-
-theorem unique_cons_parts[T](head: T, tail: List[T]) {
-    List.cons(head, tail).is_unique implies tail.is_unique and not tail.contains(head)
-}
-
-theorem pigeonhole_unique_map_in[T, U](items: List[T], f: T -> U) {
-    items.is_unique and not map(items, f).is_unique implies
-    exists(x: T, y: T) {
+theorem pigeonhole_collision_in[T, U](items: List[T], targets: List[U], f: T -> U) {
+    items.is_unique and items.length > targets.length and
+    forall(x: T) {
+        items.contains(x) implies targets.contains(f(x))
+    } implies exists(x: T, y: T) {
         items.contains(x) and items.contains(y) and x != y and f(x) = f(y)
     }
 }
 
-theorem locally_injective_map_is_unique[T, U](items: List[T], f: T -> U) {
-    items.is_unique and (forall(x: T, y: T) {
-        items.contains(x) and items.contains(y) and f(x) = f(y) implies x = y
-    }) implies map(items, f).is_unique
+theorem esz_pigeonhole[T: LinearOrder](r: Nat, s: Nat, xs: List[T]) {
+    xs.is_unique and xs.length > r * s and
+    not chain_geq(xs, lt_at(xs), r.suc) and
+    not chain_geq(xs, gt_at(xs), s.suc)
+    implies exists(i: Nat, j: Nat) {
+        i < j and j < xs.length and esz_pair(xs, i) = esz_pair(xs, j)
+    }
+}
+
+theorem erdos_szekeres[T: LinearOrder](r: Nat, s: Nat, xs: List[T]) {
+    xs.is_unique and xs.length > r * s implies
+    chain_geq(xs, lt_at(xs), r.suc) or chain_geq(xs, gt_at(xs), s.suc)
 }
 
 define row_sum[A: AddCommMonoid](g: Nat -> (Nat -> A), n: Nat, i: Nat) -> A {

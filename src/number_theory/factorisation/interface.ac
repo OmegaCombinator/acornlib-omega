@@ -1,234 +1,3 @@
-theorem divisor_pair_product_values_same_contains(a: Nat, b: Nat, x: Nat) {
-    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
-        divisor_pair_product_values(a, b).contains(x) = divisor_list(a * b).contains(x)
-}
-
-theorem divisor_pair_product_values_permutation_divisor_list(a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
-        is_permutation(divisor_pair_product_values(a, b), divisor_list(a * b))
-}
-
-define dirichlet_convolve_pair_product_sum_hyp(f: Nat -> Nat, g: Nat -> Nat,
-    a: Nat, b: Nat) -> Bool {
-    is_multiplicative_nat_fn(f) and is_multiplicative_nat_fn(g) and
-    Nat.0 < a and Nat.0 < b and a.coprime(b)
-}
-
-theorem dirichlet_convolve_pair_product_sum(f: Nat -> Nat, g: Nat -> Nat,
-    a: Nat, b: Nat) {
-    dirichlet_convolve_pair_product_sum_hyp(f, g, a, b) implies
-        sum(map(divisor_pair_product_values(a, b), dirichlet_term(f, g, a * b))) =
-            dirichlet_convolve(f, g)(a) * dirichlet_convolve(f, g)(b)
-}
-
-theorem dirichlet_convolve_mul_coprime_positive(f: Nat -> Nat, g: Nat -> Nat,
-    a: Nat, b: Nat) {
-    dirichlet_convolve_pair_product_sum_hyp(f, g, a, b) implies
-        dirichlet_convolve(f, g)(a * b) =
-            dirichlet_convolve(f, g)(a) * dirichlet_convolve(f, g)(b)
-}
-
-theorem dirichlet_convolve_multiplicative(f: Nat -> Nat, g: Nat -> Nat) {
-    is_multiplicative_nat_fn(f) and is_multiplicative_nat_fn(g)
-        implies is_multiplicative_nat_fn(dirichlet_convolve(f, g))
-}
-
-theorem nat_tau_mul_coprime_positive(a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
-        nat_tau(a * b) = nat_tau(a) * nat_tau(b)
-}
-
-theorem nat_tau_multiplicative {
-    is_multiplicative_nat_fn(nat_tau)
-}
-
-theorem divisor_pair_mul_row_sum(x: Nat, right: List[Nat]) {
-    sum(map(list_pair_with_left(x, right), divisor_pair_mul)) = x * sum(right)
-}
-
-theorem divisor_pair_product_mul_sum(left: List[Nat], right: List[Nat]) {
-    sum(map(list_pair_product(left, right), divisor_pair_mul)) = sum(left) * sum(right)
-}
-
-theorem divisor_pair_product_values_sum(a: Nat, b: Nat) {
-    sum(divisor_pair_product_values(a, b)) = nat_sigma(a) * nat_sigma(b)
-}
-
-theorem nat_sigma_mul_coprime_positive(a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
-        nat_sigma(a * b) = nat_sigma(a) * nat_sigma(b)
-}
-
-theorem nat_sigma_multiplicative {
-    is_multiplicative_nat_fn(nat_sigma)
-}
-
-theorem divisor_quotient_involution(n: Nat, d: Nat) {
-    Nat.0 < n and d.divides(n)
-        implies divisor_quotient(n, divisor_quotient(n, d)) = d
-}
-
-theorem dirichlet_term_flip(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
-    Nat.0 < n and d.divides(n)
-        implies dirichlet_term(f, g, n)(d) =
-            dirichlet_term(g, f, n)(divisor_quotient(n, d))
-}
-
-define dirichlet_cofactor_term(f: Nat -> Nat, g: Nat -> Nat, n: Nat) -> (Nat -> Nat) {
-    function(d: Nat) { dirichlet_term(g, f, n)(divisor_quotient(n, d)) }
-}
-
-theorem dirichlet_cofactor_term_apply(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
-    dirichlet_cofactor_term(f, g, n)(d) =
-        dirichlet_term(g, f, n)(divisor_quotient(n, d))
-}
-
-theorem dirichlet_term_eq_cofactor_term(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
-    Nat.0 < n and d.divides(n) implies
-        dirichlet_term(f, g, n)(d) = dirichlet_cofactor_term(f, g, n)(d)
-}
-
-define dirichlet_swap_below_pred(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) -> Bool {
-    Nat.0 < n implies
-        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
-        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
-}
-
-theorem dirichlet_swap_below_base(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
-    dirichlet_swap_below_pred(f, g, n, Nat.0)
-}
-
-theorem dirichlet_swap_below_step_yes(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
-    Nat.0 < n and k.suc.divides(n) and
-        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
-        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
-        implies sum(map(divisors_up_to(n, k.suc), dirichlet_term(f, g, n))) =
-            sum(map(divisors_up_to(n, k.suc), dirichlet_cofactor_term(f, g, n)))
-}
-
-theorem dirichlet_swap_below_step_no(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
-    not k.suc.divides(n) and
-        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
-        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
-        implies sum(map(divisors_up_to(n, k.suc), dirichlet_term(f, g, n))) =
-            sum(map(divisors_up_to(n, k.suc), dirichlet_cofactor_term(f, g, n)))
-}
-
-theorem dirichlet_swap_below_step(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
-    dirichlet_swap_below_pred(f, g, n, k)
-        implies dirichlet_swap_below_pred(f, g, n, k.suc)
-}
-
-theorem dirichlet_swap_below(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
-    dirichlet_swap_below_pred(f, g, n, k)
-}
-
-define nat_divisor_quotient_fn(n: Nat) -> (Nat -> Nat) {
-    function(d: Nat) { divisor_quotient(n, d) }
-}
-
-theorem nat_divisor_quotient_fn_apply(n: Nat, d: Nat) {
-    nat_divisor_quotient_fn(n)(d) = divisor_quotient(n, d)
-}
-
-define cofactor_image_list(n: Nat) -> List[Nat] {
-    map(divisor_list(n), nat_divisor_quotient_fn(n))
-}
-
-theorem nat_divisor_quotient_fn_involution(n: Nat, d: Nat) {
-    Nat.0 < n and d.divides(n) implies
-        nat_divisor_quotient_fn(n)(nat_divisor_quotient_fn(n)(d)) = d
-}
-
-theorem nat_divisor_quotient_fn_divides(n: Nat, d: Nat) {
-    d.divides(n) implies nat_divisor_quotient_fn(n)(d).divides(n)
-}
-
-theorem dirichlet_convolve_swap_form(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
-    Nat.0 < n implies
-        dirichlet_convolve(f, g)(n) =
-        sum(map(divisor_list(n), dirichlet_cofactor_term(f, g, n)))
-}
-
-theorem dirichlet_term_add_left_eq(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat,
-        n: Nat) {
-    dirichlet_term(arithmetic_fn_add(f, g), h, n) =
-        add_fn(dirichlet_term(f, h, n), dirichlet_term(g, h, n))
-}
-
-theorem dirichlet_term_add_right_eq(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat,
-        n: Nat) {
-    dirichlet_term(f, arithmetic_fn_add(g, h), n) =
-        add_fn(dirichlet_term(f, g, n), dirichlet_term(f, h, n))
-}
-
-theorem dirichlet_convolve_add_left(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
-    dirichlet_convolve(arithmetic_fn_add(f, g), h) =
-        arithmetic_fn_add(dirichlet_convolve(f, h), dirichlet_convolve(g, h))
-}
-
-theorem dirichlet_convolve_add_right(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
-    dirichlet_convolve(f, arithmetic_fn_add(g, h)) =
-        arithmetic_fn_add(dirichlet_convolve(f, g), dirichlet_convolve(f, h))
-}
-
-theorem cofactor_image_list_contains_iff(n: Nat, x: Nat) {
-    Nat.0 < n implies
-        (cofactor_image_list(n).contains(x) = divisor_list(n).contains(x))
-}
-
-theorem cons_unique_of_fresh(head: Nat, tail: List[Nat]) {
-    tail.is_unique and not tail.contains(head)
-        implies List.cons(head, tail).is_unique
-}
-
-define cofactor_image_unique_pred(n: Nat) -> (List[Nat] -> Bool) {
-    function(l: List[Nat]) {
-        l.is_unique and (forall(d: Nat) { l.contains(d) implies d.divides(n) })
-            and Nat.0 < n
-            implies map(l, nat_divisor_quotient_fn(n)).is_unique
-    }
-}
-
-theorem cofactor_image_unique_base(n: Nat) {
-    cofactor_image_unique_pred(n)(List.nil[Nat])
-}
-
-theorem cofactor_image_unique_step(n: Nat, head: Nat, tail: List[Nat]) {
-    cofactor_image_unique_pred(n)(tail)
-        implies cofactor_image_unique_pred(n)(List.cons(head, tail))
-}
-
-theorem cofactor_image_unique_thm(n: Nat, l: List[Nat]) {
-    cofactor_image_unique_pred(n)(l)
-}
-
-theorem cofactor_image_list_is_unique(n: Nat) {
-    Nat.0 < n implies cofactor_image_list(n).is_unique
-}
-
-define cofactor_term_compose_pred(f: Nat -> Nat, g: Nat -> Nat, n: Nat) -> (List[Nat] -> Bool) {
-    function(l: List[Nat]) {
-        map(l, dirichlet_cofactor_term(f, g, n)) =
-            map(map(l, nat_divisor_quotient_fn(n)), dirichlet_term(g, f, n))
-    }
-}
-
-theorem cofactor_term_compose_base(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
-    cofactor_term_compose_pred(f, g, n)(List.nil[Nat])
-}
-
-theorem cofactor_term_compose_step(f: Nat -> Nat, g: Nat -> Nat, n: Nat,
-        head: Nat, tail: List[Nat]) {
-    cofactor_term_compose_pred(f, g, n)(tail)
-        implies cofactor_term_compose_pred(f, g, n)(List.cons(head, tail))
-}
-
-theorem cofactor_term_compose(f: Nat -> Nat, g: Nat -> Nat, n: Nat, l: List[Nat]) {
-    map(l, dirichlet_cofactor_term(f, g, n)) =
-        map(map(l, nat_divisor_quotient_fn(n)), dirichlet_term(g, f, n))
-}
-
 theorem dirichlet_convolve_comm_positive(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
     Nat.0 < n implies dirichlet_convolve(f, g)(n) = dirichlet_convolve(g, f)(n)
 }
@@ -703,6 +472,311 @@ theorem dirichlet_convolve_multiplicative_law(f: Nat -> Nat, g: Nat -> Nat) {
 theorem dirichlet_convolve_unit_multiplicative(f: Nat -> Nat) {
     is_multiplicative_nat_fn(f) implies
         is_multiplicative_nat_fn(dirichlet_convolve(f, nat_dirichlet_unit_fn))
+}
+
+theorem dsa_pow_order_reduce(p: Nat, q: Nat, g: Nat, k: Nat, r: Nat) {
+    g.pow(q).mod(p) = 1 implies g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
+}
+
+theorem dsa_pow_mod_q(p: Nat, q: Nat, g: Nat, a: Nat) {
+    g.pow(q).mod(p) = 1 implies g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
+}
+
+theorem dsa_y_pow_congr(p: Nat, g: Nat, x: Nat, y: Nat, b: Nat) {
+    y = g.pow(x).mod(p) implies y.pow(b).congr_mod(g.pow(x * b), p)
+}
+
+theorem dsa_combine_pow(p: Nat, g: Nat, x: Nat, y: Nat, a: Nat, b: Nat) {
+    y = g.pow(x).mod(p) implies
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)
+}
+
+theorem dsa_exp_mod_q_factor(q: Nat, h: Nat, x: Nat, r: Nat, sinv: Nat) {
+    ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) =
+        ((h + x * r) * sinv).mod(q)
+}
+
+theorem dsa_k_times_s_congr(q: Nat, h: Nat, x: Nat, r: Nat,
+                             k: Nat, kinv: Nat, s: Nat) {
+    s.congr_mod(kinv * (h + x * r), q) and (k * kinv).congr_mod(Nat.1, q)
+    implies (k * s).congr_mod(h + x * r, q)
+}
+
+theorem dsa_finish_congr(q: Nat, h: Nat, x: Nat, r: Nat,
+                          k: Nat, s: Nat, sinv: Nat) {
+    (k * s).congr_mod(h + x * r, q) and (s * sinv).congr_mod(Nat.1, q)
+    implies ((h + x * r) * sinv).congr_mod(k, q)
+}
+
+theorem dsa_congr_to_eq(q: Nat, k: Nat, lhs: Nat) {
+    k < q and lhs.congr_mod(k, q) implies lhs.mod(q) = k
+}
+
+theorem dsa_k_times_s_from_mod(q: Nat, h: Nat, x: Nat, r: Nat,
+                                k: Nat, kinv: Nat, s: Nat) {
+    1 < q and (k * kinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies (k * s).congr_mod(h + x * r, q)
+}
+
+define is_dsa_params(p: Nat, q: Nat, g: Nat) -> Bool {
+    p.is_prime and q.is_prime and q.divides(p - 1) and
+    1 < g and g < p and g.pow(q).mod(p) = 1
+}
+
+theorem is_dsa_params_unfold(p: Nat, q: Nat, g: Nat) {
+    is_dsa_params(p, q, g) = (p.is_prime and q.is_prime and
+        q.divides(p - 1) and 1 < g and g < p and g.pow(q).mod(p) = 1)
+}
+
+define is_dsa_keypair(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) -> Bool {
+    0 < x and x < q and y = g.pow(x).mod(p)
+}
+
+theorem is_dsa_keypair_unfold(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) {
+    is_dsa_keypair(p, q, g, x, y) = (0 < x and x < q and y = g.pow(x).mod(p))
+}
+
+define is_mod_inverse(k: Nat, kinv: Nat, q: Nat) -> Bool {
+    (k * kinv).mod(q) = 1
+}
+
+theorem is_mod_inverse_unfold(k: Nat, kinv: Nat, q: Nat) {
+    is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = 1)
+}
+
+define dsa_sign_r(p: Nat, q: Nat, g: Nat, k: Nat) -> Nat {
+    g.pow(k).mod(p).mod(q)
+}
+
+define dsa_sign_s(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) -> Nat {
+    (kinv * (h + x * r)).mod(q)
+}
+
+theorem dsa_sign_r_lt(p: Nat, q: Nat, g: Nat, k: Nat) {
+    q != 0 implies dsa_sign_r(p, q, g, k) < q
+}
+
+theorem dsa_sign_s_lt(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) {
+    q != 0 implies dsa_sign_s(q, h, x, r, kinv) < q
+}
+
+define dsa_verify(p: Nat, q: Nat, g: Nat, y: Nat, h: Nat,
+                  r: Nat, s: Nat, sinv: Nat) -> Bool {
+    0 < r and r < q and 0 < s and s < q and
+    is_mod_inverse(s, sinv, q) and
+    (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) = r
+}
+
+theorem dsa_verify_exponent_eq(q: Nat, h: Nat, x: Nat, r: Nat,
+                                k: Nat, kinv: Nat, s: Nat, sinv: Nat) {
+    1 < q and k < q and
+    (k * kinv).mod(q) = 1 and
+    (s * sinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies
+        ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) = k
+}
+
+theorem dsa_pow_combine(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                         a: Nat, b: Nat, k: Nat) {
+    y = g.pow(x).mod(p) and
+    g.pow(q).mod(p) = 1 and
+    (a + x * b).mod(q) = k
+    implies
+        (g.pow(a) * y.pow(b)).mod(p) = g.pow(k).mod(p)
+}
+
+theorem dsa_verify_identity(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                             h: Nat, r: Nat, k: Nat, kinv: Nat,
+                             s: Nat, sinv: Nat) {
+    1 < q and
+    g.pow(q).mod(p) = 1 and
+    y = g.pow(x).mod(p) and
+    k < q and
+    (k * kinv).mod(q) = 1 and
+    (s * sinv).mod(q) = 1 and
+    s = (kinv * (h + x * r)).mod(q)
+    implies
+        (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p) =
+            g.pow(k).mod(p)
+}
+
+theorem dsa_verifier_mod_q_eq_r(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                                 h: Nat, k: Nat, kinv: Nat, sinv: Nat) {
+    Nat.1 < q and
+    g.pow(q).mod(p) = 1 and
+    y = g.pow(x).mod(p) and
+    k < q and
+    (k * kinv).mod(q) = 1 and
+    (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = 1
+    implies
+        (g.pow((h * sinv).mod(q)) *
+         y.pow((dsa_sign_r(p, q, g, k) * sinv).mod(q))).mod(p).mod(q) =
+            dsa_sign_r(p, q, g, k)
+}
+
+theorem dsa_correctness(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
+                        k: Nat, kinv: Nat, h: Nat, sinv: Nat) {
+    is_dsa_params(p, q, g) and
+    is_dsa_keypair(p, q, g, x, y) and
+    0 < k and k < q and
+    is_mod_inverse(k, kinv, q) and
+    is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv), sinv, q) and
+    0 < dsa_sign_r(p, q, g, k) and
+    0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv)
+    implies
+        dsa_verify(p, q, g, y, h,
+                   dsa_sign_r(p, q, g, k),
+                   dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
+                   sinv)
+}
+
+define dsa_r_in_range(q: Nat, r: Nat) -> Bool {
+    0 < r and r < q
+}
+
+define dsa_s_in_range(q: Nat, s: Nat) -> Bool {
+    0 < s and s < q
+}
+
+define dsa_signature_components_in_range(q: Nat, r: Nat, s: Nat) -> Bool {
+    dsa_r_in_range(q, r) and dsa_s_in_range(q, s)
+}
+
+define dsa_verify_core_equation(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    sinv: Nat
+) -> Bool {
+    (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) = r
+}
+
+theorem dsa_r_in_range_pos(q: Nat, r: Nat) {
+    dsa_r_in_range(q, r) implies 0 < r
+}
+
+theorem dsa_r_in_range_lt(q: Nat, r: Nat) {
+    dsa_r_in_range(q, r) implies r < q
+}
+
+theorem dsa_s_in_range_pos(q: Nat, s: Nat) {
+    dsa_s_in_range(q, s) implies 0 < s
+}
+
+theorem dsa_s_in_range_lt(q: Nat, s: Nat) {
+    dsa_s_in_range(q, s) implies s < q
+}
+
+theorem dsa_signature_components_in_range_r(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies dsa_r_in_range(q, r)
+}
+
+theorem dsa_signature_components_in_range_s(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies dsa_s_in_range(q, s)
+}
+
+theorem dsa_signature_components_in_range_r_pos(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies 0 < r
+}
+
+theorem dsa_signature_components_in_range_r_lt(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies r < q
+}
+
+theorem dsa_signature_components_in_range_s_pos(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies 0 < s
+}
+
+theorem dsa_signature_components_in_range_s_lt(q: Nat, r: Nat, s: Nat) {
+    dsa_signature_components_in_range(q, r, s) implies s < q
+}
+
+theorem dsa_verify_guards_of_verify(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_verify(p, q, g, y, h, r, s, sinv) implies
+        dsa_signature_components_in_range(q, r, s) and is_mod_inverse(s, sinv, q)
+}
+
+theorem dsa_verify_signature_components_in_range_of_verify(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_verify(p, q, g, y, h, r, s, sinv) implies dsa_signature_components_in_range(q, r, s)
+}
+
+theorem dsa_verify_inverse_of_verify(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_verify(p, q, g, y, h, r, s, sinv) implies is_mod_inverse(s, sinv, q)
+}
+
+theorem dsa_verify_core_equation_of_verify(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_verify(p, q, g, y, h, r, s, sinv) implies
+        dsa_verify_core_equation(p, q, g, y, h, r, sinv)
+}
+
+theorem dsa_verify_modulus_ne_zero(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_verify(p, q, g, y, h, r, s, sinv) implies q != 0
+}
+
+theorem dsa_verify_of_guards_and_core_equation(
+    p: Nat,
+    q: Nat,
+    g: Nat,
+    y: Nat,
+    h: Nat,
+    r: Nat,
+    s: Nat,
+    sinv: Nat
+) {
+    dsa_signature_components_in_range(q, r, s) and
+        is_mod_inverse(s, sinv, q) and
+        dsa_verify_core_equation(p, q, g, y, h, r, sinv)
+    implies dsa_verify(p, q, g, y, h, r, s, sinv)
 }
 
 theorem lcm_gcd_product(a: Nat, b: Nat) {

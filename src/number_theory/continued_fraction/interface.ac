@@ -3114,81 +3114,88 @@ theorem approximation_theorems_dirichlet_box(
     }
 }
 
-theorem dsa_pow_order_reduce(p: Nat, q: Nat, g: Nat, k: Nat, r: Nat) {
-    g.pow(q).mod(p) = 1 implies g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
+define is_ecdsa_keypair[G: XCoord](gen: G, d: Nat, pub: G) -> Bool {
+    pub = gen.pow(d)
 }
 
-theorem dsa_pow_mod_q(p: Nat, q: Nat, g: Nat, a: Nat) {
-    g.pow(q).mod(p) = 1 implies g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
+theorem is_ecdsa_keypair_unfold[G: XCoord](gen: G, d: Nat, pub: G) {
+    is_ecdsa_keypair(gen, d, pub) = (pub = gen.pow(d))
 }
 
-theorem dsa_y_pow_congr(p: Nat, g: Nat, x: Nat, y: Nat, b: Nat) {
-    y = g.pow(x).mod(p) implies y.pow(b).congr_mod(g.pow(x * b), p)
+define is_mod_inv(k: Nat, kinv: Nat, n: Nat) -> Bool {
+    (k * kinv).mod(n) = 1
 }
 
-theorem dsa_combine_pow(p: Nat, g: Nat, x: Nat, y: Nat, a: Nat, b: Nat) {
-    y = g.pow(x).mod(p) implies
-        (g.pow(a) * y.pow(b)).mod(p) = g.pow(a + x * b).mod(p)
+attributes Nat {
+    /// True when b is a modular inverse of self modulo n: their product is
+    /// congruent to one modulo n.
+    define is_mod_inv(self, b: Nat, n: Nat) -> Bool {
+        (self * b).congr_mod(Nat.1, n)
+    }
 }
 
-theorem dsa_exp_mod_q_factor(q: Nat, h: Nat, x: Nat, r: Nat, sinv: Nat) {
-    ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) =
-        ((h + x * r) * sinv).mod(q)
+theorem is_mod_inv_unfold(k: Nat, kinv: Nat, n: Nat) {
+    is_mod_inv(k, kinv, n) = ((k * kinv).mod(n) = 1)
 }
 
-theorem dsa_k_times_s_congr(q: Nat, h: Nat, x: Nat, r: Nat,
-                             k: Nat, kinv: Nat, s: Nat) {
-    s.congr_mod(kinv * (h + x * r), q) and (k * kinv).congr_mod(Nat.1, q)
-    implies (k * s).congr_mod(h + x * r, q)
+define ecdsa_sign_r[G: XCoord](n: Nat, gen: G, k: Nat) -> Nat {
+    gen.pow(k).x_coord.mod(n)
 }
 
-theorem dsa_finish_congr(q: Nat, h: Nat, x: Nat, r: Nat,
-                          k: Nat, s: Nat, sinv: Nat) {
-    (k * s).congr_mod(h + x * r, q) and (s * sinv).congr_mod(Nat.1, q)
-    implies ((h + x * r) * sinv).congr_mod(k, q)
+define ecdsa_sign_s(n: Nat, h: Nat, d: Nat, r: Nat, kinv: Nat) -> Nat {
+    (kinv * (h + r * d)).mod(n)
 }
 
-theorem dsa_congr_to_eq(q: Nat, k: Nat, lhs: Nat) {
-    k < q and lhs.congr_mod(k, q) implies lhs.mod(q) = k
+theorem ecdsa_sign_r_lt[G: XCoord](n: Nat, gen: G, k: Nat) {
+    n != 0 implies ecdsa_sign_r(n, gen, k) < n
 }
 
-theorem dsa_k_times_s_from_mod(q: Nat, h: Nat, x: Nat, r: Nat,
-                                k: Nat, kinv: Nat, s: Nat) {
-    1 < q and (k * kinv).mod(q) = 1 and
-    s = (kinv * (h + x * r)).mod(q)
-    implies (k * s).congr_mod(h + x * r, q)
+theorem ecdsa_sign_s_lt(n: Nat, h: Nat, d: Nat, r: Nat, kinv: Nat) {
+    n != 0 implies ecdsa_sign_s(n, h, d, r, kinv) < n
 }
 
-define is_dsa_params(p: Nat, q: Nat, g: Nat) -> Bool {
-    p.is_prime and q.is_prime and q.divides(p - 1) and
-    1 < g and g < p and g.pow(q).mod(p) = 1
+define ecdsa_verify[G: XCoord](n: Nat, gen: G, pub: G, h: Nat,
+                               r: Nat, s: Nat, sinv: Nat) -> Bool {
+    0 < r and r < n and 0 < s and s < n and
+    is_mod_inv(s, sinv, n) and
+    (gen.pow((h * sinv).mod(n)) * pub.pow((r * sinv).mod(n))).x_coord.mod(n) = r
 }
 
-theorem is_dsa_params_unfold(p: Nat, q: Nat, g: Nat) {
-    is_dsa_params(p, q, g) = (p.is_prime and q.is_prime and
-        q.divides(p - 1) and 1 < g and g < p and g.pow(q).mod(p) = 1)
+define ecdsa_r_in_range(n: Nat, r: Nat) -> Bool {
+    0 < r and r < n
 }
 
-define is_dsa_keypair(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) -> Bool {
-    0 < x and x < q and y = g.pow(x).mod(p)
+define ecdsa_s_in_range(n: Nat, s: Nat) -> Bool {
+    0 < s and s < n
 }
 
-theorem is_dsa_keypair_unfold(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) {
-    is_dsa_keypair(p, q, g, x, y) = (0 < x and x < q and y = g.pow(x).mod(p))
+define ecdsa_signature_components_in_range(n: Nat, r: Nat, s: Nat) -> Bool {
+    ecdsa_r_in_range(n, r) and ecdsa_s_in_range(n, s)
 }
 
-define is_mod_inverse(k: Nat, kinv: Nat, q: Nat) -> Bool {
-    (k * kinv).mod(q) = 1
+define ecdsa_verify_public_guards(n: Nat, r: Nat, s: Nat, sinv: Nat) -> Bool {
+    ecdsa_signature_components_in_range(n, r, s) and is_mod_inv(s, sinv, n)
 }
 
-theorem is_mod_inverse_unfold(k: Nat, kinv: Nat, q: Nat) {
-    is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = 1)
+define ecdsa_verify_core_equation[G: XCoord](
+    n: Nat,
+    gen: G,
+    pub: G,
+    h: Nat,
+    r: Nat,
+    sinv: Nat
+) -> Bool {
+    (gen.pow((h * sinv).mod(n)) * pub.pow((r * sinv).mod(n))).x_coord.mod(n) = r
 }
 
-define dsa_sign_r(p: Nat, q: Nat, g: Nat, k: Nat) -> Nat {
-    g.pow(k).mod(p).mod(q)
+theorem ecdsa_r_in_range_lt(n: Nat, r: Nat) {
+    ecdsa_r_in_range(n, r) implies r < n
 }
 
-define dsa_sign_s(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) -> Nat {
-    (kinv * (h + x * r)).mod(q)
+theorem ecdsa_s_in_range_lt(n: Nat, s: Nat) {
+    ecdsa_s_in_range(n, s) implies s < n
+}
+
+theorem ecdsa_signature_components_in_range_r(n: Nat, r: Nat, s: Nat) {
+    ecdsa_signature_components_in_range(n, r, s) implies ecdsa_r_in_range(n, r)
 }

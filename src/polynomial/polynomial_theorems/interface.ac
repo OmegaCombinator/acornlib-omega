@@ -1,44 +1,3 @@
-theorem polynomial_linear_root_inverse[F: Field](a: F, b: F) {
-    a != F.0 implies polynomial_eval(linear_polynomial(a, b), -b * a.inverse) = F.0
-}
-
-theorem polynomial_linear_has_root[F: Field](a: F, b: F) {
-    a != F.0 implies exists(x: F) {
-        polynomial_eval(linear_polynomial(a, b), x) = F.0
-    }
-}
-
-theorem polynomial_root_constant[R: Semiring](r: R, x: R) {
-    (polynomial_eval(polynomial_constant(r), x) = R.0) = (r = R.0)
-}
-
-theorem polynomial_root_monomial_one[F: Field](r: F, x: F) {
-    (polynomial_eval(polynomial_monomial(Nat.1, r), x) = F.0) = (r = F.0 or x = F.0)
-}
-
-theorem polynomial_root_product_iff[F: Field](p: Polynomial[F], q: Polynomial[F], x: F) {
-    (polynomial_eval(polynomial_mul(p, q), x) = F.0) =
-        (polynomial_eval(p, x) = F.0 or polynomial_eval(q, x) = F.0)
-}
-
-theorem polynomial_root_linear_product[F: Field](a: F, b: F, x: F) {
-    (polynomial_eval(polynomial_mul(linear_polynomial(F.1, -a),
-        linear_polynomial(F.1, -b)), x) = F.0) = (x = a or x = b)
-}
-
-theorem polynomial_shift_root[R: CommRing](p: Polynomial[R], a: R, r: R) {
-    (polynomial_eval(p, r) = R.0) = (polynomial_shift_eval(p, a, r - a) = R.0)
-}
-
-theorem polynomial_scale_eval_of_mul[R: CommRing](p: Polynomial[R], c: R, x: R) {
-    polynomial_scale_eval(p, c, x) = polynomial_eval(p, c * x)
-}
-
-theorem polynomial_root_scale_field[F: Field](p: Polynomial[F], c: F, r: F) {
-    c != F.0 implies
-    (polynomial_eval(p, r) = F.0) = (polynomial_scale_eval(p, c, r * c.inverse) = F.0)
-}
-
 theorem polynomial_root_shift_zero[R: CommRing](p: Polynomial[R], a: R) {
     (polynomial_eval(p, a) = R.0) = (polynomial_shift_eval(p, a, R.0) = R.0)
 }
@@ -229,12 +188,6 @@ define int_roots_on_list(p: Polynomial[Int], roots: List[Int]) -> Bool {
     }
 }
 
-theorem int_agreement_gives_roots(
-    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
-) {
-    int_agrees_on_list(p, q, points) implies int_roots_on_list(p.sub(q), points)
-}
-
 theorem int_roots_rationalise(p: Polynomial[Int], roots: List[Int]) {
     int_roots_on_list(p, roots)
         implies polynomial_roots_on_list(rationalise(p), map(roots, Rat.from_int))
@@ -266,6 +219,67 @@ theorem int_polynomial_value_list_length_lt_support_bound(
         and p.sub(Polynomial[Int].constant(c)) != Polynomial[Int].zero
         and roots.is_unique and int_solutions_on_list(p, c, roots)
         implies roots.length < n
+}
+
+define agrees_below[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) -> Bool {
+    forall(k: Nat) {
+        k < n implies p.coeff(k) = q.coeff(k)
+    }
+}
+
+theorem agrees_below_of_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
+    p = q implies agrees_below(p, q, n)
+}
+
+theorem agrees_below_apply[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat, k: Nat
+) {
+    agrees_below(p, q, n) and k < n implies p.coeff(k) = q.coeff(k)
+}
+
+theorem polynomial_eq_of_agrees_below[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        and agrees_below(p, q, n)
+        implies p = q
+}
+
+theorem polynomial_eq_iff_agrees_below[R: Semiring](
+    p: Polynomial[R], q: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        implies ((p = q) = agrees_below(p, q, n))
+}
+
+define int_agrees_on_list(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
+) -> Bool {
+    forall(x: Int) {
+        points.contains(x) implies polynomial_eval(p, x) = polynomial_eval(q, x)
+    }
+}
+
+theorem int_agreement_gives_roots(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
+) {
+    int_agrees_on_list(p, q, points) implies int_roots_on_list(p.sub(q), points)
+}
+
+theorem int_polynomial_sub_zero_of_eq(p: Polynomial[Int], q: Polynomial[Int]) {
+    p = q implies p.sub(q) = Polynomial[Int].zero
+}
+
+theorem int_polynomial_eq_of_sub_zero(p: Polynomial[Int], q: Polynomial[Int]) {
+    p.sub(q) = Polynomial[Int].zero implies p = q
+}
+
+theorem int_polynomial_eq_of_agreement(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and polynomial_support_bounded_by(q, n)
+        and points.is_unique and n <= points.length and int_agrees_on_list(p, q, points)
+        implies p = q
 }
 
 define polynomial_pow[R: Semiring](p: Polynomial[R], k: Nat) -> Polynomial[R] {

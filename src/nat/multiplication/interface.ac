@@ -1156,40 +1156,6 @@ theorem count_upto_none(n: Nat) {
     count_upto(none_pred, n) = Nat.0
 }
 
-theorem nat_div_div(n: Nat, a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b implies n.div(a * b) = (n.div(a)).div(b)
-}
-
-theorem nat_mod_mul(n: Nat, a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b implies
-        n.mod(a * b) = (n.div(a)).mod(b) * a + n.mod(a)
-}
-
-theorem nat_div_div_comm(n: Nat, a: Nat, b: Nat) {
-    Nat.0 < a and Nat.0 < b implies (n.div(a)).div(b) = (n.div(b)).div(a)
-}
-
-theorem nat_pow_pos(b: Nat, k: Nat) {
-    Nat.0 < b implies Nat.0 < b.pow(k)
-}
-
-theorem nat_div_pow_suc(b: Nat, n: Nat, k: Nat) {
-    Nat.0 < b implies n.div(b.pow(k.suc)) = (n.div(b.pow(k))).div(b)
-}
-
-define nat_digit(b: Nat, n: Nat, k: Nat) -> Nat {
-    (n.div(b.pow(k))).mod(b)
-}
-
-theorem nat_digit_lt_base(b: Nat, n: Nat, k: Nat) {
-    Nat.0 < b implies nat_digit(b, n, k) < b
-}
-
-theorem nat_digit_eq_div_sub(b: Nat, n: Nat, k: Nat) {
-    Nat.0 < b implies
-        (n.div(b.pow(k))).div(b) * b + nat_digit(b, n, k) = n.div(b.pow(k))
-}
-
 define eventually_after_nat(p: Nat -> Bool, n0: Nat) -> Bool {
     forall(n: Nat) {
         n0 <= n implies p(n)
@@ -2110,4 +2076,50 @@ theorem digit_sum_carry_step(p: Nat, a: Nat, b: Nat, c: Nat) {
     Nat.1 < p implies
         digit_sum(p, a + b + c) =
             carry_digit(p, a, b, c) + digit_sum(p, carry_high(p, a, b, c))
+}
+
+theorem digit_sum_carry_fuel_decomp(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
+    Nat.1 < p implies
+        digit_sum(p, a + b + c) =
+            carry_digit_sum_fuel(p, a, b, c, fuel) +
+            digit_sum(p, carry_high_fuel(p, a, b, c, fuel))
+}
+
+theorem carry_high_fuel_zero_right(p: Nat, a: Nat, fuel: Nat) {
+    p != Nat.0 implies
+        carry_high_fuel(p, a, Nat.0, Nat.0, fuel) = iterated_div(p, a, fuel)
+}
+
+theorem carry_high_fuel_zero_left(p: Nat, b: Nat, fuel: Nat) {
+    p != Nat.0 implies
+        carry_high_fuel(p, Nat.0, b, Nat.0, fuel) = iterated_div(p, b, fuel)
+}
+
+theorem carry_digit_sum_fuel_zero_right_step(p: Nat, a: Nat, k: Nat) {
+    p != Nat.0 and forall(x: Nat) {
+        carry_digit_sum_fuel(p, x, Nat.0, Nat.0, k) =
+            digit_sum_fuel(p, x, k)
+    } implies
+        carry_digit_sum_fuel(p, a, Nat.0, Nat.0, k.suc) =
+            digit_sum_fuel(p, a, k.suc)
+}
+
+theorem carry_digit_sum_fuel_zero_right(p: Nat, a: Nat, fuel: Nat) {
+    p != Nat.0 implies
+        carry_digit_sum_fuel(p, a, Nat.0, Nat.0, fuel) =
+        digit_sum_fuel(p, a, fuel)
+}
+
+theorem carry_digit_sum_fuel_zero_left(p: Nat, b: Nat, fuel: Nat) {
+    p != Nat.0 implies
+        carry_digit_sum_fuel(p, Nat.0, b, Nat.0, fuel) =
+        digit_sum_fuel(p, b, fuel)
+}
+
+theorem carry_total_zero_right(p: Nat, a: Nat) {
+    carry_total(p, a, Nat.0, Nat.0) = a.mod(p)
+}
+
+theorem carry_total_zero_left(p: Nat, b: Nat) {
+    carry_total(p, Nat.0, b, Nat.0) = b.mod(p)
 }

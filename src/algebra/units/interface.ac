@@ -1,1848 +1,859 @@
-theorem zero_pow[F: Field](n: Int) {
-    n != Int.0 implies F.0.zpow(n) = F.0
+theorem ideal_product_subset_of_mul_mem[R: CommRing](i: Ideal[R], j: Ideal[R], c: Ideal[R]) {
+    (forall(a: R, b: R) { i.contains(a) and j.contains(b) implies c.contains(a * b) })
+        implies bundled_ideal_subset(ideal_product(i, j), c)
 }
 
-theorem pow_inverse2[F: Field](a: F, n: Int) {
-    a.zpow(-n) = a.zpow(n).inverse
+theorem ideal_product_subset_iff_mul_mem[R: CommRing](i: Ideal[R], j: Ideal[R], c: Ideal[R]) {
+    bundled_ideal_subset(ideal_product(i, j), c) =
+        forall(a: R, b: R) { i.contains(a) and j.contains(b) implies c.contains(a * b) }
 }
 
-theorem one_pow[F: Field](n: Int) {
-    F.1.zpow(n) = F.1
+theorem ideal_product_monotone[R: CommRing](i: Ideal[R], j: Ideal[R], i_target: Ideal[R], j_target: Ideal[R]) {
+    bundled_ideal_subset(i, i_target) and bundled_ideal_subset(j, j_target) implies
+        bundled_ideal_subset(ideal_product(i, j), ideal_product(i_target, j_target))
 }
 
-theorem pow_pow_nonnegative[F: Field](a: F, n: Int, m: Int) {
-    n >= Int.0 and m >= Int.0 implies a.zpow(n).zpow(m) = a.zpow(n * m)
+theorem ideal_product_subset_intersection[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    bundled_ideal_subset(ideal_product(i, j), i.intersection(j))
 }
 
-theorem pow_pow[F: Field](a: F, n: Int, m: Int) {
-    a != F.0 or (n >= Int.0 and m >= Int.0) implies a.zpow(n).zpow(m) = a.zpow(n * m)
+theorem ideal_product_subset_left[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    bundled_ideal_subset(ideal_product(i, j), i)
 }
 
-theorem inverse_not_zero[F: Field](a: F) {
-    a != F.0 implies a.inverse != F.0
+theorem ideal_product_subset_right[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    bundled_ideal_subset(ideal_product(i, j), j)
 }
 
-theorem mul_not_zero[F: Field](a: F, b: F) {
-    a != F.0 and b != F.0 implies a * b != F.0
+theorem ideal_product_contains_implies_left[R: CommRing](i: Ideal[R], j: Ideal[R], x: R) {
+    ideal_product(i, j).contains(x) implies i.contains(x)
 }
 
-theorem field_mul_nonzero[F: Field](a: F, b: F) {
-    a != F.0 and b != F.0 implies a * b != F.0
+theorem ideal_product_contains_implies_right[R: CommRing](i: Ideal[R], j: Ideal[R], x: R) {
+    ideal_product(i, j).contains(x) implies j.contains(x)
 }
 
-theorem field_square_nonzero[F: Field](a: F) {
-    a != F.0 implies a * a != F.0
+define ideal_image[R: CommRing, S: CommRing](f: RingHom[R, S], i: Ideal[R]) -> Ideal[S] {
+    Ideal[S].closure(set_image(i.as_set, f.hom))
 }
 
-theorem field_left_nonzero_of_mul_nonzero[F: Field](a: F, b: F) {
-    a * b != F.0 implies a != F.0
+theorem ideal_image_eq_closure[R: CommRing, S: CommRing](f: RingHom[R, S], i: Ideal[R]) {
+    ideal_image(f, i) = Ideal[S].closure(set_image(i.as_set, f.hom))
 }
 
-theorem field_right_nonzero_of_mul_nonzero[F: Field](a: F, b: F) {
-    a * b != F.0 implies b != F.0
+theorem ideal_image_contains_hom[R: CommRing, S: CommRing](f: RingHom[R, S], i: Ideal[R], x: R) {
+    i.contains(x) implies ideal_image(f, i).contains(f.hom(x))
 }
 
-theorem field_mul_eq_zero[F: Field](a: F, b: F) {
-    a * b = F.0 implies a = F.0 or b = F.0
-}
-
-theorem field_mul_eq_zero_of_factor[F: Field](a: F, b: F) {
-    a = F.0 or b = F.0 implies a * b = F.0
-}
-
-theorem pow_not_zero[F: Field](a: F, n: Nat) {
-    a != F.0 implies a.pow(n) != F.0
-}
-
-theorem gf4_cases(x: GF4) {
-    x = GF4.zero or x = GF4.one or x = GF4.x or x = GF4.x_plus_one
-}
-
-theorem gf4_mul_one_left(z: GF4) {
-    Mul.mul(One.1[GF4], z) = z
-}
-
-theorem gf4_mul_one_right(z: GF4) {
-    Mul.mul(z, One.1[GF4]) = z
-}
-
-theorem gf4_add_comm_e1(z: GF4) {
-    gf4_add(GF4.one, z) = gf4_add(z, GF4.one)
-}
-
-theorem gf4_mul_comm_e1(z: GF4) {
-    gf4_mul(GF4.one, z) = gf4_mul(z, GF4.one)
-}
-
-theorem gf4_add_assoc_e0e1(z: GF4) {
-    gf4_add(GF4.zero, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.zero, GF4.one), z)
-}
-
-theorem gf4_add_assoc_e1e0(z: GF4) {
-    gf4_add(GF4.one, gf4_add(GF4.zero, z)) = gf4_add(gf4_add(GF4.one, GF4.zero), z)
-}
-
-theorem gf4_add_assoc_e1e1(z: GF4) {
-    gf4_add(GF4.one, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.one, GF4.one), z)
-}
-
-theorem gf4_add_assoc_e1e2(z: GF4) {
-    gf4_add(GF4.one, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.one, GF4.x), z)
-}
-
-theorem gf4_add_assoc_e1e3(z: GF4) {
-    gf4_add(GF4.one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.one, GF4.x_plus_one), z)
-}
-
-theorem gf4_add_assoc_e2e1(z: GF4) {
-    gf4_add(GF4.x, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.x, GF4.one), z)
-}
-
-theorem gf4_add_assoc_e3e1(z: GF4) {
-    gf4_add(GF4.x_plus_one, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.one), z)
-}
-
-theorem gf4_add_assoc_e1(y: GF4, z: GF4) {
-    gf4_add(GF4.one, gf4_add(y, z)) = gf4_add(gf4_add(GF4.one, y), z)
-}
-
-theorem gf4_mul_assoc_e0e1(z: GF4) {
-    gf4_mul(GF4.zero, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.zero, GF4.one), z)
-}
-
-theorem gf4_mul_assoc_e1e0(z: GF4) {
-    gf4_mul(GF4.one, gf4_mul(GF4.zero, z)) = gf4_mul(gf4_mul(GF4.one, GF4.zero), z)
-}
-
-theorem gf4_mul_assoc_e1e1(z: GF4) {
-    gf4_mul(GF4.one, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.one, GF4.one), z)
-}
-
-theorem gf4_mul_assoc_e1e2(z: GF4) {
-    gf4_mul(GF4.one, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.one, GF4.x), z)
-}
-
-theorem gf4_mul_assoc_e1e3(z: GF4) {
-    gf4_mul(GF4.one, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.one, GF4.x_plus_one), z)
-}
-
-theorem gf4_mul_assoc_e2e1(z: GF4) {
-    gf4_mul(GF4.x, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.x, GF4.one), z)
-}
-
-theorem gf4_mul_assoc_e3e1(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.one), z)
-}
-
-theorem gf4_mul_assoc_e1(y: GF4, z: GF4) {
-    gf4_mul(GF4.one, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.one, y), z)
-}
-
-theorem gf4_mul_add_left_e0e1(z: GF4) {
-    gf4_mul(GF4.zero, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.zero, GF4.one), gf4_mul(GF4.zero, z))
-}
-
-theorem gf4_mul_add_left_e1e0(z: GF4) {
-    gf4_mul(GF4.one, gf4_add(GF4.zero, z)) = gf4_add(gf4_mul(GF4.one, GF4.zero), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_left_e1e1(z: GF4) {
-    gf4_mul(GF4.one, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.one, GF4.one), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_left_e1e2(z: GF4) {
-    gf4_mul(GF4.one, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.one, GF4.x), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_left_e1e3(z: GF4) {
-    gf4_mul(GF4.one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.one, GF4.x_plus_one), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_left_e2e1(z: GF4) {
-    gf4_mul(GF4.x, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.x, GF4.one), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_left_e3e1(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.one), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_left_e1(y: GF4, z: GF4) {
-    gf4_mul(GF4.one, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.one, y), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_right_e0e1(z: GF4) {
-    gf4_mul(gf4_add(GF4.zero, GF4.one), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_right_e1e0(z: GF4) {
-    gf4_mul(gf4_add(GF4.one, GF4.zero), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.zero, z))
-}
-
-theorem gf4_mul_add_right_e1e1(z: GF4) {
-    gf4_mul(gf4_add(GF4.one, GF4.one), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_right_e1e2(z: GF4) {
-    gf4_mul(gf4_add(GF4.one, GF4.x), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_right_e1e3(z: GF4) {
-    gf4_mul(gf4_add(GF4.one, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_right_e2e1(z: GF4) {
-    gf4_mul(gf4_add(GF4.x, GF4.one), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_right_e3e1(z: GF4) {
-    gf4_mul(gf4_add(GF4.x_plus_one, GF4.one), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.one, z))
-}
-
-theorem gf4_mul_add_right_e1(y: GF4, z: GF4) {
-    gf4_mul(gf4_add(GF4.one, y), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(y, z))
-}
-
-theorem gf4_field_inverse(x: GF4) {
-    x != Zero.0[GF4] implies x * x.inverse = One.1[GF4]
-}
-
-theorem gf4_zero_ne_one {
-    Zero.0[GF4] != One.1[GF4]
-}
-
-theorem gf4_x_squared_plus_x_plus_one_eq_zero {
-    gf4_add(gf4_add(gf4_mul(GF4.x, GF4.x), GF4.x), GF4.one) = GF4.zero
-}
-
-theorem gf4_x_inverse {
-    gf4_mul(GF4.x, GF4.x_plus_one) = GF4.one
-}
-
-theorem gf4_x_plus_one_inverse {
-    gf4_mul(GF4.x_plus_one, GF4.x) = GF4.one
-}
-
-theorem gf4_zero_ne_one_elt {
-    GF4.zero != GF4.one
-}
-
-theorem gf4_one_ne_x {
-    GF4.one != GF4.x
-}
-
-theorem gf4_one_ne_x_plus_one {
-    GF4.one != GF4.x_plus_one
-}
-
-define pointwise_one[T, A: One](t: T) -> A {
-    A.1
-}
-
-let function_pair_one[T, A: One, B: One]: Pair[T -> A, T -> B] =
-    Pair.new(pointwise_one[T, A], pointwise_one[T, B])
-
-theorem function_pair_one_first[T, A: One, B: One] {
-    function_pair_one[T, A, B].first = pointwise_one[T, A]
-}
-
-theorem function_pair_one_second[T, A: One, B: One] {
-    function_pair_one[T, A, B].second = pointwise_one[T, B]
-}
-
-theorem function_pair_one_apply[T, A: One, B: One](t: T) {
-    function_pair_apply(function_pair_one[T, A, B], t) = pair_one[A, B]
-}
-
-theorem function_pair_mul_one_right[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
+theorem ideal_subset_preimage_of_image_subset[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R], j: Ideal[S]
 ) {
-    function_pair_mul(p, function_pair_one[T, A, B]) = p
+    bundled_ideal_subset(ideal_image(f, i), j) implies bundled_ideal_subset(i, ideal_preimage(f, j))
 }
 
-theorem function_pair_mul_one_left[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
+theorem ideal_image_subset_of_subset_preimage[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R], j: Ideal[S]
 ) {
-    function_pair_mul(function_pair_one[T, A, B], p) = p
+    bundled_ideal_subset(i, ideal_preimage(f, j)) implies bundled_ideal_subset(ideal_image(f, i), j)
 }
 
-theorem function_pair_mul_inverse_right[T, A: Group, B: Group](
-    p: Pair[T -> A, T -> B]
+theorem ideal_image_subset_iff_subset_preimage[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R], j: Ideal[S]
 ) {
-    function_pair_mul(p, function_pair_inverse(p)) = function_pair_one[T, A, B]
+    bundled_ideal_subset(ideal_image(f, i), j) = bundled_ideal_subset(i, ideal_preimage(f, j))
 }
 
-theorem function_pair_mul_inverse_left[T, A: Group, B: Group](
-    p: Pair[T -> A, T -> B]
+theorem ideal_subset_preimage_image[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R]
 ) {
-    function_pair_mul(function_pair_inverse(p), p) = function_pair_one[T, A, B]
+    bundled_ideal_subset(i, ideal_preimage(f, ideal_image(f, i)))
 }
 
-let function_triple_one[T, A: One, B: One, C: One]:
-    Pair[T -> A, Pair[T -> B, T -> C]] =
-    Pair.new(pointwise_one[T, A], Pair.new(pointwise_one[T, B], pointwise_one[T, C]))
-
-theorem function_triple_one_first[T, A: One, B: One, C: One] {
-    function_triple_one[T, A, B, C].first = pointwise_one[T, A]
-}
-
-theorem function_triple_one_second_first[T, A: One, B: One, C: One] {
-    function_triple_one[T, A, B, C].second.first = pointwise_one[T, B]
-}
-
-theorem function_triple_one_second_second[T, A: One, B: One, C: One] {
-    function_triple_one[T, A, B, C].second.second = pointwise_one[T, C]
-}
-
-theorem function_triple_one_apply[T, A: One, B: One, C: One](t: T) {
-    function_triple_apply(function_triple_one[T, A, B, C], t) =
-    Pair.new(A.1, Pair.new(B.1, C.1))
-}
-
-theorem function_triple_mul_one_right[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem ideal_image_preimage_subset[R: CommRing, S: CommRing](
+    f: RingHom[R, S], j: Ideal[S]
 ) {
-    function_triple_mul(p, function_triple_one[T, A, B, C]) = p
+    bundled_ideal_subset(ideal_image(f, ideal_preimage(f, j)), j)
 }
 
-theorem function_triple_mul_one_left[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem ideal_image_mono[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R], j: Ideal[R]
 ) {
-    function_triple_mul(function_triple_one[T, A, B, C], p) = p
+    bundled_ideal_subset(i, j) implies bundled_ideal_subset(ideal_image(f, i), ideal_image(f, j))
 }
 
-theorem function_triple_mul_inverse_right[T, A: Group, B: Group, C: Group](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem ideal_image_subset_zero_iff_subset_kernel[R: CommRing, S: CommRing](
+    f: RingHom[R, S], i: Ideal[R]
 ) {
-    function_triple_mul(p, function_triple_inverse(p)) = function_triple_one[T, A, B, C]
+    bundled_ideal_subset(ideal_image(f, i), Ideal[S].zero) =
+        bundled_ideal_subset(i, ring_hom_kernel(f))
 }
 
-theorem function_triple_mul_inverse_left[T, A: Group, B: Group, C: Group](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem ideal_image_subset_kernel_iff_subset_kernel_compose[R: CommRing, S: CommRing, T: CommRing](
+    f: RingHom[S, T], g: RingHom[R, S], i: Ideal[R]
 ) {
-    function_triple_mul(function_triple_inverse(p), p) = function_triple_one[T, A, B, C]
+    bundled_ideal_subset(ideal_image(g, i), ring_hom_kernel(f)) =
+        bundled_ideal_subset(i, ring_hom_kernel(compose_ring_hom(f, g)))
 }
 
-let function_quadruple_one[T, A: One, B: One, C: One, D: One]:
-    Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]] =
-    Pair.new(pointwise_one[T, A],
-        Pair.new(pointwise_one[T, B],
-            Pair.new(pointwise_one[T, C], pointwise_one[T, D])))
-
-theorem function_quadruple_one_first[T, A: One, B: One, C: One, D: One] {
-    function_quadruple_one[T, A, B, C, D].first = pointwise_one[T, A]
+theorem subring_sup_eq_closure_union[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_sup(a, b) = subring_closure(a.as_set.union(b.as_set))
 }
 
-theorem function_quadruple_one_second_first[T, A: One, B: One, C: One, D: One] {
-    function_quadruple_one[T, A, B, C, D].second.first = pointwise_one[T, B]
+theorem subring_subset_sup_left[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, subring_sup(a, b))
 }
 
-theorem function_quadruple_one_second_second_first[T, A: One, B: One, C: One, D: One] {
-    function_quadruple_one[T, A, B, C, D].second.second.first = pointwise_one[T, C]
+theorem subring_subset_sup_right[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(b, subring_sup(a, b))
 }
 
-theorem function_quadruple_one_second_second_second[T, A: One, B: One, C: One, D: One] {
-    function_quadruple_one[T, A, B, C, D].second.second.second = pointwise_one[T, D]
-}
-
-theorem function_quadruple_mul_one_right[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+theorem subring_sup_subset_of_subset_left_right[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
 ) {
-    function_quadruple_mul(p, function_quadruple_one[T, A, B, C, D]) = p
+    subring_subset(a, c) and subring_subset(b, c) implies subring_subset(subring_sup(a, b), c)
 }
 
-theorem function_quadruple_mul_one_left[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+theorem subring_sup_subset_iff[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
 ) {
-    function_quadruple_mul(function_quadruple_one[T, A, B, C, D], p) = p
+    subring_subset(subring_sup(a, b), c) = (subring_subset(a, c) and subring_subset(b, c))
 }
 
-theorem function_quadruple_mul_inverse_right[T, A: Group, B: Group, C: Group, D: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+theorem full_subring_intersection_left[R: Ring](s: Subring[R]) {
+    full_subring[R].intersection(s) = s
+}
+
+theorem full_subring_intersection_right[R: Ring](s: Subring[R]) {
+    s.intersection(full_subring[R]) = s
+}
+
+theorem subring_to_add_subgroup_as_set[R: Ring](s: Subring[R]) {
+    subring_to_add_subgroup(s).as_set = s.as_set
+}
+
+theorem subring_to_submonoid_as_set[R: Ring](s: Subring[R]) {
+    subring_to_submonoid(s).as_set = s.as_set
+}
+
+theorem subring_preimage_intersection[R: Ring, S: Ring](
+    f: RingHom[R, S],
+    t: Subring[S],
+    u: Subring[S]
 ) {
-    function_quadruple_mul(p, function_quadruple_inverse(p)) =
-    function_quadruple_one[T, A, B, C, D]
+    subring_preimage(f, t.intersection(u)) =
+        subring_preimage(f, t).intersection(subring_preimage(f, u))
 }
 
-theorem function_quadruple_mul_inverse_left[T, A: Group, B: Group, C: Group, D: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+theorem subring_sup_comm[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_sup(a, b) = subring_sup(b, a)
+}
+
+theorem subring_sup_idempotent[R: Ring](a: Subring[R]) {
+    subring_sup(a, a) = a
+}
+
+theorem subring_sup_assoc[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
 ) {
-    function_quadruple_mul(function_quadruple_inverse(p), p) =
-    function_quadruple_one[T, A, B, C, D]
+    subring_sup(subring_sup(a, b), c) = subring_sup(a, subring_sup(b, c))
 }
 
-let function_quintuple_one[T, A: One, B: One, C: One, D: One, E: One]:
-    Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]] =
-    Pair.new(pointwise_one[T, A], function_quadruple_one[T, B, C, D, E])
-
-theorem function_quintuple_one_first[T, A: One, B: One, C: One, D: One, E: One] {
-    function_quintuple_one[T, A, B, C, D, E].first = pointwise_one[T, A]
+theorem subring_subset_as_set_iff[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, b) = a.as_set.subset(b.as_set)
 }
 
-theorem function_quintuple_one_second_first[T, A: One, B: One, C: One, D: One, E: One] {
-    function_quintuple_one[T, A, B, C, D, E].second.first = pointwise_one[T, B]
+theorem subring_as_set_subset_contains[R: Ring](a: Subring[R], b: Subring[R], x: R) {
+    a.as_set.subset(b.as_set) and a.contains(x) implies b.contains(x)
 }
 
-theorem function_quintuple_one_second_second_first[T, A: One, B: One, C: One, D: One, E: One] {
-    function_quintuple_one[T, A, B, C, D, E].second.second.first =
-        pointwise_one[T, C]
+theorem subring_intersection_greatest_lower_bound[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) = (subring_subset(c, a) and subring_subset(c, b))
 }
 
-theorem function_quintuple_one_second_second_second_first[T, A: One, B: One, C: One, D: One, E: One] {
-    function_quintuple_one[T, A, B, C, D, E].second.second.second.first =
-        pointwise_one[T, D]
+theorem subring_subset_left_of_subset_intersection[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) implies subring_subset(c, a)
 }
 
-theorem function_quintuple_one_second_second_second_second[T, A: One, B: One, C: One, D: One, E: One] {
-    function_quintuple_one[T, A, B, C, D, E].second.second.second.second =
-        pointwise_one[T, E]
+theorem subring_subset_right_of_subset_intersection[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) implies subring_subset(c, b)
 }
 
-theorem function_quintuple_mul_one_right[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid, E: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
+theorem subring_subset_intersection_of_subset_both[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a) and subring_subset(c, b) implies subring_subset(c, a.intersection(b))
+}
+
+theorem subring_closure_as_set_monotone[R: Ring](a: Set[R], b: Set[R]) {
+    a.subset(b) implies subring_closure(a).as_set.subset(subring_closure(b).as_set)
+}
+
+theorem subring_closure_subset_iff_as_set_subset[R: Ring](a: Set[R], s: Subring[R]) {
+    subring_subset(subring_closure(a), s) = a.subset(s.as_set)
+}
+
+theorem subring_intersection_mono_left[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(a.intersection(c), b.intersection(c))
+}
+
+theorem subring_intersection_mono_right[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(c.intersection(a), c.intersection(b))
+}
+
+theorem subring_intersection_mono[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R], d: Subring[R]) {
+    subring_subset(a, b) and subring_subset(c, d) implies
+        subring_subset(a.intersection(c), b.intersection(d))
+}
+
+theorem subring_sup_mono_left[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(subring_sup(a, c), subring_sup(b, c))
+}
+
+theorem subring_sup_mono_right[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(subring_sup(c, a), subring_sup(c, b))
+}
+
+theorem subring_sup_mono[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R], d: Subring[R]) {
+    subring_subset(a, b) and subring_subset(c, d) implies
+        subring_subset(subring_sup(a, c), subring_sup(b, d))
+}
+
+theorem subring_closure_eq_of_mutual_as_set_subset[R: Ring](a: Set[R], b: Set[R]) {
+    a.subset(subring_closure(b).as_set) and b.subset(subring_closure(a).as_set) implies
+        subring_closure(a) = subring_closure(b)
+}
+
+theorem subsemigroup_subset_as_set_iff[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S]) {
+    subsemigroup_subset(a, b) = a.as_set.subset(b.as_set)
+}
+
+theorem subsemigroup_as_set_subset_contains[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S], x: S) {
+    a.as_set.subset(b.as_set) and a.contains(x) implies b.contains(x)
+}
+
+theorem subsemigroup_intersection_greatest_lower_bound[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
 ) {
-    function_quintuple_mul(p, function_quintuple_one[T, A, B, C, D, E]) = p
+    subsemigroup_subset(c, a.intersection(b)) = (subsemigroup_subset(c, a) and subsemigroup_subset(c, b))
 }
 
-theorem function_quintuple_mul_one_left[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid, E: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
+theorem subsemigroup_subset_left_of_subset_intersection[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
 ) {
-    function_quintuple_mul(function_quintuple_one[T, A, B, C, D, E], p) = p
+    subsemigroup_subset(c, a.intersection(b)) implies subsemigroup_subset(c, a)
 }
 
-theorem function_quintuple_mul_inverse_right[T, A: Group, B: Group, C: Group, D: Group, E: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
+theorem subsemigroup_subset_right_of_subset_intersection[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
 ) {
-    function_quintuple_mul(p, function_quintuple_inverse(p)) =
-    function_quintuple_one[T, A, B, C, D, E]
+    subsemigroup_subset(c, a.intersection(b)) implies subsemigroup_subset(c, b)
 }
 
-theorem function_quintuple_mul_inverse_left[T, A: Group, B: Group, C: Group, D: Group, E: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
+theorem subsemigroup_subset_intersection_of_subset_both[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
 ) {
-    function_quintuple_mul(function_quintuple_inverse(p), p) =
-    function_quintuple_one[T, A, B, C, D, E]
+    subsemigroup_subset(c, a) and subsemigroup_subset(c, b) implies subsemigroup_subset(c, a.intersection(b))
 }
 
-define is_function_pair_unit[T, A: Monoid, B: Monoid](p: Pair[T -> A, T -> B]) -> Bool {
-    exists(q: Pair[T -> A, T -> B]) {
-        function_pair_mul(p, q) = function_pair_one[T, A, B] and
-        function_pair_mul(q, p) = function_pair_one[T, A, B]
+theorem subsemigroup_closure_as_set_monotone[S: Semigroup](a: Set[S], b: Set[S]) {
+    a.subset(b) implies subsemigroup_closure(a).as_set.subset(subsemigroup_closure(b).as_set)
+}
+
+theorem subsemigroup_closure_subset_iff_as_set_subset[S: Semigroup](a: Set[S], s: Subsemigroup[S]) {
+    subsemigroup_subset(subsemigroup_closure(a), s) = a.subset(s.as_set)
+}
+
+theorem subsemigroup_intersection_mono_left[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(a.intersection(c), b.intersection(c))
+}
+
+theorem subsemigroup_intersection_mono_right[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(c.intersection(a), c.intersection(b))
+}
+
+theorem subsemigroup_intersection_mono[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S],
+    d: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) and subsemigroup_subset(c, d) implies
+        subsemigroup_subset(a.intersection(c), b.intersection(d))
+}
+
+theorem subsemigroup_sup_mono_left[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(subsemigroup_sup(a, c), subsemigroup_sup(b, c))
+}
+
+theorem subsemigroup_sup_mono_right[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(subsemigroup_sup(c, a), subsemigroup_sup(c, b))
+}
+
+theorem subsemigroup_sup_mono[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S],
+    d: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) and subsemigroup_subset(c, d) implies
+        subsemigroup_subset(subsemigroup_sup(a, c), subsemigroup_sup(b, d))
+}
+
+theorem subsemigroup_closure_eq_of_mutual_as_set_subset[S: Semigroup](a: Set[S], b: Set[S]) {
+    a.subset(subsemigroup_closure(b).as_set) and b.subset(subsemigroup_closure(a).as_set) implies
+        subsemigroup_closure(a) = subsemigroup_closure(b)
+}
+
+theorem subsemiring_as_set_contains_eq[S: Semiring](s: Subsemiring[S], x: S) {
+    s.as_set.contains(x) = s.contains(x)
+}
+
+theorem subsemiring_contains_as_set_eq[S: Semiring](s: Subsemiring[S], x: S) {
+    s.contains(x) = s.as_set.contains(x)
+}
+
+theorem subsemiring_intersection_contains_eq[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) {
+    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
+}
+
+theorem subsemiring_intersection_subset_left[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) {
+    a.intersection(b).contains(x) implies a.contains(x)
+}
+
+theorem subsemiring_intersection_subset_right[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) {
+    a.intersection(b).contains(x) implies b.contains(x)
+}
+
+define subsemiring_subset[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) -> Bool {
+    forall(x: S) {
+        a.contains(x) implies b.contains(x)
     }
 }
 
-theorem function_pair_mul_is_function_pair_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    is_function_pair_unit(p) and is_function_pair_unit(q) implies
-    is_function_pair_unit(function_pair_mul(p, q))
-}
-
-theorem function_pair_one_is_function_pair_unit[T, A: Monoid, B: Monoid] {
-    is_function_pair_unit(function_pair_one[T, A, B])
-}
-
-theorem function_pair_unit_of_inverse[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, q) = function_pair_one[T, A, B] and
-    function_pair_mul(q, p) = function_pair_one[T, A, B]
-    implies is_function_pair_unit(p)
-}
-
-theorem function_pair_inverse_witness_is_function_pair_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, q) = function_pair_one[T, A, B] and
-    function_pair_mul(q, p) = function_pair_one[T, A, B]
-    implies is_function_pair_unit(q)
-}
-
-theorem function_pair_unit_of_group[T, A: Group, B: Group](p: Pair[T -> A, T -> B]) {
-    is_function_pair_unit(p)
-}
-
-theorem function_pair_inverse_is_function_pair_unit[T, A: Group, B: Group](
-    p: Pair[T -> A, T -> B]
-) {
-    is_function_pair_unit(function_pair_inverse(p))
-}
-
-define is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) -> Bool {
-    exists(q: Pair[T -> A, Pair[T -> B, T -> C]]) {
-        function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
-        function_triple_mul(q, p) = function_triple_one[T, A, B, C]
+instance Subsemiring[S: Semiring]: LTE {
+    define lte(self, other: Subsemiring[S]) -> Bool {
+        subsemiring_subset(self, other)
     }
 }
 
-theorem function_triple_one_is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid] {
-    is_function_triple_unit(function_triple_one[T, A, B, C])
+theorem subsemiring_subset_as_set_eq[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_subset(a, b) = a.as_set.subset(b.as_set)
 }
 
-theorem function_triple_unit_of_inverse[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem subsemiring_subset_refl[S: Semiring](a: Subsemiring[S]) {
+    subsemiring_subset(a, a)
+}
+
+theorem subsemiring_subset_trans[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], c: Subsemiring[S]) {
+    subsemiring_subset(a, b) and subsemiring_subset(b, c) implies subsemiring_subset(a, c)
+}
+
+theorem subsemiring_intersection_subset_left_relation[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_subset(a.intersection(b), a)
+}
+
+theorem subsemiring_intersection_subset_right_relation[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_subset(a.intersection(b), b)
+}
+
+theorem subsemiring_subset_intersection_of_subset_left_right[S: Semiring](
+    c: Subsemiring[S],
+    a: Subsemiring[S],
+    b: Subsemiring[S]
 ) {
-    function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
-    function_triple_mul(q, p) = function_triple_one[T, A, B, C]
-    implies is_function_triple_unit(p)
+    subsemiring_subset(c, a) and subsemiring_subset(c, b) implies subsemiring_subset(c, a.intersection(b))
 }
 
-theorem function_triple_inverse_witness_is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem subsemiring_subset_intersection_iff[S: Semiring](c: Subsemiring[S], a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_subset(c, a.intersection(b)) = (subsemiring_subset(c, a) and subsemiring_subset(c, b))
+}
+
+theorem subsemiring_subset_antisymm[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_subset(a, b) and subsemiring_subset(b, a) implies a = b
+}
+
+theorem subsemiring_eq_iff_subset_both[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    a = b = (subsemiring_subset(a, b) and subsemiring_subset(b, a))
+}
+
+theorem subsemiring_subset_contains[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) {
+    subsemiring_subset(a, b) and a.contains(x) implies b.contains(x)
+}
+
+theorem subsemiring_subset_of_contains[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    (forall(x: S) { a.contains(x) implies b.contains(x) }) implies subsemiring_subset(a, b)
+}
+
+theorem subsemiring_as_set_subset_contains[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) {
+    a.as_set.subset(b.as_set) and a.contains(x) implies b.contains(x)
+}
+
+theorem subsemiring_intersection_greatest_lower_bound[S: Semiring](
+    c: Subsemiring[S],
+    a: Subsemiring[S],
+    b: Subsemiring[S]
 ) {
-    function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
-    function_triple_mul(q, p) = function_triple_one[T, A, B, C]
-    implies is_function_triple_unit(q)
+    subsemiring_subset(c, a.intersection(b)) = (subsemiring_subset(c, a) and subsemiring_subset(c, b))
 }
 
-theorem function_triple_unit_of_group[T, A: Group, B: Group, C: Group](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem subsemiring_intersection_mono_left[S: Semiring](
+    a: Subsemiring[S],
+    b: Subsemiring[S],
+    c: Subsemiring[S]
 ) {
-    is_function_triple_unit(p)
+    subsemiring_subset(a, b) implies subsemiring_subset(a.intersection(c), b.intersection(c))
 }
 
-theorem function_triple_inverse_is_function_triple_unit[T, A: Group, B: Group, C: Group](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
+theorem subsemiring_intersection_mono_right[S: Semiring](
+    a: Subsemiring[S],
+    b: Subsemiring[S],
+    c: Subsemiring[S]
 ) {
-    is_function_triple_unit(function_triple_inverse(p))
+    subsemiring_subset(a, b) implies subsemiring_subset(c.intersection(a), c.intersection(b))
 }
 
-define is_function_quadruple_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) -> Bool {
-    exists(q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]) {
-        function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
-        function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
-    }
-}
-
-theorem function_quadruple_unit_of_inverse[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+theorem subsemiring_intersection_mono[S: Semiring](
+    a: Subsemiring[S],
+    b: Subsemiring[S],
+    c: Subsemiring[S],
+    d: Subsemiring[S]
 ) {
-    function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
-    function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
-    implies is_function_quadruple_unit(p)
+    subsemiring_subset(a, b) and subsemiring_subset(c, d) implies
+        subsemiring_subset(a.intersection(c), b.intersection(d))
 }
 
-theorem function_quadruple_inverse_witness_is_function_quadruple_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
-    function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
-    implies is_function_quadruple_unit(q)
+theorem subsemiring_subset_antisymm_iff_eq[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    (subsemiring_subset(a, b) and subsemiring_subset(b, a)) = (a = b)
 }
 
-theorem function_quadruple_unit_of_group[T, A: Group, B: Group, C: Group, D: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(p)
-}
-
-theorem function_quadruple_inverse_is_function_quadruple_unit[T, A: Group, B: Group, C: Group, D: Group](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(function_quadruple_inverse(p))
-}
-
-define is_pointwise_unit[T, M: Monoid](f: T -> M) -> Bool {
-    exists(g: T -> M) {
-        pointwise_mul(f, g) = pointwise_one[T, M] and
-        pointwise_mul(g, f) = pointwise_one[T, M]
-    }
-}
-
-theorem function_pair_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
-) {
-    is_function_pair_unit(p) implies is_pointwise_unit(p.first)
-}
-
-theorem function_pair_unit_second_is_pointwise_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
-) {
-    is_function_pair_unit(p) implies is_pointwise_unit(p.second)
-}
-
-theorem function_pair_unit_of_components[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
-) {
-    is_pointwise_unit(p.first) and is_pointwise_unit(p.second) implies
-    is_function_pair_unit(p)
-}
-
-theorem function_pair_unit_iff_components[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B]
-) {
-    is_function_pair_unit(p) = (is_pointwise_unit(p.first) and is_pointwise_unit(p.second))
-}
-
-theorem function_pair_mul_first_is_pointwise_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    is_pointwise_unit(p.first) and is_pointwise_unit(q.first) implies
-    is_pointwise_unit(function_pair_mul(p, q).first)
-}
-
-theorem function_pair_mul_second_is_pointwise_unit[T, A: Monoid, B: Monoid](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    is_pointwise_unit(p.second) and is_pointwise_unit(q.second) implies
-    is_pointwise_unit(function_pair_mul(p, q).second)
-}
-
-theorem function_triple_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    is_function_triple_unit(p) implies is_pointwise_unit(p.first)
-}
-
-theorem function_triple_unit_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    is_function_triple_unit(p) implies is_pointwise_unit(p.second.first)
-}
-
-theorem function_triple_unit_second_second_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    is_function_triple_unit(p) implies is_pointwise_unit(p.second.second)
-}
-
-theorem function_triple_unit_of_components[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    is_pointwise_unit(p.first) and is_pointwise_unit(p.second.first) and
-    is_pointwise_unit(p.second.second) implies is_function_triple_unit(p)
-}
-
-theorem function_triple_unit_iff_components[T, A: Monoid, B: Monoid, C: Monoid](
-    p: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    is_function_triple_unit(p) = (
-        is_pointwise_unit(p.first) and
-        is_pointwise_unit(p.second.first) and
-        is_pointwise_unit(p.second.second)
-    )
-}
-
-theorem function_quadruple_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(p) implies is_pointwise_unit(p.first)
-}
-
-theorem function_quadruple_unit_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.first)
-}
-
-theorem function_quadruple_unit_second_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.second.first)
-}
-
-theorem function_quadruple_unit_second_second_second_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.second.second)
-}
-
-theorem unit_function_val_mul_inv[T, M: Monoid](f: T -> Unit[M]) {
-    pointwise_mul(unit_function_val(f), unit_function_inv(f)) = pointwise_one[T, M]
-}
-
-theorem unit_function_inv_mul_val[T, M: Monoid](f: T -> Unit[M]) {
-    pointwise_mul(unit_function_inv(f), unit_function_val(f)) = pointwise_one[T, M]
-}
-
-theorem unit_function_val_is_pointwise_unit[T, M: Monoid](f: T -> Unit[M]) {
-    is_pointwise_unit(unit_function_val(f))
-}
-
-theorem unit_function_inv_is_pointwise_unit[T, M: Monoid](f: T -> Unit[M]) {
-    is_pointwise_unit(unit_function_inv(f))
-}
-
-theorem pointwise_unit_apply_is_monoid_unit[T, M: Monoid](f: T -> M, t: T) {
-    is_pointwise_unit(f) implies is_monoid_unit(f(t))
-}
-
-theorem pointwise_unit_of_inverse[T, M: Monoid](f: T -> M, g: T -> M) {
-    pointwise_mul(f, g) = pointwise_one[T, M] and
-    pointwise_mul(g, f) = pointwise_one[T, M]
-    implies is_pointwise_unit(f)
-}
-
-theorem pointwise_inverse_witness_is_pointwise_unit[T, M: Monoid](f: T -> M, g: T -> M) {
-    pointwise_mul(f, g) = pointwise_one[T, M] and
-    pointwise_mul(g, f) = pointwise_one[T, M]
-    implies is_pointwise_unit(g)
-}
-
-theorem pointwise_unit_of_eq[T, M: Monoid](f: T -> M, h: T -> M) {
-    is_pointwise_unit(f) and f = h implies is_pointwise_unit(h)
-}
-
-theorem pointwise_unit_of_eq_reverse[T, M: Monoid](f: T -> M, h: T -> M) {
-    is_pointwise_unit(h) and f = h implies is_pointwise_unit(f)
-}
-
-theorem pointwise_one_is_pointwise_unit[T, M: Monoid] {
-    is_pointwise_unit(pointwise_one[T, M])
-}
-
-theorem pointwise_unit_of_group[T, G: Group](f: T -> G) {
-    is_pointwise_unit(f)
-}
-
-theorem pointwise_mul_is_pointwise_unit[T, M: Monoid](f: T -> M, h: T -> M) {
-    is_pointwise_unit(f) and is_pointwise_unit(h) implies
-        is_pointwise_unit(pointwise_mul(f, h))
-}
-
-theorem pointwise_unit_mul_eq_zero_left_apply[T, R: Ring](u: T -> R, f: T -> R, t: T) {
-    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_zero[T, R] implies
-    f(t) = R.0
-}
-
-theorem pointwise_unit_mul_eq_zero_left[T, R: Ring](u: T -> R, f: T -> R) {
-    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_zero[T, R] implies
-    f = pointwise_zero[T, R]
-}
-
-theorem pointwise_unit_mul_eq_zero_right_apply[T, R: Ring](u: T -> R, f: T -> R, t: T) {
-    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_zero[T, R] implies
-    f(t) = R.0
-}
-
-theorem pointwise_unit_mul_eq_zero_right[T, R: Ring](u: T -> R, f: T -> R) {
-    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_zero[T, R] implies
-    f = pointwise_zero[T, R]
-}
-
-theorem pointwise_unit_mul_cancel_left_apply[T, R: Ring](u: T -> R, f: T -> R, g: T -> R, t: T) {
-    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_mul(u, g) implies
-    f(t) = g(t)
-}
-
-theorem pointwise_unit_mul_cancel_left[T, R: Ring](u: T -> R, f: T -> R, g: T -> R) {
-    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_mul(u, g) implies
-    f = g
-}
-
-theorem pointwise_unit_mul_cancel_right_apply[T, R: Ring](u: T -> R, f: T -> R, g: T -> R, t: T) {
-    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_mul(g, u) implies
-    f(t) = g(t)
-}
-
-theorem pointwise_unit_mul_cancel_right[T, R: Ring](u: T -> R, f: T -> R, g: T -> R) {
-    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_mul(g, u) implies
-    f = g
-}
-
-theorem pointwise_one_apply[T, A: One](t: T) {
-    pointwise_one[T, A](t) = A.1
-}
-
-theorem pointwise_mul_one_right[T, A: Monoid](f: T -> A) {
-    pointwise_mul(f, pointwise_one[T, A]) = f
-}
-
-theorem pointwise_mul_one_left[T, A: Monoid](f: T -> A) {
-    pointwise_mul(pointwise_one[T, A], f) = f
-}
-
-theorem pointwise_mul_inverse_right[T, A: Group](f: T -> A) {
-    pointwise_mul(f, pointwise_inverse(f)) = pointwise_one[T, A]
-}
-
-theorem pointwise_mul_inverse_left[T, A: Group](f: T -> A) {
-    pointwise_mul(pointwise_inverse(f), f) = pointwise_one[T, A]
-}
-
-theorem vector_space_smul_eq_zero[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    m.smul(r, v) = V.0 implies r = F.0 or v = V.0
-}
-
-theorem vector_space_smul_ne_zero[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    r != F.0 and v != V.0 implies m.smul(r, v) != V.0
-}
-
-theorem vector_space_smul_inverse_left[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    r != F.0 implies m.smul(r.inverse, m.smul(r, v)) = v
-}
-
-theorem vector_space_smul_inverse_right[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    r != F.0 implies m.smul(r, m.smul(r.inverse, v)) = v
-}
-
-theorem vector_space_smul_left_cancel[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, u: V, v: V) {
-    r != F.0 and m.smul(r, u) = m.smul(r, v) implies u = v
-}
-
-theorem vector_space_smul_right_cancel[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, s: F, v: V) {
-    v != V.0 and m.smul(r, v) = m.smul(s, v) implies r = s
-}
-
-theorem vector_space_smul_eq_implies_eq_inverse_smul[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, u: V, v: V) {
-    r != F.0 and m.smul(r, v) = u implies v = m.smul(r.inverse, u)
-}
-
-theorem vector_space_inverse_smul_implies_smul_eq[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, u: V, v: V) {
-    r != F.0 and v = m.smul(r.inverse, u) implies m.smul(r, v) = u
-}
-
-theorem vector_space_smul_eq_iff_left_cancel[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, u: V, v: V) {
-    r != F.0 implies (m.smul(r, u) = m.smul(r, v) iff u = v)
-}
-
-theorem vector_space_smul_eq_zero_iff[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    m.smul(r, v) = V.0 iff (r = F.0 or v = V.0)
-}
-
-theorem vector_space_neg_smul_eq_smul_neg[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    -m.smul(r, v) = m.smul(r, -v)
-}
-
-theorem vector_space_smul_eq_iff_right_cancel[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, s: F, v: V) {
-    v != V.0 implies (m.smul(r, v) = m.smul(s, v) iff r = s)
-}
-
-theorem vector_space_smul_ne_zero_iff[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, v: V) {
-    m.smul(r, v) != V.0 iff (r != F.0 and v != V.0)
-}
-
-theorem vector_space_smul_eq_iff_eq_inverse_smul[F: Field, V: AddCommGroup](
-    m: Module[F, V], r: F, u: V, v: V) {
-    r != F.0 implies (m.smul(r, v) = u iff v = m.smul(r.inverse, u))
-}
-
-theorem vector_space_smul_zero[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
-    m.smul(F.0, v) = V.0
-}
-
-theorem vector_space_smul_one[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
-    m.smul(F.1, v) = v
-}
-
-theorem vector_space_smul_neg_one[F: Field, V: AddCommGroup](m: Module[F, V], v: V) {
-    m.smul(-F.1, v) = -v
-}
-
-theorem vector_space_subspace_criterion[F: Field, V: AddCommGroup](
-    m: Module[F, V], contains: V -> Bool
-) {
-    (exists(x: V) { contains(x) })
-    and (forall(a: V, b: V) { contains(a) and contains(b) implies contains(a + b) })
-    and (forall(r: F, a: V) { contains(a) implies contains(m.smul(r, a)) })
-    implies is_submodule(m, contains)
-}
-
-theorem vector_space_span_is_subspace[F: Field, V: AddCommGroup](m: Module[F, V], a: Set[V]) {
-    is_submodule(m, submodule_closure(m, a).contains)
-}
-
-define vector_space_singleton_independent[F: Field, V: AddCommGroup](
-    m: Module[F, V], v: V
-) -> Bool {
-    forall(r: F) {
-        m.smul(r, v) = V.0 implies r = F.0
-    }
-}
-
-theorem vector_space_singleton_independent_of_ne_zero[F: Field, V: AddCommGroup](
-    m: Module[F, V], v: V
-) {
-    v != V.0 implies vector_space_singleton_independent(m, v)
-}
-
-theorem vector_space_ne_zero_of_singleton_independent[F: Field, V: AddCommGroup](
-    m: Module[F, V], v: V
-) {
-    vector_space_singleton_independent(m, v) implies v != V.0
-}
-
-theorem vector_space_singleton_independent_iff_ne_zero[F: Field, V: AddCommGroup](
-    m: Module[F, V], v: V
-) {
-    vector_space_singleton_independent(m, v) iff v != V.0
-}
-
-theorem mul_opposite_val_one[M: One] {
-    MulOpposite[M].one.val = M.1
-}
-
-theorem mul_opposite_one_right[M: Monoid](x: MulOpposite[M]) {
-    x * MulOpposite[M].one = x
-}
-
-theorem mul_opposite_one_right_raw[M: Monoid] {
-    forall(x: MulOpposite[M]) {
-        Mul.mul(x, One.1[MulOpposite[M]]) = x
-    }
-}
-
-theorem mul_opposite_one_left[M: Monoid](x: MulOpposite[M]) {
-    MulOpposite[M].one * x = x
-}
-
-theorem mul_opposite_one_left_raw[M: Monoid] {
-    forall(x: MulOpposite[M]) {
-        Mul.mul(One.1[MulOpposite[M]], x) = x
-    }
-}
-
-theorem mul_opposite_inverse_right[G: Group](x: MulOpposite[G]) {
-    x * x.inverse = MulOpposite[G].one
-}
-
-theorem mul_opposite_inverse_right_raw[G: Group] {
-    forall(x: MulOpposite[G]) {
-        Mul.mul(x, x.inverse) = One.1[MulOpposite[G]]
-    }
-}
-
-theorem pair_typeclass_one_eq_pair_one[A: One, B: One] {
-    One.1[Pair[A, B]] = pair_one[A, B]
-}
-
-theorem pair_monoid_right_law[A: Monoid, B: Monoid](p: Pair[A, B]) {
-    p * One.1[Pair[A, B]] = p
-}
-
-theorem pair_monoid_left_law[A: Monoid, B: Monoid](p: Pair[A, B]) {
-    One.1[Pair[A, B]] * p = p
-}
-
-theorem pointwise_function_one_apply[T, A: One](t: T) {
-    One.1[PointwiseFunction[T, A]].val(t) = A.1
-}
-
-theorem pointwise_function_mul_one_right[T, A: Monoid](f: PointwiseFunction[T, A]) {
-    f * One.1[PointwiseFunction[T, A]] = f
-}
-
-theorem pointwise_function_mul_one_left[T, A: Monoid](f: PointwiseFunction[T, A]) {
-    One.1[PointwiseFunction[T, A]] * f = f
-}
-
-theorem pointwise_function_monoid_right_law[T, A: Monoid](f: PointwiseFunction[T, A]) {
-    Mul.mul(f, One.1[PointwiseFunction[T, A]]) = f
-}
-
-theorem pointwise_function_monoid_left_law[T, A: Monoid](f: PointwiseFunction[T, A]) {
-    Mul.mul(One.1[PointwiseFunction[T, A]], f) = f
-}
-
-theorem pair_one_first[A: One, B: One] {
-    pair_one[A, B].first = A.1
-}
-
-theorem pair_one_second[A: One, B: One] {
-    pair_one[A, B].second = B.1
-}
-
-theorem pair_map_pair_one[A: One, B: One, C: One, D: One](f: A -> C, g: B -> D) {
-    f(A.1) = C.1 and g(B.1) = D.1 implies
-    pair_map(f, g, pair_one[A, B]) = pair_one[C, D]
-}
-
-theorem pair_swap_one[A: One, B: One] {
-    pair_one[A, B].swap = pair_one[B, A]
-}
-
-define is_field_hom[F: Field, E: Field](f: F -> E) -> Bool {
-    is_ring_hom(f)
-}
-
-structure FieldHom[F: Field, E: Field] {
-    /// The mapping for the homomorphism.
-    hom: F -> E
-} constraint {
-    is_field_hom(hom)
-}
-
-theorem field_hom_ext[F: Field, E: Field](f: FieldHom[F, E], g: FieldHom[F, E]) {
-    (forall(a: F) { f.hom(a) = g.hom(a) }) implies f = g
-}
-
-attributes FieldHom[F: Field, E: Field] {
-    /// Field homomorphism extensionality from pointwise equality of the homomorphism.
-    let ext = field_hom_ext[F, E]
-}
-
-let field_hom_to_ring_hom[F: Field, E: Field](f: FieldHom[F, E]) -> result: RingHom[F, E] satisfy {
-    RingHom.new(f.hom) = Option.some(result)
-}
-
-theorem field_hom_to_ring_hom_hom[F: Field, E: Field](f: FieldHom[F, E]) {
-    field_hom_to_ring_hom(f).hom = f.hom
-}
-
-theorem field_hom_one[F: Field, E: Field](f: FieldHom[F, E]) {
-    f.hom(F.1) = E.1
-}
-
-theorem field_hom_zero[F: Field, E: Field](f: FieldHom[F, E]) {
-    f.hom(F.0) = E.0
-}
-
-theorem field_hom_add[F: Field, E: Field](f: FieldHom[F, E], a: F, b: F) {
-    f.hom(a + b) = f.hom(a) + f.hom(b)
-}
-
-theorem field_hom_mul[F: Field, E: Field](f: FieldHom[F, E], a: F, b: F) {
-    f.hom(a * b) = f.hom(a) * f.hom(b)
-}
-
-theorem field_hom_neg[F: Field, E: Field](f: FieldHom[F, E], a: F) {
-    f.hom(-a) = -f.hom(a)
-}
-
-theorem field_hom_nonzero[F: Field, E: Field](f: FieldHom[F, E], a: F) {
-    a != F.0 implies f.hom(a) != E.0
-}
-
-theorem field_hom_injective[F: Field, E: Field](f: FieldHom[F, E], a: F, b: F) {
-    f.hom(a) = f.hom(b) implies a = b
-}
-
-theorem identity_fn_is_field_hom[F: Field] {
-    is_field_hom(identity_fn[F])
-}
-
-theorem compose_is_field_hom[F: Field, E: Field, K: Field](f: E -> K, g: F -> E) {
-    is_field_hom(f) and is_field_hom(g) implies is_field_hom(compose(f, g))
-}
-
-let identity_field_hom[F: Field]: FieldHom[F, F] satisfy {
-    FieldHom.new(identity_fn[F]) = Option.some(identity_field_hom)
-}
-
-theorem identity_field_hom_hom[F: Field] {
-    identity_field_hom[F].hom = identity_fn[F]
-}
-
-let compose_field_hom[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) -> result: FieldHom[F, K] satisfy {
-    FieldHom.new(compose(f.hom, g.hom)) = Option.some(result)
-}
-
-theorem compose_field_hom_hom[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
-    compose_field_hom(f, g).hom = compose(f.hom, g.hom)
-}
-
-theorem compose_field_hom_assoc[F: Field, E: Field, K: Field, L: Field](f: FieldHom[K, L], g: FieldHom[E, K], h: FieldHom[F, E]) {
-    compose_field_hom(compose_field_hom(f, g), h) = compose_field_hom(f, compose_field_hom(g, h))
-}
-
-theorem compose_field_hom_identity_left[F: Field, E: Field](f: FieldHom[F, E]) {
-    compose_field_hom(identity_field_hom[E], f) = f
-}
-
-theorem compose_field_hom_identity_right[F: Field, E: Field](f: FieldHom[F, E]) {
-    compose_field_hom(f, identity_field_hom[F]) = f
-}
-
-theorem field_hom_inverse[F: Field, E: Field](f: FieldHom[F, E], a: F) {
-    a != F.0 implies f.hom(a.inverse) = f.hom(a).inverse
-}
-
-theorem field_hom_eq_iff_sub_zero[F: Field, E: Field](f: FieldHom[F, E], a: F, b: F) {
-    (f.hom(a) = f.hom(b)) = (f.hom(b - a) = E.0)
-}
-
-define is_trivial_field_hom_kernel[F: Field, E: Field](f: FieldHom[F, E]) -> Bool {
-    forall(a: F) {
-        f.hom(a) = E.0 implies a = F.0
-    }
-}
-
-theorem field_hom_is_injective[F: Field, E: Field](f: FieldHom[F, E]) {
-    is_injective_fn(f.hom)
-}
-
-theorem field_hom_has_trivial_kernel[F: Field, E: Field](f: FieldHom[F, E]) {
-    is_trivial_field_hom_kernel(f)
-}
-
-theorem field_hom_injective_iff_trivial_kernel[F: Field, E: Field](f: FieldHom[F, E]) {
-    is_injective_fn(f.hom) = is_trivial_field_hom_kernel(f)
-}
-
-theorem zero_ideal_is_proper[F: Field] {
-    ideal_proper_constraint(zero_ideal[F])
-}
-
-theorem zero_ideal_not_contains_one[F: Field] {
-    not zero_ideal[F](F.1)
-}
-
-theorem zero_ideal_is_maximal[F: Field] {
-    is_maximal_ideal(zero_ideal[F])
-}
-
-theorem zero_ideal_is_prime[F: Field] {
-    is_prime_ideal(zero_ideal[F])
-}
-
-let field_zero_maximal_ideal[F: Field]: MaximalIdeal[F] satisfy {
-    MaximalIdeal[F].new(zero_ideal[F]) = Option.some(field_zero_maximal_ideal)
-}
-
-theorem field_zero_maximal_ideal_contains_eq[F: Field](x: F) {
-    field_zero_maximal_ideal[F].contains(x) = zero_ideal[F](x)
-}
-
-theorem zero_ideal_is_maximal_and_prime[F: Field] {
-    is_maximal_ideal(zero_ideal[F]) and is_prime_ideal(zero_ideal[F])
-}
-
-theorem ideal_quotient_typeclass_one_eq[R: CommRing](i: Ideal[R]) {
-    One.1[IdealQuotient[R, i]] = ideal_quotient_type_one(i)
-}
-
-theorem ideal_quotient_type_mul_one_left_law[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i]) {
-    Mul.mul(One.1[IdealQuotient[R, i]], x) = x
-}
-
-theorem ideal_quotient_type_mul_one_right_law[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i]) {
-    Mul.mul(x, One.1[IdealQuotient[R, i]]) = x
-}
-
-theorem ideal_quotient_mk_type_one[R: CommRing](i: Ideal[R]) {
-    ideal_quotient_mk_type(i, R.1) = One.1[IdealQuotient[R, i]]
-}
-
-theorem ideal_quotient_canonical_projection_is_hom[R: CommRing](i: Ideal[R]) {
-    ideal_quotient_mk_type(i, R.1) = One.1[IdealQuotient[R, i]] and
-    forall(a: R, b: R) {
-        ideal_quotient_mk_type(i, a + b) = ideal_quotient_mk_type(i, a) + ideal_quotient_mk_type(i, b) and
-            ideal_quotient_mk_type(i, a * b) = ideal_quotient_mk_type(i, a) * ideal_quotient_mk_type(i, b)
-    }
-}
-
-define subfield_zero_constraint[F: Field](contains: F -> Bool) -> Bool {
-    contains(F.0)
-}
-
-define subfield_one_constraint[F: Field](contains: F -> Bool) -> Bool {
-    contains(F.1)
-}
-
-define subfield_add_constraint[F: Field](contains: F -> Bool) -> Bool {
-    forall(a: F, b: F) {
-        contains(a) and contains(b) implies contains(a + b)
-    }
-}
-
-define subfield_neg_constraint[F: Field](contains: F -> Bool) -> Bool {
-    forall(a: F) {
-        contains(a) implies contains(-a)
-    }
-}
-
-define subfield_mul_constraint[F: Field](contains: F -> Bool) -> Bool {
-    forall(a: F, b: F) {
-        contains(a) and contains(b) implies contains(a * b)
-    }
-}
-
-define subfield_inverse_constraint[F: Field](contains: F -> Bool) -> Bool {
-    forall(a: F) {
-        contains(a) and a != F.0 implies contains(a.inverse)
-    }
-}
-
-define subfield_additive_constraint[F: Field](contains: F -> Bool) -> Bool {
-    subfield_zero_constraint(contains) and subfield_add_constraint(contains) and
-        subfield_neg_constraint(contains)
-}
-
-define subfield_multiplicative_constraint[F: Field](contains: F -> Bool) -> Bool {
-    subfield_one_constraint(contains) and subfield_mul_constraint(contains) and
-        subfield_inverse_constraint(contains)
-}
-
-define subfield_constraint[F: Field](contains: F -> Bool) -> Bool {
-    subfield_additive_constraint(contains) and subfield_multiplicative_constraint(contains)
-}
-
-structure Subfield[F: Field] {
-    /// True if the given element is a member of this subfield.
-    contains: F -> Bool
-} constraint {
-    subfield_constraint(contains)
-}
-
-theorem subfield_ext[F: Field](a: Subfield[F], b: Subfield[F]) {
-    (forall(x: F) { a.contains(x) = b.contains(x) }) implies a = b
-}
-
-theorem subfield_eq_contains[F: Field](a: Subfield[F], b: Subfield[F]) {
-    a = b implies a.contains = b.contains
-}
-
-theorem subfield_satisfies_constraint[F: Field](s: Subfield[F]) {
-    subfield_constraint(s.contains)
-}
-
-theorem subfield_satisfies_additive[F: Field](s: Subfield[F]) {
-    subfield_additive_constraint(s.contains)
-}
-
-theorem subfield_satisfies_multiplicative[F: Field](s: Subfield[F]) {
-    subfield_multiplicative_constraint(s.contains)
-}
-
-theorem subfield_satisfies_zero[F: Field](s: Subfield[F]) {
-    subfield_zero_constraint(s.contains)
-}
-
-theorem subfield_satisfies_one[F: Field](s: Subfield[F]) {
-    subfield_one_constraint(s.contains)
-}
-
-theorem subfield_satisfies_add[F: Field](s: Subfield[F]) {
-    subfield_add_constraint(s.contains)
-}
-
-theorem subfield_satisfies_neg[F: Field](s: Subfield[F]) {
-    subfield_neg_constraint(s.contains)
-}
-
-theorem subfield_satisfies_mul[F: Field](s: Subfield[F]) {
-    subfield_mul_constraint(s.contains)
-}
-
-theorem subfield_satisfies_inverse[F: Field](s: Subfield[F]) {
-    subfield_inverse_constraint(s.contains)
-}
-
-theorem subfield_contains_zero[F: Field](s: Subfield[F]) {
-    s.contains(F.0)
-}
-
-theorem subfield_contains_one[F: Field](s: Subfield[F]) {
-    s.contains(F.1)
-}
-
-theorem subfield_contains_add[F: Field](s: Subfield[F], a: F, b: F) {
-    s.contains(a) and s.contains(b) implies s.contains(a + b)
-}
-
-theorem subfield_contains_neg[F: Field](s: Subfield[F], a: F) {
-    s.contains(a) implies s.contains(-a)
-}
-
-theorem subfield_contains_sub[F: Field](s: Subfield[F], a: F, b: F) {
-    s.contains(a) and s.contains(b) implies s.contains(a - b)
-}
-
-theorem subfield_contains_mul[F: Field](s: Subfield[F], a: F, b: F) {
-    s.contains(a) and s.contains(b) implies s.contains(a * b)
-}
-
-define subfield_le[F: Field](a: Subfield[F], b: Subfield[F]) -> Bool {
-    forall(x: F) { a.contains(x) implies b.contains(x) }
-}
-
-theorem subfield_le_intro[F: Field](a: Subfield[F], b: Subfield[F]) {
-    (forall(x: F) { a.contains(x) implies b.contains(x) }) implies subfield_le(a, b)
-}
-
-theorem subfield_le_refl[F: Field](a: Subfield[F]) {
-    subfield_le(a, a)
-}
-
-theorem subfield_le_trans[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_le(a, b) and subfield_le(b, c) implies subfield_le(a, c)
-}
-
-theorem subfield_le_antisymm[F: Field](a: Subfield[F], b: Subfield[F]) {
-    subfield_le(a, b) and subfield_le(b, a) implies a = b
-}
-
-theorem subfield_contains_inverse[F: Field](s: Subfield[F], a: F) {
-    s.contains(a) and a != F.0 implies s.contains(a.inverse)
-}
-
-theorem subfield_contains_mul_inverse[F: Field](s: Subfield[F], a: F, b: F) {
-    s.contains(a) and s.contains(b) and b != F.0 implies s.contains(a * b.inverse)
-}
-
-define subfield_inter_contains[F: Field](a: F -> Bool, b: F -> Bool) -> F -> Bool {
-    function(x: F) { a(x) and b(x) }
-}
-
-theorem subfield_inter_is_subfield[F: Field](a: Subfield[F], b: Subfield[F]) {
-    subfield_constraint(subfield_inter_contains(a.contains, b.contains))
-}
-
-let subfield_inter[F: Field](a: Subfield[F], b: Subfield[F]) -> result: Subfield[F] satisfy {
-    Subfield.new(subfield_inter_contains(a.contains, b.contains)) = Option.some(result)
-}
-
-theorem subfield_inter_contains_eq[F: Field](a: Subfield[F], b: Subfield[F], x: F) {
-    subfield_inter(a, b).contains(x) = (a.contains(x) and b.contains(x))
-}
-
-theorem subfield_inter_le_left[F: Field](a: Subfield[F], b: Subfield[F]) {
-    subfield_le(subfield_inter(a, b), a)
-}
-
-theorem subfield_inter_le_right[F: Field](a: Subfield[F], b: Subfield[F]) {
-    subfield_le(subfield_inter(a, b), b)
-}
-
-theorem subfield_inter_greatest[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_le(c, a) and subfield_le(c, b) implies subfield_le(c, subfield_inter(a, b))
-}
-
-theorem subfield_inter_comm[F: Field](a: Subfield[F], b: Subfield[F]) {
-    subfield_inter(a, b) = subfield_inter(b, a)
-}
-
-theorem subfield_inter_idem[F: Field](a: Subfield[F]) {
-    subfield_inter(a, a) = a
-}
-
-theorem subfield_inter_eq_left_iff_le[F: Field](a: Subfield[F], b: Subfield[F]) {
-    (subfield_inter(a, b) = a) = subfield_le(a, b)
-}
-
-theorem subfield_inter_mono_left[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_le(a, b) implies subfield_le(subfield_inter(a, c), subfield_inter(b, c))
-}
-
-theorem subfield_inter_mono_right[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_le(a, b) implies subfield_le(subfield_inter(c, a), subfield_inter(c, b))
-}
-
-theorem subfield_inter_mono[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F], d: Subfield[F]) {
-    subfield_le(a, b) and subfield_le(c, d) implies subfield_le(subfield_inter(a, c), subfield_inter(b, d))
-}
-
-theorem subfield_le_inter_iff[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_le(c, subfield_inter(a, b)) = (subfield_le(c, a) and subfield_le(c, b))
-}
-
-theorem subfield_inter_assoc[F: Field](a: Subfield[F], b: Subfield[F], c: Subfield[F]) {
-    subfield_inter(subfield_inter(a, b), c) = subfield_inter(a, subfield_inter(b, c))
-}
-
-define field_hom_image_contains[F: Field, E: Field](phi: FieldHom[F, E], y: E) -> Bool {
-    exists(x: F) { phi.hom(x) = y }
-}
-
-let field_hom_image[F: Field, E: Field](phi: FieldHom[F, E]) -> result: Subfield[E] satisfy {
-    Subfield.new(field_hom_image_contains(phi)) = Option.some(result)
-}
-
-theorem field_hom_image_contains_eq[F: Field, E: Field](phi: FieldHom[F, E]) {
-    field_hom_image(phi).contains = field_hom_image_contains(phi)
-}
-
-theorem field_hom_image_contains_hom[F: Field, E: Field](phi: FieldHom[F, E], x: F) {
-    field_hom_image(phi).contains(phi.hom(x))
-}
-
-define top_subfield_contains[F: Field](x: F) -> Bool {
+define full_subsemiring_contains[S: Semiring](a: S) -> Bool {
     true
 }
 
-theorem top_subfield_contains_is_subfield[F: Field] {
-    subfield_constraint(top_subfield_contains[F])
+theorem full_subsemiring_constraint[S: Semiring] {
+    subsemiring_constraint(full_subsemiring_contains[S])
 }
 
-let top_subfield[F: Field]: Subfield[F] satisfy {
-    Subfield.new(top_subfield_contains[F]) = Option.some(top_subfield)
+let full_subsemiring[S: Semiring]: Subsemiring[S] satisfy {
+    Subsemiring.new(full_subsemiring_contains[S]) = Option.some(full_subsemiring)
 }
 
-theorem top_subfield_contains_all[F: Field](x: F) {
-    top_subfield[F].contains(x)
+attributes Subsemiring[S: Semiring] {
+    /// The full subsemiring.
+    let full = full_subsemiring[S]
 }
 
-theorem field_hom_image_identity[F: Field] {
-    field_hom_image(identity_field_hom[F]) = top_subfield[F]
+theorem full_subsemiring_contains_everything[S: Semiring](a: S) {
+    full_subsemiring[S].contains(a)
 }
 
-theorem top_subfield_ge[F: Field](s: Subfield[F]) {
-    subfield_le(s, top_subfield[F])
+theorem full_subsemiring_contains_eq[S: Semiring](a: S) {
+    full_subsemiring[S].contains(a) = true
 }
 
-theorem field_hom_image_le_top[F: Field, E: Field](phi: FieldHom[F, E]) {
-    subfield_le(field_hom_image(phi), top_subfield[E])
+theorem subsemiring_subset_full[S: Semiring](s: Subsemiring[S]) {
+    subsemiring_subset(s, full_subsemiring[S])
 }
 
-theorem field_hom_image_compose_contains[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], y: K) {
-    field_hom_image(compose_field_hom(f, g)).contains(y) implies field_hom_image(f).contains(y)
+theorem subsemiring_lte_eq_subset[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    (a <= b) = subsemiring_subset(a, b)
 }
 
-theorem field_hom_image_compose_le[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
-    subfield_le(field_hom_image(compose_field_hom(f, g)), field_hom_image(f))
+theorem subsemiring_instance_lte_refl[S: Semiring] {
+    is_reflexive(LTE.lte[Subsemiring[S]])
 }
 
-define subfield_preimage_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E]) -> F -> Bool {
-    function(x: F) { s.contains(phi.hom(x)) }
+theorem subsemiring_instance_lte_trans[S: Semiring] {
+    is_transitive(LTE.lte[Subsemiring[S]])
 }
 
-let subfield_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E]) -> result: Subfield[F] satisfy {
-    Subfield.new(subfield_preimage_contains(phi, s)) = Option.some(result)
+theorem subsemiring_instance_lte_antisymm[S: Semiring] {
+    is_antisymmetric(LTE.lte[Subsemiring[S]])
 }
 
-theorem subfield_preimage_contains_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], x: F) {
-    subfield_preimage(phi, s).contains(x) = s.contains(phi.hom(x))
+theorem subsemiring_meet_eq_intersection[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    a.meet(b) = a.intersection(b)
 }
 
-theorem subfield_preimage_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]) {
-    subfield_le(s, t) implies subfield_le(subfield_preimage(phi, s), subfield_preimage(phi, t))
+theorem subsemiring_instance_meet_lte_left[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    a.meet(b) <= a
 }
 
-theorem subfield_preimage_inter[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]) {
-    subfield_preimage(phi, subfield_inter(s, t)) = subfield_inter(subfield_preimage(phi, s), subfield_preimage(phi, t))
+theorem subsemiring_instance_meet_lte_right[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    a.meet(b) <= b
 }
 
-theorem subfield_preimage_identity[F: Field](s: Subfield[F]) {
-    subfield_preimage(identity_field_hom[F], s) = s
+theorem subsemiring_instance_lte_meet_of_bounds[S: Semiring](
+    c: Subsemiring[S],
+    a: Subsemiring[S],
+    b: Subsemiring[S]
+) {
+    c <= a and c <= b implies c <= a.meet(b)
 }
 
-theorem subfield_preimage_compose[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], s: Subfield[K]) {
-    subfield_preimage(compose_field_hom(f, g), s) = subfield_preimage(g, subfield_preimage(f, s))
-}
-
-theorem subfield_preimage_top[F: Field, E: Field](phi: FieldHom[F, E]) {
-    subfield_preimage(phi, top_subfield[E]) = top_subfield[F]
-}
-
-define subfield_image_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) -> E -> Bool {
-    function(y: E) { exists(x: F) { s.contains(x) and phi.hom(x) = y } }
-}
-
-let subfield_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) -> result: Subfield[E] satisfy {
-    Subfield.new(subfield_image_contains(phi, s)) = Option.some(result)
-}
-
-theorem subfield_image_contains_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], y: E) {
-    subfield_image(phi, s).contains(y) = exists(x: F) { s.contains(x) and phi.hom(x) = y }
-}
-
-theorem subfield_image_contains_hom[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], x: F) {
-    s.contains(x) implies subfield_image(phi, s).contains(phi.hom(x))
-}
-
-theorem subfield_image_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
-    subfield_le(s, t) implies subfield_le(subfield_image(phi, s), subfield_image(phi, t))
-}
-
-theorem subfield_image_top[F: Field, E: Field](phi: FieldHom[F, E]) {
-    subfield_image(phi, top_subfield[F]) = field_hom_image(phi)
-}
-
-theorem subfield_image_identity[F: Field](s: Subfield[F]) {
-    subfield_image(identity_field_hom[F], s) = s
-}
-
-theorem subfield_image_compose[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E], s: Subfield[F]) {
-    subfield_image(compose_field_hom(f, g), s) = subfield_image(f, subfield_image(g, s))
-}
-
-theorem subfield_image_inter_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
-    subfield_le(subfield_image(phi, subfield_inter(s, t)), subfield_inter(subfield_image(phi, s), subfield_image(phi, t)))
-}
-
-theorem subfield_image_inter[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]) {
-    subfield_image(phi, subfield_inter(s, t)) = subfield_inter(subfield_image(phi, s), subfield_image(phi, t))
-}
-
-theorem subfield_image_le_field_hom_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
-    subfield_le(subfield_image(phi, s), field_hom_image(phi))
-}
-
-theorem subfield_image_preimage_contains[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
-    subfield_image(phi, subfield_preimage(phi, t)).contains(y) implies t.contains(y)
-}
-
-theorem subfield_image_preimage_le[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
-    subfield_le(subfield_image(phi, subfield_preimage(phi, t)), t)
-}
-
-theorem subfield_preimage_image_contains[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], x: F) {
-    s.contains(x) implies subfield_preimage(phi, subfield_image(phi, s)).contains(x)
-}
-
-theorem subfield_le_preimage_image[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
-    subfield_le(s, subfield_preimage(phi, subfield_image(phi, s)))
-}
-
-theorem subfield_preimage_image_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
-    subfield_preimage(phi, subfield_image(phi, s)) = s
-}
-
-theorem subfield_inter_preimage_image_contains[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
-    t.contains(y) and field_hom_image(phi).contains(y) implies subfield_image(phi, subfield_preimage(phi, t)).contains(y)
-}
-
-theorem subfield_image_preimage_in_image[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E], y: E) {
-    subfield_image(phi, subfield_preimage(phi, t)).contains(y) implies field_hom_image(phi).contains(y)
-}
-
-theorem subfield_image_preimage_eq_inter[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
-    subfield_image(phi, subfield_preimage(phi, t)) = subfield_inter(t, field_hom_image(phi))
-}
-
-theorem subfield_image_le_of_le_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
-    subfield_le(s, subfield_preimage(phi, t)) implies subfield_le(subfield_image(phi, s), t)
-}
-
-theorem subfield_le_preimage_of_image_le[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
-    subfield_le(subfield_image(phi, s), t) implies subfield_le(s, subfield_preimage(phi, t))
-}
-
-theorem subfield_image_le_iff_le_preimage[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]) {
-    subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
-}
-
-theorem subfield_image_preimage_eq_iff_le_image[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
-    (subfield_image(phi, subfield_preimage(phi, t)) = t) = subfield_le(t, field_hom_image(phi))
-}
-
-theorem subfield_image_preimage_image_eq[F: Field, E: Field](phi: FieldHom[F, E], s: Subfield[F]) {
-    subfield_image(phi, subfield_preimage(phi, subfield_image(phi, s))) = subfield_image(phi, s)
-}
-
-theorem subfield_preimage_image_preimage_eq[F: Field, E: Field](phi: FieldHom[F, E], t: Subfield[E]) {
-    subfield_preimage(phi, subfield_image(phi, subfield_preimage(phi, t))) = subfield_preimage(phi, t)
-}
-
-theorem field_hom_image_compose_eq[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
-    field_hom_image(compose_field_hom(f, g)) = subfield_image(f, field_hom_image(g))
-}
-
-define is_field_hom_surjective[F: Field, E: Field](phi: FieldHom[F, E]) -> Bool {
-    forall(y: E) { exists(x: F) { phi.hom(x) = y } }
-}
-
-theorem field_hom_image_eq_top_implies_surjective[F: Field, E: Field](phi: FieldHom[F, E]) {
-    field_hom_image(phi) = top_subfield[E] implies is_field_hom_surjective(phi)
-}
-
-theorem surjective_implies_field_hom_image_eq_top[F: Field, E: Field](phi: FieldHom[F, E]) {
-    is_field_hom_surjective(phi) implies field_hom_image(phi) = top_subfield[E]
-}
-
-theorem field_hom_image_eq_top_iff_surjective[F: Field, E: Field](phi: FieldHom[F, E]) {
-    (field_hom_image(phi) = top_subfield[E]) = is_field_hom_surjective(phi)
-}
-
-theorem identity_field_hom_surjective[F: Field] {
-    is_field_hom_surjective(identity_field_hom[F])
-}
-
-theorem compose_field_hom_surjective[F: Field, E: Field, K: Field](f: FieldHom[E, K], g: FieldHom[F, E]) {
-    is_field_hom_surjective(f) and is_field_hom_surjective(g) implies is_field_hom_surjective(compose_field_hom(f, g))
-}
-
-define is_subfield_image_preimage_galois_connection[F: Field, E: Field](
-    phi: FieldHom[F, E]
-) -> Bool {
-    forall(s: Subfield[F], t: Subfield[E]) {
-        subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+define is_monoid_unit[M: Monoid](a: M) -> Bool {
+    exists(b: M) {
+        a * b = M.1 and b * a = M.1
     }
 }
 
-theorem subfield_image_preimage_galois_connection_at[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[E]
-) {
-    subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+theorem unit_ext[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u.val = v.val and u.inv = v.inv implies u = v
 }
 
-theorem field_hom_subfield_image_preimage_galois_connection_raw[F: Field, E: Field](
-    phi: FieldHom[F, E]
-) {
-    forall(s: Subfield[F], t: Subfield[E]) {
-        subfield_le(subfield_image(phi, s), t) = subfield_le(s, subfield_preimage(phi, t))
+attributes Unit[M: Monoid] {
+    /// Unit extensionality from equality of the value and inverse.
+    let ext = unit_ext[M]
+}
+
+theorem unit_val_mul_inv[M: Monoid](u: Unit[M]) {
+    u.val * u.inv = M.1
+}
+
+theorem unit_inv_mul_val[M: Monoid](u: Unit[M]) {
+    u.inv * u.val = M.1
+}
+
+theorem unit_val_is_monoid_unit[M: Monoid](u: Unit[M]) {
+    is_monoid_unit(u.val)
+}
+
+theorem one_is_monoid_unit[M: Monoid] {
+    is_monoid_unit(M.1)
+}
+
+theorem is_monoid_unit_of_inverse[M: Monoid](a: M, b: M) {
+    a * b = M.1 and b * a = M.1 implies is_monoid_unit(a)
+}
+
+theorem monoid_unit_mul_right_inverse[M: Monoid](a: M, b: M, a_inv: M, b_inv: M) {
+    a * a_inv = M.1 and a_inv * a = M.1 and b * b_inv = M.1 and b_inv * b = M.1
+        implies (a * b) * (b_inv * a_inv) = M.1
+}
+
+theorem monoid_unit_mul_left_inverse[M: Monoid](a: M, b: M, a_inv: M, b_inv: M) {
+    a * a_inv = M.1 and a_inv * a = M.1 and b * b_inv = M.1 and b_inv * b = M.1
+        implies (b_inv * a_inv) * (a * b) = M.1
+}
+
+theorem monoid_unit_mul_is_monoid_unit[M: Monoid](a: M, b: M) {
+    is_monoid_unit(a) and is_monoid_unit(b) implies is_monoid_unit(a * b)
+}
+
+theorem monoid_unit_pow_suc_is_monoid_unit[M: Monoid](a: M, k: Nat) {
+    is_monoid_unit(a) and is_monoid_unit(a.pow(k)) implies is_monoid_unit(a.pow(k.suc))
+}
+
+theorem monoid_unit_pow_is_monoid_unit[M: Monoid](a: M, n: Nat) {
+    is_monoid_unit(a) implies is_monoid_unit(a.pow(n))
+}
+
+theorem monoid_inverse_unique[M: Monoid](a: M, b: M, c: M) {
+    a * b = M.1 and b * a = M.1 and a * c = M.1 and c * a = M.1 implies b = c
+}
+
+theorem unit_right_inverse_unique[M: Monoid](u: Unit[M], b: M) {
+    u.val * b = M.1 implies b = u.inv
+}
+
+theorem unit_left_inverse_unique[M: Monoid](u: Unit[M], b: M) {
+    b * u.val = M.1 implies b = u.inv
+}
+
+theorem unit_inverse_unique[M: Monoid](u: Unit[M], b: M) {
+    u.val * b = M.1 and b * u.val = M.1 implies b = u.inv
+}
+
+theorem unit_val_eq_inv_eq[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u.val = v.val implies u.inv = v.inv
+}
+
+theorem unit_inv_eq_val_eq[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u.inv = v.inv implies u.val = v.val
+}
+
+theorem unit_ext_val[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u.val = v.val implies u = v
+}
+
+theorem unit_ext_inv[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u.inv = v.inv implies u = v
+}
+
+theorem unit_eq_iff_val_eq[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (u = v) = (u.val = v.val)
+}
+
+theorem unit_eq_iff_inv_eq[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (u = v) = (u.inv = v.inv)
+}
+
+theorem unit_eq_val[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u = v implies u.val = v.val
+}
+
+theorem unit_eq_inv[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u = v implies u.inv = v.inv
+}
+
+let unit_one[M: Monoid]: Unit[M] satisfy {
+    Unit.new(M.1, M.1) = Option.some(unit_one)
+}
+
+instance Unit[M: Monoid]: One {
+    let 1: Unit[M] = unit_one[M]
+}
+
+let unit_mul[M: Monoid](u: Unit[M], v: Unit[M]) -> result: Unit[M] satisfy {
+    Unit.new(u.val * v.val, v.inv * u.inv) = Option.some(result)
+}
+
+instance Unit[M: Monoid]: Mul {
+    define mul(self, other: Unit[M]) -> Unit[M] {
+        unit_mul(self, other)
     }
 }
 
-define subfield_image_preimage_closure[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F]
-) -> Subfield[F] {
-    subfield_preimage(phi, subfield_image(phi, s))
+let unit_inverse[M: Monoid](u: Unit[M]) -> result: Unit[M] satisfy {
+    Unit.new(u.inv, u.val) = Option.some(result)
 }
 
-theorem subfield_image_preimage_closure_extensive[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F]
-) {
-    subfield_le(s, subfield_image_preimage_closure(phi, s))
-}
-
-theorem subfield_image_preimage_closure_monotone[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]
-) {
-    subfield_le(s, t) implies
-        subfield_le(subfield_image_preimage_closure(phi, s), subfield_image_preimage_closure(phi, t))
-}
-
-theorem subfield_le_image_preimage_closure_iff_image_le[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F], t: Subfield[F]
-) {
-    subfield_le(s, subfield_image_preimage_closure(phi, t)) =
-        subfield_le(subfield_image(phi, s), subfield_image(phi, t))
-}
-
-theorem subfield_image_preimage_closure_eq_self[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F]
-) {
-    subfield_image_preimage_closure(phi, s) = s
-}
-
-theorem subfield_image_of_preimage_closure_eq[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F]
-) {
-    subfield_image(phi, subfield_image_preimage_closure(phi, s)) = subfield_image(phi, s)
-}
-
-theorem subfield_image_preimage_closure_idempotent[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[F]
-) {
-    subfield_image_preimage_closure(phi, subfield_image_preimage_closure(phi, s)) =
-        subfield_image_preimage_closure(phi, s)
-}
-
-define subfield_image_preimage_kernel[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) -> Subfield[E] {
-    subfield_image(phi, subfield_preimage(phi, t))
-}
-
-theorem subfield_image_preimage_kernel_le[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_le(subfield_image_preimage_kernel(phi, t), t)
-}
-
-theorem subfield_image_preimage_kernel_le_field_hom_image[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_le(subfield_image_preimage_kernel(phi, t), field_hom_image(phi))
-}
-
-theorem subfield_image_preimage_kernel_eq_inter[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_image_preimage_kernel(phi, t) = subfield_inter(t, field_hom_image(phi))
-}
-
-theorem subfield_image_preimage_kernel_le_iff_preimage_le[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]
-) {
-    subfield_le(subfield_image_preimage_kernel(phi, s), t) =
-        subfield_le(subfield_preimage(phi, s), subfield_preimage(phi, t))
-}
-
-theorem subfield_image_preimage_kernel_monotone[F: Field, E: Field](
-    phi: FieldHom[F, E], s: Subfield[E], t: Subfield[E]
-) {
-    subfield_le(s, t) implies
-        subfield_le(subfield_image_preimage_kernel(phi, s), subfield_image_preimage_kernel(phi, t))
-}
-
-theorem subfield_image_preimage_kernel_idempotent[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_image_preimage_kernel(phi, subfield_image_preimage_kernel(phi, t)) =
-        subfield_image_preimage_kernel(phi, t)
-}
-
-theorem subfield_image_preimage_kernel_fixed_iff_le_image[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    (subfield_image_preimage_kernel(phi, t) = t) = subfield_le(t, field_hom_image(phi))
-}
-
-theorem subfield_image_preimage_kernel_eq_of_le_image[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_le(t, field_hom_image(phi)) implies subfield_image_preimage_kernel(phi, t) = t
-}
-
-theorem subfield_le_image_of_subfield_image_preimage_kernel_eq[F: Field, E: Field](
-    phi: FieldHom[F, E], t: Subfield[E]
-) {
-    subfield_image_preimage_kernel(phi, t) = t implies subfield_le(t, field_hom_image(phi))
-}
-
-define subfield_carrier[F: Field](s: Subfield[F]) -> Set[F] {
-    Set[F].new(s.contains)
-}
-
-theorem subfield_carrier_contains_eq[F: Field](s: Subfield[F], x: F) {
-    subfield_carrier(s).contains(x) = s.contains(x)
-}
-
-define set_subset_subfield[F: Field](a: Set[F], s: Subfield[F]) -> Bool {
-    a.subset(subfield_carrier(s))
-}
-
-theorem set_subset_subfield_intro[F: Field](a: Set[F], s: Subfield[F]) {
-    (forall(x: F) { a.contains(x) implies s.contains(x) }) implies set_subset_subfield(a, s)
-}
-
-theorem set_subset_subfield_contains[F: Field](a: Set[F], s: Subfield[F], x: F) {
-    set_subset_subfield(a, s) and a.contains(x) implies s.contains(x)
-}
-
-theorem set_subset_subfield_carrier_self[F: Field](s: Subfield[F]) {
-    set_subset_subfield(subfield_carrier(s), s)
-}
-
-define subfield_closure_contains[F: Field](a: Set[F], x: F) -> Bool {
-    forall(s: Subfield[F]) {
-        set_subset_subfield(a, s) implies s.contains(x)
+instance Unit[M: Monoid]: Group {
+    define inverse(self) -> Unit[M] {
+        unit_inverse(self)
     }
 }
 
-theorem subfield_closure_contains_intro[F: Field](a: Set[F], x: F) {
-    (forall(s: Subfield[F]) { set_subset_subfield(a, s) implies s.contains(x) })
-    implies subfield_closure_contains(a, x)
+theorem unit_one_val[M: Monoid] {
+    unit_one[M].val = M.1
 }
 
-theorem subfield_closure_contains_in_subfield[F: Field](a: Set[F], s: Subfield[F], x: F) {
-    subfield_closure_contains(a, x) and set_subset_subfield(a, s) implies s.contains(x)
+theorem unit_one_inv[M: Monoid] {
+    unit_one[M].inv = M.1
 }
 
-theorem subfield_closure_contains_zero[F: Field](a: Set[F]) {
-    subfield_closure_contains(a, F.0)
+theorem unit_mul_val[M: Monoid](u: Unit[M], v: Unit[M]) {
+    unit_mul(u, v).val = u.val * v.val
 }
 
-theorem subfield_closure_contains_one[F: Field](a: Set[F]) {
-    subfield_closure_contains(a, F.1)
+theorem unit_mul_inv[M: Monoid](u: Unit[M], v: Unit[M]) {
+    unit_mul(u, v).inv = v.inv * u.inv
 }
 
-theorem subfield_closure_contains_add[F: Field](a: Set[F], x: F, y: F) {
-    subfield_closure_contains(a, x) and subfield_closure_contains(a, y)
-    implies subfield_closure_contains(a, x + y)
+theorem unit_mul_val_is_monoid_unit[M: Monoid](u: Unit[M], v: Unit[M]) {
+    is_monoid_unit(u.val * v.val)
 }
 
-theorem subfield_closure_contains_neg[F: Field](a: Set[F], x: F) {
-    subfield_closure_contains(a, x) implies subfield_closure_contains(a, -x)
+theorem unit_inverse_val[M: Monoid](u: Unit[M]) {
+    unit_inverse(u).val = u.inv
 }
 
-theorem subfield_closure_contains_mul[F: Field](a: Set[F], x: F, y: F) {
-    subfield_closure_contains(a, x) and subfield_closure_contains(a, y)
-    implies subfield_closure_contains(a, x * y)
+theorem unit_inverse_inv[M: Monoid](u: Unit[M]) {
+    unit_inverse(u).inv = u.val
 }
 
-theorem subfield_closure_contains_inverse[F: Field](a: Set[F], x: F) {
-    subfield_closure_contains(a, x) and x != F.0 implies subfield_closure_contains(a, x.inverse)
+theorem unit_inv_is_monoid_unit[M: Monoid](u: Unit[M]) {
+    is_monoid_unit(u.inv)
 }
 
-theorem subfield_closure_contains_is_subfield[F: Field](a: Set[F]) {
-    subfield_constraint(subfield_closure_contains(a))
+theorem unit_mul_one_right[M: Monoid](u: Unit[M]) {
+    unit_mul(u, unit_one[M]) = u
 }
 
-let subfield_closure[F: Field](a: Set[F]) -> result: Subfield[F] satisfy {
-    Subfield.new(subfield_closure_contains(a)) = Option.some(result)
+theorem unit_mul_one_left[M: Monoid](u: Unit[M]) {
+    unit_mul(unit_one[M], u) = u
 }
 
-theorem subfield_closure_contains_eq[F: Field](a: Set[F], x: F) {
-    subfield_closure(a).contains(x) = subfield_closure_contains(a, x)
+theorem unit_eq_one_iff_val_eq_one[M: Monoid](u: Unit[M]) {
+    (u = unit_one[M]) = (u.val = M.1)
 }
 
-theorem subfield_closure_contains_generator[F: Field](a: Set[F], x: F) {
-    a.contains(x) implies subfield_closure(a).contains(x)
+theorem unit_eq_one_iff_inv_eq_one[M: Monoid](u: Unit[M]) {
+    (u = unit_one[M]) = (u.inv = M.1)
 }
 
-theorem subfield_closure_minimal[F: Field](a: Set[F], s: Subfield[F]) {
-    set_subset_subfield(a, s) implies subfield_le(subfield_closure(a), s)
+theorem unit_mul_inverse_right[M: Monoid](u: Unit[M]) {
+    unit_mul(u, unit_inverse(u)) = unit_one[M]
 }
 
-theorem subfield_closure_le_iff_set_subset_subfield[F: Field](a: Set[F], s: Subfield[F]) {
-    subfield_le(subfield_closure(a), s) = set_subset_subfield(a, s)
+theorem unit_mul_inverse_left[M: Monoid](u: Unit[M]) {
+    unit_mul(unit_inverse(u), u) = unit_one[M]
 }
 
-theorem subfield_closure_mono[F: Field](a: Set[F], b: Set[F]) {
-    a.subset(b) implies subfield_le(subfield_closure(a), subfield_closure(b))
+theorem unit_mul_eq_one_iff_eq_inverse[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (unit_mul(u, v) = unit_one[M]) = (v = unit_inverse(u))
 }
 
-theorem subfield_closure_eq_of_mutual_subset[F: Field](a: Set[F], b: Set[F]) {
-    a.subset(b) and b.subset(a) implies subfield_closure(a) = subfield_closure(b)
+theorem unit_mul_eq_one_iff_eq_inverse_left[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (unit_mul(u, v) = unit_one[M]) = (u = unit_inverse(v))
 }
 
-theorem subfield_closure_of_carrier[F: Field](s: Subfield[F]) {
-    subfield_closure(subfield_carrier(s)) = s
+theorem unit_mul_assoc[M: Monoid](u: Unit[M], v: Unit[M], w: Unit[M]) {
+    unit_mul(u, unit_mul(v, w)) = unit_mul(unit_mul(u, v), w)
 }
 
-theorem subfield_closure_idempotent[F: Field](a: Set[F]) {
-    subfield_closure(subfield_carrier(subfield_closure(a))) = subfield_closure(a)
+theorem unit_inverse_inverse[M: Monoid](u: Unit[M]) {
+    unit_inverse(unit_inverse(u)) = u
 }
 
-theorem set_image_subset_subfield_image_closure[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[F]
+theorem unit_inverse_mul[M: Monoid](u: Unit[M], v: Unit[M]) {
+    unit_inverse(unit_mul(u, v)) = unit_mul(unit_inverse(v), unit_inverse(u))
+}
+
+theorem monoid_hom_maps_monoid_unit[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M) {
+    is_monoid_unit(a) implies is_monoid_unit(f.hom(a))
+}
+
+let monoid_hom_unit[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) -> result: Unit[N] satisfy {
+    Unit.new(f.hom(u.val), f.hom(u.inv)) = Option.some(result)
+}
+
+theorem monoid_hom_unit_val[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) {
+    monoid_hom_unit(f, u).val = f.hom(u.val)
+}
+
+theorem monoid_hom_unit_inv[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) {
+    monoid_hom_unit(f, u).inv = f.hom(u.inv)
+}
+
+theorem monoid_hom_unit_one[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    monoid_hom_unit(f, unit_one[M]) = unit_one[N]
+}
+
+theorem monoid_hom_unit_identity[M: Monoid](u: Unit[M]) {
+    monoid_hom_unit(identity_monoid_hom[M], u) = u
+}
+
+theorem monoid_hom_unit_compose[M: Monoid, N: Monoid, P: Monoid](
+    f: MonoidHom[N, P],
+    g: MonoidHom[M, N],
+    u: Unit[M]
 ) {
-    set_subset_subfield(set_image(a, phi.hom), subfield_image(phi, subfield_closure(a)))
+    monoid_hom_unit(compose_monoid_hom(f, g), u) = monoid_hom_unit(f, monoid_hom_unit(g, u))
 }
 
-theorem subfield_image_closure_le_closure_image[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[F]
-) {
-    subfield_le(subfield_image(phi, subfield_closure(a)), subfield_closure(set_image(a, phi.hom)))
+theorem monoid_hom_unit_inverse[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) {
+    monoid_hom_unit(f, unit_inverse(u)) = unit_inverse(monoid_hom_unit(f, u))
 }
 
-theorem subfield_image_closure_eq_closure_image[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[F]
-) {
-    subfield_image(phi, subfield_closure(a)) = subfield_closure(set_image(a, phi.hom))
+theorem monoid_hom_unit_mul[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M], v: Unit[M]) {
+    monoid_hom_unit(f, unit_mul(u, v)) = unit_mul(monoid_hom_unit(f, u), monoid_hom_unit(f, v))
 }
 
-theorem subfield_preimage_closure_image_eq_closure[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[F]
-) {
-    subfield_preimage(phi, subfield_closure(set_image(a, phi.hom))) = subfield_closure(a)
+theorem unit_val_mul_eq_zero_left[R: Ring](u: Unit[R], a: R) {
+    u.val * a = R.0 implies a = R.0
 }
 
-theorem subfield_closure_preimage_le_preimage_closure[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[E]
-) {
-    subfield_le(subfield_closure(set_preimage(phi.hom, a)), subfield_preimage(phi, subfield_closure(a)))
+theorem unit_val_mul_eq_zero_right[R: Ring](u: Unit[R], a: R) {
+    a * u.val = R.0 implies a = R.0
 }
 
-theorem subfield_image_closure_preimage_le_closure[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[E]
-) {
-    subfield_le(subfield_image(phi, subfield_closure(set_preimage(phi.hom, a))), subfield_closure(a))
+theorem unit_val_mul_nonzero_left[R: Ring](u: Unit[R], a: R) {
+    a != R.0 implies u.val * a != R.0
 }
 
-theorem subfield_image_closure_preimage_eq_closure_of_set_subset_image[F: Field, E: Field](
-    phi: FieldHom[F, E], a: Set[E]
-) {
-    set_subset_subfield(a, field_hom_image(phi)) implies
-    subfield_image(phi, subfield_closure(set_preimage(phi.hom, a))) = subfield_closure(a)
+theorem unit_val_mul_nonzero_right[R: Ring](u: Unit[R], a: R) {
+    a != R.0 implies a * u.val != R.0
+}
+
+theorem unit_val_mul_zero_iff_left[R: Ring](u: Unit[R], a: R) {
+    (u.val * a = R.0) = (a = R.0)
+}
+
+theorem unit_val_mul_zero_iff_right[R: Ring](u: Unit[R], a: R) {
+    (a * u.val = R.0) = (a = R.0)
+}
+
+theorem unit_val_mul_cancel_left[R: Ring](u: Unit[R], a: R, b: R) {
+    u.val * a = u.val * b implies a = b
+}
+
+theorem unit_val_mul_cancel_right[R: Ring](u: Unit[R], a: R, b: R) {
+    a * u.val = b * u.val implies a = b
+}
+
+theorem monoid_unit_mul_eq_zero_left[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) and u * a = R.0 implies a = R.0
+}
+
+theorem monoid_unit_mul_eq_zero_right[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) and a * u = R.0 implies a = R.0
+}
+
+theorem monoid_unit_mul_nonzero_left[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) and a != R.0 implies u * a != R.0
+}
+
+theorem monoid_unit_mul_nonzero_right[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) and a != R.0 implies a * u != R.0
+}
+
+theorem monoid_unit_mul_cancel_left[R: Ring](u: R, a: R, b: R) {
+    is_monoid_unit(u) and u * a = u * b implies a = b
+}
+
+theorem monoid_unit_mul_cancel_right[R: Ring](u: R, a: R, b: R) {
+    is_monoid_unit(u) and a * u = b * u implies a = b
+}
+
+theorem monoid_unit_mul_zero_iff_left[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) implies ((u * a = R.0) = (a = R.0))
+}
+
+theorem monoid_unit_mul_zero_iff_right[R: Ring](u: R, a: R) {
+    is_monoid_unit(u) implies ((a * u = R.0) = (a = R.0))
+}
+
+theorem unit_val_mul_eq_iff_left[R: Ring](u: Unit[R], a: R, b: R) {
+    (u.val * a = u.val * b) = (a = b)
+}
+
+theorem unit_val_mul_eq_iff_right[R: Ring](u: Unit[R], a: R, b: R) {
+    (a * u.val = b * u.val) = (a = b)
+}
+
+theorem monoid_unit_mul_eq_iff_left[R: Ring](u: R, a: R, b: R) {
+    is_monoid_unit(u) implies ((u * a = u * b) = (a = b))
+}
+
+theorem monoid_unit_mul_eq_iff_right[R: Ring](u: R, a: R, b: R) {
+    is_monoid_unit(u) implies ((a * u = b * u) = (a = b))
+}
+
+theorem unit_val_mul_ne_left[R: Ring](u: Unit[R], a: R, b: R) {
+    a != b implies u.val * a != u.val * b
+}
+
+theorem unit_val_mul_ne_right[R: Ring](u: Unit[R], a: R, b: R) {
+    a != b implies a * u.val != b * u.val
 }
 
 theorem field_unit_val_nonzero[F: Field](u: Unit[F]) {
@@ -1907,6 +918,98 @@ theorem field_unit_exists_of_nonzero[F: Field](a: F) {
     }
 }
 
+theorem is_unit_one[R: CommRing] {
+    R.1.is_unit
+}
+
+theorem is_unit_eq_is_monoid_unit[R: CommRing](a: R) {
+    a.is_unit = is_monoid_unit(a)
+}
+
+theorem is_unit_of_monoid_unit[R: CommRing](a: R) {
+    is_monoid_unit(a) implies a.is_unit
+}
+
+theorem is_monoid_unit_of_is_unit[R: CommRing](a: R) {
+    a.is_unit implies is_monoid_unit(a)
+}
+
+theorem is_unit_iff_is_monoid_unit[R: CommRing](a: R) {
+    a.is_unit = is_monoid_unit(a)
+}
+
+theorem is_unit_exists[R: CommRing](a: R) {
+    a.is_unit implies exists(b: R) { a * b = R.1 }
+}
+
+theorem is_unit_witness[R: CommRing](a: R, b: R) {
+    a * b = R.1 implies a.is_unit
+}
+
+theorem is_unit_symm[R: CommRing](a: R, b: R) {
+    a * b = R.1 implies b * a = R.1
+}
+
+theorem is_unit_mul[R: CommRing](a: R, b: R) {
+    a.is_unit and b.is_unit implies (a * b).is_unit
+}
+
+theorem is_unit_pow_via_monoid_unit[R: CommRing](a: R, n: Nat) {
+    a.is_unit implies a.pow(n).is_unit
+}
+
+theorem is_unit_pow_suc[R: CommRing](a: R, k: Nat) {
+    a.is_unit and a.pow(k).is_unit implies a.pow(k.suc).is_unit
+}
+
+theorem is_unit_pow[R: CommRing](a: R, n: Nat) {
+    a.is_unit implies a.pow(n).is_unit
+}
+
+theorem zero_non_unit_or_trivial[R: CommRing] {
+    R.0.is_non_unit or R.0 = R.1
+}
+
+theorem is_unit_mul_cancel_left[R: CommRing](u: R, a: R, b: R) {
+    u.is_unit and u * a = u * b implies a = b
+}
+
+theorem is_unit_mul_cancel_right[R: CommRing](u: R, a: R, b: R) {
+    u.is_unit and a * u = b * u implies a = b
+}
+
+theorem is_unit_mul_zero_iff_left[R: CommRing](u: R, a: R) {
+    u.is_unit implies ((u * a = R.0) = (a = R.0))
+}
+
+theorem is_unit_mul_zero_iff_right[R: CommRing](u: R, a: R) {
+    u.is_unit implies ((a * u = R.0) = (a = R.0))
+}
+
+theorem is_unit_mul_nonzero_left[R: CommRing](u: R, a: R) {
+    u.is_unit and a != R.0 implies u * a != R.0
+}
+
+theorem is_unit_mul_nonzero_right[R: CommRing](u: R, a: R) {
+    u.is_unit and a != R.0 implies a * u != R.0
+}
+
+theorem is_unit_mul_eq_iff_left[R: CommRing](u: R, a: R, b: R) {
+    u.is_unit implies ((u * a = u * b) = (a = b))
+}
+
+theorem is_unit_mul_eq_iff_right[R: CommRing](u: R, a: R, b: R) {
+    u.is_unit implies ((a * u = b * u) = (a = b))
+}
+
+theorem is_non_unit_of_mul_left[R: CommRing](u: R, a: R) {
+    u.is_unit and (u * a).is_non_unit implies a.is_non_unit
+}
+
+theorem is_non_unit_of_mul_right[R: CommRing](u: R, a: R) {
+    u.is_unit and (a * u).is_non_unit implies a.is_non_unit
+}
+
 theorem field_nonzero_is_unit[F: Field](a: F) {
     a != F.0 implies a.is_unit
 }
@@ -1927,20 +1030,901 @@ theorem field_zero_is_non_unit[F: Field] {
     F.0.is_non_unit
 }
 
+define non_units[R: CommRing](a: R) -> Bool {
+    a.is_non_unit
+}
+
+theorem non_units_mem[R: CommRing](a: R) {
+    non_units[R](a) = a.is_non_unit
+}
+
+theorem non_units_not_one[R: CommRing] {
+    not non_units[R](R.1)
+}
+
+theorem ideal_with_unit_eq_unit_ideal[R: CommRing](contains: R -> Bool, u: R) {
+    is_ideal(contains) and contains(u) and u.is_unit implies contains = unit_ideal[R]
+}
+
+theorem principal_ideal_eq_unit_of_unit[R: CommRing](a: R) {
+    a.is_unit implies principal_ideal[R](a) = unit_ideal[R]
+}
+
+theorem unit_of_principal_ideal_eq_unit[R: CommRing](a: R) {
+    principal_ideal[R](a) = unit_ideal[R] implies a.is_unit
+}
+
+theorem proper_ideal_no_units[R: CommRing](contains: R -> Bool, a: R) {
+    is_ideal(contains) and ideal_proper_constraint(contains) and contains(a) implies a.is_non_unit
+}
+
+theorem proper_ideal_subset_non_units[R: CommRing](contains: R -> Bool) {
+    is_ideal(contains) and ideal_proper_constraint(contains) implies ideal_subset(contains, non_units[R])
+}
+
 theorem field_non_unit_iff_zero[F: Field](a: F) {
     a.is_non_unit = (a = F.0)
+}
+
+define is_pointwise_unit[T, M: Monoid](f: T -> M) -> Bool {
+    exists(g: T -> M) {
+        pointwise_mul(f, g) = pointwise_one[T, M] and
+        pointwise_mul(g, f) = pointwise_one[T, M]
+    }
+}
+
+define unit_function_val[T, M: Monoid](f: T -> Unit[M], t: T) -> M {
+    f(t).val
+}
+
+define unit_function_inv[T, M: Monoid](f: T -> Unit[M], t: T) -> M {
+    f(t).inv
+}
+
+theorem unit_function_val_apply[T, M: Monoid](f: T -> Unit[M], t: T) {
+    unit_function_val(f, t) = f(t).val
+}
+
+theorem unit_function_inv_apply[T, M: Monoid](f: T -> Unit[M], t: T) {
+    unit_function_inv(f, t) = f(t).inv
+}
+
+theorem unit_function_val_mul_inv[T, M: Monoid](f: T -> Unit[M]) {
+    pointwise_mul(unit_function_val(f), unit_function_inv(f)) = pointwise_one[T, M]
+}
+
+theorem unit_function_inv_mul_val[T, M: Monoid](f: T -> Unit[M]) {
+    pointwise_mul(unit_function_inv(f), unit_function_val(f)) = pointwise_one[T, M]
+}
+
+theorem unit_function_val_is_pointwise_unit[T, M: Monoid](f: T -> Unit[M]) {
+    is_pointwise_unit(unit_function_val(f))
+}
+
+theorem unit_function_inv_is_pointwise_unit[T, M: Monoid](f: T -> Unit[M]) {
+    is_pointwise_unit(unit_function_inv(f))
+}
+
+theorem pointwise_unit_apply_is_monoid_unit[T, M: Monoid](f: T -> M, t: T) {
+    is_pointwise_unit(f) implies is_monoid_unit(f(t))
+}
+
+theorem pointwise_unit_of_inverse[T, M: Monoid](f: T -> M, g: T -> M) {
+    pointwise_mul(f, g) = pointwise_one[T, M] and
+    pointwise_mul(g, f) = pointwise_one[T, M]
+    implies is_pointwise_unit(f)
+}
+
+theorem pointwise_inverse_witness_is_pointwise_unit[T, M: Monoid](f: T -> M, g: T -> M) {
+    pointwise_mul(f, g) = pointwise_one[T, M] and
+    pointwise_mul(g, f) = pointwise_one[T, M]
+    implies is_pointwise_unit(g)
+}
+
+theorem pointwise_unit_of_eq[T, M: Monoid](f: T -> M, h: T -> M) {
+    is_pointwise_unit(f) and f = h implies is_pointwise_unit(h)
+}
+
+theorem pointwise_unit_of_eq_reverse[T, M: Monoid](f: T -> M, h: T -> M) {
+    is_pointwise_unit(h) and f = h implies is_pointwise_unit(f)
+}
+
+theorem unit_function_val_apply_is_monoid_unit[T, M: Monoid](f: T -> Unit[M], t: T) {
+    is_monoid_unit(unit_function_val(f, t))
+}
+
+theorem unit_function_inv_apply_is_monoid_unit[T, M: Monoid](f: T -> Unit[M], t: T) {
+    is_monoid_unit(unit_function_inv(f, t))
+}
+
+theorem pointwise_one_is_pointwise_unit[T, M: Monoid] {
+    is_pointwise_unit(pointwise_one[T, M])
+}
+
+theorem pointwise_unit_of_group[T, G: Group](f: T -> G) {
+    is_pointwise_unit(f)
+}
+
+theorem pointwise_mul_is_pointwise_unit[T, M: Monoid](f: T -> M, h: T -> M) {
+    is_pointwise_unit(f) and is_pointwise_unit(h) implies
+        is_pointwise_unit(pointwise_mul(f, h))
+}
+
+theorem pointwise_unit_mul_eq_zero_left_apply[T, R: Ring](u: T -> R, f: T -> R, t: T) {
+    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_zero[T, R] implies
+    f(t) = R.0
+}
+
+theorem pointwise_unit_mul_eq_zero_left[T, R: Ring](u: T -> R, f: T -> R) {
+    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_zero[T, R] implies
+    f = pointwise_zero[T, R]
+}
+
+theorem pointwise_unit_mul_eq_zero_right_apply[T, R: Ring](u: T -> R, f: T -> R, t: T) {
+    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_zero[T, R] implies
+    f(t) = R.0
+}
+
+theorem pointwise_unit_mul_eq_zero_right[T, R: Ring](u: T -> R, f: T -> R) {
+    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_zero[T, R] implies
+    f = pointwise_zero[T, R]
+}
+
+theorem pointwise_unit_mul_cancel_left_apply[T, R: Ring](u: T -> R, f: T -> R, g: T -> R, t: T) {
+    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_mul(u, g) implies
+    f(t) = g(t)
+}
+
+theorem pointwise_unit_mul_cancel_left[T, R: Ring](u: T -> R, f: T -> R, g: T -> R) {
+    is_pointwise_unit(u) and pointwise_mul(u, f) = pointwise_mul(u, g) implies
+    f = g
+}
+
+theorem pointwise_unit_mul_cancel_right_apply[T, R: Ring](u: T -> R, f: T -> R, g: T -> R, t: T) {
+    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_mul(g, u) implies
+    f(t) = g(t)
+}
+
+theorem pointwise_unit_mul_cancel_right[T, R: Ring](u: T -> R, f: T -> R, g: T -> R) {
+    is_pointwise_unit(u) and pointwise_mul(f, u) = pointwise_mul(g, u) implies
+    f = g
+}
+
+define is_function_pair_unit[T, A: Monoid, B: Monoid](p: Pair[T -> A, T -> B]) -> Bool {
+    exists(q: Pair[T -> A, T -> B]) {
+        function_pair_mul(p, q) = function_pair_one[T, A, B] and
+        function_pair_mul(q, p) = function_pair_one[T, A, B]
+    }
+}
+
+theorem function_pair_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B]
+) {
+    is_function_pair_unit(p) implies is_pointwise_unit(p.first)
+}
+
+theorem function_pair_unit_second_is_pointwise_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B]
+) {
+    is_function_pair_unit(p) implies is_pointwise_unit(p.second)
+}
+
+theorem function_pair_unit_of_components[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B]
+) {
+    is_pointwise_unit(p.first) and is_pointwise_unit(p.second) implies
+    is_function_pair_unit(p)
+}
+
+theorem function_pair_unit_iff_components[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B]
+) {
+    is_function_pair_unit(p) = (is_pointwise_unit(p.first) and is_pointwise_unit(p.second))
+}
+
+theorem function_pair_mul_first_is_pointwise_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B],
+    q: Pair[T -> A, T -> B]
+) {
+    is_pointwise_unit(p.first) and is_pointwise_unit(q.first) implies
+    is_pointwise_unit(function_pair_mul(p, q).first)
+}
+
+theorem function_pair_mul_second_is_pointwise_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B],
+    q: Pair[T -> A, T -> B]
+) {
+    is_pointwise_unit(p.second) and is_pointwise_unit(q.second) implies
+    is_pointwise_unit(function_pair_mul(p, q).second)
+}
+
+theorem function_pair_mul_is_function_pair_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B],
+    q: Pair[T -> A, T -> B]
+) {
+    is_function_pair_unit(p) and is_function_pair_unit(q) implies
+    is_function_pair_unit(function_pair_mul(p, q))
+}
+
+theorem function_pair_one_is_function_pair_unit[T, A: Monoid, B: Monoid] {
+    is_function_pair_unit(function_pair_one[T, A, B])
+}
+
+theorem function_pair_unit_of_inverse[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B],
+    q: Pair[T -> A, T -> B]
+) {
+    function_pair_mul(p, q) = function_pair_one[T, A, B] and
+    function_pair_mul(q, p) = function_pair_one[T, A, B]
+    implies is_function_pair_unit(p)
+}
+
+theorem function_pair_inverse_witness_is_function_pair_unit[T, A: Monoid, B: Monoid](
+    p: Pair[T -> A, T -> B],
+    q: Pair[T -> A, T -> B]
+) {
+    function_pair_mul(p, q) = function_pair_one[T, A, B] and
+    function_pair_mul(q, p) = function_pair_one[T, A, B]
+    implies is_function_pair_unit(q)
+}
+
+theorem function_pair_unit_of_group[T, A: Group, B: Group](p: Pair[T -> A, T -> B]) {
+    is_function_pair_unit(p)
+}
+
+theorem function_pair_inverse_is_function_pair_unit[T, A: Group, B: Group](
+    p: Pair[T -> A, T -> B]
+) {
+    is_function_pair_unit(function_pair_inverse(p))
+}
+
+define is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) -> Bool {
+    exists(q: Pair[T -> A, Pair[T -> B, T -> C]]) {
+        function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
+        function_triple_mul(q, p) = function_triple_one[T, A, B, C]
+    }
+}
+
+theorem function_triple_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(p) implies is_pointwise_unit(p.first)
+}
+
+theorem function_triple_unit_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(p) implies is_pointwise_unit(p.second.first)
+}
+
+theorem function_triple_unit_second_second_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(p) implies is_pointwise_unit(p.second.second)
+}
+
+theorem function_triple_unit_of_components[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_pointwise_unit(p.first) and is_pointwise_unit(p.second.first) and
+    is_pointwise_unit(p.second.second) implies is_function_triple_unit(p)
+}
+
+theorem function_triple_unit_iff_components[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(p) = (
+        is_pointwise_unit(p.first) and
+        is_pointwise_unit(p.second.first) and
+        is_pointwise_unit(p.second.second)
+    )
+}
+
+theorem function_triple_one_is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid] {
+    is_function_triple_unit(function_triple_one[T, A, B, C])
+}
+
+theorem function_triple_unit_of_inverse[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]],
+    q: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
+    function_triple_mul(q, p) = function_triple_one[T, A, B, C]
+    implies is_function_triple_unit(p)
+}
+
+theorem function_triple_inverse_witness_is_function_triple_unit[T, A: Monoid, B: Monoid, C: Monoid](
+    p: Pair[T -> A, Pair[T -> B, T -> C]],
+    q: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    function_triple_mul(p, q) = function_triple_one[T, A, B, C] and
+    function_triple_mul(q, p) = function_triple_one[T, A, B, C]
+    implies is_function_triple_unit(q)
+}
+
+theorem function_triple_unit_of_group[T, A: Group, B: Group, C: Group](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(p)
+}
+
+theorem function_triple_inverse_is_function_triple_unit[T, A: Group, B: Group, C: Group](
+    p: Pair[T -> A, Pair[T -> B, T -> C]]
+) {
+    is_function_triple_unit(function_triple_inverse(p))
+}
+
+define is_function_quadruple_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) -> Bool {
+    exists(q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]) {
+        function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
+        function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
+    }
+}
+
+theorem function_quadruple_unit_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(p) implies is_pointwise_unit(p.first)
+}
+
+theorem function_quadruple_unit_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.first)
+}
+
+theorem function_quadruple_unit_second_second_first_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.second.first)
+}
+
+theorem function_quadruple_unit_second_second_second_is_pointwise_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(p) implies is_pointwise_unit(p.second.second.second)
+}
+
+theorem function_quadruple_unit_of_inverse[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
+    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
+    function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
+    implies is_function_quadruple_unit(p)
+}
+
+theorem function_quadruple_inverse_witness_is_function_quadruple_unit[T, A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
+    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    function_quadruple_mul(p, q) = function_quadruple_one[T, A, B, C, D] and
+    function_quadruple_mul(q, p) = function_quadruple_one[T, A, B, C, D]
+    implies is_function_quadruple_unit(q)
+}
+
+theorem function_quadruple_unit_of_group[T, A: Group, B: Group, C: Group, D: Group](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(p)
+}
+
+theorem function_quadruple_inverse_is_function_quadruple_unit[T, A: Group, B: Group, C: Group, D: Group](
+    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
+) {
+    is_function_quadruple_unit(function_quadruple_inverse(p))
+}
+
+define is_local_ring[R: CommRing](m: R -> Bool) -> Bool {
+    is_maximal_ideal(m)
+    and forall(other: R -> Bool) {
+        is_maximal_ideal(other) implies other = m
+    }
+}
+
+structure LocalRing[R: CommRing] {
+    /// The unique maximal ideal of this local ring, as a membership predicate.
+    maximal: R -> Bool
+} constraint {
+    is_local_ring(maximal)
+}
+
+theorem is_local_ring_unfold[R: CommRing](m: R -> Bool) {
+    is_local_ring(m) = (is_maximal_ideal(m) and forall(other: R -> Bool) {
+        is_maximal_ideal(other) implies other = m
+    })
+}
+
+theorem is_local_ring_from_unique_maximal[R: CommRing](m: R -> Bool) {
+    is_maximal_ideal(m) and (forall(other: R -> Bool) {
+        is_maximal_ideal(other) implies other = m
+    }) implies is_local_ring(m)
+}
+
+theorem local_ring_witness_is_maximal[R: CommRing](m: R -> Bool) {
+    is_local_ring(m) implies is_maximal_ideal(m)
+}
+
+theorem local_ring_maximal_unique[R: CommRing](m: R -> Bool, other: R -> Bool) {
+    is_local_ring(m) and is_maximal_ideal(other) implies other = m
+}
+
+theorem local_ring_witness_eq_of_is_local_ring[R: CommRing](m: R -> Bool, n: R -> Bool) {
+    is_local_ring(m) and is_local_ring(n) implies n = m
 }
 
 theorem field_maximal_ideal_eq_zero_ideal[F: Field](other: F -> Bool) {
     is_maximal_ideal(other) implies other = zero_ideal[F]
 }
 
+theorem local_ring_maximal_is_maximal_ideal[R: CommRing](lr: LocalRing[R]) {
+    is_maximal_ideal(lr.maximal)
+}
+
+theorem local_ring_unique_maximal[R: CommRing](lr: LocalRing[R], other: R -> Bool) {
+    is_maximal_ideal(other) implies other = lr.maximal
+}
+
+let local_ring_as_maximal_ideal[R: CommRing](lr: LocalRing[R]) -> result: MaximalIdeal[R] satisfy {
+    MaximalIdeal.new(lr.maximal) = Option.some(result)
+}
+
+theorem local_ring_ext[R: CommRing](a: LocalRing[R], b: LocalRing[R]) {
+    a.maximal = b.maximal implies a = b
+}
+
+attributes LocalRing[R: CommRing] {
+    /// Bundled local ring extensionality from equality of the maximal witness.
+    let ext = local_ring_ext[R]
+
+    /// The bundled maximal ideal obtained from the local ring structure.
+    let as_maximal_ideal: LocalRing[R] -> MaximalIdeal[R] = local_ring_as_maximal_ideal[R]
+}
+
+theorem local_ring_ext_at[R: CommRing](a: LocalRing[R], b: LocalRing[R]) {
+    (forall(x: R) { a.maximal(x) = b.maximal(x) }) implies a = b
+}
+
+theorem local_ring_as_maximal_ideal_contains_eq[R: CommRing](lr: LocalRing[R], x: R) {
+    lr.as_maximal_ideal.contains(x) = lr.maximal(x)
+}
+
+theorem non_units_ideal_proper[R: CommRing] {
+    ideal_proper_constraint(non_units[R])
+}
+
+theorem non_units_ideal_is_maximal[R: CommRing] {
+    is_ideal(non_units[R]) implies is_maximal_ideal(non_units[R])
+}
+
+theorem non_units_ideal_maximal_unique[R: CommRing](other: R -> Bool) {
+    is_ideal(non_units[R]) and is_maximal_ideal(other) implies other = non_units[R]
+}
+
+theorem non_units_ideal_implies_local_ring[R: CommRing] {
+    is_ideal(non_units[R]) implies is_local_ring(non_units[R])
+}
+
 theorem field_is_local_ring[F: Field] {
     is_local_ring(zero_ideal[F])
 }
 
+define is_pair_unit[A: Monoid, B: Monoid](p: Pair[A, B]) -> Bool {
+    exists(q: Pair[A, B]) {
+        pair_mul(p, q) = pair_one[A, B] and pair_mul(q, p) = pair_one[A, B]
+    }
+}
+
+define unit_pair_val[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) -> Pair[A, B] {
+    Pair.new(u.first.val, u.second.val)
+}
+
+define unit_pair_inv[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) -> Pair[A, B] {
+    Pair.new(u.first.inv, u.second.inv)
+}
+
+theorem unit_pair_val_first[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    unit_pair_val(u).first = u.first.val
+}
+
+theorem unit_pair_val_second[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    unit_pair_val(u).second = u.second.val
+}
+
+theorem unit_pair_inv_first[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    unit_pair_inv(u).first = u.first.inv
+}
+
+theorem unit_pair_inv_second[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    unit_pair_inv(u).second = u.second.inv
+}
+
+theorem unit_pair_val_mul_inv[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    pair_mul(unit_pair_val(u), unit_pair_inv(u)) = pair_one[A, B]
+}
+
+theorem unit_pair_inv_mul_val[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    pair_mul(unit_pair_inv(u), unit_pair_val(u)) = pair_one[A, B]
+}
+
+theorem unit_pair_val_is_pair_unit[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    is_pair_unit(unit_pair_val(u))
+}
+
+theorem pair_of_unit_values_is_pair_unit[A: Monoid, B: Monoid](u: Unit[A], v: Unit[B]) {
+    is_pair_unit(Pair.new(u.val, v.val))
+}
+
+theorem pair_unit_first_is_monoid_unit[A: Monoid, B: Monoid](p: Pair[A, B]) {
+    is_pair_unit(p) implies is_monoid_unit(p.first)
+}
+
+theorem pair_unit_second_is_monoid_unit[A: Monoid, B: Monoid](p: Pair[A, B]) {
+    is_pair_unit(p) implies is_monoid_unit(p.second)
+}
+
+theorem pair_unit_of_components[A: Monoid, B: Monoid](p: Pair[A, B]) {
+    is_monoid_unit(p.first) and is_monoid_unit(p.second) implies is_pair_unit(p)
+}
+
+theorem pair_unit_iff_components[A: Monoid, B: Monoid](p: Pair[A, B]) {
+    is_pair_unit(p) = (is_monoid_unit(p.first) and is_monoid_unit(p.second))
+}
+
+theorem pair_one_is_pair_unit[A: Monoid, B: Monoid] {
+    is_pair_unit(pair_one[A, B])
+}
+
+theorem pair_unit_mul[A: Monoid, B: Monoid](p: Pair[A, B], q: Pair[A, B]) {
+    is_pair_unit(p) and is_pair_unit(q) implies is_pair_unit(pair_mul(p, q))
+}
+
+theorem pair_unit_of_inverse[A: Monoid, B: Monoid](p: Pair[A, B], q: Pair[A, B]) {
+    pair_mul(p, q) = pair_one[A, B] and pair_mul(q, p) = pair_one[A, B]
+    implies is_pair_unit(p)
+}
+
+theorem pair_inverse_witness_is_pair_unit[A: Monoid, B: Monoid](p: Pair[A, B], q: Pair[A, B]) {
+    pair_mul(p, q) = pair_one[A, B] and pair_mul(q, p) = pair_one[A, B]
+    implies is_pair_unit(q)
+}
+
+theorem pair_unit_witness_components[A: Monoid, B: Monoid](p: Pair[A, B], q: Pair[A, B]) {
+    pair_mul(p, q) = pair_one[A, B] and pair_mul(q, p) = pair_one[A, B]
+    implies is_monoid_unit(p.first) and is_monoid_unit(p.second)
+}
+
+theorem unit_pair_inv_is_pair_unit[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    is_pair_unit(unit_pair_inv(u))
+}
+
+theorem unit_pair_val_components_are_units[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    is_monoid_unit(unit_pair_val(u).first) and is_monoid_unit(unit_pair_val(u).second)
+}
+
+theorem unit_pair_inv_components_are_units[A: Monoid, B: Monoid](u: Pair[Unit[A], Unit[B]]) {
+    is_monoid_unit(unit_pair_inv(u).first) and is_monoid_unit(unit_pair_inv(u).second)
+}
+
+theorem pair_unit_of_group[A: Group, B: Group](p: Pair[A, B]) {
+    is_pair_unit(p)
+}
+
+theorem pair_inverse_is_pair_unit[A: Group, B: Group](p: Pair[A, B]) {
+    is_pair_unit(pair_inverse(p))
+}
+
+theorem pair_unit_mul_eq_zero_left_first[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_zero[A, B] implies p.first = A.0
+}
+
+theorem pair_unit_mul_eq_zero_left_second[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_zero[A, B] implies p.second = B.0
+}
+
+theorem pair_unit_mul_eq_zero_right_first[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_zero[A, B] implies p.first = A.0
+}
+
+theorem pair_unit_mul_eq_zero_right_second[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_zero[A, B] implies p.second = B.0
+}
+
+theorem pair_unit_mul_cancel_left_first[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_mul(u, q) implies p.first = q.first
+}
+
+theorem pair_unit_mul_cancel_left_second[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_mul(u, q) implies p.second = q.second
+}
+
+theorem pair_unit_mul_cancel_right_first[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_mul(q, u) implies p.first = q.first
+}
+
+theorem pair_unit_mul_cancel_right_second[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_mul(q, u) implies p.second = q.second
+}
+
+theorem pair_unit_mul_eq_zero_left_components[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_zero[A, B] implies
+    p.first = A.0 and p.second = B.0
+}
+
+theorem pair_unit_mul_eq_zero_left[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_zero[A, B] implies p = pair_zero[A, B]
+}
+
+theorem pair_unit_mul_eq_zero_right_components[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_zero[A, B] implies
+    p.first = A.0 and p.second = B.0
+}
+
+theorem pair_unit_mul_eq_zero_right[A: Ring, B: Ring](u: Pair[A, B], p: Pair[A, B]) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_zero[A, B] implies p = pair_zero[A, B]
+}
+
+theorem pair_unit_mul_cancel_left_components[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_mul(u, q) implies
+    p.first = q.first and p.second = q.second
+}
+
+theorem pair_unit_mul_cancel_left[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(u, p) = pair_mul(u, q) implies p = q
+}
+
+theorem pair_unit_mul_cancel_right_components[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_mul(q, u) implies
+    p.first = q.first and p.second = q.second
+}
+
+theorem pair_unit_mul_cancel_right[A: Ring, B: Ring](
+    u: Pair[A, B],
+    p: Pair[A, B],
+    q: Pair[A, B]
+) {
+    is_pair_unit(u) and pair_mul(p, u) = pair_mul(q, u) implies p = q
+}
+
+theorem ring_hom_sub[R: Ring, S: Ring](f: RingHom[R, S], a: R, b: R) {
+    f.hom(a - b) = f.hom(a) - f.hom(b)
+}
+
+theorem ring_hom_unit_val[R: Ring, S: Ring](f: RingHom[R, S], u: Unit[R]) {
+    monoid_hom_unit(ring_hom_to_monoid_hom(f), u).val = f.hom(u.val)
+}
+
+theorem ring_hom_unit_inv[R: Ring, S: Ring](f: RingHom[R, S], u: Unit[R]) {
+    monoid_hom_unit(ring_hom_to_monoid_hom(f), u).inv = f.hom(u.inv)
+}
+
+theorem ring_hom_maps_unit[R: CommRing, S: CommRing](f: RingHom[R, S], a: R) {
+    a.is_unit implies f.hom(a).is_unit
+}
+
+theorem ring_hom_kernel_contains_zero[R: CommRing, S: CommRing](f: RingHom[R, S]) {
+    ring_hom_kernel(f).contains(R.0)
+}
+
+theorem ring_hom_kernel_contains_add[R: CommRing, S: CommRing](f: RingHom[R, S], a: R, b: R) {
+    ring_hom_kernel(f).contains(a) and ring_hom_kernel(f).contains(b) implies
+        ring_hom_kernel(f).contains(a + b)
+}
+
+theorem ring_hom_kernel_contains_mul[R: CommRing, S: CommRing](f: RingHom[R, S], r: R, a: R) {
+    ring_hom_kernel(f).contains(a) implies ring_hom_kernel(f).contains(r * a)
+}
+
+theorem ring_hom_kernel_is_ideal[R: CommRing, S: CommRing](f: RingHom[R, S]) {
+    is_ideal(ring_hom_kernel(f).contains)
+}
+
+theorem ring_hom_kernel_contains_sub_iff[R: CommRing, S: CommRing](f: RingHom[R, S], a: R, b: R) {
+    ring_hom_kernel(f).contains(a - b) = (f.hom(a) = f.hom(b))
+}
+
+theorem ring_hom_kernel_of_compose[R: CommRing, S: CommRing, T: CommRing](
+    f: RingHom[S, T],
+    g: RingHom[R, S]
+) {
+    ring_hom_kernel(compose_ring_hom(f, g)) = ideal_preimage(g, ring_hom_kernel(f))
+}
+
+theorem ideal_contains_mul_of_contains[R: CommRing](i: Ideal[R], a: R, b: R) {
+    i.contains(a) and i.contains(b) implies i.contains(a * b)
+}
+
+theorem ideal_inter_contains_of_contains[R: CommRing](i: Ideal[R], j: Ideal[R], a: R) {
+    i.contains(a) and j.contains(a) implies i.intersection(j).contains(a)
+}
+
+theorem ideal_sum_contains_add[R: CommRing](i: Ideal[R], j: Ideal[R], a: R, b: R) {
+    i.contains(a) and j.contains(b) implies i.sum(j).contains(a + b)
+}
+
+theorem ideal_quotient_mk_type_eq_iff_contains_sub[R: CommRing](i: Ideal[R], a: R, b: R) {
+    (ideal_quotient_mk_type(i, a) = ideal_quotient_mk_type(i, b)) = i.contains(a - b)
+}
+
+theorem ideal_quotient_mk_type_eq_zero_iff_contains[R: CommRing](i: Ideal[R], a: R) {
+    (ideal_quotient_mk_type(i, a) = Zero.0[IdealQuotient[R, i]]) = i.contains(a)
+}
+
+theorem ideal_quotient_mk_type_eq_zero_of_contains[R: CommRing](i: Ideal[R], a: R) {
+    i.contains(a) implies ideal_quotient_mk_type(i, a) = Zero.0[IdealQuotient[R, i]]
+}
+
+theorem ideal_quotient_contains_of_mk_type_eq_zero[R: CommRing](i: Ideal[R], a: R) {
+    ideal_quotient_mk_type(i, a) = Zero.0[IdealQuotient[R, i]] implies i.contains(a)
+}
+
+theorem ideal_quotient_mk_type_neg[R: CommRing](i: Ideal[R], a: R) {
+    ideal_quotient_mk_type(i, -a) = -ideal_quotient_mk_type(i, a)
+}
+
+theorem ideal_quotient_first_iso_factorization[R: CommRing, S: CommRing](f: RingHom[R, S]) {
+    forall(a: R) {
+        ring_hom_kernel_quotient_induced(f, ideal_quotient_project(ring_hom_kernel(f), a)) = f.hom(a)
+    }
+}
+
+theorem ideal_quotient_first_iso_induced_injective[R: CommRing, S: CommRing](f: RingHom[R, S]) {
+    forall(a: R, b: R) {
+        ring_hom_kernel_quotient_induced(f, ideal_quotient_project(ring_hom_kernel(f), a)) =
+            ring_hom_kernel_quotient_induced(f, ideal_quotient_project(ring_hom_kernel(f), b))
+        implies ideal_quotient_project(ring_hom_kernel(f), a) = ideal_quotient_project(ring_hom_kernel(f), b)
+    }
+}
+
+theorem ring_two_mul[R: CommRing](x: R) {
+    (R.1 + R.1) * x = x + x
+}
+
+theorem ring_square_add_raw[R: CommRing](a: R, b: R) {
+    (a + b) * (a + b) = a * a + (a * b + a * b) + b * b
+}
+
+theorem ring_square_add_pow[R: CommRing](a: R, b: R) {
+    (a + b).pow(Nat.2) = a.pow(Nat.2) + (R.1 + R.1) * a * b + b.pow(Nat.2)
+}
+
+theorem ring_square_sub_pow[R: CommRing](a: R, b: R) {
+    (a - b).pow(Nat.2) = a.pow(Nat.2) - (R.1 + R.1) * a * b + b.pow(Nat.2)
+}
+
+theorem ring_square_add_reordered[R: CommRing](a: R, b: R) {
+    (a + b).pow(Nat.2) = a.pow(Nat.2) + b.pow(Nat.2) + (R.1 + R.1) * a * b
+}
+
+theorem ring_difference_of_squares[R: CommRing](a: R, b: R) {
+    (a + b) * (a - b) = a.pow(Nat.2) - b.pow(Nat.2)
+}
+
+theorem ring_add_rotate_three[R: Ring](a: R, b: R, c: R) {
+    (a + b) + c = (b + c) + a
+}
+
+theorem ring_add_swap_outer[R: Ring](a: R, b: R, c: R) {
+    a + (b + c) = b + (a + c)
+}
+
+theorem ideal_contains_sub[R: CommRing](i: Ideal[R], a: R, b: R) {
+    i.contains(a) and i.contains(b) implies i.contains(a - b)
+}
+
+theorem ideal_contains_neg_iff[R: CommRing](i: Ideal[R], a: R) {
+    i.contains(-a) = i.contains(a)
+}
+
+theorem ideal_contains_of_contains_sub_add[R: CommRing](i: Ideal[R], a: R, b: R) {
+    i.contains(a - b) and i.contains(b) implies i.contains(a)
+}
+
+theorem ideal_contains_iff_contains_zero_sub[R: CommRing](i: Ideal[R], a: R) {
+    i.contains(R.0 - a) = i.contains(a)
+}
+
+theorem ideal_contains_sub_self[R: CommRing](i: Ideal[R], a: R) {
+    i.contains(a - a)
+}
+
+theorem ideal_contains_pow[R: CommRing](i: Ideal[R], a: R, n: Nat) {
+    n != Nat.0 and i.contains(a) implies i.contains(a.pow(n))
+}
+
+theorem ideal_contains_pow_two[R: CommRing](i: Ideal[R], a: R) {
+    i.contains(a) implies i.contains(a.pow(2))
+}
+
+theorem ideal_contains_mul_left_of_contains[R: CommRing](i: Ideal[R], r: R, a: R) {
+    i.contains(a) implies i.contains(r * a)
+}
+
+theorem ideal_contains_mul_right_of_contains[R: CommRing](i: Ideal[R], a: R, r: R) {
+    i.contains(a) implies i.contains(a * r)
+}
+
+theorem ideal_contains_from_nat_mul[R: CommRing](i: Ideal[R], a: R, n: Nat) {
+    i.contains(a) implies i.contains(from_nat[R](n) * a)
+}
+
+theorem ideal_inter_contains_mul[R: CommRing](i: Ideal[R], j: Ideal[R], a: R, b: R) {
+    i.contains(a) and j.contains(b) implies i.intersection(j).contains(a * b)
+}
+
+theorem ideal_sum_contains_mul[R: CommRing](i: Ideal[R], j: Ideal[R], a: R, b: R) {
+    i.contains(a) and j.contains(b) implies i.sum(j).contains(a * b)
+}
+
+theorem ideal_sum_contains_left_elem[R: CommRing](i: Ideal[R], j: Ideal[R], a: R) {
+    i.contains(a) implies i.sum(j).contains(a)
+}
+
+theorem ideal_sum_contains_right_elem[R: CommRing](i: Ideal[R], j: Ideal[R], b: R) {
+    j.contains(b) implies i.sum(j).contains(b)
+}
+
+theorem ideal_quotient_mk_type_sub[R: CommRing](i: Ideal[R], a: R, b: R) {
+    ideal_quotient_mk_type(i, a - b) = ideal_quotient_mk_type(i, a) - ideal_quotient_mk_type(i, b)
+}
+
+theorem ideal_quotient_mk_type_pow[R: CommRing](i: Ideal[R], a: R, n: Nat) {
+    ideal_quotient_mk_type(i, a.pow(n)) = ideal_quotient_mk_type(i, a).pow(n)
+}
+
+theorem ideal_quotient_mk_type_sub_eq_zero_iff_contains[R: CommRing](i: Ideal[R], a: R, b: R) {
+    (ideal_quotient_mk_type(i, a) - ideal_quotient_mk_type(i, b) = Zero.0[IdealQuotient[R, i]]) =
+        i.contains(a - b)
+}
+
+theorem unit_typeclass_mul_eq_unit_mul[M: Monoid](u: Unit[M], v: Unit[M]) {
+    u * v = unit_mul(u, v)
+}
+
 theorem unit_typeclass_one_eq_unit_one[M: Monoid] {
     One.1[Unit[M]] = unit_one[M]
+}
+
+theorem unit_typeclass_mul_assoc[M: Monoid](u: Unit[M], v: Unit[M], w: Unit[M]) {
+    Mul.mul(u, Mul.mul(v, w)) = Mul.mul(Mul.mul(u, v), w)
+}
+
+theorem unit_semigroup_mul_associative[M: Monoid] {
+    forall(u: Unit[M], v: Unit[M], w: Unit[M]) {
+        Mul.mul(u, Mul.mul(v, w)) = Mul.mul(Mul.mul(u, v), w)
+    }
 }
 
 theorem unit_typeclass_mul_one_right[M: Monoid](u: Unit[M]) {
@@ -1967,8 +1951,20 @@ theorem unit_typeclass_unit_inverse_right[M: Monoid](u: Unit[M]) {
     u * unit_inverse(u) = One.1[Unit[M]]
 }
 
+theorem unit_typeclass_inverse_eq_unit_inverse[M: Monoid](u: Unit[M]) {
+    u.inverse = unit_inverse(u)
+}
+
 theorem unit_typeclass_inverse_right[M: Monoid](u: Unit[M]) {
     u * u.inverse = One.1[Unit[M]]
+}
+
+theorem unit_val_mul_typeclass[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (u * v).val = u.val * v.val
+}
+
+theorem unit_inv_mul_typeclass[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (u * v).inv = v.inv * u.inv
 }
 
 theorem unit_one_val_typeclass[M: Monoid] {
@@ -1979,6 +1975,46 @@ theorem unit_one_inv_typeclass[M: Monoid] {
     One.1[Unit[M]].inv = M.1
 }
 
+theorem unit_inverse_val_typeclass[M: Monoid](u: Unit[M]) {
+    u.inverse.val = u.inv
+}
+
+theorem unit_inverse_inv_typeclass[M: Monoid](u: Unit[M]) {
+    u.inverse.inv = u.val
+}
+
+theorem unit_typeclass_eq_iff_val_eq[M: Monoid](u: Unit[M], v: Unit[M]) {
+    (u = v) = (u.val = v.val)
+}
+
 theorem unit_typeclass_eq_one_iff_val_eq_one[M: Monoid](u: Unit[M]) {
     (u = One.1[Unit[M]]) = (u.val = M.1)
+}
+
+theorem unit_typeclass_mul_ext_val[M: Monoid](u: Unit[M], v: Unit[M], w: Unit[M]) {
+    u.val * v.val = w.val implies u * v = w
+}
+
+define units_map_fn[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) -> Unit[N] {
+    monoid_hom_unit(f, u)
+}
+
+theorem units_map_fn_is_monoid_hom[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    is_monoid_hom(units_map_fn(f))
+}
+
+let units_map[M: Monoid, N: Monoid](f: MonoidHom[M, N]) -> result: MonoidHom[Unit[M], Unit[N]] satisfy {
+    MonoidHom.new(units_map_fn(f)) = Option.some(result)
+}
+
+theorem units_map_hom[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    units_map(f).hom = units_map_fn(f)
+}
+
+theorem coe_map[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) {
+    units_map(f).hom(u).val = f.hom(u.val)
+}
+
+theorem coe_map_inv[M: Monoid, N: Monoid](f: MonoidHom[M, N], u: Unit[M]) {
+    units_map(f).hom(u).inv = f.hom(u.inv)
 }
