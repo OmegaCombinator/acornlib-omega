@@ -1,0 +1,50 @@
+from nat import Nat, range_sum, range_sum_zero, range_sum_suc
+from list.list_sum import partial, partial_zero, partial_split_last, AddCommMonoid, sum
+from list.list_base import List, map
+
+numerals Nat
+
+/// The range sum agrees with the partial sum of the same summand.
+///
+/// `range_sum` is defined by the recurrence and `partial` by summing over `n.range`; the two
+/// have the same base case and the same step, so they agree everywhere. This is the bridge
+/// between the range-indexed sums and everything in `src/list/` stated for `partial`.
+theorem range_sum_eq_partial[A: AddCommMonoid](f: Nat -> A, n: Nat) {
+    range_sum(f, n) = partial(f, n)
+} by {
+    define p(x: Nat) -> Bool {
+        range_sum(f, x) = partial(f, x)
+    }
+    range_sum_zero(f)
+    partial_zero(f)
+    range_sum(f, Nat.0) = partial(f, Nat.0)
+    p(Nat.0)
+    forall(k: Nat) {
+        if p(k) {
+            range_sum(f, k) = partial(f, k)
+            range_sum_suc(f, k)
+            range_sum(f, k.suc) = range_sum(f, k) + f(k)
+            partial_split_last(f, k)
+            partial(f, k.suc) = partial(f, k) + f(k)
+            range_sum(f, k.suc) = partial(f, k.suc)
+            p(k.suc)
+        }
+        (p(k) implies p(k.suc))
+    }
+    p(Nat.0) and forall(k: Nat) {
+        p(k) implies p(k.suc)
+    }
+    Nat.induction(p)
+    p(n)
+    range_sum(f, n) = partial(f, n)
+}
+
+/// The range sum is the sum over the list of indices below the limit.
+theorem range_sum_eq_list_sum[A: AddCommMonoid](f: Nat -> A, n: Nat) {
+    range_sum(f, n) = sum(map(n.range, f))
+} by {
+    range_sum_eq_partial(f, n)
+    range_sum(f, n) = partial(f, n)
+    partial(f, n) = sum(map(n.range, f))
+    range_sum(f, n) = sum(map(n.range, f))
+}

@@ -1,5 +1,51 @@
+typeclass G: AddLeftOrderedGroup extends AddGroup, LinearOrder {
+    /// Left addition preserves the order relation: if `a ≤ b`, then `c + a ≤ c + b`.
+    left_invariance(a: G, b: G, c: G) {
+        a <= b implies c + a <= c + b
+    }
+}
+
+typeclass G: AddOrderedGroup extends AddLeftOrderedGroup {
+    /// Right addition preserves the order relation: if `a ≤ b`, then `a + c ≤ b + c`.
+    right_invariance(a: G, b: G, c: G) {
+        a <= b implies a + c <= b + c
+    }
+}
+
 define image_pred[A, B](f: A -> B, p: A -> Bool, y: B) -> Bool {
     exists(x: A) { p(x) and f(x) = y }
+}
+
+define galois_closure[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) -> A {
+    upper(lower(a))
+}
+
+define galois_kernel[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) -> B {
+    lower(upper(b))
+}
+
+theorem galois_closure_at[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    galois_closure(lower, upper, a) = upper(lower(a))
+}
+
+theorem galois_kernel_at[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    galois_kernel(lower, upper, b) = lower(upper(b))
 }
 
 define is_idempotent_map[A](f: A -> A) -> Bool {
@@ -12,13 +58,1305 @@ define is_fixed_by[A](f: A -> A, a: A) -> Bool {
     f(a) = a
 }
 
-let mod = Nat.mod
-
-theorem pair_map_compose_fn[A, B, C, D, E, F](f: C -> E, g: A -> C, h: D -> F, i: B -> D) {
-    pair_map(compose(f, g), compose(h, i)) = compose(pair_map(f, h), pair_map(g, i))
+define is_order_iso_pair[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) -> Bool {
+    forall(a: A) {
+        g(f(a)) = a
+    } and forall(b: B) {
+        f(g(b)) = b
+    } and is_order_embedding(f) and is_order_embedding(g)
 }
 
-let from_nat = Int.from_nat
+structure OrderIso[A: PartialOrder, B: PartialOrder] {
+    /// The order-preserving map.
+    map: A -> B
+
+    /// The inverse order-preserving map.
+    inv: B -> A
+} constraint {
+    is_order_iso_pair(map, inv)
+}
+
+theorem order_iso_pair_left_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, a: A) {
+    is_order_iso_pair(f, g) implies g(f(a)) = a
+}
+
+theorem order_iso_pair_right_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, b: B) {
+    is_order_iso_pair(f, g) implies f(g(b)) = b
+}
+
+theorem order_iso_pair_map_is_order_embedding[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_iso_pair(f, g) implies is_order_embedding(f)
+}
+
+theorem order_iso_pair_inv_is_order_embedding[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_iso_pair(f, g) implies is_order_embedding(g)
+}
+
+theorem order_iso_pair_swap[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_iso_pair(f, g) implies is_order_iso_pair(g, f)
+}
+
+theorem order_iso_pair_compose[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    f: B -> C,
+    g: C -> B,
+    h: A -> B,
+    k: B -> A
+) {
+    is_order_iso_pair(f, g) and is_order_iso_pair(h, k) implies
+    is_order_iso_pair(compose(f, h), compose(k, g))
+}
+
+define is_order_dual_iso_pair[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) -> Bool {
+    forall(a: A) {
+        g(f(a)) = a
+    } and forall(b: B) {
+        f(g(b)) = b
+    } and is_antitone(f) and is_antitone(g)
+}
+
+structure OrderDualIso[A: PartialOrder, B: PartialOrder] {
+    /// The order-reversing map.
+    map: A -> B
+
+    /// The inverse order-reversing map.
+    inv: B -> A
+} constraint {
+    is_order_dual_iso_pair(map, inv)
+}
+
+theorem order_dual_iso_pair_left_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, a: A) {
+    is_order_dual_iso_pair(f, g) implies g(f(a)) = a
+}
+
+theorem order_dual_iso_pair_right_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, b: B) {
+    is_order_dual_iso_pair(f, g) implies f(g(b)) = b
+}
+
+theorem order_dual_iso_pair_map_is_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_dual_iso_pair(f, g) implies is_antitone(f)
+}
+
+theorem order_dual_iso_pair_inv_is_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_dual_iso_pair(f, g) implies is_antitone(g)
+}
+
+theorem order_dual_iso_pair_swap[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_dual_iso_pair(f, g) implies is_order_dual_iso_pair(g, f)
+}
+
+theorem order_dual_iso_pair_map_is_strict_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_dual_iso_pair(f, g) implies is_strict_antitone(f)
+}
+
+theorem order_dual_iso_pair_inv_is_strict_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
+    is_order_dual_iso_pair(f, g) implies is_strict_antitone(g)
+}
+
+theorem order_dual_iso_new_map[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderDualIso[A, B]) {
+    OrderDualIso[A, B].new(f, g) = Option.some(e) implies e.map = f
+}
+
+theorem order_dual_iso_new_inv[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderDualIso[A, B]) {
+    OrderDualIso[A, B].new(f, g) = Option.some(e) implies e.inv = g
+}
+
+theorem order_dual_iso_new_self[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    OrderDualIso[A, B].new(e.map, e.inv) = Option.some(e)
+}
+
+theorem order_dual_iso_some_injective[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
+    Option.some(e) = Option.some(h) implies e = h
+}
+
+theorem order_dual_iso_ext[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
+    e.map = h.map and e.inv = h.inv implies e = h
+}
+
+theorem order_dual_iso_eq_map[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
+    e = h implies e.map = h.map
+}
+
+theorem order_dual_iso_eq_inv[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
+    e = h implies e.inv = h.inv
+}
+
+theorem order_dual_iso_left_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], a: A) {
+    e.inv(e.map(a)) = a
+}
+
+theorem order_dual_iso_right_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], b: B) {
+    e.map(e.inv(b)) = b
+}
+
+theorem order_dual_iso_map_is_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    is_antitone(e.map)
+}
+
+theorem order_dual_iso_inv_is_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    is_antitone(e.inv)
+}
+
+theorem order_dual_iso_map_is_strict_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    is_strict_antitone(e.map)
+}
+
+theorem order_dual_iso_inv_is_strict_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    is_strict_antitone(e.inv)
+}
+
+let order_dual_iso_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) -> result: OrderDualIso[B, A] satisfy {
+    OrderDualIso[B, A].new(e.inv, e.map) = Option.some(result)
+}
+
+theorem order_dual_iso_inverse_map[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    order_dual_iso_inverse(e).map = e.inv
+}
+
+theorem order_dual_iso_inverse_inv[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
+    order_dual_iso_inverse(e).inv = e.map
+}
+
+theorem order_dual_iso_pair_compose_dual[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    f: B -> C,
+    g: C -> B,
+    h: A -> B,
+    k: B -> A
+) {
+    is_order_dual_iso_pair(f, g) and is_order_dual_iso_pair(h, k) implies
+    is_order_iso_pair(compose(f, h), compose(k, g))
+}
+
+define order_iso_image_predicate[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], p: A -> Bool, y: B) -> Bool {
+    p(e.inv(y))
+}
+
+define order_iso_preimage_predicate[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], q: B -> Bool, x: A) -> Bool {
+    q(e.map(x))
+}
+
+define order_dual_iso_image_predicate[A: PartialOrder, B: PartialOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    y: B
+) -> Bool {
+    p(e.inv(y))
+}
+
+define order_dual_iso_preimage_predicate[A: PartialOrder, B: PartialOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    x: A
+) -> Bool {
+    q(e.map(x))
+}
+
+theorem order_iso_new_map[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderIso[A, B]) {
+    OrderIso[A, B].new(f, g) = Option.some(e) implies e.map = f
+}
+
+theorem order_iso_new_inv[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderIso[A, B]) {
+    OrderIso[A, B].new(f, g) = Option.some(e) implies e.inv = g
+}
+
+theorem order_iso_new_self[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    OrderIso[A, B].new(e.map, e.inv) = Option.some(e)
+}
+
+theorem order_iso_some_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
+    Option.some(e) = Option.some(h) implies e = h
+}
+
+theorem order_iso_ext[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
+    e.map = h.map and e.inv = h.inv implies e = h
+}
+
+theorem order_iso_eq_map[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
+    e = h implies e.map = h.map
+}
+
+theorem order_iso_eq_inv[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
+    e = h implies e.inv = h.inv
+}
+
+theorem order_iso_left_inverse[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], a: A) {
+    e.inv(e.map(a)) = a
+}
+
+theorem order_iso_right_inverse[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], b: B) {
+    e.map(e.inv(b)) = b
+}
+
+theorem order_iso_map_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_order_embedding(e.map)
+}
+
+theorem order_iso_inv_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_order_embedding(e.inv)
+}
+
+theorem order_iso_map_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_injective_fn(e.map)
+}
+
+theorem order_iso_map_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_surjective_fn(e.map)
+}
+
+theorem order_iso_map_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_bijection_fn(e.map)
+}
+
+theorem order_iso_inv_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_injective_fn(e.inv)
+}
+
+theorem order_iso_inv_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_surjective_fn(e.inv)
+}
+
+theorem order_iso_inv_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_bijection_fn(e.inv)
+}
+
+theorem order_iso_image_predicate_map[A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    x: A
+) {
+    order_iso_image_predicate(e, p, e.map(x)) = p(x)
+}
+
+theorem order_iso_preimage_predicate_inv[A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    y: B
+) {
+    order_iso_preimage_predicate(e, q, e.inv(y)) = q(y)
+}
+
+theorem order_iso_image_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_lower_bound_linear(p, a) implies is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a))
+}
+
+theorem order_iso_image_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_upper_bound_linear(p, b) implies is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b))
+}
+
+theorem order_iso_reflects_image_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a)) implies is_lower_bound_linear(p, a)
+}
+
+theorem order_iso_reflects_image_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b)) implies is_upper_bound_linear(p, b)
+}
+
+theorem order_iso_image_lower_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a)) = is_lower_bound_linear(p, a)
+}
+
+theorem order_iso_image_upper_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b)) = is_upper_bound_linear(p, b)
+}
+
+theorem order_iso_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(p, a, b) implies
+    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b))
+}
+
+theorem order_iso_reflects_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b)) implies
+    is_bounded_by_interval(p, a, b)
+}
+
+theorem order_iso_image_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b)) =
+    is_bounded_by_interval(p, a, b)
+}
+
+theorem order_iso_image_bounded_below[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_below_linear(p) implies is_bounded_below_linear(order_iso_image_predicate(e, p))
+}
+
+theorem order_iso_image_bounded_above[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_above_linear(p) implies is_bounded_above_linear(order_iso_image_predicate(e, p))
+}
+
+theorem order_iso_image_bounded[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_linear(p) implies is_bounded_linear(order_iso_image_predicate(e, p))
+}
+
+theorem order_iso_preimage_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_lower_bound_linear(q, a) implies is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a))
+}
+
+theorem order_iso_preimage_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_upper_bound_linear(q, b) implies is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b))
+}
+
+theorem order_iso_reflects_preimage_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a)) implies is_lower_bound_linear(q, a)
+}
+
+theorem order_iso_reflects_preimage_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b)) implies is_upper_bound_linear(q, b)
+}
+
+theorem order_iso_preimage_lower_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a)) = is_lower_bound_linear(q, a)
+}
+
+theorem order_iso_preimage_upper_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b)) = is_upper_bound_linear(q, b)
+}
+
+theorem order_iso_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(q, a, b) implies
+    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b))
+}
+
+theorem order_iso_reflects_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b)) implies
+    is_bounded_by_interval(q, a, b)
+}
+
+theorem order_iso_preimage_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b)) =
+    is_bounded_by_interval(q, a, b)
+}
+
+theorem order_iso_preimage_bounded_below[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_below_linear(q) implies is_bounded_below_linear(order_iso_preimage_predicate(e, q))
+}
+
+theorem order_iso_preimage_bounded_above[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_above_linear(q) implies is_bounded_above_linear(order_iso_preimage_predicate(e, q))
+}
+
+theorem order_iso_preimage_bounded[A: LinearOrder, B: LinearOrder](
+    e: OrderIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_linear(q) implies is_bounded_linear(order_iso_preimage_predicate(e, q))
+}
+
+theorem order_dual_iso_image_predicate_map[A: PartialOrder, B: PartialOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    x: A
+) {
+    order_dual_iso_image_predicate(e, p, e.map(x)) = p(x)
+}
+
+theorem order_dual_iso_preimage_predicate_inv[A: PartialOrder, B: PartialOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    y: B
+) {
+    order_dual_iso_preimage_predicate(e, q, e.inv(y)) = q(y)
+}
+
+theorem order_dual_iso_image_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_lower_bound_linear(p, a) implies is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a))
+}
+
+theorem order_dual_iso_image_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_upper_bound_linear(p, b) implies is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b))
+}
+
+theorem order_dual_iso_reflects_image_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a)) implies is_lower_bound_linear(p, a)
+}
+
+theorem order_dual_iso_reflects_image_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b)) implies is_upper_bound_linear(p, b)
+}
+
+theorem order_dual_iso_image_lower_bound_upper_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A
+) {
+    is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a)) = is_lower_bound_linear(p, a)
+}
+
+theorem order_dual_iso_image_upper_bound_lower_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    b: A
+) {
+    is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b)) = is_upper_bound_linear(p, b)
+}
+
+theorem order_dual_iso_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(p, a, b) implies
+    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a))
+}
+
+theorem order_dual_iso_reflects_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a)) implies
+    is_bounded_by_interval(p, a, b)
+}
+
+theorem order_dual_iso_image_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool,
+    a: A,
+    b: A
+) {
+    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a)) =
+    is_bounded_by_interval(p, a, b)
+}
+
+theorem order_dual_iso_image_bounded_below_to_bounded_above[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_below_linear(p) implies is_bounded_above_linear(order_dual_iso_image_predicate(e, p))
+}
+
+theorem order_dual_iso_image_bounded_above_to_bounded_below[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_above_linear(p) implies is_bounded_below_linear(order_dual_iso_image_predicate(e, p))
+}
+
+theorem order_dual_iso_image_bounded[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    p: A -> Bool
+) {
+    is_bounded_linear(p) implies is_bounded_linear(order_dual_iso_image_predicate(e, p))
+}
+
+theorem order_dual_iso_preimage_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_lower_bound_linear(q, a) implies is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a))
+}
+
+theorem order_dual_iso_preimage_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_upper_bound_linear(q, b) implies is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b))
+}
+
+theorem order_dual_iso_reflects_preimage_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a)) implies is_lower_bound_linear(q, a)
+}
+
+theorem order_dual_iso_reflects_preimage_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b)) implies is_upper_bound_linear(q, b)
+}
+
+theorem order_dual_iso_preimage_lower_bound_upper_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B
+) {
+    is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a)) = is_lower_bound_linear(q, a)
+}
+
+theorem order_dual_iso_preimage_upper_bound_lower_bound_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    b: B
+) {
+    is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b)) = is_upper_bound_linear(q, b)
+}
+
+theorem order_dual_iso_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(q, a, b) implies
+    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a))
+}
+
+theorem order_dual_iso_reflects_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a)) implies
+    is_bounded_by_interval(q, a, b)
+}
+
+theorem order_dual_iso_preimage_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool,
+    a: B,
+    b: B
+) {
+    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a)) =
+    is_bounded_by_interval(q, a, b)
+}
+
+theorem order_dual_iso_preimage_bounded_below_to_bounded_above[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_below_linear(q) implies is_bounded_above_linear(order_dual_iso_preimage_predicate(e, q))
+}
+
+theorem order_dual_iso_preimage_bounded_above_to_bounded_below[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_above_linear(q) implies is_bounded_below_linear(order_dual_iso_preimage_predicate(e, q))
+}
+
+theorem order_dual_iso_preimage_bounded[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    q: B -> Bool
+) {
+    is_bounded_linear(q) implies is_bounded_linear(order_dual_iso_preimage_predicate(e, q))
+}
+
+let identity_order_iso[A: PartialOrder](anchor: A) -> result: OrderIso[A, A] satisfy {
+    result.map = identity_fn[A] and result.inv = identity_fn[A]
+}
+
+theorem identity_order_iso_map[A: PartialOrder](anchor: A) {
+    identity_order_iso(anchor).map = identity_fn[A]
+}
+
+theorem identity_order_iso_inv[A: PartialOrder](anchor: A) {
+    identity_order_iso(anchor).inv = identity_fn[A]
+}
+
+let inverse_order_iso[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) -> result: OrderIso[B, A] satisfy {
+    result.map = e.inv and result.inv = e.map
+}
+
+theorem inverse_order_iso_map[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    inverse_order_iso(e).map = e.inv
+}
+
+theorem inverse_order_iso_inv[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    inverse_order_iso(e).inv = e.map
+}
+
+let compose_order_iso[A: PartialOrder, B: PartialOrder, C: PartialOrder](e: OrderIso[B, C], h: OrderIso[A, B]) -> result: OrderIso[A, C] satisfy {
+    result.map = compose(e.map, h.map) and result.inv = compose(h.inv, e.inv)
+}
+
+theorem compose_order_iso_map[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B]
+) {
+    compose_order_iso(e, h).map = compose(e.map, h.map)
+}
+
+theorem compose_order_iso_inv[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B]
+) {
+    compose_order_iso(e, h).inv = compose(h.inv, e.inv)
+}
+
+let compose_order_dual_iso[A: PartialOrder, B: PartialOrder, C: PartialOrder](e: OrderDualIso[B, C], h: OrderDualIso[A, B]) -> result: OrderIso[A, C] satisfy {
+    result.map = compose(e.map, h.map) and result.inv = compose(h.inv, e.inv)
+}
+
+theorem compose_order_dual_iso_map[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderDualIso[B, C],
+    h: OrderDualIso[A, B]
+) {
+    compose_order_dual_iso(e, h).map = compose(e.map, h.map)
+}
+
+theorem compose_order_dual_iso_inv[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderDualIso[B, C],
+    h: OrderDualIso[A, B]
+) {
+    compose_order_dual_iso(e, h).inv = compose(h.inv, e.inv)
+}
+
+theorem compose_order_dual_iso_apply[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderDualIso[B, C],
+    h: OrderDualIso[A, B],
+    a: A
+) {
+    compose_order_dual_iso(e, h).map(a) = e.map(h.map(a))
+}
+
+theorem order_iso_closed_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    closed_interval(a, b, x) implies closed_interval(e.map(a), e.map(b), e.map(x))
+}
+
+theorem order_iso_closed_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    closed_interval(e.map(a), e.map(b), e.map(x)) implies closed_interval(a, b, x)
+}
+
+theorem order_iso_closed_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    closed_interval(e.map(a), e.map(b), e.map(x)) = closed_interval(a, b, x)
+}
+
+theorem order_iso_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    open_interval(a, b, x) implies open_interval(e.map(a), e.map(b), e.map(x))
+}
+
+theorem order_iso_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    open_interval(e.map(a), e.map(b), e.map(x)) implies open_interval(a, b, x)
+}
+
+theorem order_iso_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    open_interval(e.map(a), e.map(b), e.map(x)) = open_interval(a, b, x)
+}
+
+theorem order_iso_left_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    left_open_interval(a, b, x) implies left_open_interval(e.map(a), e.map(b), e.map(x))
+}
+
+theorem order_iso_left_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    left_open_interval(e.map(a), e.map(b), e.map(x)) implies left_open_interval(a, b, x)
+}
+
+theorem order_iso_left_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    left_open_interval(e.map(a), e.map(b), e.map(x)) = left_open_interval(a, b, x)
+}
+
+theorem order_iso_right_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    right_open_interval(a, b, x) implies right_open_interval(e.map(a), e.map(b), e.map(x))
+}
+
+theorem order_iso_right_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    right_open_interval(e.map(a), e.map(b), e.map(x)) implies right_open_interval(a, b, x)
+}
+
+theorem order_iso_right_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
+    right_open_interval(e.map(a), e.map(b), e.map(x)) = right_open_interval(a, b, x)
+}
+
+theorem order_dual_iso_closed_interval_image[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    closed_interval(a, b, x) implies closed_interval(e.map(b), e.map(a), e.map(x))
+}
+
+theorem order_dual_iso_closed_interval_preimage[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    closed_interval(e.map(b), e.map(a), e.map(x)) implies closed_interval(a, b, x)
+}
+
+theorem order_dual_iso_closed_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    closed_interval(e.map(b), e.map(a), e.map(x)) = closed_interval(a, b, x)
+}
+
+theorem order_dual_iso_open_interval_image[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    open_interval(a, b, x) implies open_interval(e.map(b), e.map(a), e.map(x))
+}
+
+theorem order_dual_iso_open_interval_preimage[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    open_interval(e.map(b), e.map(a), e.map(x)) implies open_interval(a, b, x)
+}
+
+theorem order_dual_iso_open_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    open_interval(e.map(b), e.map(a), e.map(x)) = open_interval(a, b, x)
+}
+
+theorem order_dual_iso_left_open_interval_image[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    left_open_interval(a, b, x) implies right_open_interval(e.map(b), e.map(a), e.map(x))
+}
+
+theorem order_dual_iso_left_open_interval_preimage[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    right_open_interval(e.map(b), e.map(a), e.map(x)) implies left_open_interval(a, b, x)
+}
+
+theorem order_dual_iso_left_open_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    right_open_interval(e.map(b), e.map(a), e.map(x)) = left_open_interval(a, b, x)
+}
+
+theorem order_dual_iso_right_open_interval_image[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    right_open_interval(a, b, x) implies left_open_interval(e.map(b), e.map(a), e.map(x))
+}
+
+theorem order_dual_iso_right_open_interval_preimage[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    left_open_interval(e.map(b), e.map(a), e.map(x)) implies right_open_interval(a, b, x)
+}
+
+theorem order_dual_iso_right_open_interval_iff[A: LinearOrder, B: LinearOrder](
+    e: OrderDualIso[A, B],
+    a: A,
+    b: A,
+    x: A
+) {
+    left_open_interval(e.map(b), e.map(a), e.map(x)) = right_open_interval(a, b, x)
+}
+
+define order_iso_apply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) -> B {
+    e.map(x)
+}
+
+define order_iso_unapply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) -> A {
+    e.inv(y)
+}
+
+theorem order_iso_apply_at[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) {
+    order_iso_apply(e, x) = e.map(x)
+}
+
+theorem order_iso_unapply_at[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) {
+    order_iso_unapply(e, y) = e.inv(y)
+}
+
+theorem order_iso_unapply_apply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) {
+    order_iso_unapply(e, order_iso_apply(e, x)) = x
+}
+
+theorem order_iso_apply_unapply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) {
+    order_iso_apply(e, order_iso_unapply(e, y)) = y
+}
+
+theorem order_iso_apply_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_injective_fn(order_iso_apply(e))
+}
+
+theorem order_iso_apply_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_surjective_fn(order_iso_apply(e))
+}
+
+theorem order_iso_apply_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_bijection_fn(order_iso_apply(e))
+}
+
+theorem order_iso_unapply_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_injective_fn(order_iso_unapply(e))
+}
+
+theorem order_iso_unapply_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_surjective_fn(order_iso_unapply(e))
+}
+
+theorem order_iso_unapply_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_bijection_fn(order_iso_unapply(e))
+}
+
+theorem order_iso_apply_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_order_embedding(order_iso_apply(e))
+}
+
+theorem order_iso_unapply_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
+    is_order_embedding(order_iso_unapply(e))
+}
+
+theorem identity_order_iso_apply[A: PartialOrder](anchor: A, x: A) {
+    order_iso_apply(identity_order_iso(anchor), x) = x
+}
+
+theorem identity_order_iso_unapply[A: PartialOrder](anchor: A, x: A) {
+    order_iso_unapply(identity_order_iso(anchor), x) = x
+}
+
+theorem inverse_order_iso_apply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) {
+    order_iso_apply(inverse_order_iso(e), y) = order_iso_unapply(e, y)
+}
+
+theorem inverse_order_iso_unapply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) {
+    order_iso_unapply(inverse_order_iso(e), x) = order_iso_apply(e, x)
+}
+
+theorem compose_order_iso_apply[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B],
+    x: A
+) {
+    order_iso_apply(compose_order_iso(e, h), x) =
+    order_iso_apply(e, order_iso_apply(h, x))
+}
+
+theorem compose_order_iso_unapply[A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B],
+    z: C
+) {
+    order_iso_unapply(compose_order_iso(e, h), z) =
+    order_iso_unapply(h, order_iso_unapply(e, z))
+}
+
+define function_order_iso_map[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    f: X -> A,
+    x: X
+) -> B {
+    e.map(f(x))
+}
+
+define function_order_iso_unmap[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    g: X -> B,
+    x: X
+) -> A {
+    e.inv(g(x))
+}
+
+theorem function_order_iso_unmap_map[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    f: X -> A
+) {
+    function_order_iso_unmap(e, function_order_iso_map(e, f)) = f
+}
+
+theorem function_order_iso_map_unmap[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    g: X -> B
+) {
+    function_order_iso_map(e, function_order_iso_unmap(e, g)) = g
+}
+
+theorem function_order_iso_map_identity[X, A: PartialOrder](anchor: A, f: X -> A) {
+    function_order_iso_map(identity_order_iso(anchor), f) = f
+}
+
+theorem function_order_iso_unmap_identity[X, A: PartialOrder](anchor: A, f: X -> A) {
+    function_order_iso_unmap(identity_order_iso(anchor), f) = f
+}
+
+theorem function_order_iso_map_inverse[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    g: X -> B
+) {
+    function_order_iso_map(inverse_order_iso(e), g) = function_order_iso_unmap(e, g)
+}
+
+theorem function_order_iso_unmap_inverse[X, A: PartialOrder, B: PartialOrder](
+    e: OrderIso[A, B],
+    f: X -> A
+) {
+    function_order_iso_unmap(inverse_order_iso(e), f) = function_order_iso_map(e, f)
+}
+
+theorem function_order_iso_map_compose[X, A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B],
+    f: X -> A
+) {
+    function_order_iso_map(compose_order_iso(e, h), f) =
+    function_order_iso_map(e, function_order_iso_map(h, f))
+}
+
+theorem function_order_iso_unmap_compose[X, A: PartialOrder, B: PartialOrder, C: PartialOrder](
+    e: OrderIso[B, C],
+    h: OrderIso[A, B],
+    f: X -> C
+) {
+    function_order_iso_unmap(compose_order_iso(e, h), f) =
+    function_order_iso_unmap(h, function_order_iso_unmap(e, f))
+}
+
+define function_order_iso_reindex[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: Y -> A,
+    x: X
+) -> A {
+    f(e.map(x))
+}
+
+define function_order_iso_unreindex[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: X -> A,
+    y: Y
+) -> A {
+    f(e.inv(y))
+}
+
+theorem function_order_iso_unreindex_reindex[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: Y -> A
+) {
+    function_order_iso_unreindex(e, function_order_iso_reindex(e, f)) = f
+}
+
+theorem function_order_iso_reindex_unreindex[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: X -> A
+) {
+    function_order_iso_reindex(e, function_order_iso_unreindex(e, f)) = f
+}
+
+theorem function_order_iso_reindex_identity[X: PartialOrder, A: PartialOrder](anchor: X, f: X -> A) {
+    function_order_iso_reindex(identity_order_iso(anchor), f) = f
+}
+
+theorem function_order_iso_unreindex_identity[X: PartialOrder, A: PartialOrder](anchor: X, f: X -> A) {
+    function_order_iso_unreindex(identity_order_iso(anchor), f) = f
+}
+
+theorem function_order_iso_reindex_inverse[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: X -> A
+) {
+    function_order_iso_reindex(inverse_order_iso(e), f) = function_order_iso_unreindex(e, f)
+}
+
+theorem function_order_iso_unreindex_inverse[X: PartialOrder, Y: PartialOrder, A: PartialOrder](
+    e: OrderIso[X, Y],
+    f: Y -> A
+) {
+    function_order_iso_unreindex(inverse_order_iso(e), f) = function_order_iso_reindex(e, f)
+}
+
+theorem function_order_iso_reindex_compose[X: PartialOrder, Y: PartialOrder, Z: PartialOrder, A: PartialOrder](
+    e: OrderIso[Y, Z],
+    h: OrderIso[X, Y],
+    f: Z -> A
+) {
+    function_order_iso_reindex(compose_order_iso(e, h), f) =
+    function_order_iso_reindex(h, function_order_iso_reindex(e, f))
+}
+
+theorem function_order_iso_unreindex_compose[X: PartialOrder, Y: PartialOrder, Z: PartialOrder, A: PartialOrder](
+    e: OrderIso[Y, Z],
+    h: OrderIso[X, Y],
+    f: X -> A
+) {
+    function_order_iso_unreindex(compose_order_iso(e, h), f) =
+    function_order_iso_unreindex(e, function_order_iso_unreindex(h, f))
+}
+
+theorem lt_trans_ordered_group[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    a < b and b < c implies a < c
+}
+
+theorem add_inequality[F: AddOrderedGroup](a: F, b: F, c: F, d: F) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+define add_left_map[G: AddLeftOrderedGroup](c: G, x: G) -> G {
+    c + x
+}
+
+define add_right_map[G: AddOrderedGroup](c: G, x: G) -> G {
+    x + c
+}
+
+theorem add_left_map_apply[G: AddLeftOrderedGroup](c: G, x: G) {
+    add_left_map(c, x) = c + x
+}
+
+theorem add_right_map_apply[G: AddOrderedGroup](c: G, x: G) {
+    add_right_map(c, x) = x + c
+}
+
+theorem add_left_map_is_monotone[G: AddLeftOrderedGroup](c: G) {
+    is_monotone(add_left_map(c))
+}
+
+theorem add_right_map_is_monotone[G: AddOrderedGroup](c: G) {
+    is_monotone(add_right_map(c))
+}
+
+theorem add_left_map_is_order_embedding[G: AddLeftOrderedGroup](c: G) {
+    is_order_embedding(add_left_map(c))
+}
+
+theorem add_right_map_is_order_embedding[G: AddOrderedGroup](c: G) {
+    is_order_embedding(add_right_map(c))
+}
+
+theorem add_left_map_is_strict_monotone[G: AddLeftOrderedGroup](c: G) {
+    is_strict_monotone(add_left_map(c))
+}
+
+theorem add_right_map_is_strict_monotone[G: AddOrderedGroup](c: G) {
+    is_strict_monotone(add_right_map(c))
+}
+
+theorem add_le_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    a <= b implies c + a <= c + b
+}
+
+theorem add_le_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a <= b implies a + c <= b + c
+}
+
+theorem add_lt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    a < b implies c + a < c + b
+}
+
+theorem add_lt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a < b implies a + c < b + c
+}
+
+theorem add_ge_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    a >= b implies c + a >= c + b
+}
+
+theorem add_ge_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a >= b implies a + c >= b + c
+}
+
+theorem add_gt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    a > b implies c + a > c + b
+}
+
+theorem add_gt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a > b implies a + c > b + c
+}
+
+theorem le_of_add_le_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a <= c + b implies a <= b
+}
+
+theorem le_of_add_le_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c <= b + c implies a <= b
+}
+
+theorem lt_of_add_lt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a < c + b implies a < b
+}
+
+theorem lt_of_add_lt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c < b + c implies a < b
+}
+
+theorem ge_of_add_ge_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a >= c + b implies a >= b
+}
+
+theorem ge_of_add_ge_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c >= b + c implies a >= b
+}
+
+theorem gt_of_add_gt_add_left[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a > c + b implies a > b
+}
+
+theorem gt_of_add_gt_add_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c > b + c implies a > b
+}
+
+theorem add_le_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a <= c + b = (a <= b)
+}
+
+theorem add_le_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c <= b + c = (a <= b)
+}
+
+theorem add_le_iff_le_sub_right[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + b <= c = (a <= c - b)
+}
+
+theorem add_lt_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a < c + b = (a < b)
+}
+
+theorem add_lt_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c < b + c = (a < b)
+}
+
+theorem add_ge_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a >= c + b = (a >= b)
+}
+
+theorem add_ge_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c >= b + c = (a >= b)
+}
+
+theorem add_gt_add_left_iff[G: AddLeftOrderedGroup](a: G, b: G, c: G) {
+    c + a > c + b = (a > b)
+}
+
+theorem add_gt_add_right_iff[G: AddOrderedGroup](a: G, b: G, c: G) {
+    a + c > b + c = (a > b)
+}
+
+theorem add_le_add[G: AddOrderedGroup](a: G, b: G, c: G, d: G) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+theorem add_ge_add[G: AddOrderedGroup](a: G, b: G, c: G, d: G) {
+    a >= b and c >= d implies a + c >= b + d
+}
+
+let mod = Nat.mod
 
 inductive Int {
     /// `Int.from_nat` converts a natural number to an integer via the typical embedding.
@@ -32,24 +1370,272 @@ inductive Int {
 numerals Int
 
 
+let from_nat = Int.from_nat
+
+define abs(a: Int) -> Nat {
+    match a {
+        Int.from_nat(n) {
+            n
+        }
+        Int.neg_suc(k) {
+            k.suc
+        }
+    }
+}
+
+attributes Int {
+    /// The greatest common divisor of this integer and b.
+    define gcd(self, b: Int) -> Int {
+        Int.from_nat(abs(self).gcd(abs(b)))
+    }
+}
+
+attributes Int {
+    /// The absolute value of an integer.
+    define abs(self) -> Int {
+        Int.from_nat(abs(self))
+    }
+}
+
+attributes Int {
+    /// The least common multiple of this integer and b, defined as the
+    /// nonneg integer with absolute value equal to the natural-number lcm
+    /// of the two absolute values.
+    define lcm(self, b: Int) -> Int {
+        Int.from_nat(abs(self).lcm(abs(b)))
+    }
+}
+
+theorem abs_from_nat(n: Nat) {
+    abs(Int.from_nat(n)) = n
+}
+
+theorem gcd_comm_int(a: Int, b: Int) { a.gcd(b) = b.gcd(a) }
+
+define is_prime(a: Int) -> Bool {
+    abs(a).is_prime
+}
+
+theorem nat_is_prime_iff_int_is_prime(n: Nat) {
+    n.is_prime = is_prime(Int.from_nat(n))
+}
+
+theorem int_is_prime_iff_abs_is_prime(a: Int) {
+    is_prime(a) = abs(a).is_prime
+}
+
+theorem nat_gcd_self(a: Nat) {
+    a.gcd(a) = a
+}
+
+theorem int_gcd_self(a: Int) {
+    a.gcd(a) = Int.from_nat(abs(a))
+}
+
+theorem nat_lcm_comm_for_int_lcm(a: Nat, b: Nat) {
+    a.lcm(b) = b.lcm(a)
+}
+
+theorem nat_lcm_self_for_int_lcm(a: Nat) {
+    a.lcm(a) = a
+}
+
+theorem int_lcm_from_nat_abs(a: Int, b: Int) {
+    a.lcm(b) = Int.from_nat(abs(a).lcm(abs(b)))
+}
+
+theorem int_lcm_comm(a: Int, b: Int) {
+    a.lcm(b) = b.lcm(a)
+}
+
+theorem int_lcm_self(a: Int) {
+    a.lcm(a) = Int.from_nat(abs(a))
+}
+
+theorem int_abs_lcm(a: Int, b: Int) {
+    abs(a.lcm(b)) = abs(a).lcm(abs(b))
+}
+
+define pair_lte[A: PartialOrder, B: PartialOrder](p: Pair[A, B], q: Pair[A, B]) -> Bool {
+    p.first <= q.first and p.second <= q.second
+}
+
+instance Pair[A: PartialOrder, B: PartialOrder]: LTE {
+    define lte(self, other: Pair[A, B]) -> Bool {
+        pair_lte(self, other)
+    }
+}
+
+instance Pair[A: PartialOrder, B: PartialOrder]: PartialOrder
+
+define pair_meet[A: MeetSemilattice, B: MeetSemilattice](p: Pair[A, B], q: Pair[A, B]) -> Pair[A, B] {
+    Pair.new(p.first.meet(q.first), p.second.meet(q.second))
+}
+
+instance Pair[A: MeetSemilattice, B: MeetSemilattice]: Meet {
+    define meet(self, other: Pair[A, B]) -> Pair[A, B] {
+        pair_meet(self, other)
+    }
+}
+
+instance Pair[A: MeetSemilattice, B: MeetSemilattice]: MeetSemilattice
+
+define pair_join[A: JoinSemilattice, B: JoinSemilattice](p: Pair[A, B], q: Pair[A, B]) -> Pair[A, B] {
+    Pair.new(p.first.join(q.first), p.second.join(q.second))
+}
+
+instance Pair[A: JoinSemilattice, B: JoinSemilattice]: Join {
+    define join(self, other: Pair[A, B]) -> Pair[A, B] {
+        pair_join(self, other)
+    }
+}
+
+instance Pair[A: JoinSemilattice, B: JoinSemilattice]: JoinSemilattice
+
+instance Pair[A: Lattice, B: Lattice]: Lattice
+
+instance Pair[A: DistribLattice, B: DistribLattice]: DistribLattice
+
+theorem pair_map_is_order_embedding[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    f: A -> C,
+    g: B -> D
+) {
+    is_order_embedding(f) and is_order_embedding(g) implies is_order_embedding(pair_map(f, g))
+}
+
+theorem pair_map_is_order_iso_pair[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    f1: A -> C,
+    g1: C -> A,
+    f2: B -> D,
+    g2: D -> B
+) {
+    is_order_iso_pair(f1, g1) and is_order_iso_pair(f2, g2) implies
+    is_order_iso_pair(pair_map(f1, f2), pair_map(g1, g2))
+}
+
+let pair_order_iso[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](e: OrderIso[A, C], h: OrderIso[B, D]) -> result: OrderIso[Pair[A, B], Pair[C, D]] satisfy {
+    result.map = pair_map(e.map, h.map) and result.inv = pair_map(e.inv, h.inv)
+}
+
+theorem pair_order_iso_map[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D]
+) {
+    pair_order_iso(e, h).map = pair_map(e.map, h.map)
+}
+
+theorem pair_order_iso_inv[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D]
+) {
+    pair_order_iso(e, h).inv = pair_map(e.inv, h.inv)
+}
+
+theorem pair_map_identity_fn[A, B] {
+    pair_map(identity_fn[A], identity_fn[B]) = identity_fn[Pair[A, B]]
+}
+
+theorem pair_map_compose_fn[A, B, C, D, E, F](f: C -> E, g: A -> C, h: D -> F, i: B -> D) {
+    pair_map(compose(f, g), compose(h, i)) = compose(pair_map(f, h), pair_map(g, i))
+}
+
+theorem pair_order_iso_identity[A: PartialOrder, B: PartialOrder](a: A, b: B) {
+    pair_order_iso(identity_order_iso(a), identity_order_iso(b)) = identity_order_iso(Pair.new(a, b))
+}
+
+theorem pair_order_iso_inverse[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D]
+) {
+    inverse_order_iso(pair_order_iso(e, h)) =
+        pair_order_iso(inverse_order_iso(e), inverse_order_iso(h))
+}
+
+theorem pair_order_iso_compose[A1: PartialOrder, A2: PartialOrder, B1: PartialOrder, B2: PartialOrder, C1: PartialOrder, C2: PartialOrder](
+    e2: OrderIso[B1, C1],
+    h2: OrderIso[B2, C2],
+    e1: OrderIso[A1, B1],
+    h1: OrderIso[A2, B2]
+) {
+    compose_order_iso(pair_order_iso(e2, h2), pair_order_iso(e1, h1)) =
+        pair_order_iso(compose_order_iso(e2, e1), compose_order_iso(h2, h1))
+}
+
+theorem pair_order_iso_apply[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D],
+    p: Pair[A, B]
+) {
+    order_iso_apply(pair_order_iso(e, h), p) =
+        Pair.new(order_iso_apply(e, p.first), order_iso_apply(h, p.second))
+}
+
+theorem pair_order_iso_unapply[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D],
+    q: Pair[C, D]
+) {
+    order_iso_unapply(pair_order_iso(e, h), q) =
+        Pair.new(order_iso_unapply(e, q.first), order_iso_unapply(h, q.second))
+}
+
+theorem pair_order_iso_apply_new[A: PartialOrder, B: PartialOrder, C: PartialOrder, D: PartialOrder](
+    e: OrderIso[A, C],
+    h: OrderIso[B, D],
+    a: A,
+    b: B
+) {
+    order_iso_apply(pair_order_iso(e, h), Pair.new(a, b)) =
+        Pair.new(order_iso_apply(e, a), order_iso_apply(h, b))
+}
+
+theorem pair_swap_map_is_order_embedding[A: PartialOrder, B: PartialOrder] {
+    is_order_embedding(Pair[A, B].swap)
+}
+
+theorem pair_swap_is_order_iso_pair[A: PartialOrder, B: PartialOrder] {
+    is_order_iso_pair(Pair[A, B].swap, Pair[B, A].swap)
+}
+
+let pair_swap_order_iso[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B]) -> result: OrderIso[Pair[A, B], Pair[B, A]] satisfy {
+    result.map = Pair[A, B].swap and result.inv = Pair[B, A].swap
+}
+
+theorem pair_swap_order_iso_map[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B]) {
+    pair_swap_order_iso(anchor).map = Pair[A, B].swap
+}
+
+theorem pair_swap_order_iso_inv[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B]) {
+    pair_swap_order_iso(anchor).inv = Pair[B, A].swap
+}
+
+theorem pair_swap_order_iso_apply[A: PartialOrder, B: PartialOrder](p: Pair[A, B]) {
+    order_iso_apply(pair_swap_order_iso(p), p) = p.swap
+}
+
+theorem pair_swap_order_iso_unapply[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B], q: Pair[B, A]) {
+    order_iso_unapply(pair_swap_order_iso(anchor), q) = q.swap
+}
+
+theorem pair_swap_order_iso_inverse[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B]) {
+    inverse_order_iso(pair_swap_order_iso(anchor)) = pair_swap_order_iso(anchor.swap)
+}
+
+theorem pair_swap_order_iso_apply_new[A: PartialOrder, B: PartialOrder](a: A, b: B) {
+    order_iso_apply(pair_swap_order_iso(Pair.new(a, b)), Pair.new(a, b)) = Pair.new(b, a)
+}
+
+theorem pair_swap_order_iso_compose_self[A: PartialOrder, B: PartialOrder](anchor: Pair[A, B]) {
+    compose_order_iso(pair_swap_order_iso(anchor.swap), pair_swap_order_iso(anchor)) =
+        identity_order_iso(anchor)
+}
+
 instance Int: Zero {
     let 0: Int = Int.from_nat(Nat.0)
 }
 
 instance Int: One {
     let 1: Int = Int.from_nat(Nat.1)
-}
-
-instance Int: Meet {
-    define meet(self, other: Int) -> Int {
-        self.min(other)
-    }
-}
-
-instance Int: Join {
-    define join(self, other: Int) -> Int {
-        self.max(other)
-    }
 }
 
 attributes Int {
@@ -74,24 +1660,27 @@ attributes Int {
 }
 
 attributes Int {
-    /// The integer formed by appending a digit to this integer in base 10.
-    define read(self, other: Int) -> Int { 10 * self + other }
+    /// True if this integer and b have no common factor greater than one.
+    define coprime(self, b: Int) -> Bool { self.gcd(b) = 1 }
 }
 
-attributes Int {
-    /// True if this integer divides b (equivalently, there exists d such that d * this = b).
-    define divides(self, b: Int) -> Bool {
-        exists(d: Int) { d * self = b }
+define neg_nat(n: Nat) -> Int {
+    if n = Nat.0 {
+        0
+    } else {
+        Int.neg_suc(n - Nat.1)
     }
 }
 
-define abs(a: Int) -> Nat {
-    match a {
-        Int.from_nat(n) {
-            n
-        }
-        Int.neg_suc(k) {
-            k.suc
+instance Int: Neg {
+    define neg(self) -> Int {
+        match self {
+            Int.from_nat(n) {
+                neg_nat(n)
+            }
+            Int.neg_suc(n) {
+                Int.from_nat(n.suc)
+            }
         }
     }
 }
@@ -107,34 +1696,6 @@ attributes Int {
         (-self).is_negative
     }
 }
-
-instance Int: LTE {
-    define lte(self, b: Int) -> Bool {
-        (b - self).is_positive or self = b
-    }
-}
-
-instance Int: PartialOrder
-
-instance Int: LinearOrder
-
-instance Int: MeetSemilattice
-
-instance Int: JoinSemilattice
-
-instance Int: Lattice
-
-instance Int: DistribLattice
-
-instance Pair[A: PartialOrder, B: PartialOrder]: PartialOrder
-
-instance Pair[A: MeetSemilattice, B: MeetSemilattice]: MeetSemilattice
-
-instance Pair[A: JoinSemilattice, B: JoinSemilattice]: JoinSemilattice
-
-instance Pair[A: Lattice, B: Lattice]: Lattice
-
-instance Pair[A: DistribLattice, B: DistribLattice]: DistribLattice
 
 attributes Int {
     /// The positive part of this integer.
@@ -186,31 +1747,127 @@ instance Int: CommSemigroup
 instance Int: CommMonoid
 
 attributes Int {
-    /// The greatest common divisor of this integer and b.
-    define gcd(self, b: Int) -> Int {
-        Int.from_nat(abs(self).gcd(abs(b)))
+    /// True if this integer divides b (equivalently, there exists d such that d * this = b).
+    define divides(self, b: Int) -> Bool {
+        exists(d: Int) { d * self = b }
     }
 }
 
-attributes Int {
-    /// The absolute value of an integer.
-    define abs(self) -> Int {
-        Int.from_nat(abs(self))
+theorem neg_nat_zero { neg_nat(Nat.0) = 0 }
+
+theorem neg_nat_suc(n: Nat) {
+    neg_nat(n.suc) = Int.neg_suc(n)
+}
+
+theorem abs_neg_nat(n: Nat) {
+    abs(neg_nat(n)) = n
+}
+
+theorem neg_zero {
+    -0 = 0
+}
+
+theorem neg_neg_suc(n: Nat) {
+    -Int.neg_suc(n) = Int.from_nat(n.suc)
+}
+
+theorem neg_from_nat(n: Nat) {
+    -Int.from_nat(n) = neg_nat(n)
+}
+
+theorem neg_neg(a: Int) {
+    -(-a) = a
+}
+
+theorem fix_neg(a: Int) {
+    -a = a implies a = 0
+}
+
+theorem abs_neg(a: Int) {
+    abs(-a) = abs(a)
+}
+
+theorem neg_or_pos(a: Int) {
+    a = Int.from_nat(abs(a)) or a = -(Int.from_nat(abs(a)))
+}
+
+theorem from_eq_neg_from(p: Nat, q: Nat) {
+    Int.from_nat(p) = -(Int.from_nat(q)) implies p = Nat.0 and q = Nat.0
+}
+
+theorem abs_zero { abs(0) = Nat.0 }
+
+theorem one_neq_zero { 1 != 0 }
+
+define sub_nat(m: Nat, n: Nat) -> Int {
+    if n <= m {
+        Int.from_nat(m - n)
+    } else {
+        -(Int.from_nat(n - m))
     }
 }
 
-attributes Int {
-    /// True if this integer and b have no common factor greater than one.
-    define coprime(self, b: Int) -> Bool { self.gcd(b) = 1 }
+instance Int: Add {
+    define add(self, other: Int) -> Int {
+        sub_nat(self.pos_part + other.pos_part, self.neg_part + other.neg_part)
+    }
 }
 
-attributes Int {
-    /// The least common multiple of this integer and b, defined as the
-    /// nonneg integer with absolute value equal to the natural-number lcm
-    /// of the two absolute values.
-    define lcm(self, b: Int) -> Int {
-        Int.from_nat(abs(self).lcm(abs(b)))
+instance Int: AddSemigroup
+
+instance Int: AddCommSemigroup
+
+instance Int: AddMonoid
+
+instance Int: AddCommMonoid
+
+instance Int: AddGroup
+
+instance Int: AddCommGroup
+
+instance Int: LTE {
+    define lte(self, b: Int) -> Bool {
+        (b - self).is_positive or self = b
     }
+}
+
+instance Int: PartialOrder
+
+instance Int: Semiring
+
+instance Int: Ring
+
+instance Int: CommRing
+
+instance Int: LinearOrder
+
+instance Int: AddLeftOrderedGroup
+
+instance Int: AddOrderedGroup
+
+instance Int: Meet {
+    define meet(self, other: Int) -> Int {
+        self.min(other)
+    }
+}
+
+instance Int: Join {
+    define join(self, other: Int) -> Int {
+        self.max(other)
+    }
+}
+
+instance Int: MeetSemilattice
+
+instance Int: JoinSemilattice
+
+instance Int: Lattice
+
+instance Int: DistribLattice
+
+attributes Int {
+    /// The integer formed by appending a digit to this integer in base 10.
+    define read(self, other: Int) -> Int { 10 * self + other }
 }
 
 define is_galois_connection[A: PartialOrder, B: PartialOrder](
@@ -316,38 +1973,6 @@ theorem galois_connection_counit[A: PartialOrder, B: PartialOrder](
     b: B
 ) {
     is_galois_connection(lower, upper) implies lower(upper(b)) <= b
-}
-
-define galois_closure[A: PartialOrder, B: PartialOrder](
-    lower: A -> B,
-    upper: B -> A,
-    a: A
-) -> A {
-    upper(lower(a))
-}
-
-define galois_kernel[A: PartialOrder, B: PartialOrder](
-    lower: A -> B,
-    upper: B -> A,
-    b: B
-) -> B {
-    lower(upper(b))
-}
-
-theorem galois_closure_at[A: PartialOrder, B: PartialOrder](
-    lower: A -> B,
-    upper: B -> A,
-    a: A
-) {
-    galois_closure(lower, upper, a) = upper(lower(a))
-}
-
-theorem galois_kernel_at[A: PartialOrder, B: PartialOrder](
-    lower: A -> B,
-    upper: B -> A,
-    b: B
-) {
-    galois_kernel(lower, upper, b) = lower(upper(b))
 }
 
 theorem galois_closure_extensive[A: PartialOrder, B: PartialOrder](
@@ -1238,127 +2863,6 @@ theorem compose_galois_coinsertion[A: PartialOrder, B: PartialOrder, C: PartialO
         is_galois_coinsertion(compose(lower2, lower1), compose(upper1, upper2))
 }
 
-theorem abs_from_nat(n: Nat) {
-    abs(Int.from_nat(n)) = n
-}
-
-define neg_nat(n: Nat) -> Int {
-    if n = Nat.0 {
-        0
-    } else {
-        Int.neg_suc(n - Nat.1)
-    }
-}
-
-instance Int: Neg {
-    define neg(self) -> Int {
-        match self {
-            Int.from_nat(n) {
-                neg_nat(n)
-            }
-            Int.neg_suc(n) {
-                Int.from_nat(n.suc)
-            }
-        }
-    }
-}
-
-theorem neg_nat_zero { neg_nat(Nat.0) = 0 }
-
-theorem neg_nat_suc(n: Nat) {
-    neg_nat(n.suc) = Int.neg_suc(n)
-}
-
-theorem abs_neg_nat(n: Nat) {
-    abs(neg_nat(n)) = n
-}
-
-theorem neg_zero {
-    -0 = 0
-}
-
-theorem neg_neg_suc(n: Nat) {
-    -Int.neg_suc(n) = Int.from_nat(n.suc)
-}
-
-theorem neg_from_nat(n: Nat) {
-    -Int.from_nat(n) = neg_nat(n)
-}
-
-theorem neg_neg(a: Int) {
-    -(-a) = a
-}
-
-theorem fix_neg(a: Int) {
-    -a = a implies a = 0
-}
-
-theorem abs_neg(a: Int) {
-    abs(-a) = abs(a)
-}
-
-theorem neg_or_pos(a: Int) {
-    a = Int.from_nat(abs(a)) or a = -(Int.from_nat(abs(a)))
-}
-
-theorem from_eq_neg_from(p: Nat, q: Nat) {
-    Int.from_nat(p) = -(Int.from_nat(q)) implies p = Nat.0 and q = Nat.0
-}
-
-theorem abs_zero { abs(0) = Nat.0 }
-
-theorem one_neq_zero { 1 != 0 }
-
-define sub_nat(m: Nat, n: Nat) -> Int {
-    if n <= m {
-        Int.from_nat(m - n)
-    } else {
-        -(Int.from_nat(n - m))
-    }
-}
-
-instance Int: Add {
-    define add(self, other: Int) -> Int {
-        sub_nat(self.pos_part + other.pos_part, self.neg_part + other.neg_part)
-    }
-}
-
-instance Int: AddSemigroup
-
-instance Int: AddCommSemigroup
-
-instance Int: AddMonoid
-
-instance Int: AddCommMonoid
-
-instance Int: AddGroup
-
-typeclass G: AddLeftOrderedGroup extends AddGroup, LinearOrder {
-    /// Left addition preserves the order relation: if `a ≤ b`, then `c + a ≤ c + b`.
-    left_invariance(a: G, b: G, c: G) {
-        a <= b implies c + a <= c + b
-    }
-}
-
-typeclass G: AddOrderedGroup extends AddLeftOrderedGroup {
-    /// Right addition preserves the order relation: if `a ≤ b`, then `a + c ≤ b + c`.
-    right_invariance(a: G, b: G, c: G) {
-        a <= b implies a + c <= b + c
-    }
-}
-
-instance Int: AddCommGroup
-
-instance Int: Semiring
-
-instance Int: Ring
-
-instance Int: CommRing
-
-instance Int: AddLeftOrderedGroup
-
-instance Int: AddOrderedGroup
-
 theorem sub_nat_zero_right(n: Nat) {
     sub_nat(n, Nat.0) = Int.from_nat(n)
 }
@@ -1520,1330 +3024,4 @@ theorem add_neg_nonpos(a: Int, b: Int) {
 
 theorem add_nonneg_nonneg(a: Int, b: Int) {
     not a.is_negative and not b.is_negative implies not (a + b).is_negative
-}
-
-theorem add_nonpos_nonpos(a: Int, b: Int) {
-    not a.is_positive and not b.is_positive implies not (a + b).is_positive
-}
-
-theorem add_comm_4(a: Int, b: Int, c: Int, d: Int) { (a + b) + (c + d) = (a + c) + (b + d) }
-
-theorem sub_zero_right(a: Int) { a - 0 = a }
-
-theorem sub_zero_left(a: Int) { 0 - a = -a }
-
-theorem sub_anticomm(a: Int, b: Int) { a - b = -(b - a) }
-
-theorem sub_self(a: Int) { a - a = 0 }
-
-theorem sub_eq_zero(a: Int, b: Int) { a - b = 0 implies a = b }
-
-theorem sub_add_left(a: Int, b: Int) {
-    (a + b) - b = a
-}
-
-theorem neg_sub(a: Int, b: Int) { -(a - b) = b - a }
-
-theorem sub_add_right(a: Int, b: Int) { a - (a + b) = -b }
-
-theorem sub_imp_add(a: Int, b: Int, c: Int) { a - b = c implies b + c = a }
-
-theorem sub_negate_imp_add(a: Int, b: Int, c: Int) { a - b = -(c) implies a + c = b }
-
-theorem sub_cancel_right(a: Int, b: Int, c: Int) { a - c = b - c implies a = b }
-
-theorem sub_cancel_left(a: Int, b: Int, c: Int) { a - b = a - c implies b = c }
-
-theorem sub_add_cancel_left(a: Int, b: Int, c: Int) { (a + b) - (a + c) = b - c }
-
-theorem sub_add_cancel_right(a: Int, b: Int, c: Int) { (a + c) - (b + c) = a - b }
-
-theorem mul_nat_zero_right(a: Int) { a.mul_nat(Nat.0) = Int.0 }
-
-theorem mul_nat_zero_left(n: Nat) { 0.mul_nat(n) = 0 }
-
-theorem mul_nat_nonpos_left(a: Int, n: Nat) {
-    not a.is_positive implies a.mul_nat(n) = -(Int.from_nat(abs(a) * n))
-}
-
-theorem mul_nat_negate_left(a: Int, n: Nat) { (-a).mul_nat(n) = -(a.mul_nat(n)) }
-
-theorem mul_nat_nonneg_suc(a: Int, n: Nat) {
-    not a.is_negative implies a.mul_nat(n.suc) = a.mul_nat(n) + a
-}
-
-theorem mul_nat_suc(a: Int, n: Nat) {
-    a.mul_nat(n.suc) = (a.mul_nat(n) + a)
-}
-
-theorem mul_nat_distrib_right(a: Int, b: Int, n: Nat) {
-    (a + b).mul_nat(n) = (a.mul_nat(n) + b.mul_nat(n))
-}
-
-theorem mul_nat_from_nat_left(a: Nat, b: Nat) { Int.from_nat(a).mul_nat(b) = Int.from_nat(a * b) }
-
-theorem mul_zero_right_int(a: Int) { a * 0 = 0 }
-
-theorem mul_nat_from_nat_right(a: Int, n: Nat) { a.mul_nat(n) = (a * Int.from_nat(n)) }
-
-theorem mul_nonneg_right(a: Int, b: Int) { not b.is_negative implies a * b = a.mul_nat(abs(b)) }
-
-theorem mul_nonneg_nonneg(a: Int, b: Int) {
-    not a.is_negative and not b.is_negative implies a * b = Int.from_nat(abs(a) * abs(b))
-}
-
-theorem mul_nonneg_nonpos(a: Int, b: Int) {
-    not a.is_negative and not b.is_positive implies a * b = -(Int.from_nat(abs(a) * abs(b)))
-}
-
-theorem mul_nonpos_nonneg(a: Int, b: Int) {
-    not a.is_positive and not b.is_negative implies a * b = -(Int.from_nat(abs(a) * abs(b)))
-}
-
-theorem mul_nonpos_nonpos(a: Int, b: Int) {
-    not a.is_positive and not b.is_positive implies a * b = Int.from_nat(abs(a) * abs(b))
-}
-
-theorem mul_nonneg_nonneg_nonneg(a: Int, b: Int) {
-    not a.is_negative and not b.is_negative implies not (a * b).is_negative
-}
-
-theorem mul_nonneg_nonpos_nonpos(a: Int, b: Int) {
-    not a.is_negative and not b.is_positive implies not (a * b).is_positive
-}
-
-theorem mul_nonpos_nonneg_nonpos(a: Int, b: Int) {
-    not a.is_positive and not b.is_negative implies not (a * b).is_positive
-}
-
-theorem mul_nonpos_nonpos_nonneg(a: Int, b: Int) {
-    not a.is_positive and not b.is_positive implies not (a * b).is_negative
-}
-
-theorem mul_zero_left_int(a: Int) {
-    0 * a = 0
-}
-
-theorem mul_comm(a: Int, b: Int) { a * b = b * a }
-
-theorem mul_one_right(a: Int) { a * 1 = a }
-
-theorem mul_one_left(a: Int) { 1 * a = a }
-
-theorem mul_neg_left_int(a: Int, b: Int) { -a * b = -(a * b) }
-
-theorem mul_neg_right_int(a: Int, b: Int) { a * -b = -(a * b) }
-
-theorem mul_distrib_nonneg_right(a: Int, b: Int, c: Int) {
-    not c.is_negative implies (a + b) * c = a * c + b * c
-}
-
-theorem mul_distrib_right(a: Int, b: Int, c: Int) { (a + b) * c = a * c + b * c }
-
-theorem mul_distrib_left(a: Int, b: Int, c: Int) { a * (b + c) = a * b + a * c }
-
-theorem mul_sub_distrib_right(a: Int, b: Int, c: Int) { (a - b) * c = a * c - b * c }
-
-theorem mul_sub_distrib_left(a: Int, b: Int, c: Int) { a * (b - c) = a * b - a * c }
-
-theorem abs_mul(a: Int, b: Int) { abs(a * b) = abs(a) * abs(b) }
-
-define is_order_iso_pair[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) -> Bool {
-    forall(a: A) {
-        g(f(a)) = a
-    } and forall(b: B) {
-        f(g(b)) = b
-    } and is_order_embedding(f) and is_order_embedding(g)
-}
-
-structure OrderIso[A: PartialOrder, B: PartialOrder] {
-    /// The order-preserving map.
-    map: A -> B
-
-    /// The inverse order-preserving map.
-    inv: B -> A
-} constraint {
-    is_order_iso_pair(map, inv)
-}
-
-theorem order_iso_pair_left_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, a: A) {
-    is_order_iso_pair(f, g) implies g(f(a)) = a
-}
-
-theorem order_iso_pair_right_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, b: B) {
-    is_order_iso_pair(f, g) implies f(g(b)) = b
-}
-
-theorem order_iso_pair_map_is_order_embedding[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_iso_pair(f, g) implies is_order_embedding(f)
-}
-
-theorem order_iso_pair_inv_is_order_embedding[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_iso_pair(f, g) implies is_order_embedding(g)
-}
-
-theorem order_iso_pair_swap[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_iso_pair(f, g) implies is_order_iso_pair(g, f)
-}
-
-theorem order_iso_pair_compose[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    f: B -> C,
-    g: C -> B,
-    h: A -> B,
-    k: B -> A
-) {
-    is_order_iso_pair(f, g) and is_order_iso_pair(h, k) implies
-    is_order_iso_pair(compose(f, h), compose(k, g))
-}
-
-define is_order_dual_iso_pair[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) -> Bool {
-    forall(a: A) {
-        g(f(a)) = a
-    } and forall(b: B) {
-        f(g(b)) = b
-    } and is_antitone(f) and is_antitone(g)
-}
-
-structure OrderDualIso[A: PartialOrder, B: PartialOrder] {
-    /// The order-reversing map.
-    map: A -> B
-
-    /// The inverse order-reversing map.
-    inv: B -> A
-} constraint {
-    is_order_dual_iso_pair(map, inv)
-}
-
-theorem order_dual_iso_pair_left_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, a: A) {
-    is_order_dual_iso_pair(f, g) implies g(f(a)) = a
-}
-
-theorem order_dual_iso_pair_right_inverse[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, b: B) {
-    is_order_dual_iso_pair(f, g) implies f(g(b)) = b
-}
-
-theorem order_dual_iso_pair_map_is_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_dual_iso_pair(f, g) implies is_antitone(f)
-}
-
-theorem order_dual_iso_pair_inv_is_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_dual_iso_pair(f, g) implies is_antitone(g)
-}
-
-theorem order_dual_iso_pair_swap[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_dual_iso_pair(f, g) implies is_order_dual_iso_pair(g, f)
-}
-
-theorem order_dual_iso_pair_apply_le[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) and x <= y implies f(y) <= f(x)
-}
-
-theorem order_dual_iso_pair_reflects_le[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) and f(y) <= f(x) implies x <= y
-}
-
-theorem order_dual_iso_pair_le_iff_ge[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) implies (f(x) <= f(y) = (x >= y))
-}
-
-theorem order_dual_iso_pair_apply_lt[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) and x < y implies f(y) < f(x)
-}
-
-theorem order_dual_iso_pair_reflects_lt[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) and f(y) < f(x) implies x < y
-}
-
-theorem order_dual_iso_pair_lt_iff_gt[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) implies (f(x) < f(y) = (x > y))
-}
-
-theorem order_dual_iso_pair_ge_iff_le[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) implies (f(x) >= f(y) = (x <= y))
-}
-
-theorem order_dual_iso_pair_gt_iff_lt[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, x: A, y: A) {
-    is_order_dual_iso_pair(f, g) implies (f(x) > f(y) = (x < y))
-}
-
-theorem order_dual_iso_pair_map_is_strict_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_dual_iso_pair(f, g) implies is_strict_antitone(f)
-}
-
-theorem order_dual_iso_pair_inv_is_strict_antitone[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A) {
-    is_order_dual_iso_pair(f, g) implies is_strict_antitone(g)
-}
-
-theorem order_dual_iso_new_map[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderDualIso[A, B]) {
-    OrderDualIso[A, B].new(f, g) = Option.some(e) implies e.map = f
-}
-
-theorem order_dual_iso_new_inv[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderDualIso[A, B]) {
-    OrderDualIso[A, B].new(f, g) = Option.some(e) implies e.inv = g
-}
-
-theorem order_dual_iso_new_self[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    OrderDualIso[A, B].new(e.map, e.inv) = Option.some(e)
-}
-
-theorem order_dual_iso_some_injective[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
-    Option.some(e) = Option.some(h) implies e = h
-}
-
-theorem order_dual_iso_ext[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
-    e.map = h.map and e.inv = h.inv implies e = h
-}
-
-theorem order_dual_iso_eq_map[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
-    e = h implies e.map = h.map
-}
-
-theorem order_dual_iso_eq_inv[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], h: OrderDualIso[A, B]) {
-    e = h implies e.inv = h.inv
-}
-
-theorem order_dual_iso_left_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], a: A) {
-    e.inv(e.map(a)) = a
-}
-
-theorem order_dual_iso_right_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], b: B) {
-    e.map(e.inv(b)) = b
-}
-
-theorem order_dual_iso_map_is_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    is_antitone(e.map)
-}
-
-theorem order_dual_iso_inv_is_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    is_antitone(e.inv)
-}
-
-theorem order_dual_iso_apply_le[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    x <= y implies e.map(y) <= e.map(x)
-}
-
-theorem order_dual_iso_reflects_le[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(y) <= e.map(x) implies x <= y
-}
-
-theorem order_dual_iso_le_iff_ge[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(x) <= e.map(y) = (x >= y)
-}
-
-theorem order_dual_iso_apply_lt[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    x < y implies e.map(y) < e.map(x)
-}
-
-theorem order_dual_iso_reflects_lt[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(y) < e.map(x) implies x < y
-}
-
-theorem order_dual_iso_lt_iff_gt[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(x) < e.map(y) = (x > y)
-}
-
-theorem order_dual_iso_ge_iff_le[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(x) >= e.map(y) = (x <= y)
-}
-
-theorem order_dual_iso_gt_iff_lt[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B], x: A, y: A) {
-    e.map(x) > e.map(y) = (x < y)
-}
-
-theorem order_dual_iso_map_is_strict_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    is_strict_antitone(e.map)
-}
-
-theorem order_dual_iso_inv_is_strict_antitone[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    is_strict_antitone(e.inv)
-}
-
-let order_dual_iso_inverse[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) -> result: OrderDualIso[B, A] satisfy {
-    OrderDualIso[B, A].new(e.inv, e.map) = Option.some(result)
-}
-
-theorem order_dual_iso_inverse_map[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    order_dual_iso_inverse(e).map = e.inv
-}
-
-theorem order_dual_iso_inverse_inv[A: PartialOrder, B: PartialOrder](e: OrderDualIso[A, B]) {
-    order_dual_iso_inverse(e).inv = e.map
-}
-
-theorem order_dual_iso_pair_compose_dual[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    f: B -> C,
-    g: C -> B,
-    h: A -> B,
-    k: B -> A
-) {
-    is_order_dual_iso_pair(f, g) and is_order_dual_iso_pair(h, k) implies
-    is_order_iso_pair(compose(f, h), compose(k, g))
-}
-
-define order_iso_image_predicate[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], p: A -> Bool, y: B) -> Bool {
-    p(e.inv(y))
-}
-
-define order_iso_preimage_predicate[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], q: B -> Bool, x: A) -> Bool {
-    q(e.map(x))
-}
-
-define order_dual_iso_image_predicate[A: PartialOrder, B: PartialOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    y: B
-) -> Bool {
-    p(e.inv(y))
-}
-
-define order_dual_iso_preimage_predicate[A: PartialOrder, B: PartialOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    x: A
-) -> Bool {
-    q(e.map(x))
-}
-
-theorem order_iso_new_map[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderIso[A, B]) {
-    OrderIso[A, B].new(f, g) = Option.some(e) implies e.map = f
-}
-
-theorem order_iso_new_inv[A: PartialOrder, B: PartialOrder](f: A -> B, g: B -> A, e: OrderIso[A, B]) {
-    OrderIso[A, B].new(f, g) = Option.some(e) implies e.inv = g
-}
-
-theorem order_iso_new_self[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    OrderIso[A, B].new(e.map, e.inv) = Option.some(e)
-}
-
-theorem order_iso_some_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
-    Option.some(e) = Option.some(h) implies e = h
-}
-
-theorem order_iso_ext[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
-    e.map = h.map and e.inv = h.inv implies e = h
-}
-
-theorem order_iso_eq_map[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
-    e = h implies e.map = h.map
-}
-
-theorem order_iso_eq_inv[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], h: OrderIso[A, B]) {
-    e = h implies e.inv = h.inv
-}
-
-theorem order_iso_left_inverse[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], a: A) {
-    e.inv(e.map(a)) = a
-}
-
-theorem order_iso_right_inverse[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], b: B) {
-    e.map(e.inv(b)) = b
-}
-
-theorem order_iso_map_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_order_embedding(e.map)
-}
-
-theorem order_iso_inv_is_order_embedding[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_order_embedding(e.inv)
-}
-
-theorem order_iso_map_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_injective_fn(e.map)
-}
-
-theorem order_iso_map_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_surjective_fn(e.map)
-}
-
-theorem order_iso_map_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_bijection_fn(e.map)
-}
-
-theorem order_iso_inv_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_injective_fn(e.inv)
-}
-
-theorem order_iso_inv_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_surjective_fn(e.inv)
-}
-
-theorem order_iso_inv_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_bijection_fn(e.inv)
-}
-
-theorem order_iso_apply_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    x <= y implies e.map(x) <= e.map(y)
-}
-
-theorem order_iso_reflects_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) <= e.map(y) implies x <= y
-}
-
-theorem order_iso_le_iff_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) <= e.map(y) = (x <= y)
-}
-
-theorem order_iso_inv_apply_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    x <= y implies e.inv(x) <= e.inv(y)
-}
-
-theorem order_iso_inv_reflects_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) <= e.inv(y) implies x <= y
-}
-
-theorem order_iso_inv_le_iff_le[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) <= e.inv(y) = (x <= y)
-}
-
-theorem order_iso_apply_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    x < y implies e.map(x) < e.map(y)
-}
-
-theorem order_iso_reflects_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) < e.map(y) implies x < y
-}
-
-theorem order_iso_lt_iff_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) < e.map(y) = (x < y)
-}
-
-theorem order_iso_apply_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    x >= y implies e.map(x) >= e.map(y)
-}
-
-theorem order_iso_reflects_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) >= e.map(y) implies x >= y
-}
-
-theorem order_iso_ge_iff_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) >= e.map(y) = (x >= y)
-}
-
-theorem order_iso_apply_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    x > y implies e.map(x) > e.map(y)
-}
-
-theorem order_iso_reflects_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) > e.map(y) implies x > y
-}
-
-theorem order_iso_gt_iff_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A, y: A) {
-    e.map(x) > e.map(y) = (x > y)
-}
-
-theorem order_iso_inv_apply_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    x < y implies e.inv(x) < e.inv(y)
-}
-
-theorem order_iso_inv_reflects_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) < e.inv(y) implies x < y
-}
-
-theorem order_iso_inv_lt_iff_lt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) < e.inv(y) = (x < y)
-}
-
-theorem order_iso_inv_apply_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    x >= y implies e.inv(x) >= e.inv(y)
-}
-
-theorem order_iso_inv_reflects_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) >= e.inv(y) implies x >= y
-}
-
-theorem order_iso_inv_ge_iff_ge[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) >= e.inv(y) = (x >= y)
-}
-
-theorem order_iso_inv_apply_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    x > y implies e.inv(x) > e.inv(y)
-}
-
-theorem order_iso_inv_reflects_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) > e.inv(y) implies x > y
-}
-
-theorem order_iso_inv_gt_iff_gt[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: B, y: B) {
-    e.inv(x) > e.inv(y) = (x > y)
-}
-
-theorem order_iso_image_predicate_map[A: PartialOrder, B: PartialOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    x: A
-) {
-    order_iso_image_predicate(e, p, e.map(x)) = p(x)
-}
-
-theorem order_iso_preimage_predicate_inv[A: PartialOrder, B: PartialOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    y: B
-) {
-    order_iso_preimage_predicate(e, q, e.inv(y)) = q(y)
-}
-
-theorem order_iso_image_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_lower_bound_linear(p, a) implies is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a))
-}
-
-theorem order_iso_image_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_upper_bound_linear(p, b) implies is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b))
-}
-
-theorem order_iso_reflects_image_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a)) implies is_lower_bound_linear(p, a)
-}
-
-theorem order_iso_reflects_image_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b)) implies is_upper_bound_linear(p, b)
-}
-
-theorem order_iso_image_lower_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_lower_bound_linear(order_iso_image_predicate(e, p), e.map(a)) = is_lower_bound_linear(p, a)
-}
-
-theorem order_iso_image_upper_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_upper_bound_linear(order_iso_image_predicate(e, p), e.map(b)) = is_upper_bound_linear(p, b)
-}
-
-theorem order_iso_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(p, a, b) implies
-    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b))
-}
-
-theorem order_iso_reflects_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b)) implies
-    is_bounded_by_interval(p, a, b)
-}
-
-theorem order_iso_image_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(order_iso_image_predicate(e, p), e.map(a), e.map(b)) =
-    is_bounded_by_interval(p, a, b)
-}
-
-theorem order_iso_image_bounded_below[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_below_linear(p) implies is_bounded_below_linear(order_iso_image_predicate(e, p))
-}
-
-theorem order_iso_image_bounded_above[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_above_linear(p) implies is_bounded_above_linear(order_iso_image_predicate(e, p))
-}
-
-theorem order_iso_image_bounded[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_linear(p) implies is_bounded_linear(order_iso_image_predicate(e, p))
-}
-
-theorem order_iso_preimage_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_lower_bound_linear(q, a) implies is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a))
-}
-
-theorem order_iso_preimage_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_upper_bound_linear(q, b) implies is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b))
-}
-
-theorem order_iso_reflects_preimage_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a)) implies is_lower_bound_linear(q, a)
-}
-
-theorem order_iso_reflects_preimage_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b)) implies is_upper_bound_linear(q, b)
-}
-
-theorem order_iso_preimage_lower_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_lower_bound_linear(order_iso_preimage_predicate(e, q), e.inv(a)) = is_lower_bound_linear(q, a)
-}
-
-theorem order_iso_preimage_upper_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_upper_bound_linear(order_iso_preimage_predicate(e, q), e.inv(b)) = is_upper_bound_linear(q, b)
-}
-
-theorem order_iso_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(q, a, b) implies
-    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b))
-}
-
-theorem order_iso_reflects_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b)) implies
-    is_bounded_by_interval(q, a, b)
-}
-
-theorem order_iso_preimage_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(order_iso_preimage_predicate(e, q), e.inv(a), e.inv(b)) =
-    is_bounded_by_interval(q, a, b)
-}
-
-theorem order_iso_preimage_bounded_below[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_below_linear(q) implies is_bounded_below_linear(order_iso_preimage_predicate(e, q))
-}
-
-theorem order_iso_preimage_bounded_above[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_above_linear(q) implies is_bounded_above_linear(order_iso_preimage_predicate(e, q))
-}
-
-theorem order_iso_preimage_bounded[A: LinearOrder, B: LinearOrder](
-    e: OrderIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_linear(q) implies is_bounded_linear(order_iso_preimage_predicate(e, q))
-}
-
-theorem order_dual_iso_image_predicate_map[A: PartialOrder, B: PartialOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    x: A
-) {
-    order_dual_iso_image_predicate(e, p, e.map(x)) = p(x)
-}
-
-theorem order_dual_iso_preimage_predicate_inv[A: PartialOrder, B: PartialOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    y: B
-) {
-    order_dual_iso_preimage_predicate(e, q, e.inv(y)) = q(y)
-}
-
-theorem order_dual_iso_image_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_lower_bound_linear(p, a) implies is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a))
-}
-
-theorem order_dual_iso_image_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_upper_bound_linear(p, b) implies is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b))
-}
-
-theorem order_dual_iso_reflects_image_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a)) implies is_lower_bound_linear(p, a)
-}
-
-theorem order_dual_iso_reflects_image_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b)) implies is_upper_bound_linear(p, b)
-}
-
-theorem order_dual_iso_image_lower_bound_upper_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A
-) {
-    is_upper_bound_linear(order_dual_iso_image_predicate(e, p), e.map(a)) = is_lower_bound_linear(p, a)
-}
-
-theorem order_dual_iso_image_upper_bound_lower_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    b: A
-) {
-    is_lower_bound_linear(order_dual_iso_image_predicate(e, p), e.map(b)) = is_upper_bound_linear(p, b)
-}
-
-theorem order_dual_iso_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(p, a, b) implies
-    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a))
-}
-
-theorem order_dual_iso_reflects_image_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a)) implies
-    is_bounded_by_interval(p, a, b)
-}
-
-theorem order_dual_iso_image_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool,
-    a: A,
-    b: A
-) {
-    is_bounded_by_interval(order_dual_iso_image_predicate(e, p), e.map(b), e.map(a)) =
-    is_bounded_by_interval(p, a, b)
-}
-
-theorem order_dual_iso_image_bounded_below_to_bounded_above[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_below_linear(p) implies is_bounded_above_linear(order_dual_iso_image_predicate(e, p))
-}
-
-theorem order_dual_iso_image_bounded_above_to_bounded_below[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_above_linear(p) implies is_bounded_below_linear(order_dual_iso_image_predicate(e, p))
-}
-
-theorem order_dual_iso_image_bounded[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    p: A -> Bool
-) {
-    is_bounded_linear(p) implies is_bounded_linear(order_dual_iso_image_predicate(e, p))
-}
-
-theorem order_dual_iso_preimage_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_lower_bound_linear(q, a) implies is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a))
-}
-
-theorem order_dual_iso_preimage_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_upper_bound_linear(q, b) implies is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b))
-}
-
-theorem order_dual_iso_reflects_preimage_upper_bound_to_lower_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a)) implies is_lower_bound_linear(q, a)
-}
-
-theorem order_dual_iso_reflects_preimage_lower_bound_to_upper_bound[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b)) implies is_upper_bound_linear(q, b)
-}
-
-theorem order_dual_iso_preimage_lower_bound_upper_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B
-) {
-    is_upper_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(a)) = is_lower_bound_linear(q, a)
-}
-
-theorem order_dual_iso_preimage_upper_bound_lower_bound_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    b: B
-) {
-    is_lower_bound_linear(order_dual_iso_preimage_predicate(e, q), e.inv(b)) = is_upper_bound_linear(q, b)
-}
-
-theorem order_dual_iso_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(q, a, b) implies
-    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a))
-}
-
-theorem order_dual_iso_reflects_preimage_bounded_by_interval[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a)) implies
-    is_bounded_by_interval(q, a, b)
-}
-
-theorem order_dual_iso_preimage_bounded_by_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool,
-    a: B,
-    b: B
-) {
-    is_bounded_by_interval(order_dual_iso_preimage_predicate(e, q), e.inv(b), e.inv(a)) =
-    is_bounded_by_interval(q, a, b)
-}
-
-theorem order_dual_iso_preimage_bounded_below_to_bounded_above[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_below_linear(q) implies is_bounded_above_linear(order_dual_iso_preimage_predicate(e, q))
-}
-
-theorem order_dual_iso_preimage_bounded_above_to_bounded_below[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_above_linear(q) implies is_bounded_below_linear(order_dual_iso_preimage_predicate(e, q))
-}
-
-theorem order_dual_iso_preimage_bounded[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    q: B -> Bool
-) {
-    is_bounded_linear(q) implies is_bounded_linear(order_dual_iso_preimage_predicate(e, q))
-}
-
-let identity_order_iso[A: PartialOrder](anchor: A) -> result: OrderIso[A, A] satisfy {
-    result.map = identity_fn[A] and result.inv = identity_fn[A]
-}
-
-theorem identity_order_iso_map[A: PartialOrder](anchor: A) {
-    identity_order_iso(anchor).map = identity_fn[A]
-}
-
-theorem identity_order_iso_inv[A: PartialOrder](anchor: A) {
-    identity_order_iso(anchor).inv = identity_fn[A]
-}
-
-let inverse_order_iso[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) -> result: OrderIso[B, A] satisfy {
-    result.map = e.inv and result.inv = e.map
-}
-
-theorem inverse_order_iso_map[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    inverse_order_iso(e).map = e.inv
-}
-
-theorem inverse_order_iso_inv[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    inverse_order_iso(e).inv = e.map
-}
-
-let compose_order_iso[A: PartialOrder, B: PartialOrder, C: PartialOrder](e: OrderIso[B, C], h: OrderIso[A, B]) -> result: OrderIso[A, C] satisfy {
-    result.map = compose(e.map, h.map) and result.inv = compose(h.inv, e.inv)
-}
-
-theorem compose_order_iso_map[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    e: OrderIso[B, C],
-    h: OrderIso[A, B]
-) {
-    compose_order_iso(e, h).map = compose(e.map, h.map)
-}
-
-theorem compose_order_iso_inv[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    e: OrderIso[B, C],
-    h: OrderIso[A, B]
-) {
-    compose_order_iso(e, h).inv = compose(h.inv, e.inv)
-}
-
-let compose_order_dual_iso[A: PartialOrder, B: PartialOrder, C: PartialOrder](e: OrderDualIso[B, C], h: OrderDualIso[A, B]) -> result: OrderIso[A, C] satisfy {
-    result.map = compose(e.map, h.map) and result.inv = compose(h.inv, e.inv)
-}
-
-theorem compose_order_dual_iso_map[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    e: OrderDualIso[B, C],
-    h: OrderDualIso[A, B]
-) {
-    compose_order_dual_iso(e, h).map = compose(e.map, h.map)
-}
-
-theorem compose_order_dual_iso_inv[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    e: OrderDualIso[B, C],
-    h: OrderDualIso[A, B]
-) {
-    compose_order_dual_iso(e, h).inv = compose(h.inv, e.inv)
-}
-
-theorem compose_order_dual_iso_apply[A: PartialOrder, B: PartialOrder, C: PartialOrder](
-    e: OrderDualIso[B, C],
-    h: OrderDualIso[A, B],
-    a: A
-) {
-    compose_order_dual_iso(e, h).map(a) = e.map(h.map(a))
-}
-
-theorem order_iso_closed_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    closed_interval(a, b, x) implies closed_interval(e.map(a), e.map(b), e.map(x))
-}
-
-theorem order_iso_closed_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    closed_interval(e.map(a), e.map(b), e.map(x)) implies closed_interval(a, b, x)
-}
-
-theorem order_iso_closed_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    closed_interval(e.map(a), e.map(b), e.map(x)) = closed_interval(a, b, x)
-}
-
-theorem order_iso_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    open_interval(a, b, x) implies open_interval(e.map(a), e.map(b), e.map(x))
-}
-
-theorem order_iso_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    open_interval(e.map(a), e.map(b), e.map(x)) implies open_interval(a, b, x)
-}
-
-theorem order_iso_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    open_interval(e.map(a), e.map(b), e.map(x)) = open_interval(a, b, x)
-}
-
-theorem order_iso_left_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    left_open_interval(a, b, x) implies left_open_interval(e.map(a), e.map(b), e.map(x))
-}
-
-theorem order_iso_left_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    left_open_interval(e.map(a), e.map(b), e.map(x)) implies left_open_interval(a, b, x)
-}
-
-theorem order_iso_left_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    left_open_interval(e.map(a), e.map(b), e.map(x)) = left_open_interval(a, b, x)
-}
-
-theorem order_iso_right_open_interval_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    right_open_interval(a, b, x) implies right_open_interval(e.map(a), e.map(b), e.map(x))
-}
-
-theorem order_iso_right_open_interval_preimage[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    right_open_interval(e.map(a), e.map(b), e.map(x)) implies right_open_interval(a, b, x)
-}
-
-theorem order_iso_right_open_interval_iff[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A, x: A) {
-    right_open_interval(e.map(a), e.map(b), e.map(x)) = right_open_interval(a, b, x)
-}
-
-theorem order_iso_min_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.min(b)) = e.map(a).min(e.map(b))
-}
-
-theorem order_iso_max_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.max(b)) = e.map(a).max(e.map(b))
-}
-
-theorem order_iso_inv_min_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.min(b)) = e.inv(a).min(e.inv(b))
-}
-
-theorem order_iso_inv_max_image[A: LinearOrder, B: LinearOrder](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.max(b)) = e.inv(a).max(e.inv(b))
-}
-
-theorem order_dual_iso_closed_interval_image[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    closed_interval(a, b, x) implies closed_interval(e.map(b), e.map(a), e.map(x))
-}
-
-theorem order_dual_iso_closed_interval_preimage[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    closed_interval(e.map(b), e.map(a), e.map(x)) implies closed_interval(a, b, x)
-}
-
-theorem order_dual_iso_closed_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    closed_interval(e.map(b), e.map(a), e.map(x)) = closed_interval(a, b, x)
-}
-
-theorem order_dual_iso_open_interval_image[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    open_interval(a, b, x) implies open_interval(e.map(b), e.map(a), e.map(x))
-}
-
-theorem order_dual_iso_open_interval_preimage[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    open_interval(e.map(b), e.map(a), e.map(x)) implies open_interval(a, b, x)
-}
-
-theorem order_dual_iso_open_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    open_interval(e.map(b), e.map(a), e.map(x)) = open_interval(a, b, x)
-}
-
-theorem order_dual_iso_left_open_interval_image[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    left_open_interval(a, b, x) implies right_open_interval(e.map(b), e.map(a), e.map(x))
-}
-
-theorem order_dual_iso_left_open_interval_preimage[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    right_open_interval(e.map(b), e.map(a), e.map(x)) implies left_open_interval(a, b, x)
-}
-
-theorem order_dual_iso_left_open_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    right_open_interval(e.map(b), e.map(a), e.map(x)) = left_open_interval(a, b, x)
-}
-
-theorem order_dual_iso_right_open_interval_image[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    right_open_interval(a, b, x) implies left_open_interval(e.map(b), e.map(a), e.map(x))
-}
-
-theorem order_dual_iso_right_open_interval_preimage[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    left_open_interval(e.map(b), e.map(a), e.map(x)) implies right_open_interval(a, b, x)
-}
-
-theorem order_dual_iso_right_open_interval_iff[A: LinearOrder, B: LinearOrder](
-    e: OrderDualIso[A, B],
-    a: A,
-    b: A,
-    x: A
-) {
-    left_open_interval(e.map(b), e.map(a), e.map(x)) = right_open_interval(a, b, x)
-}
-
-theorem order_dual_iso_min_image[A: LinearOrder, B: LinearOrder](e: OrderDualIso[A, B], a: A, b: A) {
-    e.map(a.min(b)) = e.map(a).max(e.map(b))
-}
-
-theorem order_dual_iso_max_image[A: LinearOrder, B: LinearOrder](e: OrderDualIso[A, B], a: A, b: A) {
-    e.map(a.max(b)) = e.map(a).min(e.map(b))
-}
-
-theorem order_dual_iso_inv_min_image[A: LinearOrder, B: LinearOrder](e: OrderDualIso[A, B], a: B, b: B) {
-    e.inv(a.min(b)) = e.inv(a).max(e.inv(b))
-}
-
-theorem order_dual_iso_inv_max_image[A: LinearOrder, B: LinearOrder](e: OrderDualIso[A, B], a: B, b: B) {
-    e.inv(a.max(b)) = e.inv(a).min(e.inv(b))
-}
-
-theorem order_iso_meet_image[A: MeetSemilattice, B: MeetSemilattice](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.meet(b)) = e.map(a).meet(e.map(b))
-}
-
-theorem order_iso_join_image[A: JoinSemilattice, B: JoinSemilattice](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.join(b)) = e.map(a).join(e.map(b))
-}
-
-theorem order_iso_inf_image[A: MeetSemilattice, B: MeetSemilattice](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.meet(b)) = e.map(a).meet(e.map(b))
-}
-
-theorem order_iso_sup_image[A: JoinSemilattice, B: JoinSemilattice](e: OrderIso[A, B], a: A, b: A) {
-    e.map(a.join(b)) = e.map(a).join(e.map(b))
-}
-
-theorem order_iso_inv_meet_image[A: MeetSemilattice, B: MeetSemilattice](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.meet(b)) = e.inv(a).meet(e.inv(b))
-}
-
-theorem order_iso_inv_join_image[A: JoinSemilattice, B: JoinSemilattice](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.join(b)) = e.inv(a).join(e.inv(b))
-}
-
-theorem order_iso_inv_inf_image[A: MeetSemilattice, B: MeetSemilattice](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.meet(b)) = e.inv(a).meet(e.inv(b))
-}
-
-theorem order_iso_inv_sup_image[A: JoinSemilattice, B: JoinSemilattice](e: OrderIso[A, B], a: B, b: B) {
-    e.inv(a.join(b)) = e.inv(a).join(e.inv(b))
-}
-
-theorem order_dual_iso_meet_image[A: MeetSemilattice, B: JoinSemilattice](e: OrderDualIso[A, B], a: A, b: A) {
-    e.map(a.meet(b)) = e.map(a).join(e.map(b))
-}
-
-theorem order_dual_iso_join_image[A: JoinSemilattice, B: MeetSemilattice](e: OrderDualIso[A, B], a: A, b: A) {
-    e.map(a.join(b)) = e.map(a).meet(e.map(b))
-}
-
-theorem order_dual_iso_inv_meet_image[A: JoinSemilattice, B: MeetSemilattice](e: OrderDualIso[A, B], a: B, b: B) {
-    e.inv(a.meet(b)) = e.inv(a).join(e.inv(b))
-}
-
-theorem order_dual_iso_inv_join_image[A: MeetSemilattice, B: JoinSemilattice](e: OrderDualIso[A, B], a: B, b: B) {
-    e.inv(a.join(b)) = e.inv(a).meet(e.inv(b))
-}
-
-define order_iso_apply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) -> B {
-    e.map(x)
-}
-
-define order_iso_unapply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) -> A {
-    e.inv(y)
-}
-
-theorem order_iso_apply_at[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) {
-    order_iso_apply(e, x) = e.map(x)
-}
-
-theorem order_iso_unapply_at[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) {
-    order_iso_unapply(e, y) = e.inv(y)
-}
-
-theorem order_iso_unapply_apply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], x: A) {
-    order_iso_unapply(e, order_iso_apply(e, x)) = x
-}
-
-theorem order_iso_apply_unapply[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B], y: B) {
-    order_iso_apply(e, order_iso_unapply(e, y)) = y
-}
-
-theorem order_iso_apply_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_injective_fn(order_iso_apply(e))
-}
-
-theorem order_iso_apply_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_surjective_fn(order_iso_apply(e))
-}
-
-theorem order_iso_apply_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_bijection_fn(order_iso_apply(e))
-}
-
-theorem order_iso_unapply_is_injective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_injective_fn(order_iso_unapply(e))
-}
-
-theorem order_iso_unapply_is_surjective[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_surjective_fn(order_iso_unapply(e))
-}
-
-theorem order_iso_unapply_is_bijection[A: PartialOrder, B: PartialOrder](e: OrderIso[A, B]) {
-    is_bijection_fn(order_iso_unapply(e))
 }

@@ -1,3 +1,60 @@
+typeclass F: Field extends CommRing, Inverse {
+    /// We define the field inverse so that the inverse of zero is zero.
+    /// It would be nice to instead express that an inverse is "not valid" or yields "no value"
+    /// but it is not convenient to do so in the current type system.
+    field_inverse_zero {
+        F.0.inverse = F.0
+    }
+
+    /// The definition of "multiplicative inverse" in a field.
+    field_inverse(f: F) {
+        f != F.0 implies f * f.inverse = F.1
+    }
+
+    /// Zero and one are distinct elements.
+    zero_and_one_are_distinct {
+        F.0 != F.1
+    }
+}
+
+typeclass G: Group extends Monoid {
+    /// The inverse operation
+    inverse: G -> G
+
+    /// We only need right-inverse; we can prove left-inverse from it.
+    inverse_right(a: G) {
+        a * a.inverse = G.1
+    }
+}
+
+typeclass C: CommGroup extends CommMonoid, Group {
+    // All the properties are provided by the base typeclasses.
+}
+
+typeclass M: MulZeroClass extends Mul, Zero {
+    /// Zero is a left absorbing element for multiplication.
+    zero_mul(a: M) {
+        M.0 * a = M.0
+    }
+
+    /// Zero is a right absorbing element for multiplication.
+    mul_zero(a: M) {
+        a * M.0 = M.0
+    }
+}
+
+typeclass D: IntegralDomain extends CommRing {
+    /// Zero and one are distinct elements of the integral domain.
+    zero_ne_one {
+        D.0 != D.1
+    }
+
+    /// The product of two elements of an integral domain is zero only if at least one factor is zero.
+    no_zero_divisors(a: D, b: D) {
+        a * b = D.0 implies a = D.0 or b = D.0
+    }
+}
+
 inductive GF4 {
     /// The class of zero.
     zero
@@ -26,1233 +83,1527 @@ structure PointwiseFunction[T, A] {
     val: T -> A
 }
 
-theorem gf4_x_ne_x_plus_one {
-    GF4.x != GF4.x_plus_one
+structure Unit[M: Monoid] {
+    /// The element of the monoid.
+    val: M
+    /// A two-sided inverse of the element.
+    inv: M
+} constraint {
+    val * inv = M.1 and inv * val = M.1
 }
 
-define prepend_all[T](x: T, ts: List[List[T]]) -> List[List[T]] {
-    map[List[T], List[T]](ts, function(t: List[T]) {
-        List.cons(x, t)
-    })
+instance GF4: Zero {
+    let 0 = GF4.zero
 }
 
-theorem prepend_all_unfold[T](x: T, ts: List[List[T]]) {
-    prepend_all(x, ts) = map[List[T], List[T]](ts, function(t: List[T]) {
-        List.cons(x, t)
-    })
+instance GF4: One {
+    let 1 = GF4.one
 }
 
-theorem cons_injective_fn[T](x: T) {
-    is_injective_fn(function(t: List[T]) { List.cons(x, t) })
-}
-
-theorem map_unique_of_injective[T, U](items: List[T], f: T -> U) {
-    items.is_unique and is_injective_fn(f) implies map(items, f).is_unique
-}
-
-theorem predicate_subset_intro[T](p: T -> Bool, q: T -> Bool) {
-    (forall(x: T) { p(x) implies q(x) }) implies predicate_subset(p, q)
-}
-
-define to_mul_opposite[M](x: M) -> MulOpposite[M] {
-    MulOpposite.new(x)
-}
-
-define of_mul_opposite[M](x: MulOpposite[M]) -> M {
-    x.val
-}
-
-theorem mul_opposite_ext[M](x: MulOpposite[M], y: MulOpposite[M]) {
-    x.val = y.val implies x = y
-}
-
-theorem of_to_mul_opposite[M](x: M) {
-    of_mul_opposite(to_mul_opposite(x)) = x
-}
-
-theorem to_of_mul_opposite[M](x: MulOpposite[M]) {
-    to_mul_opposite(of_mul_opposite(x)) = x
-}
-
-theorem to_mul_opposite_val[M](x: M) {
-    to_mul_opposite(x).val = x
-}
-
-theorem pointwise_function_ext[T, A](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A]) {
-    (forall(t: T) { f.val(t) = g.val(t) }) implies f = g
-}
-
-theorem pointwise_function_eq_val[T, A](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A]) {
-    f = g implies f.val = g.val
-}
-
-theorem pointwise_function_eq_apply[T, A](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A], t: T) {
-    f = g implies f.val(t) = g.val(t)
-}
-
-let add_monoid_algebra_singleton_support[M](m: M) -> result: FiniteSet[M] satisfy {
-    FiniteSet[M].new(Set[M].singleton(m)) = Option.some(result)
-}
-
-define is_well_founded[T](r: (T, T) -> Bool) -> Bool {
-    forall(p: T -> Bool) {
-        (exists(x: T) { p(x) }) implies exists(m: T) {
-            p(m) and forall(y: T) {
-                r(y, m) implies not p(y)
-            }
-        }
+attributes MulOpposite[G: Group] {
+    /// Inversion in the opposite carrier is inherited from the original carrier.
+    define inverse(self) -> MulOpposite[G] {
+        MulOpposite.new(self.val.inverse)
     }
 }
 
-define is_descending_chain[T](r: (T, T) -> Bool, c: Nat -> T) -> Bool {
-    forall(n: Nat) {
-        r(c(n.suc), c(n))
+define add_comm_group_hom_image[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B], s: Set[A]) -> Set[B] {
+    set_image(s, f.hom)
+}
+
+define add_comm_group_hom_preimage[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B], s: Set[B]) -> Set[A] {
+    set_preimage(f.hom, s)
+}
+
+define add_comm_group_hom_image_preimage_closure[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A]
+) -> Set[A] {
+    set_image_preimage_closure(f.hom, s)
+}
+
+define add_comm_group_hom_preimage_image_kernel[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[B]
+) -> Set[B] {
+    set_preimage_image_kernel(f.hom, s)
+}
+
+theorem add_comm_group_hom_image_contains_witness[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A],
+    y: B
+) {
+    add_comm_group_hom_image(f, s).contains(y) implies exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
 }
 
-define has_descending_chain[T](r: (T, T) -> Bool) -> Bool {
-    exists(c: Nat -> T) {
-        is_descending_chain(r, c)
+theorem add_comm_group_hom_maps_into_image[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A],
+    x: A
+) {
+    s.contains(x) implies add_comm_group_hom_image(f, s).contains(f.hom(x))
+}
+
+theorem add_comm_group_hom_image_subset_iff_subset_preimage[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A],
+    t: Set[B]
+) {
+    add_comm_group_hom_image(f, s).subset(t) = s.subset(add_comm_group_hom_preimage(f, t))
+}
+
+theorem add_comm_group_hom_image_compose[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup](
+    f: AddCommGroupHom[B, C],
+    g: AddCommGroupHom[A, B],
+    s: Set[A]
+) {
+    add_comm_group_hom_image(compose_add_comm_group_hom(f, g), s) =
+        add_comm_group_hom_image(f, add_comm_group_hom_image(g, s))
+}
+
+theorem add_comm_group_hom_preimage_compose[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup](
+    f: AddCommGroupHom[B, C],
+    g: AddCommGroupHom[A, B],
+    s: Set[C]
+) {
+    add_comm_group_hom_preimage(compose_add_comm_group_hom(f, g), s) =
+        add_comm_group_hom_preimage(g, add_comm_group_hom_preimage(f, s))
+}
+
+theorem add_comm_group_hom_image_preimage_closure_extensive[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A]
+) {
+    s.subset(add_comm_group_hom_image_preimage_closure(f, s))
+}
+
+theorem add_comm_group_hom_image_preimage_closure_monotone[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    is_subset_monotone_map(add_comm_group_hom_image_preimage_closure(f))
+}
+
+theorem add_comm_group_hom_image_preimage_closure_idempotent[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[A]
+) {
+    add_comm_group_hom_image_preimage_closure(f, add_comm_group_hom_image_preimage_closure(f, s)) =
+        add_comm_group_hom_image_preimage_closure(f, s)
+}
+
+theorem add_comm_group_hom_image_preimage_closure_operator[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    is_set_closure_operator(add_comm_group_hom_image_preimage_closure(f))
+}
+
+theorem add_comm_group_hom_preimage_image_kernel_reductive[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[B]
+) {
+    add_comm_group_hom_preimage_image_kernel(f, s).subset(s)
+}
+
+theorem add_comm_group_hom_preimage_image_kernel_monotone[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    is_subset_monotone_map(add_comm_group_hom_preimage_image_kernel(f))
+}
+
+theorem add_comm_group_hom_preimage_image_kernel_idempotent[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    s: Set[B]
+) {
+    add_comm_group_hom_preimage_image_kernel(f, add_comm_group_hom_preimage_image_kernel(f, s)) =
+        add_comm_group_hom_preimage_image_kernel(f, s)
+}
+
+theorem add_comm_group_hom_preimage_image_kernel_operator[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    is_set_kernel_operator(add_comm_group_hom_preimage_image_kernel(f))
+}
+
+define add_comm_monoid_hom_image[A: AddCommMonoid, B: AddCommMonoid](f: AddCommMonoidHom[A, B], s: Set[A]) -> Set[B] {
+    set_image(s, f.hom)
+}
+
+define add_comm_monoid_hom_preimage[A: AddCommMonoid, B: AddCommMonoid](f: AddCommMonoidHom[A, B], s: Set[B]) -> Set[A] {
+    set_preimage(f.hom, s)
+}
+
+define add_comm_monoid_hom_image_preimage_closure[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A]
+) -> Set[A] {
+    set_image_preimage_closure(f.hom, s)
+}
+
+define add_comm_monoid_hom_preimage_image_kernel[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[B]
+) -> Set[B] {
+    set_preimage_image_kernel(f.hom, s)
+}
+
+theorem add_comm_monoid_hom_image_contains_witness[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A],
+    y: B
+) {
+    add_comm_monoid_hom_image(f, s).contains(y) implies exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
 }
 
-define has_no_descending_chain[T](r: (T, T) -> Bool) -> Bool {
-    not has_descending_chain(r)
+theorem add_comm_monoid_hom_maps_into_image[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A],
+    x: A
+) {
+    s.contains(x) implies add_comm_monoid_hom_image(f, s).contains(f.hom(x))
 }
 
-define is_noetherian_relation[T](r: (T, T) -> Bool) -> Bool {
-    is_well_founded(relation_converse(r))
+theorem add_comm_monoid_hom_image_subset_iff_subset_preimage[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A],
+    t: Set[B]
+) {
+    add_comm_monoid_hom_image(f, s).subset(t) = s.subset(add_comm_monoid_hom_preimage(f, t))
 }
 
-define is_successor_closed_predicate[T](r: (T, T) -> Bool, p: T -> Bool) -> Bool {
-    forall(x: T) {
-        (forall(y: T) { r(x, y) implies p(y) }) implies p(x)
+theorem add_comm_monoid_hom_image_compose[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid](
+    f: AddCommMonoidHom[B, C],
+    g: AddCommMonoidHom[A, B],
+    s: Set[A]
+) {
+    add_comm_monoid_hom_image(compose_add_comm_monoid_hom(f, g), s) =
+        add_comm_monoid_hom_image(f, add_comm_monoid_hom_image(g, s))
+}
+
+theorem add_comm_monoid_hom_preimage_compose[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid](
+    f: AddCommMonoidHom[B, C],
+    g: AddCommMonoidHom[A, B],
+    s: Set[C]
+) {
+    add_comm_monoid_hom_preimage(compose_add_comm_monoid_hom(f, g), s) =
+        add_comm_monoid_hom_preimage(g, add_comm_monoid_hom_preimage(f, s))
+}
+
+theorem add_comm_monoid_hom_image_preimage_closure_extensive[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A]
+) {
+    s.subset(add_comm_monoid_hom_image_preimage_closure(f, s))
+}
+
+theorem add_comm_monoid_hom_image_preimage_closure_monotone[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    is_subset_monotone_map(add_comm_monoid_hom_image_preimage_closure(f))
+}
+
+theorem add_comm_monoid_hom_image_preimage_closure_idempotent[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[A]
+) {
+    add_comm_monoid_hom_image_preimage_closure(f, add_comm_monoid_hom_image_preimage_closure(f, s)) =
+        add_comm_monoid_hom_image_preimage_closure(f, s)
+}
+
+theorem add_comm_monoid_hom_image_preimage_closure_operator[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    is_set_closure_operator(add_comm_monoid_hom_image_preimage_closure(f))
+}
+
+theorem add_comm_monoid_hom_preimage_image_kernel_reductive[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[B]
+) {
+    add_comm_monoid_hom_preimage_image_kernel(f, s).subset(s)
+}
+
+theorem add_comm_monoid_hom_preimage_image_kernel_monotone[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    is_subset_monotone_map(add_comm_monoid_hom_preimage_image_kernel(f))
+}
+
+theorem add_comm_monoid_hom_preimage_image_kernel_idempotent[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    s: Set[B]
+) {
+    add_comm_monoid_hom_preimage_image_kernel(f, add_comm_monoid_hom_preimage_image_kernel(f, s)) =
+        add_comm_monoid_hom_preimage_image_kernel(f, s)
+}
+
+theorem add_comm_monoid_hom_preimage_image_kernel_operator[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    is_set_kernel_operator(add_comm_monoid_hom_preimage_image_kernel(f))
+}
+
+define add_group_hom_image[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], s: Set[A]) -> Set[B] {
+    set_image(s, f.hom)
+}
+
+define add_group_hom_preimage[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], s: Set[B]) -> Set[A] {
+    set_preimage(f.hom, s)
+}
+
+define add_group_hom_image_preimage_closure[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A]
+) -> Set[A] {
+    set_image_preimage_closure(f.hom, s)
+}
+
+define add_group_hom_preimage_image_kernel[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[B]
+) -> Set[B] {
+    set_preimage_image_kernel(f.hom, s)
+}
+
+theorem add_group_hom_image_contains_witness[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A],
+    y: B
+) {
+    add_group_hom_image(f, s).contains(y) implies exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
 }
 
-theorem successor_closed_predicate_at[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
-    is_successor_closed_predicate(r, p) and
-    forall(y: T) {
-        r(x, y) implies p(y)
+theorem add_group_hom_maps_into_image[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A],
+    x: A
+) {
+    s.contains(x) implies add_group_hom_image(f, s).contains(f.hom(x))
+}
+
+theorem add_group_hom_image_subset_iff_subset_preimage[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A],
+    t: Set[B]
+) {
+    add_group_hom_image(f, s).subset(t) = s.subset(add_group_hom_preimage(f, t))
+}
+
+theorem add_group_hom_image_compose[A: AddGroup, B: AddGroup, C: AddGroup](
+    f: AddGroupHom[B, C],
+    g: AddGroupHom[A, B],
+    s: Set[A]
+) {
+    add_group_hom_image(compose_add_group_hom(f, g), s) =
+        add_group_hom_image(f, add_group_hom_image(g, s))
+}
+
+theorem add_group_hom_preimage_compose[A: AddGroup, B: AddGroup, C: AddGroup](
+    f: AddGroupHom[B, C],
+    g: AddGroupHom[A, B],
+    s: Set[C]
+) {
+    add_group_hom_preimage(compose_add_group_hom(f, g), s) =
+        add_group_hom_preimage(g, add_group_hom_preimage(f, s))
+}
+
+theorem add_group_hom_image_preimage_closure_extensive[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A]
+) {
+    s.subset(add_group_hom_image_preimage_closure(f, s))
+}
+
+theorem add_group_hom_image_preimage_closure_monotone[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B]
+) {
+    is_subset_monotone_map(add_group_hom_image_preimage_closure(f))
+}
+
+theorem add_group_hom_image_preimage_closure_idempotent[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[A]
+) {
+    add_group_hom_image_preimage_closure(f, add_group_hom_image_preimage_closure(f, s)) =
+        add_group_hom_image_preimage_closure(f, s)
+}
+
+theorem add_group_hom_image_preimage_closure_operator[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B]
+) {
+    is_set_closure_operator(add_group_hom_image_preimage_closure(f))
+}
+
+theorem add_group_hom_preimage_image_kernel_reductive[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[B]
+) {
+    add_group_hom_preimage_image_kernel(f, s).subset(s)
+}
+
+theorem add_group_hom_preimage_image_kernel_monotone[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B]
+) {
+    is_subset_monotone_map(add_group_hom_preimage_image_kernel(f))
+}
+
+theorem add_group_hom_preimage_image_kernel_idempotent[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: Set[B]
+) {
+    add_group_hom_preimage_image_kernel(f, add_group_hom_preimage_image_kernel(f, s)) =
+        add_group_hom_preimage_image_kernel(f, s)
+}
+
+theorem add_group_hom_preimage_image_kernel_operator[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B]
+) {
+    is_set_kernel_operator(add_group_hom_preimage_image_kernel(f))
+}
+
+define add_monoid_hom_image[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], s: Set[A]) -> Set[B] {
+    set_image(s, f.hom)
+}
+
+define add_monoid_hom_preimage[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], s: Set[B]) -> Set[A] {
+    set_preimage(f.hom, s)
+}
+
+define add_monoid_hom_image_preimage_closure[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A]
+) -> Set[A] {
+    set_image_preimage_closure(f.hom, s)
+}
+
+define add_monoid_hom_preimage_image_kernel[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[B]
+) -> Set[B] {
+    set_preimage_image_kernel(f.hom, s)
+}
+
+theorem add_monoid_hom_image_contains_witness[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A],
+    y: B
+) {
+    add_monoid_hom_image(f, s).contains(y) implies exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
-    implies
-    p(x)
 }
 
-define is_ascending_chain[T](r: (T, T) -> Bool, c: Nat -> T) -> Bool {
-    forall(n: Nat) {
-        r(c(n), c(n.suc))
+theorem add_monoid_hom_maps_into_image[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A],
+    x: A
+) {
+    s.contains(x) implies add_monoid_hom_image(f, s).contains(f.hom(x))
+}
+
+theorem add_monoid_hom_image_subset_iff_subset_preimage[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A],
+    t: Set[B]
+) {
+    add_monoid_hom_image(f, s).subset(t) = s.subset(add_monoid_hom_preimage(f, t))
+}
+
+theorem add_monoid_hom_image_compose[A: AddMonoid, B: AddMonoid, C: AddMonoid](
+    f: AddMonoidHom[B, C],
+    g: AddMonoidHom[A, B],
+    s: Set[A]
+) {
+    add_monoid_hom_image(compose_add_monoid_hom(f, g), s) =
+        add_monoid_hom_image(f, add_monoid_hom_image(g, s))
+}
+
+theorem add_monoid_hom_preimage_compose[A: AddMonoid, B: AddMonoid, C: AddMonoid](
+    f: AddMonoidHom[B, C],
+    g: AddMonoidHom[A, B],
+    s: Set[C]
+) {
+    add_monoid_hom_preimage(compose_add_monoid_hom(f, g), s) =
+        add_monoid_hom_preimage(g, add_monoid_hom_preimage(f, s))
+}
+
+theorem add_monoid_hom_image_preimage_closure_extensive[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A]
+) {
+    s.subset(add_monoid_hom_image_preimage_closure(f, s))
+}
+
+theorem add_monoid_hom_image_preimage_closure_monotone[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B]
+) {
+    is_subset_monotone_map(add_monoid_hom_image_preimage_closure(f))
+}
+
+theorem add_monoid_hom_image_preimage_closure_idempotent[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[A]
+) {
+    add_monoid_hom_image_preimage_closure(f, add_monoid_hom_image_preimage_closure(f, s)) =
+        add_monoid_hom_image_preimage_closure(f, s)
+}
+
+theorem add_monoid_hom_image_preimage_closure_operator[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B]
+) {
+    is_set_closure_operator(add_monoid_hom_image_preimage_closure(f))
+}
+
+theorem add_monoid_hom_preimage_image_kernel_reductive[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[B]
+) {
+    add_monoid_hom_preimage_image_kernel(f, s).subset(s)
+}
+
+theorem add_monoid_hom_preimage_image_kernel_monotone[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B]
+) {
+    is_subset_monotone_map(add_monoid_hom_preimage_image_kernel(f))
+}
+
+theorem add_monoid_hom_preimage_image_kernel_idempotent[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: Set[B]
+) {
+    add_monoid_hom_preimage_image_kernel(f, add_monoid_hom_preimage_image_kernel(f, s)) =
+        add_monoid_hom_preimage_image_kernel(f, s)
+}
+
+theorem add_monoid_hom_preimage_image_kernel_operator[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B]
+) {
+    is_set_kernel_operator(add_monoid_hom_preimage_image_kernel(f))
+}
+
+define add_submonoid_zero_constraint[M: AddMonoid](contains: M -> Bool) -> Bool {
+    contains(M.0)
+}
+
+define add_submonoid_closure_constraint[M: AddMonoid](contains: M -> Bool) -> Bool {
+    forall(a: M, b: M) {
+        contains(a) and contains(b) implies contains(a + b)
     }
 }
 
-define has_ascending_chain[T](r: (T, T) -> Bool) -> Bool {
-    exists(c: Nat -> T) {
-        is_ascending_chain(r, c)
-    }
+define add_submonoid_constraint[M: AddMonoid](contains: M -> Bool) -> Bool {
+    add_submonoid_zero_constraint(contains) and add_submonoid_closure_constraint(contains)
 }
 
-define has_no_ascending_chain[T](r: (T, T) -> Bool) -> Bool {
-    not has_ascending_chain(r)
+structure AddSubmonoid[M: AddMonoid] {
+    /// True if the given element is a member of this additive submonoid.
+    contains: M -> Bool
+} constraint {
+    add_submonoid_constraint(contains)
 }
 
-theorem ascending_chain_iff_descending_chain_converse[T](r: (T, T) -> Bool, c: Nat -> T) {
-    is_ascending_chain(r, c) = is_descending_chain(relation_converse(r), c)
+theorem add_submonoid_ext[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    (forall(x: M) { a.contains(x) = b.contains(x) }) implies a = b
 }
 
-theorem has_ascending_chain_iff_has_descending_chain_converse[T](r: (T, T) -> Bool) {
-    has_ascending_chain(r) = has_descending_chain(relation_converse(r))
+theorem add_submonoid_eq_contains[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    a = b implies a.contains = b.contains
 }
 
-define descending_chain_map[A, B](f: A -> B, c: Nat -> A, n: Nat) -> B {
-    f(c(n))
+theorem add_submonoid_eq_contains_at[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M], x: M) {
+    a = b implies a.contains(x) = b.contains(x)
 }
 
-define nat_lt_relation(x: Nat, y: Nat) -> Bool {
-    x < y
+theorem add_submonoid_eq_transport_predicate[M: AddMonoid](
+    p: AddSubmonoid[M] -> Bool,
+    a: AddSubmonoid[M],
+    b: AddSubmonoid[M]
+) {
+    a = b and p(a) implies p(b)
 }
 
-define is_least_nat_witness(p: Nat -> Bool, m: Nat) -> Bool {
-    p(m) and forall(y: Nat) {
-        y < m implies not p(y)
-    }
+theorem add_submonoid_eq_transport_predicate_rev[M: AddMonoid](
+    p: AddSubmonoid[M] -> Bool,
+    a: AddSubmonoid[M],
+    b: AddSubmonoid[M]
+) {
+    a = b and p(b) implies p(a)
 }
 
-define is_least_nat_counterexample(p: Nat -> Bool, m: Nat) -> Bool {
-    not p(m) and forall(y: Nat) {
-        y < m implies p(y)
-    }
+theorem add_submonoid_eq_of_contains_eq[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    a.contains = b.contains implies a = b
 }
 
-define functions_agree_on_predecessors[T, U](
-    r: (T, T) -> Bool,
-    x: T,
-    f: T -> U,
-    g: T -> U
+theorem add_submonoid_eq_of_contains_at_eq[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    (forall(x: M) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem add_submonoid_contains_zero[M: AddMonoid](s: AddSubmonoid[M]) {
+    s.contains(M.0)
+}
+
+theorem add_submonoid_contains_add[M: AddMonoid](s: AddSubmonoid[M], a: M, b: M) {
+    s.contains(a) and s.contains(b) implies s.contains(a + b)
+}
+
+define add_submonoid_intersection_contains[M: AddMonoid](
+    a: AddSubmonoid[M],
+    b: AddSubmonoid[M],
+    x: M
 ) -> Bool {
-    forall(y: T) {
-        r(y, x) implies f(y) = g(y)
+    a.contains(x) and b.contains(x)
+}
+
+theorem add_submonoid_intersection_zero_constraint[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    add_submonoid_zero_constraint(add_submonoid_intersection_contains(a, b))
+}
+
+theorem add_submonoid_intersection_closure_constraint[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    add_submonoid_closure_constraint(add_submonoid_intersection_contains(a, b))
+}
+
+theorem add_submonoid_intersection_constraint[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    add_submonoid_constraint(add_submonoid_intersection_contains(a, b))
+}
+
+let add_submonoid_intersection[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) -> result: AddSubmonoid[M] satisfy {
+    AddSubmonoid.new(add_submonoid_intersection_contains(a, b)) = Option.some(result)
+}
+
+define add_submonoid_subset[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) -> Bool {
+    forall(x: M) {
+        a.contains(x) implies b.contains(x)
     }
 }
 
-define is_predecessor_extensional_recursive_step[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U
-) -> Bool {
-    forall(x: T, f: T -> U, g: T -> U) {
-        functions_agree_on_predecessors(r, x, f, g) implies step(x, f) = step(x, g)
+theorem add_submonoid_subset_refl[M: AddMonoid](a: AddSubmonoid[M]) {
+    add_submonoid_subset(a, a)
+}
+
+theorem add_submonoid_subset_trans[M: AddMonoid](
+    a: AddSubmonoid[M],
+    b: AddSubmonoid[M],
+    c: AddSubmonoid[M]
+) {
+    add_submonoid_subset(a, b) and add_submonoid_subset(b, c) implies add_submonoid_subset(a, c)
+}
+
+define is_add_monoid_identity[M: AddMonoid](m: M) -> Bool {
+    m = M.0
+}
+
+theorem zero_add_submonoid_constraint[M: AddMonoid] {
+    add_submonoid_constraint(is_add_monoid_identity[M])
+}
+
+let zero_add_submonoid[M: AddMonoid]: AddSubmonoid[M] satisfy {
+    AddSubmonoid.new(is_add_monoid_identity[M]) = Option.some(zero_add_submonoid)
+}
+
+theorem zero_add_submonoid_subset[M: AddMonoid](s: AddSubmonoid[M]) {
+    add_submonoid_subset(zero_add_submonoid[M], s)
+}
+
+define full_add_monoid_contains[M: AddMonoid](a: M) -> Bool {
+    true
+}
+
+theorem full_add_submonoid_constraint[M: AddMonoid] {
+    add_submonoid_constraint(full_add_monoid_contains[M])
+}
+
+let full_add_submonoid[M: AddMonoid]: AddSubmonoid[M] satisfy {
+    AddSubmonoid.new(full_add_monoid_contains[M]) = Option.some(full_add_submonoid)
+}
+
+theorem add_submonoid_subset_full[M: AddMonoid](s: AddSubmonoid[M]) {
+    add_submonoid_subset(s, full_add_submonoid[M])
+}
+
+theorem add_submonoid_subset_antisymm[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    add_submonoid_subset(a, b) and add_submonoid_subset(b, a) implies a = b
+}
+
+theorem add_submonoid_eq_iff_subset_both[M: AddMonoid](a: AddSubmonoid[M], b: AddSubmonoid[M]) {
+    a = b = (add_submonoid_subset(a, b) and add_submonoid_subset(b, a))
+}
+
+define set_subset_add_submonoid[M: AddMonoid](a: Set[M], s: AddSubmonoid[M]) -> Bool {
+    forall(x: M) {
+        a.contains(x) implies s.contains(x)
     }
 }
 
-define is_well_founded_recursive_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    f: T -> U
+theorem set_subset_add_submonoid_trans[M: AddMonoid](
+    a: Set[M],
+    s: AddSubmonoid[M],
+    t: AddSubmonoid[M]
+) {
+    set_subset_add_submonoid(a, s) and add_submonoid_subset(s, t) implies set_subset_add_submonoid(a, t)
+}
+
+theorem set_subset_add_submonoid_of_set_subset[M: AddMonoid](
+    a: Set[M],
+    b: Set[M],
+    s: AddSubmonoid[M]
+) {
+    a.subset(b) and set_subset_add_submonoid(b, s) implies set_subset_add_submonoid(a, s)
+}
+
+define add_submonoid_preimage_contains[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B],
+    a: A
 ) -> Bool {
-    forall(x: T) {
-        f(x) = step(x, f)
+    s.contains(f.hom(a))
+}
+
+theorem add_submonoid_preimage_zero_constraint[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B]
+) {
+    add_submonoid_zero_constraint(add_submonoid_preimage_contains(f, s))
+}
+
+theorem add_submonoid_preimage_closure_constraint[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B]
+) {
+    add_submonoid_closure_constraint(add_submonoid_preimage_contains(f, s))
+}
+
+theorem add_submonoid_preimage_constraint[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B]
+) {
+    add_submonoid_constraint(add_submonoid_preimage_contains(f, s))
+}
+
+let add_submonoid_preimage[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], s: AddSubmonoid[B]) -> result: AddSubmonoid[A] satisfy {
+    AddSubmonoid.new(add_submonoid_preimage_contains(f, s)) = Option.some(result)
+}
+
+theorem add_submonoid_preimage_contains_eq[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B],
+    a: A
+) {
+    add_submonoid_preimage(f, s).contains(a) = s.contains(f.hom(a))
+}
+
+theorem add_submonoid_preimage_contains_of_contains_map[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B],
+    a: A
+) {
+    s.contains(f.hom(a)) implies add_submonoid_preimage(f, s).contains(a)
+}
+
+theorem add_submonoid_contains_map_of_preimage_contains[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B],
+    a: A
+) {
+    add_submonoid_preimage(f, s).contains(a) implies s.contains(f.hom(a))
+}
+
+theorem add_submonoid_preimage_subset_of_subset[A: AddMonoid, B: AddMonoid](
+    f: AddMonoidHom[A, B],
+    s: AddSubmonoid[B],
+    t: AddSubmonoid[B]
+) {
+    add_submonoid_subset(s, t) implies
+        add_submonoid_subset(add_submonoid_preimage(f, s), add_submonoid_preimage(f, t))
+}
+
+theorem add_submonoid_preimage_full[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B]) {
+    add_submonoid_preimage(f, full_add_submonoid[B]) = full_add_submonoid[A]
+}
+
+define add_monoid_hom_kernel[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B]) -> AddSubmonoid[A] {
+    add_submonoid_preimage(f, zero_add_submonoid[B])
+}
+
+define add_zero_constraint[G: AddGroup](contains: G -> Bool) -> Bool {
+    contains(G.0)
+}
+
+define add_closure_constraint[G: AddGroup](contains: G -> Bool) -> Bool {
+    forall(a: G, b: G) {
+        contains(a) and contains(b) implies contains(a + b)
     }
 }
 
-define well_founded_recursive_solution_predicate[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    f: T -> U
-) -> Bool {
-    is_well_founded_recursive_solution(r, step, f)
+define neg_constraint[G: AddGroup](contains: G -> Bool) -> Bool {
+    forall(a: G) {
+        contains(a) implies contains(-a)
+    }
 }
 
-define well_founded_recursive_default_function[T, U](default: U, x: T) -> U {
-    default
+define add_subgroup_constraint[G: AddGroup](contains: G -> Bool) -> Bool {
+    add_zero_constraint(contains) and add_closure_constraint(contains) and neg_constraint(contains)
 }
 
-define choose_well_founded_recursive_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default: U
-) -> T -> U {
-    choose_or_default(
-        well_founded_recursive_solution_predicate(r, step),
-        well_founded_recursive_default_function[T, U](default)
+structure AddSubgroup[G: AddGroup] {
+    /// True if the given element is a member of this additive subgroup.
+    contains: G -> Bool
+} constraint {
+    add_subgroup_constraint(contains)
+}
+
+theorem add_subgroup_ext[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    (forall(x: G) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem add_subgroup_eq_contains[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a = b implies a.contains = b.contains
+}
+
+theorem add_subgroup_eq_contains_at[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G], x: G) {
+    a = b implies a.contains(x) = b.contains(x)
+}
+
+theorem add_subgroup_eq_transport_predicate[G: AddGroup](
+    p: AddSubgroup[G] -> Bool,
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    a = b and p(a) implies p(b)
+}
+
+theorem add_subgroup_eq_transport_predicate_rev[G: AddGroup](
+    p: AddSubgroup[G] -> Bool,
+    a: AddSubgroup[G],
+    b: AddSubgroup[G]
+) {
+    a = b and p(b) implies p(a)
+}
+
+theorem add_subgroup_eq_of_contains_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a.contains = b.contains implies a = b
+}
+
+theorem add_subgroup_eq_of_contains_at_eq[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    (forall(x: G) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem add_subgroup_contains_zero[G: AddGroup](h: AddSubgroup[G]) {
+    h.contains(G.0)
+}
+
+theorem add_subgroup_contains_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(a + b)
+}
+
+theorem add_subgroup_contains_neg[G: AddGroup](h: AddSubgroup[G], a: G) {
+    h.contains(a) implies h.contains(-a)
+}
+
+theorem add_subgroup_contains_neg_iff[G: AddGroup](h: AddSubgroup[G], a: G) {
+    h.contains(-a) = h.contains(a)
+}
+
+theorem add_subgroup_contains_sub[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(a - b)
+}
+
+theorem add_subgroup_contains_add_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G, c: G) {
+    h.contains(a) and h.contains(b) and h.contains(c) implies h.contains(a + b + c)
+}
+
+theorem add_subgroup_contains_neg_add[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies h.contains(-a + b)
+}
+
+define add_subgroup_intersection_contains[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G],
+    x: G) -> Bool {
+    a.contains(x) and b.contains(x)
+}
+
+theorem add_subgroup_intersection_zero_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_zero_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_closure_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_closure_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_neg_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    neg_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+theorem add_subgroup_intersection_constraint[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_constraint(add_subgroup_intersection_contains(a, b))
+}
+
+let add_subgroup_intersection[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) -> result: AddSubgroup[G] satisfy {
+    AddSubgroup.new(add_subgroup_intersection_contains(a, b)) = Option.some(result)
+}
+
+define add_subgroup_subset[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) -> Bool {
+    forall(x: G) {
+        a.contains(x) implies b.contains(x)
+    }
+}
+
+theorem add_subgroup_subset_refl[G: AddGroup](a: AddSubgroup[G]) {
+    add_subgroup_subset(a, a)
+}
+
+theorem add_subgroup_subset_trans[G: AddGroup](
+    a: AddSubgroup[G],
+    b: AddSubgroup[G],
+    c: AddSubgroup[G]
+) {
+    add_subgroup_subset(a, b) and add_subgroup_subset(b, c) implies add_subgroup_subset(a, c)
+}
+
+define is_add_identity[G: AddGroup](g: G) -> Bool {
+    g = G.0
+}
+
+theorem zero_add_subgroup_constraint[G: AddGroup] {
+    add_subgroup_constraint(is_add_identity[G])
+}
+
+let zero_add_subgroup[G: AddGroup]: AddSubgroup[G] satisfy {
+    AddSubgroup.new(is_add_identity[G]) = Option.some(zero_add_subgroup)
+}
+
+theorem zero_add_subgroup_subset[G: AddGroup](s: AddSubgroup[G]) {
+    add_subgroup_subset(zero_add_subgroup[G], s)
+}
+
+define full_add_group_contains[G: AddGroup](a: G) -> Bool {
+    true
+}
+
+theorem full_add_subgroup_constraint[G: AddGroup] {
+    add_subgroup_constraint(full_add_group_contains[G])
+}
+
+let full_add_subgroup[G: AddGroup]: AddSubgroup[G] satisfy {
+    AddSubgroup.new(full_add_group_contains[G]) = Option.some(full_add_subgroup)
+}
+
+theorem add_subgroup_subset_full[G: AddGroup](s: AddSubgroup[G]) {
+    add_subgroup_subset(s, full_add_subgroup[G])
+}
+
+theorem add_subgroup_subset_antisymm[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    add_subgroup_subset(a, b) and add_subgroup_subset(b, a) implies a = b
+}
+
+theorem add_subgroup_eq_iff_subset_both[G: AddGroup](a: AddSubgroup[G], b: AddSubgroup[G]) {
+    a = b = (add_subgroup_subset(a, b) and add_subgroup_subset(b, a))
+}
+
+define set_subset_add_subgroup[G: AddGroup](a: Set[G], s: AddSubgroup[G]) -> Bool {
+    forall(x: G) {
+        a.contains(x) implies s.contains(x)
+    }
+}
+
+theorem set_subset_add_subgroup_trans[G: AddGroup](
+    a: Set[G],
+    s: AddSubgroup[G],
+    t: AddSubgroup[G]
+) {
+    set_subset_add_subgroup(a, s) and add_subgroup_subset(s, t) implies set_subset_add_subgroup(a, t)
+}
+
+theorem set_subset_add_subgroup_of_set_subset[G: AddGroup](
+    a: Set[G],
+    b: Set[G],
+    s: AddSubgroup[G]
+) {
+    a.subset(b) and set_subset_add_subgroup(b, s) implies set_subset_add_subgroup(a, s)
+}
+
+theorem add_subgroup_add_submonoid_constraint[G: AddGroup](s: AddSubgroup[G]) {
+    add_submonoid_constraint(s.contains)
+}
+
+let add_subgroup_to_add_submonoid[G: AddGroup](s: AddSubgroup[G]) -> result: AddSubmonoid[G] satisfy {
+    AddSubmonoid.new(s.contains) = Option.some(result)
+}
+
+theorem add_subgroup_to_add_submonoid_contains[G: AddGroup](s: AddSubgroup[G]) {
+    add_subgroup_to_add_submonoid(s).contains = s.contains
+}
+
+theorem add_subgroup_to_add_submonoid_contains_eq[G: AddGroup](s: AddSubgroup[G], x: G) {
+    add_subgroup_to_add_submonoid(s).contains(x) = s.contains(x)
+}
+
+theorem add_subgroup_contains_to_add_submonoid_eq[G: AddGroup](s: AddSubgroup[G], x: G) {
+    s.contains(x) = add_subgroup_to_add_submonoid(s).contains(x)
+}
+
+define add_subgroup_rel[G: AddGroup](h: AddSubgroup[G], a: G, b: G) -> Bool {
+    h.contains(a - b)
+}
+
+theorem add_subgroup_rel_reflexive[G: AddGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_rel(h, a, a)
+}
+
+theorem add_subgroup_rel_symmetric[G: AddGroup](h: AddSubgroup[G], a: G, b: G) {
+    add_subgroup_rel(h, a, b) implies add_subgroup_rel(h, b, a)
+}
+
+theorem add_subgroup_rel_is_reflexive[G: AddGroup](h: AddSubgroup[G]) {
+    is_reflexive(add_subgroup_rel(h))
+}
+
+theorem add_subgroup_rel_is_symmetric[G: AddGroup](h: AddSubgroup[G]) {
+    is_symmetric(add_subgroup_rel(h))
+}
+
+theorem add_subgroup_sub_chain[G: AddGroup](a: G, b: G, c: G) {
+    (a - b) + (b - c) = a - c
+}
+
+theorem add_subgroup_rel_trans_at[G: AddGroup](h: AddSubgroup[G], a: G, b: G, c: G) {
+    add_subgroup_rel(h, a, b) and add_subgroup_rel(h, b, c) implies add_subgroup_rel(h, a, c)
+}
+
+theorem add_subgroup_rel_is_transitive[G: AddGroup](h: AddSubgroup[G]) {
+    is_transitive(add_subgroup_rel(h))
+}
+
+theorem add_subgroup_rel_is_equivalence[G: AddGroup](h: AddSubgroup[G]) {
+    is_equivalence(add_subgroup_rel(h))
+}
+
+let add_subgroup_quotient_relation[G: AddGroup](h: AddSubgroup[G]) -> result: QuotientRelation[G] satisfy {
+    QuotientRelation[G].new(add_subgroup_rel(h)) = Option.some(result)
+}
+
+theorem add_subgroup_quotient_relation_rel[G: AddGroup](h: AddSubgroup[G]) {
+    add_subgroup_quotient_relation(h).rel = add_subgroup_rel(h)
+}
+
+theorem add_sub_distrib[G: AddCommGroup](a: G, b: G, ap: G, bp: G) {
+    (a + b) - (ap + bp) = (a - ap) + (b - bp)
+}
+
+theorem add_subgroup_rel_add_step[G: AddCommGroup](h: AddSubgroup[G], a: G, ap: G, b: G, bp: G) {
+    add_subgroup_rel(h, a, ap) and add_subgroup_rel(h, b, bp)
+    implies add_subgroup_rel(h, a + b, ap + bp)
+}
+
+theorem add_subgroup_rel_respects_add[G: AddCommGroup](h: AddSubgroup[G]) {
+    respects_add(add_subgroup_rel(h))
+}
+
+theorem add_subgroup_rel_is_add_congruence[G: AddCommGroup](h: AddSubgroup[G]) {
+    is_add_congruence(add_subgroup_rel(h))
+}
+
+theorem add_neg_sub[G: AddCommGroup](a: G, b: G) {
+    -a - -b = -(a - b)
+}
+
+theorem add_subgroup_rel_neg_step[G: AddCommGroup](h: AddSubgroup[G], a: G, b: G) {
+    add_subgroup_rel(h, a, b) implies add_subgroup_rel(h, -a, -b)
+}
+
+theorem add_subgroup_rel_respects_neg[G: AddCommGroup](h: AddSubgroup[G]) {
+    respects_unary_op(add_subgroup_rel(h), G.neg)
+}
+
+theorem add_subgroup_quotient_relation_respects_neg[G: AddCommGroup](h: AddSubgroup[G]) {
+    quotient_unary_respects(add_subgroup_quotient_relation(h), G.neg)
+}
+
+theorem add_subgroup_quotient_relation_respects_add[G: AddCommGroup](h: AddSubgroup[G]) {
+    quotient_binary_respects(add_subgroup_quotient_relation(h), G.add)
+}
+
+define add_subgroup_quotient_add[G: AddCommGroup](h: AddSubgroup[G]) ->
+    (QuotientOver[G], QuotientOver[G]) -> QuotientOver[G] {
+    quotient_over_binary_op(G.add)
+}
+
+theorem add_subgroup_quotient_add_projection[G: AddCommGroup](h: AddSubgroup[G], a: G, b: G) {
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b)
+    ) = quotient_over_mk(add_subgroup_quotient_relation(h), a + b)
+}
+
+theorem add_subgroup_quotient_add_projection_left[G: AddCommGroup](h: AddSubgroup[G], a1: G, a2: G, b: G) {
+    add_subgroup_rel(h, a1, a2) implies
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a1),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b)
+    ) = add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a2),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b)
     )
 }
 
-define well_founded_nonrecursive_step[T, U](value: T -> U, x: T, f: T -> U) -> U {
-    value(x)
-}
-
-define well_founded_nonrecursive_function[T, U](value: T -> U, x: T) -> U {
-    value(x)
-}
-
-define is_nat_recursive_solution[U](step: (Nat, Nat -> U) -> U, f: Nat -> U) -> Bool {
-    is_well_founded_recursive_solution(nat_lt_relation, step, f)
-}
-
-define nat_recursive_solution_predicate[U](step: (Nat, Nat -> U) -> U, f: Nat -> U) -> Bool {
-    is_nat_recursive_solution(step, f)
-}
-
-define choose_nat_recursive_solution[U](step: (Nat, Nat -> U) -> U, default: U) -> Nat -> U {
-    choose_well_founded_recursive_solution(nat_lt_relation, step, default)
-}
-
-define nat_nonrecursive_step[U](value: Nat -> U, n: Nat, f: Nat -> U) -> U {
-    value(n)
-}
-
-define nat_nonrecursive_function[U](value: Nat -> U, n: Nat) -> U {
-    value(n)
-}
-
-theorem well_founded_is_irreflexive[T](r: (T, T) -> Bool) {
-    is_well_founded(r) implies is_irreflexive(r)
-}
-
-theorem relation_pullback_is_well_founded[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_well_founded(r) implies is_well_founded(relation_pullback(f, r))
-}
-
-theorem relation_pushforward_is_well_founded_of_bijection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_bijection_fn(f) and is_well_founded(r) implies is_well_founded(relation_pushforward(f, r))
-}
-
-theorem relation_pushforward_is_well_founded_of_injection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_injective_fn(f) and is_well_founded(r) implies is_well_founded(relation_pushforward(f, r))
-}
-
-theorem relation_pushforward_is_well_founded_of_bijection_map[A, B](e: Bijection[A, B], r: (A, A) -> Bool) {
-    is_well_founded(r) implies is_well_founded(relation_pushforward(e.map, r))
-}
-
-theorem relation_subset_is_well_founded[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and is_well_founded(s) implies is_well_founded(r)
-}
-
-theorem relation_subset_pullback_is_well_founded[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_well_founded(s) implies is_well_founded(r)
-}
-
-theorem relation_eq_pullback_is_well_founded[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and
-    relation_subset(relation_pullback(f, s), r) and
-    is_well_founded(s) implies is_well_founded(r)
-}
-
-theorem relation_pullback_subset_is_well_founded[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(relation_pullback(f, s), r) and is_well_founded(r) implies
-    is_well_founded(relation_pullback(f, s))
-}
-
-theorem relation_surjective_pullback_well_founded_reflects_target[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_surjective_fn(f) and is_well_founded(relation_pullback(f, r)) implies is_well_founded(r)
-}
-
-theorem relation_surjective_pullback_well_founded_iff[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_surjective_fn(f) implies (is_well_founded(relation_pullback(f, r)) = is_well_founded(r))
-}
-
-theorem relation_subset_pullback_pushforward[A, B](f: A -> B, r: (A, A) -> Bool) {
-    relation_subset(r, relation_pullback(f, relation_pushforward(f, r)))
-}
-
-theorem relation_pushforward_well_founded_reflects_source[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_well_founded(relation_pushforward(f, r)) implies is_well_founded(r)
-}
-
-theorem relation_injective_pushforward_well_founded_iff[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_injective_fn(f) implies (is_well_founded(relation_pushforward(f, r)) = is_well_founded(r))
-}
-
-theorem well_founded_induction[T](r: (T, T) -> Bool, p: T -> Bool) {
-    is_well_founded(r) and
-    forall(x: T) {
-        (forall(y: T) { r(y, x) implies p(y) }) implies p(x)
-    }
-    implies
-    forall(x: T) {
-        p(x)
-    }
-}
-
-theorem relation_intersection_left_is_well_founded[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    is_well_founded(r) implies is_well_founded(relation_intersection(r, s))
-}
-
-theorem relation_intersection_right_is_well_founded[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    is_well_founded(s) implies is_well_founded(relation_intersection(r, s))
-}
-
-theorem relation_subset_both_is_well_founded[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and relation_subset(s, r) and is_well_founded(s) implies is_well_founded(r)
-}
-
-theorem well_founded_induction_at[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
-    is_well_founded(r) and
-    forall(z: T) {
-        (forall(y: T) { r(y, z) implies p(y) }) implies p(z)
-    }
-    implies
-    p(x)
-}
-
-theorem noetherian_relation_has_maximal[T](r: (T, T) -> Bool, p: T -> Bool) {
-    is_noetherian_relation(r) and exists(x: T) { p(x) } implies exists(m: T) {
-        p(m) and forall(y: T) {
-            r(m, y) implies not p(y)
-        }
-    }
-}
-
-theorem relation_subset_is_noetherian_relation[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and is_noetherian_relation(s) implies is_noetherian_relation(r)
-}
-
-theorem relation_intersection_left_is_noetherian_relation[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    is_noetherian_relation(r) implies is_noetherian_relation(relation_intersection(r, s))
-}
-
-theorem relation_intersection_right_is_noetherian_relation[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    is_noetherian_relation(s) implies is_noetherian_relation(relation_intersection(r, s))
-}
-
-theorem relation_subset_both_is_noetherian_relation[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and relation_subset(s, r) and is_noetherian_relation(s) implies
-    is_noetherian_relation(r)
-}
-
-theorem relation_pullback_is_noetherian_relation[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_noetherian_relation(r) implies is_noetherian_relation(relation_pullback(f, r))
-}
-
-theorem relation_subset_pullback_is_noetherian_relation[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_noetherian_relation(s) implies
-    is_noetherian_relation(r)
-}
-
-theorem relation_eq_pullback_is_noetherian_relation[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and
-    relation_subset(relation_pullback(f, s), r) and
-    is_noetherian_relation(s) implies is_noetherian_relation(r)
-}
-
-theorem relation_pullback_subset_is_noetherian_relation[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(relation_pullback(f, s), r) and is_noetherian_relation(r) implies
-    is_noetherian_relation(relation_pullback(f, s))
-}
-
-theorem relation_surjective_pullback_noetherian_reflects_target[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_surjective_fn(f) and is_noetherian_relation(relation_pullback(f, r)) implies is_noetherian_relation(r)
-}
-
-theorem relation_surjective_pullback_noetherian_iff[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_surjective_fn(f) implies
-    (is_noetherian_relation(relation_pullback(f, r)) = is_noetherian_relation(r))
-}
-
-theorem relation_pushforward_is_noetherian_relation_of_bijection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_bijection_fn(f) and is_noetherian_relation(r) implies is_noetherian_relation(relation_pushforward(f, r))
-}
-
-theorem relation_pushforward_is_noetherian_relation_of_injection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_injective_fn(f) and is_noetherian_relation(r) implies is_noetherian_relation(relation_pushforward(f, r))
-}
-
-theorem relation_pushforward_is_noetherian_relation_of_bijection_map[A, B](e: Bijection[A, B], r: (A, A) -> Bool) {
-    is_noetherian_relation(r) implies is_noetherian_relation(relation_pushforward(e.map, r))
-}
-
-theorem relation_pushforward_noetherian_reflects_source[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_noetherian_relation(relation_pushforward(f, r)) implies is_noetherian_relation(r)
-}
-
-theorem relation_injective_pushforward_noetherian_iff[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_injective_fn(f) implies
-    (is_noetherian_relation(relation_pushforward(f, r)) = is_noetherian_relation(r))
-}
-
-theorem noetherian_relation_induction[T](r: (T, T) -> Bool, p: T -> Bool) {
-    is_noetherian_relation(r) and is_successor_closed_predicate(r, p)
-    implies
-    forall(x: T) {
-        p(x)
-    }
-}
-
-theorem noetherian_relation_induction_at[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
-    is_noetherian_relation(r) and is_successor_closed_predicate(r, p)
-    implies
-    p(x)
-}
-
-theorem well_founded_recursive_solution_eq_at[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    f: T -> U,
-    g: T -> U,
-    x: T
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    is_well_founded_recursive_solution(r, step, f) and
-    is_well_founded_recursive_solution(r, step, g) implies
-    f(x) = g(x)
-}
-
-theorem well_founded_recursive_solution_exists_unique[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    exists(f: T -> U) {
-        is_well_founded_recursive_solution(r, step, f)
-    } implies
-    exists_unique(well_founded_recursive_solution_predicate(r, step))
-}
-
-theorem well_founded_recursive_solution_eq[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    f: T -> U,
-    g: T -> U
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    is_well_founded_recursive_solution(r, step, f) and
-    is_well_founded_recursive_solution(r, step, g) implies
-    f = g
-}
-
-theorem choose_well_founded_recursive_solution_is_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default: U
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    exists(f: T -> U) {
-        is_well_founded_recursive_solution(r, step, f)
-    } implies
-    is_well_founded_recursive_solution(r, step, choose_well_founded_recursive_solution(r, step, default))
-}
-
-theorem choose_well_founded_recursive_solution_eq_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default: U,
-    f: T -> U
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    is_well_founded_recursive_solution(r, step, f) implies
-    choose_well_founded_recursive_solution(r, step, default) = f
-}
-
-theorem choose_well_founded_recursive_solution_default_independent[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default1: U,
-    default2: U
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    exists(f: T -> U) {
-        is_well_founded_recursive_solution(r, step, f)
-    } implies
-    choose_well_founded_recursive_solution(r, step, default1) =
-    choose_well_founded_recursive_solution(r, step, default2)
-}
-
-theorem choose_well_founded_recursive_solution_eq_step_at[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default: U,
-    x: T
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    exists(f: T -> U) {
-        is_well_founded_recursive_solution(r, step, f)
-    } implies
-    choose_well_founded_recursive_solution(r, step, default)(x) =
-    step(x, choose_well_founded_recursive_solution(r, step, default))
-}
-
-theorem well_founded_nonrecursive_step_is_predecessor_extensional[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U
-) {
-    is_predecessor_extensional_recursive_step(r, well_founded_nonrecursive_step(value))
-}
-
-theorem well_founded_nonrecursive_function_is_solution[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U
-) {
-    is_well_founded_recursive_solution(
-        r,
-        well_founded_nonrecursive_step(value),
-        well_founded_nonrecursive_function(value)
+theorem add_subgroup_quotient_add_projection_right[G: AddCommGroup](h: AddSubgroup[G], a: G, b1: G, b2: G) {
+    add_subgroup_rel(h, b1, b2) implies
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b1)
+    ) = add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b2)
     )
 }
 
-theorem well_founded_nonrecursive_solution_exists[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U
+define add_subgroup_quotient_neg[G: AddCommGroup](h: AddSubgroup[G]) ->
+    QuotientOver[G] -> QuotientOver[G] {
+    quotient_over_unary_op(add_subgroup_quotient_relation(h), G.neg)
+}
+
+theorem add_subgroup_quotient_neg_projection[G: AddCommGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_quotient_neg(h, quotient_over_mk(add_subgroup_quotient_relation(h), a)) =
+        quotient_over_mk(add_subgroup_quotient_relation(h), -a)
+}
+
+theorem add_subgroup_quotient_neg_projection_compatible[G: AddCommGroup](h: AddSubgroup[G], a: G, b: G) {
+    add_subgroup_rel(h, a, b) implies
+    add_subgroup_quotient_neg(h, quotient_over_mk(add_subgroup_quotient_relation(h), a)) =
+        add_subgroup_quotient_neg(h, quotient_over_mk(add_subgroup_quotient_relation(h), b))
+}
+
+define add_subgroup_quotient_zero[G: AddCommGroup](h: AddSubgroup[G]) -> QuotientOver[G] {
+    quotient_over_mk(add_subgroup_quotient_relation(h), G.0)
+}
+
+theorem add_subgroup_quotient_add_assoc[G: AddCommGroup](h: AddSubgroup[G], a: G, b: G, c: G) {
+    add_subgroup_quotient_add(h,
+        add_subgroup_quotient_add(h,
+            quotient_over_mk(add_subgroup_quotient_relation(h), a),
+            quotient_over_mk(add_subgroup_quotient_relation(h), b)),
+        quotient_over_mk(add_subgroup_quotient_relation(h), c)) =
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        add_subgroup_quotient_add(h,
+            quotient_over_mk(add_subgroup_quotient_relation(h), b),
+            quotient_over_mk(add_subgroup_quotient_relation(h), c)))
+}
+
+theorem add_subgroup_quotient_zero_add[G: AddCommGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), G.0),
+        quotient_over_mk(add_subgroup_quotient_relation(h), a)) =
+        quotient_over_mk(add_subgroup_quotient_relation(h), a)
+}
+
+theorem add_subgroup_quotient_add_zero[G: AddCommGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        quotient_over_mk(add_subgroup_quotient_relation(h), G.0)) =
+        quotient_over_mk(add_subgroup_quotient_relation(h), a)
+}
+
+theorem add_subgroup_quotient_neg_add[G: AddCommGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_quotient_add(h,
+        add_subgroup_quotient_neg(h, quotient_over_mk(add_subgroup_quotient_relation(h), a)),
+        quotient_over_mk(add_subgroup_quotient_relation(h), a)) =
+        quotient_over_mk(add_subgroup_quotient_relation(h), G.0)
+}
+
+theorem add_subgroup_quotient_add_neg[G: AddCommGroup](h: AddSubgroup[G], a: G) {
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        add_subgroup_quotient_neg(h, quotient_over_mk(add_subgroup_quotient_relation(h), a))) =
+        quotient_over_mk(add_subgroup_quotient_relation(h), G.0)
+}
+
+theorem add_subgroup_quotient_add_comm[G: AddCommGroup](h: AddSubgroup[G], a: G, b: G) {
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), a),
+        quotient_over_mk(add_subgroup_quotient_relation(h), b)) =
+    add_subgroup_quotient_add(h,
+        quotient_over_mk(add_subgroup_quotient_relation(h), b),
+        quotient_over_mk(add_subgroup_quotient_relation(h), a))
+}
+
+define add_subgroup_preimage_contains[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B],
+    a: A
+) -> Bool {
+    s.contains(f.hom(a))
+}
+
+theorem add_subgroup_preimage_zero_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B]
 ) {
-    exists(f: T -> U) {
-        is_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), f)
+    add_zero_constraint(add_subgroup_preimage_contains(f, s))
+}
+
+theorem add_subgroup_preimage_closure_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B]
+) {
+    add_closure_constraint(add_subgroup_preimage_contains(f, s))
+}
+
+theorem add_subgroup_preimage_neg_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B]
+) {
+    neg_constraint(add_subgroup_preimage_contains(f, s))
+}
+
+theorem add_subgroup_preimage_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B]
+) {
+    add_subgroup_constraint(add_subgroup_preimage_contains(f, s))
+}
+
+let add_subgroup_preimage[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], s: AddSubgroup[B]) -> result: AddSubgroup[A] satisfy {
+    AddSubgroup.new(add_subgroup_preimage_contains(f, s)) = Option.some(result)
+}
+
+theorem add_subgroup_preimage_contains_eq[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B],
+    a: A
+) {
+    add_subgroup_preimage(f, s).contains(a) = s.contains(f.hom(a))
+}
+
+theorem add_subgroup_preimage_contains_of_contains_map[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B],
+    a: A
+) {
+    s.contains(f.hom(a)) implies add_subgroup_preimage(f, s).contains(a)
+}
+
+theorem add_subgroup_contains_map_of_preimage_contains[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B],
+    a: A
+) {
+    add_subgroup_preimage(f, s).contains(a) implies s.contains(f.hom(a))
+}
+
+theorem add_subgroup_preimage_subset_of_subset[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[B],
+    t: AddSubgroup[B]
+) {
+    add_subgroup_subset(s, t) implies
+        add_subgroup_subset(add_subgroup_preimage(f, s), add_subgroup_preimage(f, t))
+}
+
+theorem add_subgroup_preimage_full[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    add_subgroup_preimage(f, full_add_subgroup[B]) = full_add_subgroup[A]
+}
+
+define add_subgroup_image_contains[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    y: B
+) -> Bool {
+    exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
 }
 
-theorem well_founded_nonrecursive_solution_exists_unique[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U
+theorem add_subgroup_image_contains_zero[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A]
 ) {
-    is_well_founded(r) implies
-    exists_unique(well_founded_recursive_solution_predicate(r, well_founded_nonrecursive_step(value)))
+    add_subgroup_image_contains(f, s, B.0)
 }
 
-theorem well_founded_nonrecursive_solution_eq_function[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    f: T -> U
+theorem add_subgroup_image_contains_add[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    a: B,
+    b: B
 ) {
-    is_well_founded(r) and
-    is_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), f) implies
-    f = well_founded_nonrecursive_function(value)
+    add_subgroup_image_contains(f, s, a) and add_subgroup_image_contains(f, s, b)
+        implies add_subgroup_image_contains(f, s, a + b)
 }
 
-theorem choose_well_founded_nonrecursive_solution_eq_function[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    default: U
+theorem add_subgroup_image_contains_neg[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    a: B
 ) {
-    is_well_founded(r) implies
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default) =
-    well_founded_nonrecursive_function(value)
+    add_subgroup_image_contains(f, s, a) implies add_subgroup_image_contains(f, s, -a)
 }
 
-theorem choose_well_founded_nonrecursive_solution_is_solution[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    default: U
+theorem add_subgroup_image_zero_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A]
 ) {
-    is_well_founded(r) implies
-    is_well_founded_recursive_solution(
-        r,
-        well_founded_nonrecursive_step(value),
-        choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default)
-    )
+    add_zero_constraint(add_subgroup_image_contains(f, s))
 }
 
-theorem choose_well_founded_nonrecursive_solution_value[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    default: U,
-    x: T
+theorem add_subgroup_image_closure_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A]
 ) {
-    is_well_founded(r) implies
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default)(x) =
-    value(x)
+    add_closure_constraint(add_subgroup_image_contains(f, s))
 }
 
-theorem choose_well_founded_nonrecursive_solution_default_independent[T, U](
-    r: (T, T) -> Bool,
-    value: T -> U,
-    default1: U,
-    default2: U
+theorem add_subgroup_image_neg_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A]
 ) {
-    is_well_founded(r) implies
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default1) =
-    choose_well_founded_recursive_solution(r, well_founded_nonrecursive_step(value), default2)
+    neg_constraint(add_subgroup_image_contains(f, s))
 }
 
-theorem nat_lt_relation_has_minimal(p: Nat -> Bool) {
-    (exists(x: Nat) { p(x) }) implies exists(m: Nat) {
-        p(m) and forall(y: Nat) {
-            nat_lt_relation(y, m) implies not p(y)
-        }
+theorem add_subgroup_image_constraint[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A]
+) {
+    add_subgroup_constraint(add_subgroup_image_contains(f, s))
+}
+
+let add_subgroup_image[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], s: AddSubgroup[A]) -> result: AddSubgroup[B] satisfy {
+    AddSubgroup.new(add_subgroup_image_contains(f, s)) = Option.some(result)
+}
+
+theorem add_subgroup_image_contains_eq[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    y: B
+) {
+    add_subgroup_image(f, s).contains(y) = exists(x: A) {
+        s.contains(x) and y = f.hom(x)
     }
 }
 
-theorem exists_least_nat_witness(p: Nat -> Bool) {
-    (exists(x: Nat) { p(x) }) implies exists(m: Nat) {
-        is_least_nat_witness(p, m)
-    }
-}
-
-theorem least_nat_witness_le_of_witness(p: Nat -> Bool, m: Nat, n: Nat) {
-    is_least_nat_witness(p, m) and p(n) implies m <= n
-}
-
-theorem exists_least_nat_counterexample(p: Nat -> Bool) {
-    (exists(x: Nat) { not p(x) }) implies exists(m: Nat) {
-        is_least_nat_counterexample(p, m)
-    }
-}
-
-theorem least_nat_counterexample_le_of_counterexample(p: Nat -> Bool, m: Nat, n: Nat) {
-    is_least_nat_counterexample(p, m) and not p(n) implies m <= n
-}
-
-theorem nat_lt_relation_induction(p: Nat -> Bool) {
-    forall(n: Nat) {
-        (forall(k: Nat) { nat_lt_relation(k, n) implies p(k) }) implies p(n)
-    }
-    implies
-    forall(n: Nat) {
-        p(n)
-    }
-}
-
-theorem nat_lt_relation_induction_at(p: Nat -> Bool, n: Nat) {
-    forall(x: Nat) {
-        (forall(k: Nat) { nat_lt_relation(k, x) implies p(k) }) implies p(x)
-    }
-    implies
-    p(n)
-}
-
-theorem nat_recursive_solution_eq_at[U](
-    step: (Nat, Nat -> U) -> U,
-    f: Nat -> U,
-    g: Nat -> U,
-    n: Nat
+theorem add_subgroup_image_contains_map[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    x: A
 ) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) and
-    is_nat_recursive_solution(step, g) implies
-    f(n) = g(n)
+    s.contains(x) implies add_subgroup_image(f, s).contains(f.hom(x))
 }
 
-theorem nat_recursive_solution_eq[U](step: (Nat, Nat -> U) -> U, f: Nat -> U, g: Nat -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) and
-    is_nat_recursive_solution(step, g) implies
-    f = g
-}
-
-theorem nat_recursive_solution_exists_unique[U](step: (Nat, Nat -> U) -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    exists_unique(nat_recursive_solution_predicate(step))
-}
-
-theorem nat_recursive_solution_generic_exists_unique[U](step: (Nat, Nat -> U) -> U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    exists_unique(well_founded_recursive_solution_predicate(nat_lt_relation, step))
-}
-
-theorem choose_nat_recursive_solution_is_solution[U](step: (Nat, Nat -> U) -> U, default: U) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    is_nat_recursive_solution(step, choose_nat_recursive_solution(step, default))
-}
-
-theorem choose_nat_recursive_solution_eq_solution[U](
-    step: (Nat, Nat -> U) -> U,
-    default: U,
-    f: Nat -> U
+theorem add_subgroup_subset_preimage_of_image_subset[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    t: AddSubgroup[B]
 ) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    is_nat_recursive_solution(step, f) implies
-    choose_nat_recursive_solution(step, default) = f
+    add_subgroup_subset(add_subgroup_image(f, s), t) implies
+        add_subgroup_subset(s, add_subgroup_preimage(f, t))
 }
 
-theorem choose_nat_recursive_solution_default_independent[U](
-    step: (Nat, Nat -> U) -> U,
-    default1: U,
-    default2: U
+theorem add_subgroup_image_subset_of_subset_preimage[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    t: AddSubgroup[B]
 ) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    choose_nat_recursive_solution(step, default1) = choose_nat_recursive_solution(step, default2)
+    add_subgroup_subset(s, add_subgroup_preimage(f, t)) implies
+        add_subgroup_subset(add_subgroup_image(f, s), t)
 }
 
-theorem choose_nat_recursive_solution_eq_step_at[U](
-    step: (Nat, Nat -> U) -> U,
-    default: U,
-    n: Nat
+theorem add_subgroup_image_subset_iff_subset_preimage[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    t: AddSubgroup[B]
 ) {
-    is_predecessor_extensional_recursive_step(nat_lt_relation, step) and
-    exists(f: Nat -> U) {
-        is_nat_recursive_solution(step, f)
-    } implies
-    choose_nat_recursive_solution(step, default)(n) =
-    step(n, choose_nat_recursive_solution(step, default))
+    add_subgroup_subset(add_subgroup_image(f, s), t) =
+        add_subgroup_subset(s, add_subgroup_preimage(f, t))
 }
 
-theorem well_founded_has_no_descending_chain[T](r: (T, T) -> Bool, c: Nat -> T) {
-    is_well_founded(r) implies not is_descending_chain(r, c)
-}
-
-theorem well_founded_has_no_descending_chain_exists[T](r: (T, T) -> Bool) {
-    is_well_founded(r) implies has_no_descending_chain(r)
-}
-
-theorem noetherian_relation_has_no_ascending_chain[T](r: (T, T) -> Bool) {
-    is_noetherian_relation(r) implies has_no_ascending_chain(r)
-}
-
-theorem ascending_chain_not_noetherian_relation[T](r: (T, T) -> Bool, c: Nat -> T) {
-    is_ascending_chain(r, c) implies not is_noetherian_relation(r)
-}
-
-theorem has_ascending_chain_not_noetherian_relation[T](r: (T, T) -> Bool) {
-    has_ascending_chain(r) implies not is_noetherian_relation(r)
-}
-
-theorem relation_subset_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool, c: Nat -> T) {
-    relation_subset(r, s) and is_ascending_chain(r, c) implies is_ascending_chain(s, c)
-}
-
-theorem relation_subset_has_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and has_ascending_chain(r) implies has_ascending_chain(s)
-}
-
-theorem relation_subset_has_no_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and has_no_ascending_chain(s) implies has_no_ascending_chain(r)
-}
-
-theorem relation_intersection_left_has_no_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    has_no_ascending_chain(r) implies has_no_ascending_chain(relation_intersection(r, s))
-}
-
-theorem relation_intersection_right_has_no_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    has_no_ascending_chain(s) implies has_no_ascending_chain(relation_intersection(r, s))
-}
-
-theorem relation_subset_both_has_no_ascending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and relation_subset(s, r) and has_no_ascending_chain(s) implies
-    has_no_ascending_chain(r)
-}
-
-theorem relation_pullback_ascending_chain_map_is_ascending[A, B](
-    f: A -> B,
-    r: (B, B) -> Bool,
-    c: Nat -> A
+theorem add_subgroup_image_subset_of_subset[A: AddGroup, B: AddGroup](
+    f: AddGroupHom[A, B],
+    s: AddSubgroup[A],
+    t: AddSubgroup[A]
 ) {
-    is_ascending_chain(relation_pullback(f, r), c) implies
-    is_ascending_chain(r, descending_chain_map(f, c))
+    add_subgroup_subset(s, t) implies
+        add_subgroup_subset(add_subgroup_image(f, s), add_subgroup_image(f, t))
 }
 
-theorem relation_pullback_has_no_ascending_chain[A, B](f: A -> B, r: (B, B) -> Bool) {
-    has_no_ascending_chain(r) implies has_no_ascending_chain(relation_pullback(f, r))
+define add_group_hom_kernel[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) -> AddSubgroup[A] {
+    add_subgroup_preimage(f, zero_add_subgroup[B])
 }
 
-theorem relation_pullback_has_ascending_chain_imp[A, B](f: A -> B, r: (B, B) -> Bool) {
-    has_ascending_chain(relation_pullback(f, r)) implies has_ascending_chain(r)
+theorem pow_two_mul_comm_ring[R: CommRing](x: R) {
+    x.pow(Nat.2) = x * x
 }
 
-theorem relation_subset_pullback_has_no_ascending_chain[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and has_no_ascending_chain(s) implies
-    has_no_ascending_chain(r)
+theorem pow_three_mul_comm_ring[R: CommRing](x: R) {
+    x.pow(Nat.3) = x * x * x
 }
 
-theorem relation_subset_pullback_has_ascending_chain[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and has_ascending_chain(r) implies
-    has_ascending_chain(s)
+theorem two_mul_comm_ring[R: CommRing](x: R) {
+    (R.1 + R.1) * x = x + x
 }
 
-theorem nat_lt_relation_not_descending_chain(c: Nat -> Nat) {
-    not is_descending_chain(nat_lt_relation, c)
+theorem three_mul_comm_ring[R: CommRing](x: R) {
+    (R.1 + R.1 + R.1) * x = x + (x + x)
 }
 
-theorem nat_lt_relation_has_no_descending_chain {
-    has_no_descending_chain(nat_lt_relation)
+theorem square_add_expand_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v) * (u + v) = u * u + (R.1 + R.1) * u * v + v * v
 }
 
-theorem relation_pushforward_has_no_descending_chain_of_bijection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_bijection_fn(f) and is_well_founded(r) implies has_no_descending_chain(relation_pushforward(f, r))
+theorem square_add_expand_raw_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v) * (u + v) = u * u + (u * v + u * v) + v * v
 }
 
-theorem relation_pushforward_has_no_descending_chain_of_injection[A, B](f: A -> B, r: (A, A) -> Bool) {
-    is_injective_fn(f) and is_well_founded(r) implies has_no_descending_chain(relation_pushforward(f, r))
+theorem square_add_pow_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v).pow(Nat.2) = u.pow(Nat.2) + (R.1 + R.1) * u * v + v.pow(Nat.2)
 }
 
-theorem relation_pushforward_has_no_descending_chain_of_bijection_map[A, B](e: Bijection[A, B], r: (A, A) -> Bool) {
-    is_well_founded(r) implies has_no_descending_chain(relation_pushforward(e.map, r))
+theorem left_cube_raw_comm_ring[R: CommRing](u: R, v: R) {
+    (u * u + (u * v + u * v) + v * v) * (u + v) =
+    ((u * u) * u + (u * u) * v) +
+    (((u * v) * u + (u * v) * u) +
+     ((u * v) * v + (u * v) * v) +
+     ((v * v) * u + (v * v) * v))
 }
 
-theorem descending_chain_not_well_founded[T](r: (T, T) -> Bool, c: Nat -> T) {
-    is_descending_chain(r, c) implies not is_well_founded(r)
+theorem regroup_three_pairs_comm_ring[R: CommRing](a: R, b: R) {
+    (a + b) + ((a + b) + (a + b)) = (a + (a + a)) + (b + (b + b))
 }
 
-theorem has_descending_chain_not_well_founded[T](r: (T, T) -> Bool) {
-    has_descending_chain(r) implies not is_well_founded(r)
+theorem regroup_three_pairs_left_assoc_comm_ring[R: CommRing](a: R, b: R) {
+    (a + b) + (a + b) + (a + b) = (a + (a + a)) + (b + (b + b))
 }
 
-theorem relation_subset_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool, c: Nat -> T) {
-    relation_subset(r, s) and is_descending_chain(r, c) implies is_descending_chain(s, c)
+theorem three_uv_raw_comm_ring[R: CommRing](u: R, v: R) {
+    (((R.1 + R.1 + R.1) * u * v) * (u + v)) =
+    ((u * v) * u + ((u * v) * u + (u * v) * u)) +
+    ((u * v) * v + ((u * v) * v + (u * v) * v))
 }
 
-theorem relation_subset_has_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and has_descending_chain(r) implies has_descending_chain(s)
+theorem add_regroup_six_comm_ring[R: CommRing](x: R, y: R, a: R, b: R) {
+    (x + a) + (((a + a) + (b + b)) + (b + y)) =
+    x + y + ((a + (a + a)) + (b + (b + b)))
 }
 
-theorem relation_subset_has_no_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and has_no_descending_chain(s) implies has_no_descending_chain(r)
+theorem raw_cube_regroup_comm_ring[R: CommRing](u: R, v: R) {
+    ((u * u) * u + (u * u) * v) +
+    (((u * v) * u + (u * v) * u) +
+     ((u * v) * v + (u * v) * v) +
+     ((v * v) * u + (v * v) * v)) =
+    u * u * u + v * v * v + (((R.1 + R.1 + R.1) * u * v) * (u + v))
 }
 
-theorem relation_intersection_left_has_no_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    has_no_descending_chain(r) implies has_no_descending_chain(relation_intersection(r, s))
+theorem cube_add_expanded_square_comm_ring[R: CommRing](u: R, v: R) {
+    (u * u + (u * v + u * v) + v * v) * (u + v) =
+    u * u * u + v * v * v + (((R.1 + R.1 + R.1) * u * v) * (u + v))
 }
 
-theorem relation_intersection_right_has_no_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    has_no_descending_chain(s) implies has_no_descending_chain(relation_intersection(r, s))
+theorem cube_add_cardano_mul_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v) * (u + v) * (u + v) =
+    u * u * u + v * v * v + (((R.1 + R.1 + R.1) * u * v) * (u + v))
 }
 
-theorem relation_subset_both_has_no_descending_chain[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
-    relation_subset(r, s) and relation_subset(s, r) and has_no_descending_chain(s) implies
-    has_no_descending_chain(r)
+theorem cube_add_cardano_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v).pow(Nat.3) =
+    u.pow(Nat.3) + v.pow(Nat.3) + (((R.1 + R.1 + R.1) * u * v) * (u + v))
 }
 
-theorem relation_pullback_descending_chain_map_is_descending[A, B](
-    f: A -> B,
-    r: (B, B) -> Bool,
-    c: Nat -> A
-) {
-    is_descending_chain(relation_pullback(f, r), c) implies
-    is_descending_chain(r, descending_chain_map(f, c))
+theorem cardano_depressed_cubic_substitution_comm_ring[R: CommRing](u: R, v: R, p: R, q: R) {
+    ((R.1 + R.1 + R.1) * u * v + p = R.0 and
+     u.pow(Nat.3) + v.pow(Nat.3) + q = R.0) implies
+    (u + v).pow(Nat.3) + p * (u + v) + q = R.0
 }
 
-theorem relation_pullback_has_no_descending_chain[A, B](f: A -> B, r: (B, B) -> Bool) {
-    has_no_descending_chain(r) implies has_no_descending_chain(relation_pullback(f, r))
+theorem square_four_terms_comm_ring[R: CommRing](u: R, v: R) {
+    (u + v) * (u + v) = u * u + u * v + v * u + v * v
 }
 
-theorem relation_pullback_has_descending_chain_imp[A, B](f: A -> B, r: (B, B) -> Bool) {
-    has_descending_chain(relation_pullback(f, r)) implies has_descending_chain(r)
+theorem four_terms_mul_comm_ring[R: CommRing](a: R, b: R, c: R, d: R, x: R) {
+    (a + b + c + d) * x = a * x + b * x + c * x + d * x
 }
 
-theorem relation_subset_pullback_descending_chain_map_is_descending[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool,
-    c: Nat -> A
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_descending_chain(r, c) implies
-    is_descending_chain(s, descending_chain_map(f, c))
-}
-
-theorem relation_subset_pullback_has_no_descending_chain[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and has_no_descending_chain(s) implies
-    has_no_descending_chain(r)
-}
-
-theorem relation_subset_pullback_has_descending_chain_imp[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and has_descending_chain(r) implies has_descending_chain(s)
-}
-
-theorem relation_subset_pullback_well_founded_has_no_descending_chain[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_well_founded(s) implies has_no_descending_chain(r)
-}
-
-theorem relation_pushforward_has_no_descending_chain_reflects_source[A, B](f: A -> B, r: (A, A) -> Bool) {
-    has_no_descending_chain(relation_pushforward(f, r)) implies has_no_descending_chain(r)
-}
-
-theorem relation_compose_monotone_left[A, B, C](
-    r1: (A, B) -> Bool,
-    r2: (A, B) -> Bool,
-    s: (B, C) -> Bool
-) {
-    relation_subset(r1, r2) implies
-    relation_subset(relation_compose(r1, s), relation_compose(r2, s))
-}
-
-theorem relation_compose_monotone_right[A, B, C](
-    r: (A, B) -> Bool,
-    s1: (B, C) -> Bool,
-    s2: (B, C) -> Bool
-) {
-    relation_subset(s1, s2) implies
-    relation_subset(relation_compose(r, s1), relation_compose(r, s2))
-}
-
-theorem relation_intersection_monotone_left[A, B](
-    r1: (A, B) -> Bool,
-    r2: (A, B) -> Bool,
-    s: (A, B) -> Bool
-) {
-    relation_subset(r1, r2) implies
-    relation_subset(relation_intersection(r1, s), relation_intersection(r2, s))
-}
-
-theorem relation_intersection_monotone_right[A, B](
-    r: (A, B) -> Bool,
-    s1: (A, B) -> Bool,
-    s2: (A, B) -> Bool
-) {
-    relation_subset(s1, s2) implies
-    relation_subset(relation_intersection(r, s1), relation_intersection(r, s2))
-}
-
-theorem relation_union_monotone_left[A, B](
-    r1: (A, B) -> Bool,
-    r2: (A, B) -> Bool,
-    s: (A, B) -> Bool
-) {
-    relation_subset(r1, r2) implies
-    relation_subset(relation_union(r1, s), relation_union(r2, s))
-}
-
-theorem relation_union_monotone_right[A, B](
-    r: (A, B) -> Bool,
-    s1: (A, B) -> Bool,
-    s2: (A, B) -> Bool
-) {
-    relation_subset(s1, s2) implies
-    relation_subset(relation_union(r, s1), relation_union(r, s2))
+theorem triple_uv_factor_comm_ring[R: CommRing](u: R, v: R) {
+    ((R.1 + R.1 + R.1) * u * v) * (u + v) =
+    u * u * v + u * v * u + v * u * u + u * v * v + v * u * v + v * v * u
 }
 
-theorem relation_converse_subset_iff[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
-    relation_subset(relation_converse(r), relation_converse(s)) = relation_subset(r, s)
-}
-
-theorem relation_pullback_subset_imp_subset_of_surjective[A, B](
-    f: A -> B,
-    r: (B, B) -> Bool,
-    s: (B, B) -> Bool
-) {
-    is_surjective_fn(f) and
-    relation_subset(relation_pullback(f, r), relation_pullback(f, s)) implies
-    relation_subset(r, s)
-}
-
-theorem relation_pullback_subset_iff_of_surjective[A, B](
-    f: A -> B,
-    r: (B, B) -> Bool,
-    s: (B, B) -> Bool
-) {
-    is_surjective_fn(f) implies
-    relation_subset(relation_pullback(f, r), relation_pullback(f, s)) = relation_subset(r, s)
+theorem unique_inverse[F: Field](a: F, b: F) {
+    a * b = F.1 implies b = a.inverse
 }
 
-theorem relation_pushforward_subset_imp_subset_of_injective[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (A, A) -> Bool
-) {
-    is_injective_fn(f) and
-    relation_subset(relation_pushforward(f, r), relation_pushforward(f, s)) implies
-    relation_subset(r, s)
+theorem inverse_inverse_field[F: Field](a: F) {
+    a.inverse.inverse = a
 }
 
-theorem relation_pushforward_subset_iff_of_injective[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (A, A) -> Bool
-) {
-    is_injective_fn(f) implies
-    relation_subset(relation_pushforward(f, r), relation_pushforward(f, s)) = relation_subset(r, s)
+theorem mul_inverse_right[F: Field](a: F) {
+    a != F.0 implies a * a.inverse = F.1
 }
 
-theorem relation_pullback_subset_iff_of_bijection[A, B](
-    f: A -> B,
-    r: (B, B) -> Bool,
-    s: (B, B) -> Bool
-) {
-    is_bijection_fn(f) implies
-    relation_subset(relation_pullback(f, r), relation_pullback(f, s)) = relation_subset(r, s)
+theorem mul_inverse_left[F: Field](a: F) {
+    a != F.0 implies a.inverse * a = F.1
 }
 
-theorem relation_pushforward_subset_iff_of_bijection[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (A, A) -> Bool
-) {
-    is_bijection_fn(f) implies
-    relation_subset(relation_pushforward(f, r), relation_pushforward(f, s)) = relation_subset(r, s)
+theorem inverse_one[F: Field] {
+    F.1.inverse = F.1
 }
 
-theorem relation_pullback_subset_iff_of_bijection_map[A, B](
-    e: Bijection[A, B],
-    r: (B, B) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(relation_pullback(e.map, r), relation_pullback(e.map, s)) = relation_subset(r, s)
+theorem mul_inverse_cancel_right[F: Field](a: F, b: F) {
+    a != F.0 implies b * a * a.inverse = b
 }
 
-theorem relation_pushforward_subset_iff_of_bijection_map[A, B](
-    e: Bijection[A, B],
-    r: (A, A) -> Bool,
-    s: (A, A) -> Bool
-) {
-    relation_subset(relation_pushforward(e.map, r), relation_pushforward(e.map, s)) = relation_subset(r, s)
-}
-
-define is_predecessor_closed_predicate[T](r: (T, T) -> Bool, p: T -> Bool) -> Bool {
-    forall(x: T) {
-        (forall(y: T) { r(y, x) implies p(y) }) implies p(x)
-    }
+theorem mul_inverse_cancel_left[F: Field](a: F, b: F) {
+    a != F.0 implies a.inverse * (a * b) = b
 }
 
-theorem predecessor_closed_predicate_at[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
-    is_predecessor_closed_predicate(r, p) and
-    forall(y: T) { r(y, x) implies p(y) } implies p(x)
+theorem inverse_dist[F: Field](a: F, b: F) {
+    (a * b).inverse = a.inverse * b.inverse
 }
 
-theorem well_founded_induction_of_predecessor_closed[T](r: (T, T) -> Bool, p: T -> Bool) {
-    is_well_founded(r) and is_predecessor_closed_predicate(r, p) implies
-    forall(x: T) { p(x) }
+theorem pow_nat_times_inverse[F: Field](a: F, n: Nat) {
+   a != F.0 implies a.pow(n.suc) * a.inverse = a.pow(n)
 }
 
-theorem well_founded_induction_at_of_predecessor_closed[T](r: (T, T) -> Bool, p: T -> Bool, x: T) {
-    is_well_founded(r) and is_predecessor_closed_predicate(r, p) implies p(x)
+theorem pow_nat_sub_inverse[F: Field](a: F, n: Nat, m: Nat) {
+    a != F.0 and m <= n implies a.pow(n) * a.inverse.pow(m) = a.pow(n - m)
 }
 
-theorem relation_subset_well_founded_induction[T](
-    r: (T, T) -> Bool,
-    s: (T, T) -> Bool,
-    p: T -> Bool
-) {
-    relation_subset(r, s) and is_well_founded(s) and is_predecessor_closed_predicate(r, p)
-    implies forall(x: T) { p(x) }
+theorem inverse_not_zero[F: Field](a: F) {
+    a != F.0 implies a.inverse != F.0
 }
 
-theorem relation_subset_noetherian_induction[T](
-    r: (T, T) -> Bool,
-    s: (T, T) -> Bool,
-    p: T -> Bool
-) {
-    relation_subset(r, s) and is_noetherian_relation(s) and is_successor_closed_predicate(r, p)
-    implies forall(x: T) { p(x) }
+theorem mul_not_zero[F: Field](a: F, b: F) {
+    a != F.0 and b != F.0 implies a * b != F.0
 }
 
-theorem relation_subset_well_founded_has_no_descending_chain[T](
-    r: (T, T) -> Bool,
-    s: (T, T) -> Bool
-) {
-    relation_subset(r, s) and is_well_founded(s) implies has_no_descending_chain(r)
+theorem field_mul_nonzero[F: Field](a: F, b: F) {
+    a != F.0 and b != F.0 implies a * b != F.0
 }
 
-theorem relation_subset_noetherian_has_no_ascending_chain[T](
-    r: (T, T) -> Bool,
-    s: (T, T) -> Bool
-) {
-    relation_subset(r, s) and is_noetherian_relation(s) implies has_no_ascending_chain(r)
+theorem field_square_nonzero[F: Field](a: F) {
+    a != F.0 implies a * a != F.0
 }
 
-theorem relation_pullback_well_founded_has_no_descending_chain[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_well_founded(r) implies has_no_descending_chain(relation_pullback(f, r))
+theorem field_left_nonzero_of_mul_nonzero[F: Field](a: F, b: F) {
+    a * b != F.0 implies a != F.0
 }
 
-theorem relation_pullback_noetherian_has_no_ascending_chain[A, B](f: A -> B, r: (B, B) -> Bool) {
-    is_noetherian_relation(r) implies has_no_ascending_chain(relation_pullback(f, r))
+theorem field_right_nonzero_of_mul_nonzero[F: Field](a: F, b: F) {
+    a * b != F.0 implies b != F.0
 }
 
-theorem relation_subset_pullback_well_founded_has_no_descending_chain_extra[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_well_founded(s) implies
-    has_no_descending_chain(r)
+theorem field_mul_eq_zero[F: Field](a: F, b: F) {
+    a * b = F.0 implies a = F.0 or b = F.0
 }
 
-theorem relation_subset_pullback_noetherian_has_no_ascending_chain[A, B](
-    f: A -> B,
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool
-) {
-    relation_subset(r, relation_pullback(f, s)) and is_noetherian_relation(s) implies
-    has_no_ascending_chain(r)
+theorem field_mul_eq_zero_of_factor[F: Field](a: F, b: F) {
+    a = F.0 or b = F.0 implies a * b = F.0
 }
 
-theorem well_founded_recursive_solution_eq_step_at_of_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    f: T -> U,
-    x: T
-) {
-    is_well_founded_recursive_solution(r, step, f) implies f(x) = step(x, f)
-}
-
-theorem choose_well_founded_recursive_solution_eq_step_at_of_solution[T, U](
-    r: (T, T) -> Bool,
-    step: (T, T -> U) -> U,
-    default: U,
-    f: T -> U,
-    x: T
-) {
-    is_well_founded(r) and
-    is_predecessor_extensional_recursive_step(r, step) and
-    is_well_founded_recursive_solution(r, step, f) implies
-    choose_well_founded_recursive_solution(r, step, default)(x) =
-    step(x, choose_well_founded_recursive_solution(r, step, default))
-}
-
-let add_monoid_algebra_add[R: Semiring, M](p: AddMonoidAlgebra[R, M], q: AddMonoidAlgebra[R, M]) -> result: AddMonoidAlgebra[R, M] satisfy {
-    AddMonoidAlgebra[R, M].new(pointwise_add(p.coeff, q.coeff)) = Option.some(result)
-}
-
-theorem add_monoid_algebra_ext[R: Semiring, M](p: AddMonoidAlgebra[R, M], q: AddMonoidAlgebra[R, M]) {
-    p.coeff = q.coeff implies p = q
-}
-
-let add_monoid_algebra_neg[R: Ring, M](p: AddMonoidAlgebra[R, M]) -> result: AddMonoidAlgebra[R, M] satisfy {
-    AddMonoidAlgebra[R, M].new(pointwise_neg(p.coeff)) = Option.some(result)
-}
-
-let add_monoid_algebra_single[R: Semiring, M](m: M, r: R) -> result: AddMonoidAlgebra[R, M] satisfy {
-    AddMonoidAlgebra[R, M].new(add_monoid_algebra_single_coeff[R, M](m, r)) = Option.some(result)
-}
-
-let add_monoid_algebra_smul[R: Semiring, M](r: R, p: AddMonoidAlgebra[R, M]) -> result: AddMonoidAlgebra[R, M] satisfy {
-    AddMonoidAlgebra[R, M].new(add_monoid_algebra_smul_coeff_fn(r, p)) = Option.some(result)
-}
-
-let add_monoid_algebra_zero[R: Semiring, M]: AddMonoidAlgebra[R, M] satisfy {
-    AddMonoidAlgebra[R, M].new(pointwise_zero[M, R]) = Option.some(add_monoid_algebra_zero)
-}
-
-let bundled_principal_ideal[R: CommRing](a: R) -> result: Ideal[R] satisfy {
-    Ideal.new(principal_ideal[R](a)) = Option.some(result)
-}
-
-let bundled_unit_ideal[R: CommRing]: Ideal[R] satisfy {
-    Ideal.new(unit_ideal[R]) = Option.some(bundled_unit_ideal)
-}
-
-let bundled_zero_ideal[R: CommRing]: Ideal[R] satisfy {
-    Ideal.new(zero_ideal[R]) = Option.some(bundled_zero_ideal)
-}
-
-let finitely_supported_function_add[T, A: AddCommGroup](f: FinitelySupportedFunction[T, A], g: FinitelySupportedFunction[T, A]) -> result: FinitelySupportedFunction[T, A] satisfy {
-    FinitelySupportedFunction[T, A].new(pointwise_add(f.to_fun, g.to_fun)) = Option.some(result)
-}
-
-theorem finitely_supported_function_ext[T, A: AddCommGroup](
-    f: FinitelySupportedFunction[T, A],
-    g: FinitelySupportedFunction[T, A]
-) {
-    f.to_fun = g.to_fun implies f = g
-}
-
-let finitely_supported_function_neg[T, A: AddCommGroup](f: FinitelySupportedFunction[T, A]) -> result: FinitelySupportedFunction[T, A] satisfy {
-    FinitelySupportedFunction[T, A].new(pointwise_neg(f.to_fun)) = Option.some(result)
-}
-
-let finitely_supported_function_support[T, A: AddCommGroup](f: FinitelySupportedFunction[T, A]) -> result: FiniteSet[T] satisfy {
-    has_support_in(f.to_fun, result)
-}
-
-let finitely_supported_function_zero[T, A: AddCommGroup]: FinitelySupportedFunction[T, A] satisfy {
-    FinitelySupportedFunction[T, A].new(pointwise_zero[T, A]) = Option.some(finitely_supported_function_zero)
+theorem pow_not_zero[F: Field](a: F, n: Nat) {
+    a != F.0 implies a.pow(n) != F.0
 }
 
 define gf4_add(x: GF4, y: GF4) -> GF4 {
@@ -1300,45 +1651,9 @@ instance GF4: AddSemigroup
 
 instance GF4: AddCommSemigroup
 
-instance PointwiseFunction[T, A: AddSemigroup]: AddSemigroup
+instance GF4: AddMonoid
 
-instance PointwiseFunction[T, A: AddCommSemigroup]: AddCommSemigroup
-
-instance Pair[A: AddSemigroup, B: AddSemigroup]: AddSemigroup
-
-instance Pair[A: AddCommSemigroup, B: AddCommSemigroup]: AddCommSemigroup
-
-theorem gf4_add_comm_e2(z: GF4) {
-    gf4_add(GF4.x, z) = gf4_add(z, GF4.x)
-}
-
-theorem gf4_add_comm_e3(z: GF4) {
-    gf4_add(GF4.x_plus_one, z) = gf4_add(z, GF4.x_plus_one)
-}
-
-theorem gf4_add_assoc_e2e2(z: GF4) {
-    gf4_add(GF4.x, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.x, GF4.x), z)
-}
-
-theorem gf4_add_assoc_e2e3(z: GF4) {
-    gf4_add(GF4.x, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.x, GF4.x_plus_one), z)
-}
-
-theorem gf4_add_assoc_e3e2(z: GF4) {
-    gf4_add(GF4.x_plus_one, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.x), z)
-}
-
-theorem gf4_add_assoc_e3e3(z: GF4) {
-    gf4_add(GF4.x_plus_one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.x_plus_one), z)
-}
-
-theorem gf4_add_assoc_e2(y: GF4, z: GF4) {
-    gf4_add(GF4.x, gf4_add(y, z)) = gf4_add(gf4_add(GF4.x, y), z)
-}
-
-theorem gf4_add_assoc_e3(y: GF4, z: GF4) {
-    gf4_add(GF4.x_plus_one, gf4_add(y, z)) = gf4_add(gf4_add(GF4.x_plus_one, y), z)
-}
+instance GF4: AddCommMonoid
 
 define gf4_mul(x: GF4, y: GF4) -> GF4 {
     match x {
@@ -1385,103 +1700,11 @@ instance GF4: Semigroup
 
 instance GF4: CommSemigroup
 
-instance MulOpposite[M: Semigroup]: Semigroup
+instance GF4: Monoid
 
-instance PointwiseFunction[T, A: Semigroup]: Semigroup
+instance GF4: CommMonoid
 
-instance PointwiseFunction[T, A: CommSemigroup]: CommSemigroup
-
-instance Pair[A: Semigroup, B: Semigroup]: Semigroup
-
-instance Pair[A: CommSemigroup, B: CommSemigroup]: CommSemigroup
-
-theorem gf4_mul_comm_e2(z: GF4) {
-    gf4_mul(GF4.x, z) = gf4_mul(z, GF4.x)
-}
-
-theorem gf4_mul_comm_e3(z: GF4) {
-    gf4_mul(GF4.x_plus_one, z) = gf4_mul(z, GF4.x_plus_one)
-}
-
-theorem gf4_mul_assoc_e2e2(z: GF4) {
-    gf4_mul(GF4.x, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.x, GF4.x), z)
-}
-
-theorem gf4_mul_assoc_e2e3(z: GF4) {
-    gf4_mul(GF4.x, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.x, GF4.x_plus_one), z)
-}
-
-theorem gf4_mul_assoc_e3e2(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.x), z)
-}
-
-theorem gf4_mul_assoc_e3e3(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.x_plus_one), z)
-}
-
-theorem gf4_mul_assoc_e2(y: GF4, z: GF4) {
-    gf4_mul(GF4.x, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.x, y), z)
-}
-
-theorem gf4_mul_assoc_e3(y: GF4, z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, y), z)
-}
-
-theorem gf4_mul_add_left_e2e2(z: GF4) {
-    gf4_mul(GF4.x, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.x, GF4.x), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_left_e2e3(z: GF4) {
-    gf4_mul(GF4.x, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.x, GF4.x_plus_one), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_left_e3e2(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.x), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_left_e3e3(z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.x_plus_one), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_left_e2(y: GF4, z: GF4) {
-    gf4_mul(GF4.x, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.x, y), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_left_e3(y: GF4, z: GF4) {
-    gf4_mul(GF4.x_plus_one, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.x_plus_one, y), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_right_e2e2(z: GF4) {
-    gf4_mul(gf4_add(GF4.x, GF4.x), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_right_e2e3(z: GF4) {
-    gf4_mul(gf4_add(GF4.x, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_right_e3e2(z: GF4) {
-    gf4_mul(gf4_add(GF4.x_plus_one, GF4.x), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.x, z))
-}
-
-theorem gf4_mul_add_right_e3e3(z: GF4) {
-    gf4_mul(gf4_add(GF4.x_plus_one, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.x_plus_one, z))
-}
-
-theorem gf4_mul_add_right_e2(y: GF4, z: GF4) {
-    gf4_mul(gf4_add(GF4.x, y), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(y, z))
-}
-
-theorem gf4_mul_add_right_e3(y: GF4, z: GF4) {
-    gf4_mul(gf4_add(GF4.x_plus_one, y), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(y, z))
-}
-
-define empty_contains[S: Semigroup](a: S) -> Bool {
-    false
-}
-
-define full_contains[S: Semigroup](a: S) -> Bool {
-    true
-}
+instance GF4: Semiring
 
 define gf4_neg(x: GF4) -> GF4 {
     match x {
@@ -1496,361 +1719,688 @@ instance GF4: Neg {
     let neg = gf4_neg
 }
 
-define has_support_in[T, A: Zero](f: T -> A, s: FiniteSet[T]) -> Bool {
-    forall(t: T) {
-        not s.contains(t) implies f(t) = A.0
+instance GF4: AddGroup
+
+instance GF4: AddCommGroup
+
+instance GF4: Ring
+
+instance GF4: CommRing
+
+define gf4_inv(x: GF4) -> GF4 {
+    match x {
+        GF4.zero { GF4.zero }
+        GF4.one { GF4.one }
+        GF4.x { GF4.x_plus_one }
+        GF4.x_plus_one { GF4.x }
     }
 }
 
-define ideal_absorb_constraint[R: CommRing](contains: R -> Bool) -> Bool {
-    forall(r: R, a: R) {
-        contains(a) implies contains(r * a)
+instance GF4: Inverse {
+    define inverse(self) -> GF4 {
+        gf4_inv(self)
     }
 }
 
-define ideal_add_constraint[R: CommRing](contains: R -> Bool) -> Bool {
-    forall(a: R, b: R) {
-        contains(a) and contains(b) implies contains(a + b)
-    }
+instance GF4: Field
+
+theorem gf4_cases(x: GF4) {
+    x = GF4.zero or x = GF4.one or x = GF4.x or x = GF4.x_plus_one
 }
 
-theorem ideal_ext[R: CommRing](a: Ideal[R], b: Ideal[R]) {
-    (forall(x: R) { a.contains(x) = b.contains(x) }) implies a = b
+theorem gf4_add_zero_left(z: GF4) {
+    Add.add(Zero.0[GF4], z) = z
 }
 
-define ideal_quotient_add[R: CommRing](i: Ideal[R]) ->
-    (QuotientOver[R], QuotientOver[R]) -> QuotientOver[R] {
-    quotient_over_binary_op(R.add)
+theorem gf4_add_zero_right(z: GF4) {
+    Add.add(z, Zero.0[GF4]) = z
 }
 
-define ideal_quotient_mul[R: CommRing](i: Ideal[R]) ->
-    (QuotientOver[R], QuotientOver[R]) -> QuotientOver[R] {
-    quotient_over_binary_op(R.mul)
+theorem gf4_add_neg_right(z: GF4) {
+    Add.add(z, Neg.neg(z)) = Zero.0[GF4]
 }
 
-define ideal_quotient_neg[R: CommRing](i: Ideal[R]) ->
-    QuotientOver[R] -> QuotientOver[R] {
-    quotient_over_unary_op(ideal_quotient_relation(i), R.neg)
+theorem gf4_mul_one_left(z: GF4) {
+    Mul.mul(One.1[GF4], z) = z
 }
 
-define ideal_quotient_one[R: CommRing](i: Ideal[R]) -> QuotientOver[R] {
-    quotient_over_mk(ideal_quotient_relation(i), R.1)
+theorem gf4_mul_one_right(z: GF4) {
+    Mul.mul(z, One.1[GF4]) = z
 }
 
-define ideal_quotient_rel[R: CommRing](i: Ideal[R], a: R, b: R) -> Bool {
-    i.contains(a - b)
+theorem gf4_mul_zero_left(z: GF4) {
+    Mul.mul(Zero.0[GF4], z) = Zero.0[GF4]
 }
 
-let ideal_quotient_relation[R: CommRing](i: Ideal[R]) -> result: QuotientRelation[R] satisfy {
-    QuotientRelation[R].new(ideal_quotient_rel(i)) = Option.some(result)
+theorem gf4_mul_zero_right(z: GF4) {
+    Mul.mul(z, Zero.0[GF4]) = Zero.0[GF4]
 }
 
-let ideal_quotient_type_add[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i], y: IdealQuotient[R, i]) -> result: IdealQuotient[R, i] satisfy {
-    IdealQuotient[R, i].new(ideal_quotient_add(i, x.val, y.val)) = Option.some(result)
+theorem gf4_add_comm_e0(z: GF4) {
+    gf4_add(GF4.zero, z) = gf4_add(z, GF4.zero)
 }
 
-let ideal_quotient_type_mul[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i], y: IdealQuotient[R, i]) -> result: IdealQuotient[R, i] satisfy {
-    IdealQuotient[R, i].new(ideal_quotient_mul(i, x.val, y.val)) = Option.some(result)
+theorem gf4_add_comm_e1(z: GF4) {
+    gf4_add(GF4.one, z) = gf4_add(z, GF4.one)
 }
 
-let ideal_quotient_type_neg[R: CommRing](i: Ideal[R], x: IdealQuotient[R, i]) -> result: IdealQuotient[R, i] satisfy {
-    IdealQuotient[R, i].new(ideal_quotient_neg(i, x.val)) = Option.some(result)
+theorem gf4_add_comm_e2(z: GF4) {
+    gf4_add(GF4.x, z) = gf4_add(z, GF4.x)
 }
 
-let ideal_quotient_type_one[R: CommRing](i: Ideal[R]) -> result: IdealQuotient[R, i] satisfy {
-    IdealQuotient[R, i].new(ideal_quotient_one(i)) = Option.some(result)
-}
-
-let ideal_quotient_type_zero[R: CommRing](i: Ideal[R]) -> result: IdealQuotient[R, i] satisfy {
-    IdealQuotient[R, i].new(ideal_quotient_zero(i)) = Option.some(result)
-}
-
-define ideal_zero_constraint[R: CommRing](contains: R -> Bool) -> Bool {
-    contains(R.0)
-}
-
-define is_finitely_supported[T, A: Zero](f: T -> A) -> Bool {
-    exists(s: FiniteSet[T]) {
-        has_support_in(f, s)
-    }
-}
-
-define is_ideal[R: CommRing](contains: R -> Bool) -> Bool {
-    ideal_zero_constraint(contains)
-    and ideal_add_constraint(contains)
-    and ideal_absorb_constraint(contains)
-}
-
-define is_lie_bracket[R: CommRing, L: AddCommGroup](
-    m: Module[R, L], bracket: (L, L) -> L
-) -> Bool {
-    lie_bracket_add_left_constraint[R, L](bracket)
-    and lie_bracket_add_right_constraint[R, L](bracket)
-    and lie_bracket_smul_left_constraint(m, bracket)
-    and lie_bracket_smul_right_constraint(m, bracket)
-    and lie_bracket_alternating_constraint[R, L](bracket)
-    and lie_bracket_jacobi_constraint[R, L](bracket)
-}
-
-define is_lie_ideal[R: CommRing, L: AddCommGroup](
-    a: LieAlgebra[R, L], s: Submodule[R, L]
-) -> Bool {
-    s.carrier = a.module and lie_ideal_bracket_constraint(a, s)
-}
-
-define is_lie_subalgebra[R: CommRing, L: AddCommGroup](
-    a: LieAlgebra[R, L], s: Submodule[R, L]
-) -> Bool {
-    s.carrier = a.module and lie_subalgebra_bracket_constraint(a, s)
-}
-
-define is_module_action[R: Ring, M: AddCommGroup](smul: R -> M -> M) -> Bool {
-    module_smul_add_left_constraint(smul)
-    and module_smul_add_right_constraint(smul)
-    and module_smul_assoc_constraint(smul)
-    and module_smul_one_constraint(smul)
-}
-
-define is_submodule[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], contains: M -> Bool
-) -> Bool {
-    submodule_zero_constraint(carrier, contains)
-    and submodule_add_constraint(carrier, contains)
-    and submodule_neg_constraint(carrier, contains)
-    and submodule_smul_constraint(carrier, contains)
-}
-
-let mul_opposite_one[M: One]: MulOpposite[M] = MulOpposite.new(M.1)
-
-define opposite_mul[M: Mul](a: M, b: M) -> M {
-    b * a
-}
-
-attributes MulOpposite[M: Mul] {
-    /// Multiplication in the opposite carrier is original multiplication with reversed factors.
-    define mul(self, other: MulOpposite[M]) -> MulOpposite[M] {
-        MulOpposite.new(opposite_mul(self.val, other.val))
-    }
-}
-
-theorem opposite_mul_assoc[M: Semigroup](a: M, b: M, c: M) {
-    opposite_mul(a, opposite_mul(b, c)) = opposite_mul(opposite_mul(a, b), c)
-}
-
-theorem opposite_mul_comm[M: CommSemigroup](a: M, b: M) {
-    opposite_mul(a, b) = opposite_mul(b, a)
-}
-
-define pair_add[A: Add, B: Add](p: Pair[A, B], q: Pair[A, B]) -> Pair[A, B] {
-    Pair.new(p.first + q.first, p.second + q.second)
-}
-
-define pair_mul[A: Mul, B: Mul](p: Pair[A, B], q: Pair[A, B]) -> Pair[A, B] {
-    Pair.new(p.first * q.first, p.second * q.second)
-}
-
-let pair_one[A: One, B: One]: Pair[A, B] =
-    Pair.new(A.1, B.1)
-
-let pair_zero[A: Zero, B: Zero]: Pair[A, B] =
-    Pair.new(A.0, B.0)
-
-define pointwise_add[T, A: Add](f: T -> A, g: T -> A, t: T) -> A {
-    f(t) + g(t)
-}
-
-theorem pointwise_add_assoc[T, A: AddSemigroup](f: T -> A, g: T -> A, h: T -> A) {
-    pointwise_add(f, pointwise_add(g, h)) = pointwise_add(pointwise_add(f, g), h)
-}
-
-theorem pointwise_add_comm[T, A: AddCommSemigroup](f: T -> A, g: T -> A) {
-    pointwise_add(f, g) = pointwise_add(g, f)
-}
-
-define pointwise_function_add[T, A: Add](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A]) -> PointwiseFunction[T, A] {
-    PointwiseFunction.new(pointwise_add(f.val, g.val))
-}
-
-attributes PointwiseFunction[T, A: Add] {
-    /// Pointwise addition of wrapped functions.
-    define add(self, other: PointwiseFunction[T, A]) -> PointwiseFunction[T, A] {
-        pointwise_function_add(self, other)
-    }
-}
-
-define pointwise_function_mul[T, A: Mul](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A]) -> PointwiseFunction[T, A] {
-    PointwiseFunction.new(pointwise_mul(f.val, g.val))
-}
-
-attributes PointwiseFunction[T, A: Mul] {
-    /// Pointwise multiplication of wrapped functions.
-    define mul(self, other: PointwiseFunction[T, A]) -> PointwiseFunction[T, A] {
-        pointwise_function_mul(self, other)
-    }
-}
-
-let pointwise_function_one[T, A: One]: PointwiseFunction[T, A] =
-    PointwiseFunction.new(pointwise_one[T, A])
-
-let pointwise_function_zero[T, A: Zero]: PointwiseFunction[T, A] =
-    PointwiseFunction.new(pointwise_zero[T, A])
-
-attributes AddMonoidAlgebra[R: Semiring, M] {
-    /// Additive monoid algebra extensionality from equality of coefficients.
-    let ext = add_monoid_algebra_ext[R, M]
-
-    /// The single basis term with a chosen coefficient.
-    let single: (M, R) -> AddMonoidAlgebra[R, M] = add_monoid_algebra_single
-
-    /// The zero element of an additive monoid algebra.
-    let zero: AddMonoidAlgebra[R, M] = add_monoid_algebra_zero[R, M]
-
-    /// The coefficientwise sum of two additive monoid algebra elements.
-    define add(self, other: AddMonoidAlgebra[R, M]) -> AddMonoidAlgebra[R, M] {
-        add_monoid_algebra_add(self, other)
-    }
-}
-
-attributes FinitelySupportedFunction[T, A: AddCommGroup] {
-    /// Extensionality for finitely supported functions.
-    let ext = finitely_supported_function_ext[T, A]
-
-    /// A chosen finite support for the underlying function.
-    define support(self) -> FiniteSet[T] {
-        finitely_supported_function_support(self)
-    }
-
-    /// The zero finitely supported function.
-    let zero: FinitelySupportedFunction[T, A] = finitely_supported_function_zero[T, A]
-
-    /// Pointwise addition of finitely supported functions.
-    define add(self, other: FinitelySupportedFunction[T, A]) -> FinitelySupportedFunction[T, A] {
-        finitely_supported_function_add(self, other)
-    }
-
-    /// Pointwise additive inverse of a finitely supported function.
-    define neg(self) -> FinitelySupportedFunction[T, A] {
-        finitely_supported_function_neg(self)
-    }
-
-    /// Pointwise difference of finitely supported functions.
-    define sub(self, other: FinitelySupportedFunction[T, A]) -> FinitelySupportedFunction[T, A] {
-        self + other.neg
-    }
-}
-
-attributes Ideal[R: CommRing] {
-    /// Ideal extensionality from pointwise equality of membership.
-    let ext = ideal_ext[R]
-
-    /// The subset of ring elements belonging to this ideal.
-    define as_set(self) -> Set[R] {
-        Set[R].new(self.contains)
-    }
-
-    /// The zero ideal.
-    let zero = bundled_zero_ideal[R]
-
-    /// The unit ideal.
-    let unit = bundled_unit_ideal[R]
-
-    /// The principal ideal generated by an element.
-    let principal: R -> Ideal[R] = bundled_principal_ideal
-}
-
-attributes IdealQuotient[R: CommRing, i: Ideal[R]] {
-    /// Addition of quotient-ring elements.
-    define add(self, other: IdealQuotient[R, i]) -> IdealQuotient[R, i] {
-        ideal_quotient_type_add(i, self, other)
-    }
-
-    /// Multiplication of quotient-ring elements.
-    define mul(self, other: IdealQuotient[R, i]) -> IdealQuotient[R, i] {
-        ideal_quotient_type_mul(i, self, other)
-    }
-
-    /// Negation of quotient-ring elements.
-    define neg(self) -> IdealQuotient[R, i] {
-        ideal_quotient_type_neg(i, self)
-    }
-
-    /// The zero of the quotient ring.
-    let zero: IdealQuotient[R, i] = ideal_quotient_type_zero(i)
-
-    /// The one of the quotient ring.
-    let one: IdealQuotient[R, i] = ideal_quotient_type_one(i)
-}
-
-attributes MulOpposite[M: One] {
-    /// The identity element of the opposite carrier is the original identity.
-    let one: MulOpposite[M] = mul_opposite_one[M]
-}
-
-attributes MulOpposite[G: Group] {
-    /// Inversion in the opposite carrier is inherited from the original carrier.
-    define inverse(self) -> MulOpposite[G] {
-        MulOpposite.new(self.val.inverse)
-    }
-}
-
-attributes Pair[A: Add, B: Add] {
-    define add(self, other: Pair[A, B]) -> Pair[A, B] {
-        pair_add(self, other)
-    }
-}
-
-instance PointwiseFunction[T, A: Add]: Add {
-    let add = PointwiseFunction[T, A].add
-}
-
-instance Pair[A: Add, B: Add]: Add {
-    let add = Pair[A, B].add
-}
-
-attributes Pair[A: Mul, B: Mul] {
-    define mul(self, other: Pair[A, B]) -> Pair[A, B] {
-        pair_mul(self, other)
-    }
-}
-
-instance MulOpposite[M: Mul]: Mul {
-    let mul = MulOpposite[M].mul
-}
-
-instance PointwiseFunction[T, A: Mul]: Mul {
-    let mul = PointwiseFunction[T, A].mul
-}
-
-instance Pair[A: Mul, B: Mul]: Mul {
-    let mul = Pair[A, B].mul
+theorem gf4_add_comm_e3(z: GF4) {
+    gf4_add(GF4.x_plus_one, z) = gf4_add(z, GF4.x_plus_one)
 }
 
 theorem gf4_add_comm(x: GF4, y: GF4) {
     Add.add(x, y) = Add.add(y, x)
 }
 
+theorem gf4_mul_comm_e0(z: GF4) {
+    gf4_mul(GF4.zero, z) = gf4_mul(z, GF4.zero)
+}
+
+theorem gf4_mul_comm_e1(z: GF4) {
+    gf4_mul(GF4.one, z) = gf4_mul(z, GF4.one)
+}
+
+theorem gf4_mul_comm_e2(z: GF4) {
+    gf4_mul(GF4.x, z) = gf4_mul(z, GF4.x)
+}
+
+theorem gf4_mul_comm_e3(z: GF4) {
+    gf4_mul(GF4.x_plus_one, z) = gf4_mul(z, GF4.x_plus_one)
+}
+
 theorem gf4_mul_comm(x: GF4, y: GF4) {
     Mul.mul(x, y) = Mul.mul(y, x)
+}
+
+theorem gf4_add_assoc_e0e0(z: GF4) {
+    gf4_add(GF4.zero, gf4_add(GF4.zero, z)) = gf4_add(gf4_add(GF4.zero, GF4.zero), z)
+}
+
+theorem gf4_add_assoc_e0e1(z: GF4) {
+    gf4_add(GF4.zero, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.zero, GF4.one), z)
+}
+
+theorem gf4_add_assoc_e0e2(z: GF4) {
+    gf4_add(GF4.zero, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.zero, GF4.x), z)
+}
+
+theorem gf4_add_assoc_e0e3(z: GF4) {
+    gf4_add(GF4.zero, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.zero, GF4.x_plus_one), z)
+}
+
+theorem gf4_add_assoc_e1e0(z: GF4) {
+    gf4_add(GF4.one, gf4_add(GF4.zero, z)) = gf4_add(gf4_add(GF4.one, GF4.zero), z)
+}
+
+theorem gf4_add_assoc_e1e1(z: GF4) {
+    gf4_add(GF4.one, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.one, GF4.one), z)
+}
+
+theorem gf4_add_assoc_e1e2(z: GF4) {
+    gf4_add(GF4.one, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.one, GF4.x), z)
+}
+
+theorem gf4_add_assoc_e1e3(z: GF4) {
+    gf4_add(GF4.one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.one, GF4.x_plus_one), z)
+}
+
+theorem gf4_add_assoc_e2e0(z: GF4) {
+    gf4_add(GF4.x, gf4_add(GF4.zero, z)) = gf4_add(gf4_add(GF4.x, GF4.zero), z)
+}
+
+theorem gf4_add_assoc_e2e1(z: GF4) {
+    gf4_add(GF4.x, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.x, GF4.one), z)
+}
+
+theorem gf4_add_assoc_e2e2(z: GF4) {
+    gf4_add(GF4.x, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.x, GF4.x), z)
+}
+
+theorem gf4_add_assoc_e2e3(z: GF4) {
+    gf4_add(GF4.x, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.x, GF4.x_plus_one), z)
+}
+
+theorem gf4_add_assoc_e3e0(z: GF4) {
+    gf4_add(GF4.x_plus_one, gf4_add(GF4.zero, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.zero), z)
+}
+
+theorem gf4_add_assoc_e3e1(z: GF4) {
+    gf4_add(GF4.x_plus_one, gf4_add(GF4.one, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.one), z)
+}
+
+theorem gf4_add_assoc_e3e2(z: GF4) {
+    gf4_add(GF4.x_plus_one, gf4_add(GF4.x, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.x), z)
+}
+
+theorem gf4_add_assoc_e3e3(z: GF4) {
+    gf4_add(GF4.x_plus_one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_add(GF4.x_plus_one, GF4.x_plus_one), z)
+}
+
+theorem gf4_add_assoc_e0(y: GF4, z: GF4) {
+    gf4_add(GF4.zero, gf4_add(y, z)) = gf4_add(gf4_add(GF4.zero, y), z)
+}
+
+theorem gf4_add_assoc_e1(y: GF4, z: GF4) {
+    gf4_add(GF4.one, gf4_add(y, z)) = gf4_add(gf4_add(GF4.one, y), z)
+}
+
+theorem gf4_add_assoc_e2(y: GF4, z: GF4) {
+    gf4_add(GF4.x, gf4_add(y, z)) = gf4_add(gf4_add(GF4.x, y), z)
+}
+
+theorem gf4_add_assoc_e3(y: GF4, z: GF4) {
+    gf4_add(GF4.x_plus_one, gf4_add(y, z)) = gf4_add(gf4_add(GF4.x_plus_one, y), z)
 }
 
 theorem gf4_add_assoc(x: GF4, y: GF4, z: GF4) {
     Add.add(x, Add.add(y, z)) = Add.add(Add.add(x, y), z)
 }
 
+theorem gf4_mul_assoc_e0e0(z: GF4) {
+    gf4_mul(GF4.zero, gf4_mul(GF4.zero, z)) = gf4_mul(gf4_mul(GF4.zero, GF4.zero), z)
+}
+
+theorem gf4_mul_assoc_e0e1(z: GF4) {
+    gf4_mul(GF4.zero, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.zero, GF4.one), z)
+}
+
+theorem gf4_mul_assoc_e0e2(z: GF4) {
+    gf4_mul(GF4.zero, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.zero, GF4.x), z)
+}
+
+theorem gf4_mul_assoc_e0e3(z: GF4) {
+    gf4_mul(GF4.zero, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.zero, GF4.x_plus_one), z)
+}
+
+theorem gf4_mul_assoc_e1e0(z: GF4) {
+    gf4_mul(GF4.one, gf4_mul(GF4.zero, z)) = gf4_mul(gf4_mul(GF4.one, GF4.zero), z)
+}
+
+theorem gf4_mul_assoc_e1e1(z: GF4) {
+    gf4_mul(GF4.one, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.one, GF4.one), z)
+}
+
+theorem gf4_mul_assoc_e1e2(z: GF4) {
+    gf4_mul(GF4.one, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.one, GF4.x), z)
+}
+
+theorem gf4_mul_assoc_e1e3(z: GF4) {
+    gf4_mul(GF4.one, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.one, GF4.x_plus_one), z)
+}
+
+theorem gf4_mul_assoc_e2e0(z: GF4) {
+    gf4_mul(GF4.x, gf4_mul(GF4.zero, z)) = gf4_mul(gf4_mul(GF4.x, GF4.zero), z)
+}
+
+theorem gf4_mul_assoc_e2e1(z: GF4) {
+    gf4_mul(GF4.x, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.x, GF4.one), z)
+}
+
+theorem gf4_mul_assoc_e2e2(z: GF4) {
+    gf4_mul(GF4.x, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.x, GF4.x), z)
+}
+
+theorem gf4_mul_assoc_e2e3(z: GF4) {
+    gf4_mul(GF4.x, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.x, GF4.x_plus_one), z)
+}
+
+theorem gf4_mul_assoc_e3e0(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.zero, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.zero), z)
+}
+
+theorem gf4_mul_assoc_e3e1(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.one, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.one), z)
+}
+
+theorem gf4_mul_assoc_e3e2(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.x, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.x), z)
+}
+
+theorem gf4_mul_assoc_e3e3(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_mul(GF4.x_plus_one, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, GF4.x_plus_one), z)
+}
+
+theorem gf4_mul_assoc_e0(y: GF4, z: GF4) {
+    gf4_mul(GF4.zero, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.zero, y), z)
+}
+
+theorem gf4_mul_assoc_e1(y: GF4, z: GF4) {
+    gf4_mul(GF4.one, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.one, y), z)
+}
+
+theorem gf4_mul_assoc_e2(y: GF4, z: GF4) {
+    gf4_mul(GF4.x, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.x, y), z)
+}
+
+theorem gf4_mul_assoc_e3(y: GF4, z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_mul(y, z)) = gf4_mul(gf4_mul(GF4.x_plus_one, y), z)
+}
+
 theorem gf4_mul_assoc(x: GF4, y: GF4, z: GF4) {
     Mul.mul(x, Mul.mul(y, z)) = Mul.mul(Mul.mul(x, y), z)
+}
+
+theorem gf4_mul_add_left_e0e0(z: GF4) {
+    gf4_mul(GF4.zero, gf4_add(GF4.zero, z)) = gf4_add(gf4_mul(GF4.zero, GF4.zero), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_left_e0e1(z: GF4) {
+    gf4_mul(GF4.zero, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.zero, GF4.one), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_left_e0e2(z: GF4) {
+    gf4_mul(GF4.zero, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.zero, GF4.x), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_left_e0e3(z: GF4) {
+    gf4_mul(GF4.zero, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.zero, GF4.x_plus_one), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_left_e1e0(z: GF4) {
+    gf4_mul(GF4.one, gf4_add(GF4.zero, z)) = gf4_add(gf4_mul(GF4.one, GF4.zero), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_left_e1e1(z: GF4) {
+    gf4_mul(GF4.one, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.one, GF4.one), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_left_e1e2(z: GF4) {
+    gf4_mul(GF4.one, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.one, GF4.x), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_left_e1e3(z: GF4) {
+    gf4_mul(GF4.one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.one, GF4.x_plus_one), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_left_e2e0(z: GF4) {
+    gf4_mul(GF4.x, gf4_add(GF4.zero, z)) = gf4_add(gf4_mul(GF4.x, GF4.zero), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_left_e2e1(z: GF4) {
+    gf4_mul(GF4.x, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.x, GF4.one), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_left_e2e2(z: GF4) {
+    gf4_mul(GF4.x, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.x, GF4.x), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_left_e2e3(z: GF4) {
+    gf4_mul(GF4.x, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.x, GF4.x_plus_one), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_left_e3e0(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_add(GF4.zero, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.zero), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_left_e3e1(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_add(GF4.one, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.one), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_left_e3e2(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_add(GF4.x, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.x), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_left_e3e3(z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_add(GF4.x_plus_one, z)) = gf4_add(gf4_mul(GF4.x_plus_one, GF4.x_plus_one), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_left_e0(y: GF4, z: GF4) {
+    gf4_mul(GF4.zero, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.zero, y), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_left_e1(y: GF4, z: GF4) {
+    gf4_mul(GF4.one, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.one, y), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_left_e2(y: GF4, z: GF4) {
+    gf4_mul(GF4.x, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.x, y), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_left_e3(y: GF4, z: GF4) {
+    gf4_mul(GF4.x_plus_one, gf4_add(y, z)) = gf4_add(gf4_mul(GF4.x_plus_one, y), gf4_mul(GF4.x_plus_one, z))
 }
 
 theorem gf4_mul_add_left(x: GF4, y: GF4, z: GF4) {
     Mul.mul(x, Add.add(y, z)) = Add.add(Mul.mul(x, y), Mul.mul(x, z))
 }
 
+theorem gf4_mul_add_right_e0e0(z: GF4) {
+    gf4_mul(gf4_add(GF4.zero, GF4.zero), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_right_e0e1(z: GF4) {
+    gf4_mul(gf4_add(GF4.zero, GF4.one), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_right_e0e2(z: GF4) {
+    gf4_mul(gf4_add(GF4.zero, GF4.x), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_right_e0e3(z: GF4) {
+    gf4_mul(gf4_add(GF4.zero, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_right_e1e0(z: GF4) {
+    gf4_mul(gf4_add(GF4.one, GF4.zero), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_right_e1e1(z: GF4) {
+    gf4_mul(gf4_add(GF4.one, GF4.one), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_right_e1e2(z: GF4) {
+    gf4_mul(gf4_add(GF4.one, GF4.x), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_right_e1e3(z: GF4) {
+    gf4_mul(gf4_add(GF4.one, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_right_e2e0(z: GF4) {
+    gf4_mul(gf4_add(GF4.x, GF4.zero), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_right_e2e1(z: GF4) {
+    gf4_mul(gf4_add(GF4.x, GF4.one), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_right_e2e2(z: GF4) {
+    gf4_mul(gf4_add(GF4.x, GF4.x), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_right_e2e3(z: GF4) {
+    gf4_mul(gf4_add(GF4.x, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_right_e3e0(z: GF4) {
+    gf4_mul(gf4_add(GF4.x_plus_one, GF4.zero), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.zero, z))
+}
+
+theorem gf4_mul_add_right_e3e1(z: GF4) {
+    gf4_mul(gf4_add(GF4.x_plus_one, GF4.one), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.one, z))
+}
+
+theorem gf4_mul_add_right_e3e2(z: GF4) {
+    gf4_mul(gf4_add(GF4.x_plus_one, GF4.x), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.x, z))
+}
+
+theorem gf4_mul_add_right_e3e3(z: GF4) {
+    gf4_mul(gf4_add(GF4.x_plus_one, GF4.x_plus_one), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(GF4.x_plus_one, z))
+}
+
+theorem gf4_mul_add_right_e0(y: GF4, z: GF4) {
+    gf4_mul(gf4_add(GF4.zero, y), z) = gf4_add(gf4_mul(GF4.zero, z), gf4_mul(y, z))
+}
+
+theorem gf4_mul_add_right_e1(y: GF4, z: GF4) {
+    gf4_mul(gf4_add(GF4.one, y), z) = gf4_add(gf4_mul(GF4.one, z), gf4_mul(y, z))
+}
+
+theorem gf4_mul_add_right_e2(y: GF4, z: GF4) {
+    gf4_mul(gf4_add(GF4.x, y), z) = gf4_add(gf4_mul(GF4.x, z), gf4_mul(y, z))
+}
+
+theorem gf4_mul_add_right_e3(y: GF4, z: GF4) {
+    gf4_mul(gf4_add(GF4.x_plus_one, y), z) = gf4_add(gf4_mul(GF4.x_plus_one, z), gf4_mul(y, z))
+}
+
 theorem gf4_mul_add_right(x: GF4, y: GF4, z: GF4) {
     Mul.mul(Add.add(x, y), z) = Add.add(Mul.mul(x, z), Mul.mul(y, z))
 }
 
+theorem gf4_field_inverse(x: GF4) {
+    x != Zero.0[GF4] implies x * x.inverse = One.1[GF4]
+}
+
+theorem gf4_zero_ne_one {
+    Zero.0[GF4] != One.1[GF4]
+}
+
+theorem gf4_x_squared_plus_x_plus_one_eq_zero {
+    gf4_add(gf4_add(gf4_mul(GF4.x, GF4.x), GF4.x), GF4.one) = GF4.zero
+}
+
+theorem gf4_x_inverse {
+    gf4_mul(GF4.x, GF4.x_plus_one) = GF4.one
+}
+
+theorem gf4_x_plus_one_inverse {
+    gf4_mul(GF4.x_plus_one, GF4.x) = GF4.one
+}
+
+theorem gf4_zero_ne_one_elt {
+    GF4.zero != GF4.one
+}
+
+theorem gf4_zero_ne_x {
+    GF4.zero != GF4.x
+}
+
+theorem gf4_zero_ne_x_plus_one {
+    GF4.zero != GF4.x_plus_one
+}
+
+theorem gf4_one_ne_x {
+    GF4.one != GF4.x
+}
+
+theorem gf4_one_ne_x_plus_one {
+    GF4.one != GF4.x_plus_one
+}
+
+theorem gf4_x_ne_x_plus_one {
+    GF4.x != GF4.x_plus_one
+}
+
+theorem inverse_left_group[G: Group](a: G) {
+    a.inverse * a = G.1
+}
+
+theorem inverse_inverse_group[G: Group](a: G) {
+    a.inverse.inverse = a
+}
+
+theorem left_cancel_group[G: Group](a: G, b: G, c: G) {
+    a * b = a * c implies b = c
+}
+
+theorem right_cancel_group[G: Group](a: G, b: G, c: G) {
+    b * a = c * a implies b = c
+}
+
+theorem inverse_mul[G: Group](a: G, b: G) {
+    (a * b).inverse = b.inverse * a.inverse
+}
+
+theorem pow_inverse_group[G: Group](a: G, n: Nat) {
+    a.pow(n).inverse = a.inverse.pow(n)
+}
+
+theorem pow_cancel[G: Group](a: G, m: Nat, n: Nat) {
+    n > m and a.pow(n) = a.pow(m) implies a.pow(n - m) = G.1
+}
+
+define is_group_hom[G: Group, H: Group](f: G -> H) -> Bool {
+    forall(a: G, b: G) {
+        f(a * b) = f(a) * f(b)
+    }
+}
+
+structure GroupHom[G: Group, H: Group] {
+    /// The mapping for the homomorphism.
+    hom: G -> H
+} constraint {
+    is_group_hom(hom)
+}
+
+let trivial_group_hom[G: Group, H: Group]: G -> H = function(a: G) {
+    H.1
+}
+
+theorem trivial_group_hom_is_hom[G: Group, H: Group] {
+    is_group_hom(trivial_group_hom[G, H])
+}
+
+theorem group_hom_ext[G: Group, H: Group](f: GroupHom[G, H], g: GroupHom[G, H]) {
+    (forall(a: G) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes GroupHom[G: Group, H: Group] {
+    /// Group homomorphism extensionality from pointwise equality of the homomorphism.
+    let ext = group_hom_ext[G, H]
+}
+
+theorem group_hom_eq_hom[G: Group, H: Group](f: GroupHom[G, H], g: GroupHom[G, H]) {
+    f = g implies f.hom = g.hom
+}
+
+theorem group_hom_eq_apply[G: Group, H: Group](f: GroupHom[G, H], g: GroupHom[G, H], a: G) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem group_hom_eq_transport_predicate[G: Group, H: Group](
+    p: GroupHom[G, H] -> Bool,
+    f: GroupHom[G, H],
+    g: GroupHom[G, H]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem group_hom_eq_transport_predicate_rev[G: Group, H: Group](
+    p: GroupHom[G, H] -> Bool,
+    f: GroupHom[G, H],
+    g: GroupHom[G, H]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem group_hom_eq_of_hom_eq[G: Group, H: Group](f: GroupHom[G, H], g: GroupHom[G, H]) {
+    f.hom = g.hom implies f = g
+}
+
+theorem group_hom_eq_of_apply_eq[G: Group, H: Group](f: GroupHom[G, H], g: GroupHom[G, H]) {
+    (forall(a: G) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem group_hom_mul[G: Group, H: Group](f: GroupHom[G, H], a: G, b: G) {
+    f.hom(a * b) = f.hom(a) * f.hom(b)
+}
+
+theorem group_hom_one[G: Group, H: Group](f: GroupHom[G, H]) {
+    f.hom(G.1) = H.1
+}
+
+theorem group_hom_inv[G: Group, H: Group](f: GroupHom[G, H], a: G) {
+    f.hom(a.inverse) = f.hom(a).inverse
+}
+
+theorem group_hom_pow[G: Group, H: Group](f: GroupHom[G, H], a: G, n: Nat) {
+    f.hom(a.pow(n)) = f.hom(a).pow(n)
+}
+
+theorem monoid_hom_imp_group_hom[G: Group, H: Group](f: G -> H) {
+    is_monoid_hom(f) implies is_group_hom(f)
+}
+
+theorem group_hom_imp_monoid_hom[G: Group, H: Group](f: G -> H) {
+    is_group_hom(f) implies is_monoid_hom(f)
+}
+
+theorem group_hom_is_monoid_hom[G: Group, H: Group](f: GroupHom[G, H]) {
+    is_monoid_hom(f.hom)
+}
+
+theorem monoid_hom_is_group_hom[G: Group, H: Group](f: MonoidHom[G, H]) {
+    is_group_hom(f.hom)
+}
+
+let group_hom_to_monoid_hom[G: Group, H: Group](f: GroupHom[G, H]) -> result: MonoidHom[G, H] satisfy {
+    MonoidHom.new(f.hom) = Option.some(result)
+}
+
+theorem group_hom_to_monoid_hom_hom[G: Group, H: Group](f: GroupHom[G, H]) {
+    group_hom_to_monoid_hom(f).hom = f.hom
+}
+
+let group_hom_of_monoid_hom[G: Group, H: Group](f: MonoidHom[G, H]) -> result: GroupHom[G, H] satisfy {
+    GroupHom.new(f.hom) = Option.some(result)
+}
+
+theorem group_hom_of_monoid_hom_hom[G: Group, H: Group](f: MonoidHom[G, H]) {
+    group_hom_of_monoid_hom(f).hom = f.hom
+}
+
+theorem function_eq_transport_group_hom[G: Group, H: Group](f: G -> H, g: G -> H) {
+    f = g and is_group_hom(f) implies is_group_hom(g)
+}
+
+theorem function_eq_transport_group_hom_rev[G: Group, H: Group](f: G -> H, g: G -> H) {
+    f = g and is_group_hom(g) implies is_group_hom(f)
+}
+
+theorem identity_fn_is_group_hom[G: Group] {
+    is_group_hom(identity_fn[G])
+}
+
+theorem compose_is_group_hom[G: Group, H: Group, K: Group](f: H -> K, g: G -> H) {
+    is_group_hom(f) and is_group_hom(g) implies is_group_hom(compose(f, g))
+}
+
+let identity_group_hom[G: Group]: GroupHom[G, G] satisfy {
+    GroupHom.new(identity_fn[G]) = Option.some(identity_group_hom)
+}
+
+theorem identity_group_hom_hom[G: Group] {
+    identity_group_hom[G].hom = identity_fn[G]
+}
+
+let compose_group_hom[G: Group, H: Group, K: Group](f: GroupHom[H, K], g: GroupHom[G, H]) -> result: GroupHom[G, K] satisfy {
+    GroupHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_group_hom_hom[G: Group, H: Group, K: Group](f: GroupHom[H, K], g: GroupHom[G, H]) {
+    compose_group_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_group_hom_assoc[A: Group, B: Group, C: Group, D: Group](
+    f: GroupHom[C, D], g: GroupHom[B, C], h: GroupHom[A, B]) {
+    compose_group_hom(compose_group_hom(f, g), h) = compose_group_hom(f, compose_group_hom(g, h))
+}
+
+theorem compose_group_hom_identity_left[G: Group, H: Group](f: GroupHom[G, H]) {
+    compose_group_hom(identity_group_hom[H], f) = f
+}
+
+theorem compose_group_hom_identity_right[G: Group, H: Group](f: GroupHom[G, H]) {
+    compose_group_hom(f, identity_group_hom[G]) = f
+}
+
+define pointwise_add[T, A: Add](f: T -> A, g: T -> A, t: T) -> A {
+    f(t) + g(t)
+}
+
 define pointwise_mul[T, A: Mul](f: T -> A, g: T -> A, t: T) -> A {
     f(t) * g(t)
+}
+
+define pointwise_zero[T, A: Zero](t: T) -> A {
+    A.0
+}
+
+define pointwise_one[T, A: One](t: T) -> A {
+    A.1
+}
+
+define pointwise_neg[T, A: Neg](f: T -> A, t: T) -> A {
+    -f(t)
+}
+
+define pointwise_inverse[T, A: Group](f: T -> A, t: T) -> A {
+    f(t).inverse
 }
 
 theorem pointwise_add_apply[T, A: Add](f: T -> A, g: T -> A, t: T) {
@@ -1861,6 +2411,46 @@ theorem pointwise_mul_apply[T, A: Mul](f: T -> A, g: T -> A, t: T) {
     pointwise_mul(f, g, t) = f(t) * g(t)
 }
 
+theorem pointwise_zero_apply[T, A: Zero](t: T) {
+    pointwise_zero[T, A](t) = A.0
+}
+
+theorem pointwise_one_apply[T, A: One](t: T) {
+    pointwise_one[T, A](t) = A.1
+}
+
+theorem pointwise_neg_apply[T, A: Neg](f: T -> A, t: T) {
+    pointwise_neg(f, t) = -f(t)
+}
+
+theorem pointwise_inverse_apply[T, A: Group](f: T -> A, t: T) {
+    pointwise_inverse(f, t) = f(t).inverse
+}
+
+theorem pointwise_add_assoc[T, A: AddSemigroup](f: T -> A, g: T -> A, h: T -> A) {
+    pointwise_add(f, pointwise_add(g, h)) = pointwise_add(pointwise_add(f, g), h)
+}
+
+theorem pointwise_add_comm[T, A: AddCommSemigroup](f: T -> A, g: T -> A) {
+    pointwise_add(f, g) = pointwise_add(g, f)
+}
+
+theorem pointwise_add_zero_right[T, A: AddMonoid](f: T -> A) {
+    pointwise_add(f, pointwise_zero[T, A]) = f
+}
+
+theorem pointwise_add_zero_left[T, A: AddMonoid](f: T -> A) {
+    pointwise_add(pointwise_zero[T, A], f) = f
+}
+
+theorem pointwise_add_neg_right[T, A: AddGroup](f: T -> A) {
+    pointwise_add(f, pointwise_neg(f)) = pointwise_zero[T, A]
+}
+
+theorem pointwise_add_neg_left[T, A: AddGroup](f: T -> A) {
+    pointwise_add(pointwise_neg(f), f) = pointwise_zero[T, A]
+}
+
 theorem pointwise_mul_assoc[T, A: Semigroup](f: T -> A, g: T -> A, h: T -> A) {
     pointwise_mul(f, pointwise_mul(g, h)) = pointwise_mul(pointwise_mul(f, g), h)
 }
@@ -1869,1259 +2459,146 @@ theorem pointwise_mul_comm[T, A: CommSemigroup](f: T -> A, g: T -> A) {
     pointwise_mul(f, g) = pointwise_mul(g, f)
 }
 
-define flatten_list[T](xss: List[List[T]]) -> List[T] {
-    match xss {
-        List.nil {
-            List.nil[T]
-        }
-        List.cons(xs, rest) {
-            xs + flatten_list(rest)
-        }
+theorem pointwise_mul_one_right[T, A: Monoid](f: T -> A) {
+    pointwise_mul(f, pointwise_one[T, A]) = f
+}
+
+theorem pointwise_mul_one_left[T, A: Monoid](f: T -> A) {
+    pointwise_mul(pointwise_one[T, A], f) = f
+}
+
+theorem pointwise_mul_inverse_right[T, A: Group](f: T -> A) {
+    pointwise_mul(f, pointwise_inverse(f)) = pointwise_one[T, A]
+}
+
+theorem pointwise_mul_inverse_left[T, A: Group](f: T -> A) {
+    pointwise_mul(pointwise_inverse(f), f) = pointwise_one[T, A]
+}
+
+theorem pointwise_mul_distrib_left[T, A: Semiring](f: T -> A, g: T -> A, h: T -> A) {
+    pointwise_mul(f, pointwise_add(g, h)) =
+    pointwise_add(pointwise_mul(f, g), pointwise_mul(f, h))
+}
+
+theorem pointwise_mul_distrib_right[T, A: Semiring](f: T -> A, g: T -> A, h: T -> A) {
+    pointwise_mul(pointwise_add(f, g), h) =
+    pointwise_add(pointwise_mul(f, h), pointwise_mul(g, h))
+}
+
+theorem pointwise_mul_zero_right[T, A: Semiring](f: T -> A) {
+    pointwise_mul(f, pointwise_zero[T, A]) = pointwise_zero[T, A]
+}
+
+theorem pointwise_mul_zero_left[T, A: Semiring](f: T -> A) {
+    pointwise_mul(pointwise_zero[T, A], f) = pointwise_zero[T, A]
+}
+
+define function_even[A: Neg, B](f: A -> B) -> Bool {
+    forall(x: A) {
+        f(-x) = f(x)
     }
 }
 
-theorem flatten_list_nil[T] {
-    flatten_list(List.nil[List[T]]) = List.nil[T]
-}
-
-define semiconj_by[M: Mul](a: M, x: M, y: M) -> Bool {
-    a * x = y * a
-}
-
-theorem semiconj_by_eq[M: Mul](a: M, x: M, y: M) {
-    semiconj_by(a, x, y) = (a * x = y * a)
-}
-
-theorem semiconj_by_mul_eq[M: Mul](a: M, x: M, y: M) {
-    semiconj_by(a, x, y) implies a * x = y * a
-}
-
-theorem semiconj_by_mul_right[S: Semigroup](a: S, x: S, y: S, xp: S, yp: S) {
-    semiconj_by(a, x, y) and semiconj_by(a, xp, yp)
-    implies semiconj_by(a, x * xp, y * yp)
-}
-
-theorem semiconj_by_mul_left[S: Semigroup](a: S, b: S, x: S, y: S, z: S) {
-    semiconj_by(a, y, z) and semiconj_by(b, x, y)
-    implies semiconj_by(a * b, x, z)
-}
-
-define is_square[M: Semigroup](a: M) -> Bool {
-    exists(r: M) { a = r * r }
-}
-
-theorem is_square_iff_exists_mul_self[M: Semigroup](a: M) {
-    is_square[M](a) = exists(r: M) { a = r * r }
-}
-
-theorem is_square_mul_self[M: Semigroup](r: M) {
-    is_square[M](r * r)
-}
-
-theorem is_square_mul[M: CommSemigroup](a: M, b: M) {
-    is_square[M](a) and is_square[M](b) implies is_square[M](a * b)
-}
-
-theorem opposite_mul_eq[M: Mul](a: M, b: M) {
-    opposite_mul(a, b) = b * a
-}
-
-theorem opposite_mul_rev_eq[M: Mul](a: M, b: M) {
-    opposite_mul(b, a) = a * b
-}
-
-theorem opposite_mul_eq_mul[M: CommSemigroup](a: M, b: M) {
-    opposite_mul(a, b) = a * b
-}
-
-theorem preserves_opposite_mul[A: Mul, B: Mul](f: A -> B) {
-    (forall(a: A, b: A) { f(a * b) = f(a) * f(b) }) implies
-    forall(a: A, b: A) {
-        f(opposite_mul(a, b)) = opposite_mul(f(a), f(b))
+define function_odd[A: Neg, B: Neg](f: A -> B) -> Bool {
+    forall(x: A) {
+        f(-x) = -f(x)
     }
 }
 
-theorem mul_opposite_val_mul[M: Mul](x: MulOpposite[M], y: MulOpposite[M]) {
-    (x * y).val = y.val * x.val
-}
-
-theorem mul_opposite_to_mul[M: Mul](x: M, y: M) {
-    (to_mul_opposite(x) * to_mul_opposite(y)).val = y * x
-}
-
-theorem to_mul_opposite_opposite_mul[M: Mul](x: M, y: M) {
-    to_mul_opposite(opposite_mul(x, y)) = to_mul_opposite(x) * to_mul_opposite(y)
-}
-
-theorem mul_opposite_mul_assoc[M: Semigroup](x: MulOpposite[M], y: MulOpposite[M], z: MulOpposite[M]) {
-    x * (y * z) = (x * y) * z
-}
-
-theorem mul_opposite_mul_is_associative[M: Semigroup] {
-    forall(x: MulOpposite[M], y: MulOpposite[M], z: MulOpposite[M]) {
-        x * (y * z) = (x * y) * z
+theorem function_even_def[A: Neg, B](f: A -> B) {
+    function_even(f) = forall(x: A) {
+        f(-x) = f(x)
     }
 }
 
-theorem mul_opposite_mul_is_associative_raw[M: Semigroup] {
-    forall(x: MulOpposite[M], y: MulOpposite[M], z: MulOpposite[M]) {
-        Mul.mul(x, Mul.mul(y, z)) = Mul.mul(Mul.mul(x, y), z)
+theorem function_even_eq[A: Neg, B](f: A -> B, x: A) {
+    function_even(f) implies f(-x) = f(x)
+}
+
+theorem function_odd_def[A: Neg, B: Neg](f: A -> B) {
+    function_odd(f) = forall(x: A) {
+        f(-x) = -f(x)
     }
 }
 
-theorem pointwise_function_add_apply[T, A: Add](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A], t: T) {
-    (f + g).val(t) = f.val(t) + g.val(t)
+theorem function_odd_eq[A: Neg, B: Neg](f: A -> B, x: A) {
+    function_odd(f) implies f(-x) = -f(x)
 }
 
-theorem pointwise_function_mul_apply[T, A: Mul](f: PointwiseFunction[T, A], g: PointwiseFunction[T, A], t: T) {
-    (f * g).val(t) = f.val(t) * g.val(t)
+theorem function_even_const[A: Neg, B](b: B) {
+    function_even(constant[A, B](b))
 }
 
-theorem pointwise_function_add_associative[T, A: AddSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A],
-    h: PointwiseFunction[T, A]
-) {
-    f + (g + h) = (f + g) + h
+theorem function_even_zero[A: Neg, B: Zero] {
+    function_even(pointwise_zero[A, B])
 }
 
-theorem pointwise_function_add_commutative[T, A: AddCommSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A]
-) {
-    f + g = g + f
+theorem function_odd_zero[A: Neg, B: AddGroup] {
+    function_odd(pointwise_zero[A, B])
 }
 
-theorem pointwise_function_mul_associative[T, A: Semigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A],
-    h: PointwiseFunction[T, A]
-) {
-    f * (g * h) = (f * g) * h
+theorem function_even_left_comp[A: Neg, B, C](g: A -> B, f: B -> C) {
+    function_even(g) implies function_even(compose(f, g))
 }
 
-theorem pointwise_function_mul_commutative[T, A: CommSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A]
-) {
-    f * g = g * f
+theorem function_even_comp_odd[A: Neg, B: Neg, C](f: B -> C, g: A -> B) {
+    function_even(f) and function_odd(g) implies function_even(compose(f, g))
 }
 
-theorem pointwise_function_add_semigroup_law[T, A: AddSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A],
-    h: PointwiseFunction[T, A]
-) {
-    Add.add(f, Add.add(g, h)) = Add.add(Add.add(f, g), h)
+theorem function_odd_comp_odd[A: Neg, B: Neg, C: Neg](f: B -> C, g: A -> B) {
+    function_odd(f) and function_odd(g) implies function_odd(compose(f, g))
 }
 
-theorem pointwise_function_add_comm_semigroup_law[T, A: AddCommSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A]
-) {
-    Add.add(f, g) = Add.add(g, f)
+theorem function_even_add[A: Neg, B: Add](f: A -> B, g: A -> B) {
+    function_even(f) and function_even(g) implies function_even(pointwise_add(f, g))
 }
 
-theorem pointwise_function_semigroup_law[T, A: Semigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A],
-    h: PointwiseFunction[T, A]
-) {
-    Mul.mul(f, Mul.mul(g, h)) = Mul.mul(Mul.mul(f, g), h)
+theorem function_odd_add[A: Neg, B: AddCommGroup](f: A -> B, g: A -> B) {
+    function_odd(f) and function_odd(g) implies function_odd(pointwise_add(f, g))
 }
 
-theorem pointwise_function_comm_semigroup_law[T, A: CommSemigroup](
-    f: PointwiseFunction[T, A],
-    g: PointwiseFunction[T, A]
-) {
-    Mul.mul(f, g) = Mul.mul(g, f)
+theorem function_even_mul_even[A: Neg, B: Mul](f: A -> B, g: A -> B) {
+    function_even(f) and function_even(g) implies function_even(pointwise_mul(f, g))
 }
 
-theorem pair_add_first[A: Add, B: Add](p: Pair[A, B], q: Pair[A, B]) {
-    pair_add(p, q).first = p.first + q.first
+define indicator[T, A: Zero](s: Set[T], f: T -> A, x: T) -> A {
+    if s.contains(x) { f(x) } else { A.0 }
 }
 
-theorem pair_add_second[A: Add, B: Add](p: Pair[A, B], q: Pair[A, B]) {
-    pair_add(p, q).second = p.second + q.second
-}
-
-theorem pair_mul_first[A: Mul, B: Mul](p: Pair[A, B], q: Pair[A, B]) {
-    pair_mul(p, q).first = p.first * q.first
-}
-
-theorem pair_mul_second[A: Mul, B: Mul](p: Pair[A, B], q: Pair[A, B]) {
-    pair_mul(p, q).second = p.second * q.second
-}
-
-theorem pair_add_assoc[A: AddSemigroup, B: AddSemigroup](
-    p: Pair[A, B], q: Pair[A, B], r: Pair[A, B]
-) {
-    pair_add(p, pair_add(q, r)) = pair_add(pair_add(p, q), r)
-}
-
-theorem pair_add_comm[A: AddCommSemigroup, B: AddCommSemigroup](p: Pair[A, B], q: Pair[A, B]) {
-    pair_add(p, q) = pair_add(q, p)
-}
-
-theorem pair_mul_assoc[A: Semigroup, B: Semigroup](
-    p: Pair[A, B], q: Pair[A, B], r: Pair[A, B]
-) {
-    pair_mul(p, pair_mul(q, r)) = pair_mul(pair_mul(p, q), r)
-}
-
-theorem pair_mul_comm[A: CommSemigroup, B: CommSemigroup](p: Pair[A, B], q: Pair[A, B]) {
-    pair_mul(p, q) = pair_mul(q, p)
-}
-
-theorem pair_swap_add[A: Add, B: Add](p: Pair[A, B], q: Pair[A, B]) {
-    pair_add(p, q).swap = pair_add(p.swap, q.swap)
-}
-
-theorem pair_swap_mul[A: Mul, B: Mul](p: Pair[A, B], q: Pair[A, B]) {
-    pair_mul(p, q).swap = pair_mul(p.swap, q.swap)
-}
-
-define function_pair_apply[T, A, B](p: Pair[T -> A, T -> B], t: T) -> Pair[A, B] {
-    Pair.new(p.first(t), p.second(t))
-}
-
-define function_pair[T, A, B](f: T -> A, g: T -> B) -> Pair[T -> A, T -> B] {
-    Pair.new(f, g)
-}
-
-define function_pair_add[T, A: Add, B: Add](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) -> Pair[T -> A, T -> B] {
-    Pair.new(pointwise_add(p.first, q.first), pointwise_add(p.second, q.second))
-}
-
-define function_pair_mul[T, A: Mul, B: Mul](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) -> Pair[T -> A, T -> B] {
-    Pair.new(pointwise_mul(p.first, q.first), pointwise_mul(p.second, q.second))
-}
-
-theorem function_pair_apply_first[T, A, B](p: Pair[T -> A, T -> B], t: T) {
-    function_pair_apply(p, t).first = p.first(t)
-}
-
-theorem function_pair_apply_second[T, A, B](p: Pair[T -> A, T -> B], t: T) {
-    function_pair_apply(p, t).second = p.second(t)
-}
-
-theorem function_pair_first[T, A, B](f: T -> A, g: T -> B) {
-    function_pair(f, g).first = f
-}
-
-theorem function_pair_second[T, A, B](f: T -> A, g: T -> B) {
-    function_pair(f, g).second = g
-}
-
-theorem function_pair_apply_pair[T, A, B](f: T -> A, g: T -> B, t: T) {
-    function_pair_apply(function_pair(f, g), t) = Pair.new(f(t), g(t))
-}
-
-theorem function_pair_eta[T, A, B](p: Pair[T -> A, T -> B]) {
-    function_pair(p.first, p.second) = p
-}
-
-theorem function_pair_add_first[T, A: Add, B: Add](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_add(p, q).first = pointwise_add(p.first, q.first)
-}
-
-theorem function_pair_add_second[T, A: Add, B: Add](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_add(p, q).second = pointwise_add(p.second, q.second)
-}
-
-theorem function_pair_mul_first[T, A: Mul, B: Mul](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, q).first = pointwise_mul(p.first, q.first)
-}
-
-theorem function_pair_mul_second[T, A: Mul, B: Mul](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, q).second = pointwise_mul(p.second, q.second)
-}
-
-theorem function_pair_add_apply[T, A: Add, B: Add](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B],
-    t: T
-) {
-    function_pair_apply(function_pair_add(p, q), t) =
-    pair_add(function_pair_apply(p, t), function_pair_apply(q, t))
-}
-
-theorem function_pair_mul_apply[T, A: Mul, B: Mul](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B],
-    t: T
-) {
-    function_pair_apply(function_pair_mul(p, q), t) =
-    pair_mul(function_pair_apply(p, t), function_pair_apply(q, t))
-}
-
-theorem function_pair_add_assoc[T, A: AddSemigroup, B: AddSemigroup](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B],
-    r: Pair[T -> A, T -> B]
-) {
-    function_pair_add(p, function_pair_add(q, r)) =
-    function_pair_add(function_pair_add(p, q), r)
-}
-
-theorem function_pair_add_comm[T, A: AddCommSemigroup, B: AddCommSemigroup](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_add(p, q) = function_pair_add(q, p)
-}
-
-theorem function_pair_mul_assoc[T, A: Semigroup, B: Semigroup](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B],
-    r: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, function_pair_mul(q, r)) =
-    function_pair_mul(function_pair_mul(p, q), r)
-}
-
-theorem function_pair_mul_comm[T, A: CommSemigroup, B: CommSemigroup](
-    p: Pair[T -> A, T -> B],
-    q: Pair[T -> A, T -> B]
-) {
-    function_pair_mul(p, q) = function_pair_mul(q, p)
-}
-
-define function_triple_apply[T, A, B, C](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) -> Pair[A, Pair[B, C]] {
-    Pair.new(p.first(t), Pair.new(p.second.first(t), p.second.second(t)))
-}
-
-define function_triple[T, A, B, C](
-    f: T -> A,
-    g: T -> B,
-    h: T -> C
-) -> Pair[T -> A, Pair[T -> B, T -> C]] {
-    Pair.new(f, Pair.new(g, h))
-}
-
-define function_triple_add[T, A: Add, B: Add, C: Add](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) -> Pair[T -> A, Pair[T -> B, T -> C]] {
-    Pair.new(pointwise_add(p.first, q.first),
-        Pair.new(pointwise_add(p.second.first, q.second.first),
-            pointwise_add(p.second.second, q.second.second)))
-}
-
-define function_triple_mul[T, A: Mul, B: Mul, C: Mul](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) -> Pair[T -> A, Pair[T -> B, T -> C]] {
-    Pair.new(pointwise_mul(p.first, q.first),
-        Pair.new(pointwise_mul(p.second.first, q.second.first),
-            pointwise_mul(p.second.second, q.second.second)))
-}
-
-theorem function_triple_apply_first[T, A, B, C](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) {
-    function_triple_apply(p, t).first = p.first(t)
-}
-
-theorem function_triple_apply_second_first[T, A, B, C](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) {
-    function_triple_apply(p, t).second.first = p.second.first(t)
-}
-
-theorem function_triple_apply_second_second[T, A, B, C](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) {
-    function_triple_apply(p, t).second.second = p.second.second(t)
-}
-
-theorem function_triple_first[T, A, B, C](f: T -> A, g: T -> B, h: T -> C) {
-    function_triple(f, g, h).first = f
-}
-
-theorem function_triple_second_first[T, A, B, C](f: T -> A, g: T -> B, h: T -> C) {
-    function_triple(f, g, h).second.first = g
-}
-
-theorem function_triple_second_second[T, A, B, C](f: T -> A, g: T -> B, h: T -> C) {
-    function_triple(f, g, h).second.second = h
-}
-
-theorem function_triple_eta[T, A, B, C](p: Pair[T -> A, Pair[T -> B, T -> C]]) {
-    function_triple(p.first, p.second.first, p.second.second) = p
-}
-
-theorem function_triple_add_first[T, A: Add, B: Add, C: Add](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_add(p, q).first = pointwise_add(p.first, q.first)
-}
-
-theorem function_triple_mul_first[T, A: Mul, B: Mul, C: Mul](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_mul(p, q).first = pointwise_mul(p.first, q.first)
-}
-
-theorem function_triple_ext[T, A, B, C](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    p.first = q.first and p.second.first = q.second.first and
-    p.second.second = q.second.second implies p = q
-}
-
-theorem function_triple_add_second_first[T, A: Add, B: Add, C: Add](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_add(p, q).second.first = pointwise_add(p.second.first, q.second.first)
-}
-
-theorem function_triple_add_second_second[T, A: Add, B: Add, C: Add](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_add(p, q).second.second = pointwise_add(p.second.second, q.second.second)
-}
-
-theorem function_triple_mul_second_first[T, A: Mul, B: Mul, C: Mul](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_mul(p, q).second.first = pointwise_mul(p.second.first, q.second.first)
-}
-
-theorem function_triple_mul_second_second[T, A: Mul, B: Mul, C: Mul](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_mul(p, q).second.second = pointwise_mul(p.second.second, q.second.second)
-}
-
-theorem function_triple_add_apply[T, A: Add, B: Add, C: Add](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) {
-    function_triple_apply(function_triple_add(p, q), t) =
-    Pair.new(p.first(t) + q.first(t),
-        Pair.new(p.second.first(t) + q.second.first(t),
-            p.second.second(t) + q.second.second(t)))
-}
-
-theorem function_triple_mul_apply[T, A: Mul, B: Mul, C: Mul](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]],
-    t: T
-) {
-    function_triple_apply(function_triple_mul(p, q), t) =
-    Pair.new(p.first(t) * q.first(t),
-        Pair.new(p.second.first(t) * q.second.first(t),
-            p.second.second(t) * q.second.second(t)))
-}
-
-theorem function_triple_add_assoc[T, A: AddSemigroup, B: AddSemigroup, C: AddSemigroup](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]],
-    r: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_add(p, function_triple_add(q, r)) =
-    function_triple_add(function_triple_add(p, q), r)
-}
-
-theorem function_triple_add_comm[T, A: AddCommSemigroup, B: AddCommSemigroup, C: AddCommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_add(p, q) = function_triple_add(q, p)
-}
-
-theorem function_triple_mul_assoc[T, A: Semigroup, B: Semigroup, C: Semigroup](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]],
-    r: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_mul(p, function_triple_mul(q, r)) =
-    function_triple_mul(function_triple_mul(p, q), r)
-}
-
-theorem function_triple_mul_comm[T, A: CommSemigroup, B: CommSemigroup, C: CommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, T -> C]],
-    q: Pair[T -> A, Pair[T -> B, T -> C]]
-) {
-    function_triple_mul(p, q) = function_triple_mul(q, p)
-}
-
-define function_quadruple_apply[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    t: T
-) -> Pair[A, Pair[B, Pair[C, D]]] {
-    Pair.new(p.first(t),
-        Pair.new(p.second.first(t),
-            Pair.new(p.second.second.first(t), p.second.second.second(t))))
-}
-
-define function_quadruple[T, A, B, C, D](
-    f: T -> A,
-    g: T -> B,
-    h: T -> C,
-    i: T -> D
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]] {
-    Pair.new(f, Pair.new(g, Pair.new(h, i)))
-}
-
-define function_quadruple_add[T, A: Add, B: Add, C: Add, D: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]] {
-    Pair.new(pointwise_add(p.first, q.first),
-        Pair.new(pointwise_add(p.second.first, q.second.first),
-            Pair.new(pointwise_add(p.second.second.first, q.second.second.first),
-                pointwise_add(p.second.second.second, q.second.second.second))))
-}
-
-define function_quadruple_mul[T, A: Mul, B: Mul, C: Mul, D: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]] {
-    Pair.new(pointwise_mul(p.first, q.first),
-        Pair.new(pointwise_mul(p.second.first, q.second.first),
-            Pair.new(pointwise_mul(p.second.second.first, q.second.second.first),
-                pointwise_mul(p.second.second.second, q.second.second.second))))
-}
-
-theorem function_quadruple_apply_first[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    t: T
-) {
-    function_quadruple_apply(p, t).first = p.first(t)
-}
-
-theorem function_quadruple_apply_second_first[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    t: T
-) {
-    function_quadruple_apply(p, t).second.first = p.second.first(t)
-}
-
-theorem function_quadruple_apply_second_second_first[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    t: T
-) {
-    function_quadruple_apply(p, t).second.second.first = p.second.second.first(t)
-}
-
-theorem function_quadruple_apply_second_second_second[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    t: T
-) {
-    function_quadruple_apply(p, t).second.second.second = p.second.second.second(t)
-}
-
-theorem function_quadruple_first[T, A, B, C, D](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D
-) {
-    function_quadruple(f, g, h, i).first = f
-}
-
-theorem function_quadruple_second_first[T, A, B, C, D](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D
-) {
-    function_quadruple(f, g, h, i).second.first = g
-}
-
-theorem function_quadruple_second_second_first[T, A, B, C, D](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D
-) {
-    function_quadruple(f, g, h, i).second.second.first = h
-}
-
-theorem function_quadruple_second_second_second[T, A, B, C, D](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D
-) {
-    function_quadruple(f, g, h, i).second.second.second = i
-}
-
-theorem function_quadruple_eta[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple(p.first, p.second.first, p.second.second.first,
-        p.second.second.second) = p
-}
-
-theorem function_quadruple_ext[T, A, B, C, D](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    p.first = q.first and p.second.first = q.second.first and
-    p.second.second.first = q.second.second.first and
-    p.second.second.second = q.second.second.second implies p = q
-}
-
-theorem function_quadruple_add_first[T, A: Add, B: Add, C: Add, D: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, q).first = pointwise_add(p.first, q.first)
-}
-
-theorem function_quadruple_add_second_first[T, A: Add, B: Add, C: Add, D: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, q).second.first =
-        pointwise_add(p.second.first, q.second.first)
-}
-
-theorem function_quadruple_add_second_second_first[T, A: Add, B: Add, C: Add, D: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, q).second.second.first =
-        pointwise_add(p.second.second.first, q.second.second.first)
-}
-
-theorem function_quadruple_add_second_second_second[T, A: Add, B: Add, C: Add, D: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, q).second.second.second =
-        pointwise_add(p.second.second.second, q.second.second.second)
-}
-
-theorem function_quadruple_mul_first[T, A: Mul, B: Mul, C: Mul, D: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q).first = pointwise_mul(p.first, q.first)
-}
-
-theorem function_quadruple_mul_second_first[T, A: Mul, B: Mul, C: Mul, D: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q).second.first =
-        pointwise_mul(p.second.first, q.second.first)
-}
-
-theorem function_quadruple_mul_second_second_first[T, A: Mul, B: Mul, C: Mul, D: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q).second.second.first =
-        pointwise_mul(p.second.second.first, q.second.second.first)
-}
-
-theorem function_quadruple_mul_second_second_second[T, A: Mul, B: Mul, C: Mul, D: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q).second.second.second =
-        pointwise_mul(p.second.second.second, q.second.second.second)
-}
-
-theorem function_quadruple_add_assoc[T, A: AddSemigroup, B: AddSemigroup, C: AddSemigroup, D: AddSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    r: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, function_quadruple_add(q, r)) =
-    function_quadruple_add(function_quadruple_add(p, q), r)
-}
-
-theorem function_quadruple_add_comm[T, A: AddCommSemigroup, B: AddCommSemigroup, C: AddCommSemigroup, D: AddCommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_add(p, q) = function_quadruple_add(q, p)
-}
-
-theorem function_quadruple_mul_assoc[T, A: Semigroup, B: Semigroup, C: Semigroup, D: Semigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    r: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, function_quadruple_mul(q, r)) =
-    function_quadruple_mul(function_quadruple_mul(p, q), r)
-}
-
-theorem function_quadruple_mul_comm[T, A: CommSemigroup, B: CommSemigroup, C: CommSemigroup, D: CommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, T -> D]]]
-) {
-    function_quadruple_mul(p, q) = function_quadruple_mul(q, p)
-}
-
-define function_quintuple_apply[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) -> Pair[A, Pair[B, Pair[C, Pair[D, E]]]] {
-    Pair.new(p.first(t), function_quadruple_apply(p.second, t))
-}
-
-define function_quintuple[T, A, B, C, D, E](
-    f: T -> A,
-    g: T -> B,
-    h: T -> C,
-    i: T -> D,
-    j: T -> E
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]] {
-    Pair.new(f, function_quadruple(g, h, i, j))
-}
-
-define function_quintuple_add[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]] {
-    Pair.new(pointwise_add(p.first, q.first), function_quadruple_add(p.second, q.second))
-}
-
-define function_quintuple_mul[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) -> Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]] {
-    Pair.new(pointwise_mul(p.first, q.first), function_quadruple_mul(p.second, q.second))
-}
-
-theorem function_quintuple_apply_first[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) {
-    function_quintuple_apply(p, t).first = p.first(t)
-}
-
-theorem function_quintuple_apply_second_first[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) {
-    function_quintuple_apply(p, t).second.first = p.second.first(t)
-}
-
-theorem function_quintuple_apply_second_second_first[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) {
-    function_quintuple_apply(p, t).second.second.first = p.second.second.first(t)
-}
-
-theorem function_quintuple_apply_second_second_second_first[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) {
-    function_quintuple_apply(p, t).second.second.second.first =
-    p.second.second.second.first(t)
-}
-
-theorem function_quintuple_apply_second_second_second_second[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    t: T
-) {
-    function_quintuple_apply(p, t).second.second.second.second =
-    p.second.second.second.second(t)
-}
-
-theorem function_quintuple_first[T, A, B, C, D, E](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D, j: T -> E
-) {
-    function_quintuple(f, g, h, i, j).first = f
-}
-
-theorem function_quintuple_second_first[T, A, B, C, D, E](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D, j: T -> E
-) {
-    function_quintuple(f, g, h, i, j).second.first = g
-}
-
-theorem function_quintuple_second_second_first[T, A, B, C, D, E](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D, j: T -> E
-) {
-    function_quintuple(f, g, h, i, j).second.second.first = h
-}
-
-theorem function_quintuple_second_second_second_first[T, A, B, C, D, E](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D, j: T -> E
-) {
-    function_quintuple(f, g, h, i, j).second.second.second.first = i
-}
-
-theorem function_quintuple_second_second_second_second[T, A, B, C, D, E](
-    f: T -> A, g: T -> B, h: T -> C, i: T -> D, j: T -> E
-) {
-    function_quintuple(f, g, h, i, j).second.second.second.second = j
-}
-
-theorem function_quintuple_eta[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple(p.first, p.second.first, p.second.second.first,
-        p.second.second.second.first, p.second.second.second.second) = p
-}
-
-theorem function_quintuple_ext[T, A, B, C, D, E](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    p.first = q.first and p.second.first = q.second.first and
-    p.second.second.first = q.second.second.first and
-    p.second.second.second.first = q.second.second.second.first and
-    p.second.second.second.second = q.second.second.second.second implies p = q
-}
-
-theorem function_quintuple_add_first[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q).first = pointwise_add(p.first, q.first)
-}
-
-theorem function_quintuple_add_second_first[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q).second.first =
-        pointwise_add(p.second.first, q.second.first)
-}
-
-theorem function_quintuple_add_second_second_first[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q).second.second.first =
-        pointwise_add(p.second.second.first, q.second.second.first)
-}
-
-theorem function_quintuple_add_second_second_second_first[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q).second.second.second.first =
-        pointwise_add(p.second.second.second.first, q.second.second.second.first)
-}
-
-theorem function_quintuple_add_second_second_second_second[T, A: Add, B: Add, C: Add, D: Add, E: Add](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q).second.second.second.second =
-        pointwise_add(p.second.second.second.second, q.second.second.second.second)
-}
-
-theorem function_quintuple_mul_first[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q).first = pointwise_mul(p.first, q.first)
-}
-
-theorem function_quintuple_mul_second_first[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q).second.first =
-        pointwise_mul(p.second.first, q.second.first)
-}
-
-theorem function_quintuple_mul_second_second_first[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q).second.second.first =
-        pointwise_mul(p.second.second.first, q.second.second.first)
-}
-
-theorem function_quintuple_mul_second_second_second_first[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q).second.second.second.first =
-        pointwise_mul(p.second.second.second.first, q.second.second.second.first)
-}
-
-theorem function_quintuple_mul_second_second_second_second[T, A: Mul, B: Mul, C: Mul, D: Mul, E: Mul](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q).second.second.second.second =
-        pointwise_mul(p.second.second.second.second, q.second.second.second.second)
-}
-
-theorem function_quintuple_add_assoc[T, A: AddSemigroup, B: AddSemigroup, C: AddSemigroup, D: AddSemigroup, E: AddSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    r: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, function_quintuple_add(q, r)) =
-    function_quintuple_add(function_quintuple_add(p, q), r)
-}
-
-theorem function_quintuple_add_comm[T, A: AddCommSemigroup, B: AddCommSemigroup, C: AddCommSemigroup, D: AddCommSemigroup, E: AddCommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_add(p, q) = function_quintuple_add(q, p)
-}
-
-theorem function_quintuple_mul_assoc[T, A: Semigroup, B: Semigroup, C: Semigroup, D: Semigroup, E: Semigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    r: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, function_quintuple_mul(q, r)) =
-    function_quintuple_mul(function_quintuple_mul(p, q), r)
-}
-
-theorem function_quintuple_mul_comm[T, A: CommSemigroup, B: CommSemigroup, C: CommSemigroup, D: CommSemigroup, E: CommSemigroup](
-    p: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]],
-    q: Pair[T -> A, Pair[T -> B, Pair[T -> C, Pair[T -> D, T -> E]]]]
-) {
-    function_quintuple_mul(p, q) = function_quintuple_mul(q, p)
-}
-
-define pair_function_first[T, A, B](f: T -> Pair[A, B], t: T) -> A {
-    f(t).first
-}
-
-define pair_function_second[T, A, B](f: T -> Pair[A, B], t: T) -> B {
-    f(t).second
-}
-
-theorem pair_typeclass_add_eq_pair_add[A: Add, B: Add](p: Pair[A, B], q: Pair[A, B]) {
-    p + q = pair_add(p, q)
-}
-
-theorem pair_typeclass_mul_eq_pair_mul[A: Mul, B: Mul](p: Pair[A, B], q: Pair[A, B]) {
-    p * q = pair_mul(p, q)
-}
-
-theorem pair_add_semigroup_law[A: AddSemigroup, B: AddSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B],
-    r: Pair[A, B]
-) {
-    p + (q + r) = (p + q) + r
-}
-
-theorem pair_add_semigroup_instance_law[A: AddSemigroup, B: AddSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B],
-    r: Pair[A, B]
-) {
-    Add.add(p, Add.add(q, r)) = Add.add(Add.add(p, q), r)
-}
-
-theorem pair_add_comm_semigroup_law[A: AddCommSemigroup, B: AddCommSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B]
-) {
-    p + q = q + p
-}
-
-theorem pair_add_comm_semigroup_instance_law[A: AddCommSemigroup, B: AddCommSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B]
-) {
-    Add.add(p, q) = Add.add(q, p)
-}
-
-theorem pair_mul_semigroup_law[A: Semigroup, B: Semigroup](
-    p: Pair[A, B],
-    q: Pair[A, B],
-    r: Pair[A, B]
-) {
-    p * (q * r) = (p * q) * r
-}
-
-theorem pair_mul_semigroup_instance_law[A: Semigroup, B: Semigroup](
-    p: Pair[A, B],
-    q: Pair[A, B],
-    r: Pair[A, B]
-) {
-    Mul.mul(p, Mul.mul(q, r)) = Mul.mul(Mul.mul(p, q), r)
-}
-
-theorem pair_mul_comm_semigroup_law[A: CommSemigroup, B: CommSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B]
-) {
-    p * q = q * p
-}
-
-theorem pair_mul_comm_semigroup_instance_law[A: CommSemigroup, B: CommSemigroup](
-    p: Pair[A, B],
-    q: Pair[A, B]
-) {
-    Mul.mul(p, q) = Mul.mul(q, p)
-}
-
-define subsemigroup_closure_constraint[S: Semigroup](contains: S -> Bool) -> Bool {
-    forall(a: S, b: S) {
-        contains(a) and contains(b) implies contains(a * b)
+define indicator_fn[T, A: Zero](s: Set[T], f: T -> A) -> T -> A {
+    function(x: T) {
+        indicator(s, f, x)
     }
 }
 
-structure Subsemigroup[S: Semigroup] {
-    /// True if the given element is a member of this subsemigroup.
-    contains: S -> Bool
-} constraint {
-    subsemigroup_closure_constraint(contains)
+theorem indicator_fn_apply[T, A: Zero](s: Set[T], f: T -> A, x: T) {
+    indicator_fn(s, f)(x) = indicator(s, f, x)
 }
 
-theorem subsemigroup_eq_transport_predicate[S: Semigroup](
-    p: Subsemigroup[S] -> Bool,
-    a: Subsemigroup[S],
-    b: Subsemigroup[S]
-) {
-    a = b and p(a) implies p(b)
+theorem indicator_apply[T, A: Zero](s: Set[T], f: T -> A, x: T) {
+    indicator(s, f, x) = if s.contains(x) { f(x) } else { A.0 }
 }
 
-theorem subsemigroup_eq_transport_predicate_rev[S: Semigroup](
-    p: Subsemigroup[S] -> Bool,
-    a: Subsemigroup[S],
-    b: Subsemigroup[S]
-) {
-    a = b and p(b) implies p(a)
+theorem indicator_of_mem[T, A: Zero](s: Set[T], f: T -> A, x: T) {
+    s.contains(x) implies indicator(s, f, x) = f(x)
 }
 
-theorem empty_subsemigroup_constraint[S: Semigroup] {
-    subsemigroup_closure_constraint(empty_contains[S])
+theorem indicator_of_not_mem[T, A: Zero](s: Set[T], f: T -> A, x: T) {
+    not s.contains(x) implies indicator(s, f, x) = A.0
 }
 
-let empty_subsemigroup[S: Semigroup]: Subsemigroup[S] satisfy {
-    Subsemigroup.new(empty_contains[S]) = Option.some(empty_subsemigroup)
+theorem indicator_univ[T, A: Zero](f: T -> A) {
+    indicator_fn(Set[T].universal_set, f) = f
 }
 
-theorem full_subsemigroup_constraint[S: Semigroup] {
-    subsemigroup_closure_constraint(full_contains[S])
+theorem indicator_empty[T, A: Zero](f: T -> A) {
+    indicator_fn(Set[T].empty_set, f) = constant[T, A](A.0)
 }
 
-let full_subsemigroup[S: Semigroup]: Subsemigroup[S] satisfy {
-    Subsemigroup.new(full_contains[S]) = Option.some(full_subsemigroup)
+theorem indicator_pointwise_zero_apply[T, A: Zero](s: Set[T], x: T) {
+    indicator(s, pointwise_zero[T, A], x) = A.0
 }
 
-theorem pair_eq_of_components_eq[A, B](p: Pair[A, B], q: Pair[A, B]) {
-    p.first = q.first and p.second = q.second implies p = q
+theorem indicator_pointwise_zero[T, A: Zero](s: Set[T]) {
+    indicator_fn(s, pointwise_zero[T, A]) = pointwise_zero[T, A]
 }
-
-define descending_chain_first[A, B](c: Nat -> Pair[A, B], n: Nat) -> A {
-    c(n).first
-}
-
-define descending_chain_second[A, B](c: Nat -> Pair[A, B], n: Nat) -> B {
-    c(n).second
-}
-
-define nat_two_step_recursive_state_next[U](next: (Nat, U, U) -> U, n: Nat, state: Pair[U, U]) -> Pair[U, U] {
-    Pair.new(state.second, next(n, state.first, state.second))
-}
-
-define lex_relation[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool, p: Pair[A, B], q: Pair[A, B]) -> Bool {
-    r(p.first, q.first) or (p.first = q.first and s(p.second, q.second))
-}
-
-define product_first_relation[A, B](r: (A, A) -> Bool, p: Pair[A, B], q: Pair[A, B]) -> Bool {
-    r(p.first, q.first)
-}
-
-define product_second_relation[A, B](s: (B, B) -> Bool, p: Pair[A, B], q: Pair[A, B]) -> Bool {
-    s(p.second, q.second)
-}
-
-theorem product_first_relation_subset_lex_relation[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    relation_subset(product_first_relation[A, B](r), lex_relation(r, s))
-}
-
-theorem product_second_relation_subset_lex_relation_same_first[A, B](
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool,
-    p: Pair[A, B],
-    q: Pair[A, B]
-) {
-    product_second_relation[A, B](s, p, q) and p.first = q.first implies lex_relation(r, s, p, q)
-}
-
-theorem product_first_relation_descending_chain_first[A, B](
-    r: (A, A) -> Bool,
-    c: Nat -> Pair[A, B]
-) {
-    is_descending_chain(product_first_relation[A, B](r), c) implies
-    is_descending_chain(r, descending_chain_first(c))
-}
-
-theorem product_second_relation_descending_chain_second[A, B](
-    s: (B, B) -> Bool,
-    c: Nat -> Pair[A, B]
-) {
-    is_descending_chain(product_second_relation[A, B](s), c) implies
-    is_descending_chain(s, descending_chain_second(c))
-}
-
-theorem product_first_relation_has_descending_chain_imp[A, B](r: (A, A) -> Bool) {
-    has_descending_chain(product_first_relation[A, B](r)) implies has_descending_chain(r)
-}
-
-theorem product_second_relation_has_descending_chain_imp[A, B](s: (B, B) -> Bool) {
-    has_descending_chain(product_second_relation[A, B](s)) implies has_descending_chain(s)
-}
-
-theorem product_first_relation_has_no_descending_chain_of_component[A, B](r: (A, A) -> Bool) {
-    has_no_descending_chain(r) implies has_no_descending_chain(product_first_relation[A, B](r))
-}
-
-theorem product_second_relation_has_no_descending_chain_of_component[A, B](s: (B, B) -> Bool) {
-    has_no_descending_chain(s) implies has_no_descending_chain(product_second_relation[A, B](s))
-}
-
-theorem product_first_relation_is_well_founded[A, B](r: (A, A) -> Bool) {
-    is_well_founded(r) implies is_well_founded(product_first_relation[A, B](r))
-}
-
-theorem product_first_relation_has_no_descending_chain[A, B](r: (A, A) -> Bool) {
-    has_no_descending_chain(r) implies has_no_descending_chain(product_first_relation[A, B](r))
-}
-
-theorem product_first_relation_well_founded_has_no_descending_chain[A, B](r: (A, A) -> Bool) {
-    is_well_founded(r) implies has_no_descending_chain(product_first_relation[A, B](r))
-}
-
-theorem product_second_relation_is_well_founded[A, B](s: (B, B) -> Bool) {
-    is_well_founded(s) implies is_well_founded(product_second_relation[A, B](s))
-}
-
-theorem product_second_relation_has_no_descending_chain[A, B](s: (B, B) -> Bool) {
-    has_no_descending_chain(s) implies has_no_descending_chain(product_second_relation[A, B](s))
-}
-
-theorem product_second_relation_well_founded_has_no_descending_chain[A, B](s: (B, B) -> Bool) {
-    is_well_founded(s) implies has_no_descending_chain(product_second_relation[A, B](s))
-}
-
-theorem product_first_relation_is_noetherian_relation[A, B](r: (A, A) -> Bool) {
-    is_noetherian_relation(r) implies is_noetherian_relation(product_first_relation[A, B](r))
-}
-
-theorem product_first_relation_has_no_ascending_chain[A, B](r: (A, A) -> Bool) {
-    has_no_ascending_chain(r) implies has_no_ascending_chain(product_first_relation[A, B](r))
-}
-
-theorem product_first_relation_noetherian_has_no_ascending_chain[A, B](r: (A, A) -> Bool) {
-    is_noetherian_relation(r) implies has_no_ascending_chain(product_first_relation[A, B](r))
-}
-
-theorem product_second_relation_is_noetherian_relation[A, B](s: (B, B) -> Bool) {
-    is_noetherian_relation(s) implies is_noetherian_relation(product_second_relation[A, B](s))
-}
-
-theorem product_second_relation_has_no_ascending_chain[A, B](s: (B, B) -> Bool) {
-    has_no_ascending_chain(s) implies has_no_ascending_chain(product_second_relation[A, B](s))
-}
-
-theorem product_second_relation_noetherian_has_no_ascending_chain[A, B](s: (B, B) -> Bool) {
-    is_noetherian_relation(s) implies has_no_ascending_chain(product_second_relation[A, B](s))
-}
-
-theorem lex_relation_is_well_founded[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    is_well_founded(r) and is_well_founded(s) implies is_well_founded(lex_relation(r, s))
-}
-
-theorem lex_relation_well_founded_has_no_descending_chain[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    is_well_founded(r) and is_well_founded(s) implies has_no_descending_chain(lex_relation(r, s))
-}
-
-theorem relation_converse_lex_relation[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    relation_converse(lex_relation(r, s)) =
-    lex_relation(relation_converse(r), relation_converse(s))
-}
-
-theorem lex_relation_is_noetherian_relation[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    is_noetherian_relation(r) and is_noetherian_relation(s) implies
-    is_noetherian_relation(lex_relation(r, s))
-}
-
-theorem lex_relation_noetherian_has_no_ascending_chain[A, B](r: (A, A) -> Bool, s: (B, B) -> Bool) {
-    is_noetherian_relation(r) and is_noetherian_relation(s) implies
-    has_no_ascending_chain(lex_relation(r, s))
-}
-
-theorem lex_relation_descending_chain_first[A, B](
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool,
-    c: Nat -> Pair[A, B],
-    n: Nat
-) {
-    is_descending_chain(lex_relation(r, s), c) implies
-        c(n.suc).first = c(n).first or r(c(n.suc).first, c(n).first)
-}
-
-theorem lex_relation_descending_chain_second_when_same_first[A, B](
-    r: (A, A) -> Bool,
-    s: (B, B) -> Bool,
-    c: Nat -> Pair[A, B],
-    n: Nat
-) {
-    is_descending_chain(lex_relation(r, s), c) and
-    c(n.suc).first = c(n).first and
-    is_irreflexive(r) implies
-        s(c(n.suc).second, c(n).second)
-}
-
-attributes Pair[A: Zero, B: Zero] {
-    let zero: Pair[A, B] = pair_zero[A, B]
-}
-
-attributes Pair[A: One, B: One] {
-    let one: Pair[A, B] = pair_one[A, B]
-}
-
-attributes PointwiseFunction[T, A: Zero] {
-    /// The constant zero wrapped function.
-    let zero: PointwiseFunction[T, A] = pointwise_function_zero[T, A]
-}
-
-instance GF4: Zero {
-    let 0 = GF4.zero
-}
-
-typeclass M: MulZeroClass extends Mul, Zero {
-    /// Zero is a left absorbing element for multiplication.
-    zero_mul(a: M) {
-        M.0 * a = M.0
-    }
-
-    /// Zero is a right absorbing element for multiplication.
-    mul_zero(a: M) {
-        a * M.0 = M.0
-    }
-}
-
-instance GF4: AddMonoid
-
-instance GF4: AddCommMonoid
-
-instance GF4: AddGroup

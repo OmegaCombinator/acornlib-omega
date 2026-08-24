@@ -1,848 +1,3 @@
-define set_subset_subgroup[G: Group](a: Set[G], s: Subgroup[G]) -> Bool {
-    forall(x: G) {
-        a.contains(x) implies s.contains(x)
-    }
-}
-
-theorem set_subset_subgroup_trans[G: Group](
-    a: Set[G],
-    s: Subgroup[G],
-    t: Subgroup[G]
-) {
-    set_subset_subgroup(a, s) and subgroup_subset(s, t) implies set_subset_subgroup(a, t)
-}
-
-theorem set_subset_subgroup_of_set_subset[G: Group](
-    a: Set[G],
-    b: Set[G],
-    s: Subgroup[G]
-) {
-    a.subset(b) and set_subset_subgroup(b, s) implies set_subset_subgroup(a, s)
-}
-
-define subgroup_closure_contains[G: Group](a: Set[G], x: G) -> Bool {
-    forall(s: Subgroup[G]) {
-        set_subset_subgroup(a, s) implies s.contains(x)
-    }
-}
-
-theorem subgroup_closure_contains_of_set_subset_raw[G: Group](
-    a: Set[G],
-    s: Subgroup[G],
-    x: G
-) {
-    subgroup_closure_contains(a, x) and set_subset_subgroup(a, s) implies s.contains(x)
-}
-
-theorem subgroup_closure_identity_constraint[G: Group](a: Set[G]) {
-    identity_constraint(subgroup_closure_contains(a))
-}
-
-theorem subgroup_closure_closure_constraint[G: Group](a: Set[G]) {
-    closure_constraint(subgroup_closure_contains(a))
-}
-
-theorem subgroup_closure_inverse_constraint[G: Group](a: Set[G]) {
-    inverse_constraint(subgroup_closure_contains(a))
-}
-
-theorem subgroup_generated_constraint[G: Group](a: Set[G]) {
-    subgroup_constraint(subgroup_closure_contains(a))
-}
-
-let subgroup_closure[G: Group](a: Set[G]) -> result: Subgroup[G] satisfy {
-    Subgroup.new(subgroup_closure_contains(a)) = Option.some(result)
-}
-
-theorem subgroup_closure_contains_eq[G: Group](a: Set[G], x: G) {
-    subgroup_closure(a).contains(x) = subgroup_closure_contains(a, x)
-}
-
-theorem subgroup_subset_closure[G: Group](a: Set[G]) {
-    set_subset_subgroup(a, subgroup_closure(a))
-}
-
-theorem subgroup_closure_contains_of_set_contains[G: Group](a: Set[G], x: G) {
-    a.contains(x) implies subgroup_closure(a).contains(x)
-}
-
-theorem subgroup_closure_subset_of_set_subset[G: Group](a: Set[G], s: Subgroup[G]) {
-    set_subset_subgroup(a, s) implies subgroup_subset(subgroup_closure(a), s)
-}
-
-theorem subgroup_closure_le_iff_set_subset[G: Group](a: Set[G], s: Subgroup[G]) {
-    subgroup_subset(subgroup_closure(a), s) = set_subset_subgroup(a, s)
-}
-
-theorem subgroup_closure_mono[G: Group](a: Set[G], b: Set[G]) {
-    a.subset(b) implies subgroup_subset(subgroup_closure(a), subgroup_closure(b))
-}
-
-theorem subgroup_closure_eq_of_set_eq[G: Group](a: Set[G], b: Set[G]) {
-    a = b implies subgroup_closure(a) = subgroup_closure(b)
-}
-
-theorem subgroup_closure_empty[G: Group] {
-    subgroup_closure(Set[G].empty_set) = identity_subgroup[G]
-}
-
-theorem subgroup_closure_universal[G: Group] {
-    subgroup_closure(Set[G].universal_set) = full_subgroup[G]
-}
-
-define subgroup_is_finitely_generated[G: Group](s: Subgroup[G]) -> Bool {
-    exists(a: Set[G]) {
-        a.is_finite and subgroup_closure(a) = s
-    }
-}
-
-theorem subgroup_is_finitely_generated_witness[G: Group](s: Subgroup[G]) {
-    subgroup_is_finitely_generated(s) implies exists(a: Set[G]) {
-        a.is_finite and subgroup_closure(a) = s
-    }
-}
-
-theorem subgroup_is_finitely_generated_of_closure_eq[G: Group](a: Set[G], s: Subgroup[G]) {
-    a.is_finite and subgroup_closure(a) = s implies subgroup_is_finitely_generated(s)
-}
-
-theorem subgroup_is_finitely_generated_of_eq[G: Group](s: Subgroup[G], t: Subgroup[G]) {
-    subgroup_is_finitely_generated(s) and s = t implies subgroup_is_finitely_generated(t)
-}
-
-theorem subgroup_closure_is_finitely_generated[G: Group](a: Set[G]) {
-    a.is_finite implies subgroup_is_finitely_generated(subgroup_closure(a))
-}
-
-theorem subgroup_closure_singleton_is_finitely_generated[G: Group](a: G) {
-    subgroup_is_finitely_generated(subgroup_closure(Set[G].singleton(a)))
-}
-
-theorem subgroup_closure_singleton_contains[G: Group](a: G) {
-    subgroup_closure(Set[G].singleton(a)).contains(a)
-}
-
-theorem identity_subgroup_is_finitely_generated[G: Group] {
-    subgroup_is_finitely_generated(identity_subgroup[G])
-}
-
-theorem subgroup_submonoid_constraint[G: Group](s: Subgroup[G]) {
-    submonoid_constraint(s.contains)
-}
-
-let subgroup_to_submonoid[G: Group](s: Subgroup[G]) -> result: Submonoid[G] satisfy {
-    Submonoid.new(s.contains) = Option.some(result)
-}
-
-theorem subgroup_to_submonoid_contains[G: Group](s: Subgroup[G]) {
-    subgroup_to_submonoid(s).contains = s.contains
-}
-
-theorem subgroup_to_submonoid_contains_eq[G: Group](s: Subgroup[G], x: G) {
-    subgroup_to_submonoid(s).contains(x) = s.contains(x)
-}
-
-theorem subgroup_contains_to_submonoid_eq[G: Group](s: Subgroup[G], x: G) {
-    s.contains(x) = subgroup_to_submonoid(s).contains(x)
-}
-
-define subgroup_preimage_contains[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H],
-    a: G
-) -> Bool {
-    s.contains(f.hom(a))
-}
-
-theorem subgroup_preimage_identity_constraint[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H]
-) {
-    identity_constraint(subgroup_preimage_contains(f, s))
-}
-
-theorem subgroup_preimage_closure_constraint[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H]
-) {
-    closure_constraint(subgroup_preimage_contains(f, s))
-}
-
-theorem subgroup_preimage_inverse_constraint[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H]
-) {
-    inverse_constraint(subgroup_preimage_contains(f, s))
-}
-
-theorem subgroup_preimage_constraint[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H]
-) {
-    subgroup_constraint(subgroup_preimage_contains(f, s))
-}
-
-let subgroup_preimage[G: Group, H: Group](f: GroupHom[G, H], s: Subgroup[H]) -> result: Subgroup[G] satisfy {
-    Subgroup.new(subgroup_preimage_contains(f, s)) = Option.some(result)
-}
-
-theorem subgroup_preimage_contains_eq[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H],
-    a: G
-) {
-    subgroup_preimage(f, s).contains(a) = s.contains(f.hom(a))
-}
-
-theorem subgroup_preimage_contains_of_contains_map[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H],
-    a: G
-) {
-    s.contains(f.hom(a)) implies subgroup_preimage(f, s).contains(a)
-}
-
-theorem subgroup_contains_map_of_preimage_contains[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H],
-    a: G
-) {
-    subgroup_preimage(f, s).contains(a) implies s.contains(f.hom(a))
-}
-
-theorem subgroup_preimage_subset_of_subset[G: Group, H: Group](
-    f: GroupHom[G, H],
-    s: Subgroup[H],
-    t: Subgroup[H]
-) {
-    subgroup_subset(s, t) implies subgroup_subset(subgroup_preimage(f, s), subgroup_preimage(f, t))
-}
-
-theorem subgroup_preimage_full[G: Group, H: Group](f: GroupHom[G, H]) {
-    subgroup_preimage(f, full_subgroup[H]) = full_subgroup[G]
-}
-
-define group_hom_kernel[G: Group, H: Group](f: GroupHom[G, H]) -> Subgroup[G] {
-    subgroup_preimage(f, identity_subgroup[H])
-}
-
-theorem group_hom_kernel_contains_eq[G: Group, H: Group](f: GroupHom[G, H], a: G) {
-    group_hom_kernel(f).contains(a) = (f.hom(a) = H.1)
-}
-
-theorem group_hom_kernel_contains_of_maps_to_identity[G: Group, H: Group](f: GroupHom[G, H], a: G) {
-    f.hom(a) = H.1 implies group_hom_kernel(f).contains(a)
-}
-
-theorem group_hom_maps_to_identity_of_kernel_contains[G: Group, H: Group](f: GroupHom[G, H], a: G) {
-    group_hom_kernel(f).contains(a) implies f.hom(a) = H.1
-}
-
-define left_coset_contains[G: Group](s: Subgroup[G], a: G, x: G) -> Bool {
-    s.contains(a.inverse * x)
-}
-
-theorem left_coset_contains_self[G: Group](s: Subgroup[G], a: G) {
-    left_coset_contains(s, a, a)
-}
-
-theorem left_coset_contains_of_mem[G: Group](s: Subgroup[G], a: G, t: G) {
-    s.contains(t) implies left_coset_contains(s, a, a * t)
-}
-
-theorem left_coset_contains_iff[G: Group](s: Subgroup[G], a: G, x: G) {
-    left_coset_contains(s, a, x) = exists(t: G) {
-        s.contains(t) and x = a * t
-    }
-}
-
-theorem left_coset_contains_right_mul[G: Group](s: Subgroup[G], a: G, x: G, t: G) {
-    left_coset_contains(s, a, x) and s.contains(t) implies left_coset_contains(s, a, x * t)
-}
-
-theorem left_coset_eq_of_rep[G: Group](s: Subgroup[G], a: G, b: G, x: G) {
-    s.contains(a.inverse * b) implies (left_coset_contains(s, a, x) = left_coset_contains(s, b, x))
-}
-
-theorem left_coset_intersection_eq[G: Group](s: Subgroup[G], a: G, b: G) {
-    exists(x: G) {
-        left_coset_contains(s, a, x) and left_coset_contains(s, b, x)
-    } implies forall(y: G) {
-        left_coset_contains(s, a, y) = left_coset_contains(s, b, y)
-    }
-}
-
-define right_coset_contains[G: Group](s: Subgroup[G], a: G, x: G) -> Bool {
-    s.contains(x * a.inverse)
-}
-
-theorem right_coset_contains_self[G: Group](s: Subgroup[G], a: G) {
-    right_coset_contains(s, a, a)
-}
-
-theorem right_coset_contains_of_mem[G: Group](s: Subgroup[G], a: G, t: G) {
-    s.contains(t) implies right_coset_contains(s, a, t * a)
-}
-
-theorem right_coset_contains_left_mul[G: Group](s: Subgroup[G], a: G, x: G, t: G) {
-    right_coset_contains(s, a, x) and s.contains(t) implies right_coset_contains(s, a, t * x)
-}
-
-theorem group_hom_eq_iff_same_kernel_coset[G: Group, H: Group](f: GroupHom[G, H], a: G, b: G) {
-    (f.hom(a) = f.hom(b)) = left_coset_contains(group_hom_kernel(f), a, b)
-}
-
-theorem subgroup_inv_mul_mem_iff[G: Group](s: Subgroup[G], a: G, b: G) {
-    s.contains(a) implies (s.contains(a.inverse * b) = s.contains(b))
-}
-
-theorem left_coset_contains_mem[G: Group](s: Subgroup[G], a: G, x: G) {
-    s.contains(x) implies left_coset_contains(s, x, a) = s.contains(a)
-}
-
-define is_normal_subgroup[G: Group](s: Subgroup[G]) -> Bool {
-    forall(g: G, n: G) {
-        s.contains(n) implies s.contains(g * n * g.inverse)
-    }
-}
-
-theorem normal_conjugate_mem[G: Group](s: Subgroup[G], g: G, n: G) {
-    is_normal_subgroup(s) and s.contains(n) implies s.contains(g * n * g.inverse)
-}
-
-define normal_subgroup_rel[G: Group](s: Subgroup[G], a: G, b: G) -> Bool {
-    s.contains(a * b.inverse)
-}
-
-theorem normal_subgroup_rel_reflexive[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_rel(s, a, a)
-}
-
-theorem normal_subgroup_rel_symmetric[G: Group](s: Subgroup[G], a: G, b: G) {
-    normal_subgroup_rel(s, a, b) implies normal_subgroup_rel(s, b, a)
-}
-
-theorem normal_subgroup_inv_chain[G: Group](a: G, b: G, c: G) {
-    (a * b.inverse) * (b * c.inverse) = a * c.inverse
-}
-
-theorem normal_subgroup_rel_trans_at[G: Group](s: Subgroup[G], a: G, b: G, c: G) {
-    normal_subgroup_rel(s, a, b) and normal_subgroup_rel(s, b, c)
-    implies normal_subgroup_rel(s, a, c)
-}
-
-theorem normal_subgroup_rel_is_reflexive[G: Group](s: Subgroup[G]) {
-    is_reflexive(normal_subgroup_rel(s))
-}
-
-theorem normal_subgroup_rel_is_symmetric[G: Group](s: Subgroup[G]) {
-    is_symmetric(normal_subgroup_rel(s))
-}
-
-theorem normal_subgroup_rel_transitive_statement[G: Group](s: Subgroup[G]) {
-    forall(a: G, b: G, c: G) {
-        normal_subgroup_rel(s, a, b) and normal_subgroup_rel(s, b, c)
-        implies normal_subgroup_rel(s, a, c)
-    }
-}
-
-theorem normal_subgroup_rel_is_transitive[G: Group](s: Subgroup[G]) {
-    is_transitive(normal_subgroup_rel(s))
-}
-
-theorem normal_mul_inverse_distrib[G: Group](a: G, b: G, ap: G, bp: G) {
-    (a * b) * (ap * bp).inverse = (a * (b * bp.inverse) * a.inverse) * (a * ap.inverse)
-}
-
-theorem normal_subgroup_rel_mul_step[G: Group](s: Subgroup[G],
-        a: G, ap: G, b: G, bp: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, ap) and normal_subgroup_rel(s, b, bp)
-    implies normal_subgroup_rel(s, a * b, ap * bp)
-}
-
-theorem normal_subgroup_rel_inv_step[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b)
-    implies normal_subgroup_rel(s, a.inverse, b.inverse)
-}
-
-theorem normal_subgroup_rel_respects_mul[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies respects_mul(normal_subgroup_rel(s))
-}
-
-theorem normal_subgroup_rel_respects_inverse[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies respects_unary_op(normal_subgroup_rel(s), G.inverse)
-}
-
-theorem normal_subgroup_rel_is_equivalence[G: Group](s: Subgroup[G]) {
-    is_equivalence(normal_subgroup_rel(s))
-}
-
-let normal_subgroup_quotient_relation[G: Group](s: Subgroup[G]) -> result: QuotientRelation[G] satisfy {
-    QuotientRelation[G].new(normal_subgroup_rel(s)) = Option.some(result)
-}
-
-theorem normal_subgroup_quotient_relation_rel[G: Group](s: Subgroup[G]) {
-    normal_subgroup_quotient_relation(s).rel = normal_subgroup_rel(s)
-}
-
-theorem normal_subgroup_rel_is_mul_congruence[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies is_mul_congruence(normal_subgroup_rel(s))
-}
-
-theorem normal_subgroup_rel_is_group_congruence[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies is_group_congruence(normal_subgroup_rel(s))
-}
-
-theorem normal_subgroup_quotient_relation_respects_mul[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies quotient_binary_respects(normal_subgroup_quotient_relation(s), G.mul)
-}
-
-theorem normal_subgroup_quotient_relation_respects_inverse[G: Group](s: Subgroup[G]) {
-    is_normal_subgroup(s) implies quotient_unary_respects(normal_subgroup_quotient_relation(s), G.inverse)
-}
-
-define normal_subgroup_quotient_mul[G: Group](s: Subgroup[G]) ->
-    (QuotientOver[G], QuotientOver[G]) -> QuotientOver[G] {
-    quotient_over_binary_op(G.mul)
-}
-
-theorem normal_subgroup_quotient_mul_projection[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) implies normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), b)
-    ) = quotient_over_mk(normal_subgroup_quotient_relation(s), a * b)
-}
-
-theorem normal_subgroup_quotient_mul_projection_left[G: Group](s: Subgroup[G], a1: G, a2: G, b: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a1, a2) implies
-    normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a1),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), b)
-    ) = normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a2),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), b)
-    )
-}
-
-theorem normal_subgroup_quotient_mul_projection_right[G: Group](s: Subgroup[G], a: G, b1: G, b2: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, b1, b2) implies
-    normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), b1)
-    ) = normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), b2)
-    )
-}
-
-define normal_subgroup_quotient_inverse[G: Group](s: Subgroup[G]) ->
-    QuotientOver[G] -> QuotientOver[G] {
-    quotient_over_unary_op(normal_subgroup_quotient_relation(s), G.inverse)
-}
-
-theorem normal_subgroup_quotient_inverse_projection[G: Group](s: Subgroup[G], a: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_inverse(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a)) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.inverse)
-}
-
-theorem normal_subgroup_quotient_inverse_projection_compatible[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b) implies
-    normal_subgroup_quotient_inverse(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a)) =
-        normal_subgroup_quotient_inverse(s, quotient_over_mk(normal_subgroup_quotient_relation(s), b))
-}
-
-theorem normal_subgroup_quotient_inverse_inverse[G: Group](s: Subgroup[G], a: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_inverse(s,
-        normal_subgroup_quotient_inverse(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a))) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a)
-}
-
-define normal_subgroup_quotient_one[G: Group](s: Subgroup[G]) -> QuotientOver[G] {
-    quotient_over_mk(normal_subgroup_quotient_relation(s), G.1)
-}
-
-theorem normal_subgroup_quotient_one_projection[G: Group](s: Subgroup[G]) {
-    normal_subgroup_quotient_one(s) = quotient_over_mk(normal_subgroup_quotient_relation(s), G.1)
-}
-
-define normal_subgroup_quotient_project[G: Group](s: Subgroup[G], a: G) -> QuotientOver[G] {
-    quotient_over_mk(normal_subgroup_quotient_relation(s), a)
-}
-
-theorem normal_subgroup_quotient_project_eq_mk[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_project(s, a) = quotient_over_mk(normal_subgroup_quotient_relation(s), a)
-}
-
-theorem normal_subgroup_quotient_project_eq_of_rel[G: Group](s: Subgroup[G], a: G, b: G) {
-    normal_subgroup_rel(s, a, b) implies
-    normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_project(s, b)
-}
-
-theorem normal_subgroup_rel_of_quotient_project_eq[G: Group](s: Subgroup[G], a: G, b: G) {
-    normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_project(s, b)
-    implies normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_eq_iff_rel[G: Group](s: Subgroup[G], a: G, b: G) {
-    (normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_project(s, b)) =
-    normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_one[G: Group](s: Subgroup[G]) {
-    normal_subgroup_quotient_project(s, G.1) = normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_rel_one_right[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_rel(s, a, G.1) = s.contains(a)
-}
-
-theorem normal_subgroup_rel_one_left[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_rel(s, G.1, a) = s.contains(a)
-}
-
-theorem normal_subgroup_rel_of_contains_inverse_mul[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) and s.contains(b.inverse * a) implies normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_contains_inverse_mul_of_rel[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b) implies s.contains(b.inverse * a)
-}
-
-theorem normal_subgroup_contains_inverse_mul_iff_rel[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) implies
-    s.contains(b.inverse * a) = normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_eq_one_iff_contains[G: Group](s: Subgroup[G], a: G) {
-    (normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_one(s)) = s.contains(a)
-}
-
-theorem normal_subgroup_quotient_one_eq_project_iff_contains[G: Group](s: Subgroup[G], a: G) {
-    (normal_subgroup_quotient_one(s) = normal_subgroup_quotient_project(s, a)) = s.contains(a)
-}
-
-theorem normal_subgroup_quotient_project_eq_one_of_contains[G: Group](s: Subgroup[G], a: G) {
-    s.contains(a) implies normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_contains_of_quotient_project_eq_one[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_project(s, a) = normal_subgroup_quotient_one(s) implies s.contains(a)
-}
-
-theorem normal_subgroup_quotient_one_eq_project_of_contains[G: Group](s: Subgroup[G], a: G) {
-    s.contains(a) implies normal_subgroup_quotient_one(s) = normal_subgroup_quotient_project(s, a)
-}
-
-theorem normal_subgroup_contains_of_quotient_one_eq_project[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_one(s) = normal_subgroup_quotient_project(s, a) implies s.contains(a)
-}
-
-theorem normal_subgroup_quotient_project_mul[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_project(s, a * b) =
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_project(s, b))
-}
-
-theorem normal_subgroup_quotient_project_inverse[G: Group](s: Subgroup[G], a: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_project(s, a.inverse) =
-    normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, a))
-}
-
-theorem normal_subgroup_quotient_project_mul_left_of_rel[G: Group](
-    s: Subgroup[G], a1: G, a2: G, b: G
-) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a1, a2) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a1),
-        normal_subgroup_quotient_project(s, b)) =
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a2),
-        normal_subgroup_quotient_project(s, b))
-}
-
-theorem normal_subgroup_quotient_project_mul_right_of_rel[G: Group](
-    s: Subgroup[G], a: G, b1: G, b2: G
-) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, b1, b2) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_project(s, b1)) =
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_project(s, b2))
-}
-
-theorem normal_subgroup_quotient_project_inverse_of_rel[G: Group](s: Subgroup[G], a: G, b: G) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b) implies
-    normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, a)) =
-    normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))
-}
-
-theorem normal_subgroup_quotient_project_mul_inverse_eq_one_iff_rel[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    (normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s)) = normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_mul_inverse_eq_one_of_rel[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_rel_of_quotient_project_mul_inverse_eq_one[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s) implies
-    normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_mul_inverse_eq_one_iff_contains[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    (normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s)) = s.contains(a * b.inverse)
-}
-
-theorem normal_subgroup_quotient_project_mul_inverse_eq_one_of_contains[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and s.contains(a * b.inverse) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_contains_mul_inverse_of_quotient_project_mul_inverse_eq_one[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_one(s) implies
-    s.contains(a * b.inverse)
-}
-
-theorem normal_subgroup_quotient_project_mul_inverse_projection[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_project(s, a),
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b))) =
-        normal_subgroup_quotient_project(s, a * b.inverse)
-}
-
-theorem normal_subgroup_quotient_project_inverse_mul_projection[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_project(s, b.inverse * a)
-}
-
-theorem normal_subgroup_quotient_project_inverse_mul_eq_one_iff_rel[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    (normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s)) = normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_inverse_mul_eq_one_of_rel[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and normal_subgroup_rel(s, a, b) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_rel_of_quotient_project_inverse_mul_eq_one[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s) implies
-    normal_subgroup_rel(s, a, b)
-}
-
-theorem normal_subgroup_quotient_project_inverse_mul_eq_one_iff_contains[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) implies
-    (normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s)) = s.contains(b.inverse * a)
-}
-
-theorem normal_subgroup_quotient_project_inverse_mul_eq_one_of_contains[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and s.contains(b.inverse * a) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_contains_inverse_mul_of_quotient_project_inverse_mul_eq_one[G: Group](
-    s: Subgroup[G], a: G, b: G
-) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_inverse(s, normal_subgroup_quotient_project(s, b)),
-        normal_subgroup_quotient_project(s, a)) =
-        normal_subgroup_quotient_one(s) implies
-    s.contains(b.inverse * a)
-}
-
-define normal_subgroup_quotient_pow[G: Group](
-    s: Subgroup[G], q: QuotientOver[G], n: Nat
-) -> QuotientOver[G] {
-    match n {
-        Nat.zero {
-            normal_subgroup_quotient_one(s)
-        }
-        Nat.suc(k) {
-            normal_subgroup_quotient_mul(s, q, normal_subgroup_quotient_pow(s, q, k))
-        }
-    }
-}
-
-theorem normal_subgroup_quotient_pow_zero_projection[G: Group](s: Subgroup[G], q: QuotientOver[G]) {
-    normal_subgroup_quotient_pow(s, q, Nat.0) = normal_subgroup_quotient_one(s)
-}
-
-theorem normal_subgroup_quotient_pow_suc_projection[G: Group](
-    s: Subgroup[G], q: QuotientOver[G], n: Nat
-) {
-    normal_subgroup_quotient_pow(s, q, n.suc) =
-        normal_subgroup_quotient_mul(s, q, normal_subgroup_quotient_pow(s, q, n))
-}
-
-theorem normal_subgroup_quotient_pow_mk_zero[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_pow(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a), Nat.0) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.pow(Nat.0))
-}
-
-theorem normal_subgroup_quotient_pow_mk_suc_step[G: Group](s: Subgroup[G], a: G, n: Nat) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_pow(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a), n) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.pow(n))
-    implies
-    normal_subgroup_quotient_pow(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a), n.suc) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.pow(n.suc))
-}
-
-theorem normal_subgroup_quotient_pow_mk_one[G: Group](s: Subgroup[G], a: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_pow(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a), Nat.1) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.pow(Nat.1))
-}
-
-theorem normal_subgroup_quotient_project_pow_zero[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), Nat.0) =
-        normal_subgroup_quotient_project(s, a.pow(Nat.0))
-}
-
-theorem normal_subgroup_quotient_project_pow_one[G: Group](s: Subgroup[G], a: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), Nat.1) =
-        normal_subgroup_quotient_project(s, a.pow(Nat.1))
-}
-
-theorem normal_subgroup_quotient_project_pow_suc_step[G: Group](s: Subgroup[G], a: G, n: Nat) {
-    is_normal_subgroup(s) and
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n) =
-        normal_subgroup_quotient_project(s, a.pow(n))
-    implies
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n.suc) =
-        normal_subgroup_quotient_project(s, a.pow(n.suc))
-}
-
-theorem normal_subgroup_quotient_project_pow_zero_eq_one[G: Group](s: Subgroup[G], a: G) {
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), Nat.0) =
-        normal_subgroup_quotient_one(s)
-}
-
-define normal_subgroup_quotient_projected_power_law[G: Group](
-    s: Subgroup[G], a: G, n: Nat
-) -> Bool {
-    normal_subgroup_quotient_pow(s, quotient_over_mk(normal_subgroup_quotient_relation(s), a), n) =
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a.pow(n))
-}
-
-theorem normal_subgroup_quotient_pow_mk_all[G: Group](s: Subgroup[G], a: G, n: Nat) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_projected_power_law(s, a, n)
-}
-
-theorem normal_subgroup_quotient_project_pow_all[G: Group](s: Subgroup[G], a: G, n: Nat) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n) =
-        normal_subgroup_quotient_project(s, a.pow(n))
-}
-
-theorem normal_subgroup_quotient_project_pow_add[G: Group](s: Subgroup[G], a: G, n: Nat, m: Nat) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n + m) =
-        normal_subgroup_quotient_mul(s,
-            normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n),
-            normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), m))
-}
-
-theorem normal_subgroup_quotient_project_pow_pow[G: Group](s: Subgroup[G], a: G, n: Nat, m: Nat) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_pow(s,
-        normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n), m) =
-        normal_subgroup_quotient_pow(s, normal_subgroup_quotient_project(s, a), n * m)
-}
-
-theorem normal_subgroup_quotient_mul_assoc[G: Group](s: Subgroup[G], a: G, b: G, c: G) {
-    is_normal_subgroup(s) implies
-    normal_subgroup_quotient_mul(s,
-        normal_subgroup_quotient_mul(s,
-            quotient_over_mk(normal_subgroup_quotient_relation(s), a),
-            quotient_over_mk(normal_subgroup_quotient_relation(s), b)),
-        quotient_over_mk(normal_subgroup_quotient_relation(s), c)) =
-    normal_subgroup_quotient_mul(s,
-        quotient_over_mk(normal_subgroup_quotient_relation(s), a),
-        normal_subgroup_quotient_mul(s,
-            quotient_over_mk(normal_subgroup_quotient_relation(s), b),
-            quotient_over_mk(normal_subgroup_quotient_relation(s), c)))
-}
-
 theorem normal_subgroup_quotient_one_mul[G: Group](s: Subgroup[G], a: G) {
     is_normal_subgroup(s) implies
     normal_subgroup_quotient_mul(s,
@@ -1362,6 +517,16 @@ theorem subgroup_product_constraint_right[G: Group](h: Subgroup[G], k: Subgroup[
     is_normal_subgroup(h) implies subgroup_constraint(subgroup_product_contains(h, k))
 }
 
+theorem subgroup_intersection_normal_in_left[G: Group](h: Subgroup[G], k: Subgroup[G], g: G, x: G) {
+    is_normal_subgroup(k) and h.contains(g) and h.intersection(k).contains(x) implies
+    h.intersection(k).contains(g * x * g.inverse)
+}
+
+theorem subgroup_intersection_normal_in_right[G: Group](h: Subgroup[G], k: Subgroup[G], g: G, x: G) {
+    is_normal_subgroup(h) and k.contains(g) and h.intersection(k).contains(x) implies
+    h.intersection(k).contains(g * x * g.inverse)
+}
+
 theorem second_iso_project_mul[G: Group](h: Subgroup[G], k: Subgroup[G], a: G, b: G) {
     is_normal_subgroup(k) and h.contains(a) and h.contains(b) implies
     normal_subgroup_quotient_project(k, a * b) =
@@ -1376,6 +541,25 @@ theorem second_iso_project_inverse[G: Group](h: Subgroup[G], k: Subgroup[G], a: 
         normal_subgroup_quotient_inverse(k, normal_subgroup_quotient_project(k, a))
 }
 
+theorem second_iso_kernel_iff[G: Group](h: Subgroup[G], k: Subgroup[G], a: G) {
+    h.contains(a) implies
+    (normal_subgroup_quotient_project(k, a) = normal_subgroup_quotient_one(k)) =
+        h.intersection(k).contains(a)
+}
+
+theorem second_iso_kernel_rel[G: Group](h: Subgroup[G], k: Subgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies
+    (normal_subgroup_quotient_project(k, a) = normal_subgroup_quotient_project(k, b)) =
+        normal_subgroup_rel(h.intersection(k), a, b)
+}
+
+theorem second_iso_induced_injective[G: Group](h: Subgroup[G], k: Subgroup[G], a: G, b: G) {
+    h.contains(a) and h.contains(b) implies
+    (normal_subgroup_quotient_project(k, a) = normal_subgroup_quotient_project(k, b)) =
+        (normal_subgroup_quotient_project(h.intersection(k), a) =
+            normal_subgroup_quotient_project(h.intersection(k), b))
+}
+
 theorem second_iso_image_iff_product[G: Group](h: Subgroup[G], k: Subgroup[G], q: QuotientOver[G]) {
     is_normal_subgroup(k) implies
     (exists(a: G) {
@@ -1384,6 +568,25 @@ theorem second_iso_image_iff_product[G: Group](h: Subgroup[G], k: Subgroup[G], q
     (exists(x: G) {
         subgroup_product_contains(h, k, x) and normal_subgroup_quotient_project(k, x) = q
     })
+}
+
+theorem second_iso_dual_kernel_iff[G: Group](h: Subgroup[G], k: Subgroup[G], b: G) {
+    k.contains(b) implies
+    (normal_subgroup_quotient_project(h, b) = normal_subgroup_quotient_one(h)) =
+        h.intersection(k).contains(b)
+}
+
+theorem second_iso_dual_kernel_rel[G: Group](h: Subgroup[G], k: Subgroup[G], a: G, b: G) {
+    k.contains(a) and k.contains(b) implies
+    (normal_subgroup_quotient_project(h, a) = normal_subgroup_quotient_project(h, b)) =
+        normal_subgroup_rel(h.intersection(k), a, b)
+}
+
+theorem second_iso_dual_induced_injective[G: Group](h: Subgroup[G], k: Subgroup[G], a: G, b: G) {
+    k.contains(a) and k.contains(b) implies
+    (normal_subgroup_quotient_project(h, a) = normal_subgroup_quotient_project(h, b)) =
+        (normal_subgroup_quotient_project(h.intersection(k), a) =
+            normal_subgroup_quotient_project(h.intersection(k), b))
 }
 
 theorem second_iso_dual_image_iff_product[G: Group](h: Subgroup[G], k: Subgroup[G], q: QuotientOver[G]) {
@@ -2318,10 +1521,58 @@ attributes Subring[R: Ring] {
     let intersection: (Subring[R], Subring[R]) -> Subring[R] = subring_intersection
 }
 
+theorem subring_as_set_contains_eq[R: Ring](s: Subring[R], x: R) {
+    s.as_set.contains(x) = s.contains(x)
+}
+
+theorem subring_contains_as_set_eq[R: Ring](s: Subring[R], x: R) {
+    s.contains(x) = s.as_set.contains(x)
+}
+
+theorem subring_eq_as_set[R: Ring](a: Subring[R], b: Subring[R]) {
+    a = b implies a.as_set = b.as_set
+}
+
+theorem subring_intersection_contains_eq[R: Ring](a: Subring[R], b: Subring[R], x: R) {
+    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
+}
+
+theorem subring_intersection_subset_left[R: Ring](a: Subring[R], b: Subring[R], x: R) {
+    a.intersection(b).contains(x) implies a.contains(x)
+}
+
+theorem subring_intersection_subset_right[R: Ring](a: Subring[R], b: Subring[R], x: R) {
+    a.intersection(b).contains(x) implies b.contains(x)
+}
+
+theorem subring_intersection_comm[R: Ring](a: Subring[R], b: Subring[R]) {
+    a.intersection(b) = b.intersection(a)
+}
+
+theorem subring_intersection_assoc[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    a.intersection(b).intersection(c) = a.intersection(b.intersection(c))
+}
+
+theorem subring_intersection_idempotent[R: Ring](a: Subring[R]) {
+    a.intersection(a) = a
+}
+
 define subring_subset[R: Ring](a: Subring[R], b: Subring[R]) -> Bool {
     forall(x: R) {
         a.contains(x) implies b.contains(x)
     }
+}
+
+theorem subring_subset_as_set_eq[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, b) = a.as_set.subset(b.as_set)
+}
+
+theorem subring_as_set_subset_of_subset[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, b) implies a.as_set.subset(b.as_set)
+}
+
+theorem subring_subset_of_as_set_subset[R: Ring](a: Subring[R], b: Subring[R]) {
+    a.as_set.subset(b.as_set) implies subring_subset(a, b)
 }
 
 theorem subring_subset_refl[R: Ring](a: Subring[R]) {
@@ -2332,12 +1583,40 @@ theorem subring_subset_trans[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R
     subring_subset(a, b) and subring_subset(b, c) implies subring_subset(a, c)
 }
 
+theorem subring_intersection_subset_left_relation[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a.intersection(b), a)
+}
+
+theorem subring_intersection_subset_right_relation[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a.intersection(b), b)
+}
+
+theorem subring_subset_intersection_of_subset_left_right[R: Ring](
+    c: Subring[R],
+    a: Subring[R],
+    b: Subring[R]
+) {
+    subring_subset(c, a) and subring_subset(c, b) implies subring_subset(c, a.intersection(b))
+}
+
+theorem subring_subset_intersection_iff[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) = (subring_subset(c, a) and subring_subset(c, b))
+}
+
 theorem subring_subset_antisymm[R: Ring](a: Subring[R], b: Subring[R]) {
     subring_subset(a, b) and subring_subset(b, a) implies a = b
 }
 
 theorem subring_eq_iff_subset_both[R: Ring](a: Subring[R], b: Subring[R]) {
     a = b = (subring_subset(a, b) and subring_subset(b, a))
+}
+
+theorem subring_intersection_eq_left_of_subset[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, b) implies a.intersection(b) = a
+}
+
+theorem subring_intersection_eq_right_of_subset[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(b, a) implies a.intersection(b) = b
 }
 
 define full_subring_contains[R: Ring](a: R) -> Bool {
@@ -2368,6 +1647,22 @@ define set_subset_subring[R: Ring](a: Set[R], s: Subring[R]) -> Bool {
     forall(x: R) {
         a.contains(x) implies s.contains(x)
     }
+}
+
+theorem set_subset_subring_as_set_eq[R: Ring](a: Set[R], s: Subring[R]) {
+    set_subset_subring(a, s) = a.subset(s.as_set)
+}
+
+theorem set_as_set_subset_of_subset_subring[R: Ring](a: Set[R], s: Subring[R]) {
+    set_subset_subring(a, s) implies a.subset(s.as_set)
+}
+
+theorem set_subset_subring_of_as_set_subset[R: Ring](a: Set[R], s: Subring[R]) {
+    a.subset(s.as_set) implies set_subset_subring(a, s)
+}
+
+theorem subring_as_set_subset_self[R: Ring](s: Subring[R]) {
+    set_subset_subring(s.as_set, s)
 }
 
 theorem set_subset_subring_trans[R: Ring](
@@ -2448,6 +1743,14 @@ theorem subring_closure_le_iff_set_subset[R: Ring](a: Set[R], s: Subring[R]) {
     subring_subset(subring_closure(a), s) = set_subset_subring(a, s)
 }
 
+theorem subring_closure_as_set_galois_connection[R: Ring](a: Set[R], s: Subring[R]) {
+    subring_closure(a).as_set.subset(s.as_set) = a.subset(s.as_set)
+}
+
+theorem subring_closure_as_set[R: Ring](s: Subring[R]) {
+    subring_closure(s.as_set) = s
+}
+
 theorem subring_closure_mono[R: Ring](a: Set[R], b: Set[R]) {
     a.subset(b) implies subring_subset(subring_closure(a), subring_closure(b))
 }
@@ -2458,6 +1761,46 @@ theorem subring_closure_eq_of_set_eq[R: Ring](a: Set[R], b: Set[R]) {
 
 theorem subring_closure_universal[R: Ring] {
     subring_closure(Set[R].universal_set) = full_subring[R]
+}
+
+define subring_sup[R: Ring](a: Subring[R], b: Subring[R]) -> Subring[R] {
+    subring_closure(a.as_set.union(b.as_set))
+}
+
+attributes Subring[R: Ring] {
+    /// The smallest subring containing a set.
+    let closure: Set[R] -> Subring[R] = subring_closure
+
+    /// The least subring containing this subring and another subring.
+    let sup: (Subring[R], Subring[R]) -> Subring[R] = subring_sup
+}
+
+theorem subring_sup_eq_closure_union[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_sup(a, b) = subring_closure(a.as_set.union(b.as_set))
+}
+
+theorem subring_subset_sup_left[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, subring_sup(a, b))
+}
+
+theorem subring_subset_sup_right[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(b, subring_sup(a, b))
+}
+
+theorem subring_sup_subset_of_subset_left_right[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
+) {
+    subring_subset(a, c) and subring_subset(b, c) implies subring_subset(subring_sup(a, b), c)
+}
+
+theorem subring_sup_subset_iff[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
+) {
+    subring_subset(subring_sup(a, b), c) = (subring_subset(a, c) and subring_subset(b, c))
 }
 
 define subring_is_finitely_generated[R: Ring](s: Subring[R]) -> Bool {
@@ -2492,6 +1835,10 @@ theorem subring_closure_singleton_contains[R: Ring](a: R) {
     subring_closure(Set[R].singleton(a)).contains(a)
 }
 
+theorem full_subring_intersection_right[R: Ring](s: Subring[R]) {
+    s.intersection(full_subring[R]) = s
+}
+
 theorem subring_add_subgroup_constraint[R: Ring](s: Subring[R]) {
     add_subgroup_constraint(s.contains)
 }
@@ -2512,6 +1859,10 @@ theorem subring_contains_to_add_subgroup_eq[R: Ring](s: Subring[R], x: R) {
     s.contains(x) = subring_to_add_subgroup(s).contains(x)
 }
 
+theorem subring_to_add_subgroup_as_set[R: Ring](s: Subring[R]) {
+    subring_to_add_subgroup(s).as_set = s.as_set
+}
+
 theorem subring_submonoid_constraint[R: Ring](s: Subring[R]) {
     submonoid_constraint(s.contains)
 }
@@ -2530,6 +1881,10 @@ theorem subring_to_submonoid_contains_eq[R: Ring](s: Subring[R], x: R) {
 
 theorem subring_contains_to_submonoid_eq[R: Ring](s: Subring[R], x: R) {
     s.contains(x) = subring_to_submonoid(s).contains(x)
+}
+
+theorem subring_to_submonoid_as_set[R: Ring](s: Subring[R]) {
+    subring_to_submonoid(s).as_set = s.as_set
 }
 
 define subring_image_contains[R: Ring, S: Ring](
@@ -2718,6 +2073,15 @@ theorem subring_preimage_subset_of_subset[R: Ring, S: Ring](
     subring_subset(t, u) implies subring_subset(subring_preimage(f, t), subring_preimage(f, u))
 }
 
+theorem subring_preimage_intersection[R: Ring, S: Ring](
+    f: RingHom[R, S],
+    t: Subring[S],
+    u: Subring[S]
+) {
+    subring_preimage(f, t.intersection(u)) =
+        subring_preimage(f, t).intersection(subring_preimage(f, u))
+}
+
 theorem subring_preimage_full[R: Ring, S: Ring](f: RingHom[R, S]) {
     subring_preimage(f, full_subring[S]) = full_subring[R]
 }
@@ -2763,6 +2127,22 @@ theorem subring_preimage_image_preimage_eq[R: Ring, S: Ring](f: RingHom[R, S], t
     subring_preimage(f, subring_image(f, subring_preimage(f, t))) = subring_preimage(f, t)
 }
 
+theorem subring_sup_comm[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_sup(a, b) = subring_sup(b, a)
+}
+
+theorem subring_sup_idempotent[R: Ring](a: Subring[R]) {
+    subring_sup(a, a) = a
+}
+
+theorem subring_sup_assoc[R: Ring](
+    a: Subring[R],
+    b: Subring[R],
+    c: Subring[R]
+) {
+    subring_sup(subring_sup(a, b), c) = subring_sup(a, subring_sup(b, c))
+}
+
 theorem subring_subset_contains_eq[R: Ring](a: Subring[R], b: Subring[R]) {
     subring_subset(a, b) = forall(x: R) {
         a.contains(x) implies b.contains(x)
@@ -2789,12 +2169,71 @@ theorem subring_order_subset_antisymm[R: Ring](a: Subring[R], b: Subring[R]) {
     subring_subset(a, b) and subring_subset(b, a) implies a = b
 }
 
+theorem subring_subset_as_set_iff[R: Ring](a: Subring[R], b: Subring[R]) {
+    subring_subset(a, b) = a.as_set.subset(b.as_set)
+}
+
+theorem subring_as_set_subset_contains[R: Ring](a: Subring[R], b: Subring[R], x: R) {
+    a.as_set.subset(b.as_set) and a.contains(x) implies b.contains(x)
+}
+
+theorem subring_intersection_greatest_lower_bound[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) = (subring_subset(c, a) and subring_subset(c, b))
+}
+
+theorem subring_subset_left_of_subset_intersection[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) implies subring_subset(c, a)
+}
+
+theorem subring_subset_right_of_subset_intersection[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a.intersection(b)) implies subring_subset(c, b)
+}
+
+theorem subring_subset_intersection_of_subset_both[R: Ring](c: Subring[R], a: Subring[R], b: Subring[R]) {
+    subring_subset(c, a) and subring_subset(c, b) implies subring_subset(c, a.intersection(b))
+}
+
 theorem subring_closure_monotone[R: Ring](a: Set[R], b: Set[R]) {
     a.subset(b) implies subring_subset(subring_closure(a), subring_closure(b))
 }
 
+theorem subring_closure_subset_iff_as_set_subset[R: Ring](a: Set[R], s: Subring[R]) {
+    subring_subset(subring_closure(a), s) = a.subset(s.as_set)
+}
+
 theorem subring_subset_antisymm_iff_eq[R: Ring](a: Subring[R], b: Subring[R]) {
     (subring_subset(a, b) and subring_subset(b, a)) = (a = b)
+}
+
+theorem subring_intersection_mono_left[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(a.intersection(c), b.intersection(c))
+}
+
+theorem subring_intersection_mono_right[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(c.intersection(a), c.intersection(b))
+}
+
+theorem subring_intersection_mono[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R], d: Subring[R]) {
+    subring_subset(a, b) and subring_subset(c, d) implies
+        subring_subset(a.intersection(c), b.intersection(d))
+}
+
+theorem subring_sup_mono_left[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(subring_sup(a, c), subring_sup(b, c))
+}
+
+theorem subring_sup_mono_right[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R]) {
+    subring_subset(a, b) implies subring_subset(subring_sup(c, a), subring_sup(c, b))
+}
+
+theorem subring_sup_mono[R: Ring](a: Subring[R], b: Subring[R], c: Subring[R], d: Subring[R]) {
+    subring_subset(a, b) and subring_subset(c, d) implies
+        subring_subset(subring_sup(a, c), subring_sup(b, d))
+}
+
+theorem subring_closure_eq_of_mutual_as_set_subset[R: Ring](a: Set[R], b: Set[R]) {
+    a.subset(subring_closure(b).as_set) and b.subset(subring_closure(a).as_set) implies
+        subring_closure(a) = subring_closure(b)
 }
 
 theorem subsemigroup_subset_contains_eq[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S]) {
@@ -2827,12 +2266,113 @@ theorem subsemigroup_order_subset_antisymm[S: Semigroup](a: Subsemigroup[S], b: 
     subsemigroup_subset(a, b) and subsemigroup_subset(b, a) implies a = b
 }
 
+theorem subsemigroup_subset_as_set_iff[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S]) {
+    subsemigroup_subset(a, b) = a.as_set.subset(b.as_set)
+}
+
+theorem subsemigroup_as_set_subset_contains[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S], x: S) {
+    a.as_set.subset(b.as_set) and a.contains(x) implies b.contains(x)
+}
+
+theorem subsemigroup_intersection_greatest_lower_bound[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
+) {
+    subsemigroup_subset(c, a.intersection(b)) = (subsemigroup_subset(c, a) and subsemigroup_subset(c, b))
+}
+
+theorem subsemigroup_subset_left_of_subset_intersection[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
+) {
+    subsemigroup_subset(c, a.intersection(b)) implies subsemigroup_subset(c, a)
+}
+
+theorem subsemigroup_subset_right_of_subset_intersection[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
+) {
+    subsemigroup_subset(c, a.intersection(b)) implies subsemigroup_subset(c, b)
+}
+
+theorem subsemigroup_subset_intersection_of_subset_both[S: Semigroup](
+    c: Subsemigroup[S],
+    a: Subsemigroup[S],
+    b: Subsemigroup[S]
+) {
+    subsemigroup_subset(c, a) and subsemigroup_subset(c, b) implies subsemigroup_subset(c, a.intersection(b))
+}
+
 theorem subsemigroup_closure_monotone[S: Semigroup](a: Set[S], b: Set[S]) {
     a.subset(b) implies subsemigroup_subset(subsemigroup_closure(a), subsemigroup_closure(b))
 }
 
+theorem subsemigroup_closure_subset_iff_as_set_subset[S: Semigroup](a: Set[S], s: Subsemigroup[S]) {
+    subsemigroup_subset(subsemigroup_closure(a), s) = a.subset(s.as_set)
+}
+
 theorem subsemigroup_subset_antisymm_iff_eq[S: Semigroup](a: Subsemigroup[S], b: Subsemigroup[S]) {
     (subsemigroup_subset(a, b) and subsemigroup_subset(b, a)) = (a = b)
+}
+
+theorem subsemigroup_intersection_mono_left[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(a.intersection(c), b.intersection(c))
+}
+
+theorem subsemigroup_intersection_mono_right[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(c.intersection(a), c.intersection(b))
+}
+
+theorem subsemigroup_intersection_mono[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S],
+    d: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) and subsemigroup_subset(c, d) implies
+        subsemigroup_subset(a.intersection(c), b.intersection(d))
+}
+
+theorem subsemigroup_sup_mono_left[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(subsemigroup_sup(a, c), subsemigroup_sup(b, c))
+}
+
+theorem subsemigroup_sup_mono_right[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) implies subsemigroup_subset(subsemigroup_sup(c, a), subsemigroup_sup(c, b))
+}
+
+theorem subsemigroup_sup_mono[S: Semigroup](
+    a: Subsemigroup[S],
+    b: Subsemigroup[S],
+    c: Subsemigroup[S],
+    d: Subsemigroup[S]
+) {
+    subsemigroup_subset(a, b) and subsemigroup_subset(c, d) implies
+        subsemigroup_subset(subsemigroup_sup(a, c), subsemigroup_sup(b, d))
+}
+
+theorem subsemigroup_closure_eq_of_mutual_as_set_subset[S: Semigroup](a: Set[S], b: Set[S]) {
+    a.subset(subsemigroup_closure(b).as_set) and b.subset(subsemigroup_closure(a).as_set) implies
+        subsemigroup_closure(a) = subsemigroup_closure(b)
 }
 
 define subsemiring_zero_constraint[S: Semiring](contains: S -> Bool) -> Bool {
@@ -2905,4 +2445,320 @@ theorem subsemiring_eq_contains_at[S: Semiring](a: Subsemiring[S], b: Subsemirin
 
 theorem subsemiring_eq_of_contains_eq[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
     a.contains = b.contains implies a = b
+}
+
+theorem subsemiring_eq_of_contains_at_eq[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    (forall(x: S) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem subsemiring_contains_zero[S: Semiring](s: Subsemiring[S]) {
+    s.contains(S.0)
+}
+
+theorem subsemiring_contains_one[S: Semiring](s: Subsemiring[S]) {
+    s.contains(S.1)
+}
+
+theorem subsemiring_contains_add[S: Semiring](s: Subsemiring[S], a: S, b: S) {
+    s.contains(a) and s.contains(b) implies s.contains(a + b)
+}
+
+theorem subsemiring_contains_mul[S: Semiring](s: Subsemiring[S], a: S, b: S) {
+    s.contains(a) and s.contains(b) implies s.contains(a * b)
+}
+
+define subsemiring_intersection_contains[S: Semiring](a: Subsemiring[S], b: Subsemiring[S], x: S) -> Bool {
+    a.contains(x) and b.contains(x)
+}
+
+theorem subsemiring_intersection_zero_constraint[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_zero_constraint(subsemiring_intersection_contains(a, b))
+}
+
+theorem subsemiring_intersection_one_constraint[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_one_constraint(subsemiring_intersection_contains(a, b))
+}
+
+theorem subsemiring_intersection_add_constraint[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_add_constraint(subsemiring_intersection_contains(a, b))
+}
+
+theorem subsemiring_intersection_mul_constraint[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_mul_constraint(subsemiring_intersection_contains(a, b))
+}
+
+theorem subsemiring_intersection_constraint[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) {
+    subsemiring_constraint(subsemiring_intersection_contains(a, b))
+}
+
+let subsemiring_intersection[S: Semiring](a: Subsemiring[S], b: Subsemiring[S]) -> result: Subsemiring[S] satisfy {
+    Subsemiring.new(subsemiring_intersection_contains(a, b)) = Option.some(result)
+}
+
+attributes Subsemiring[S: Semiring] {
+    /// Subsemiring extensionality from pointwise equality of membership.
+    let ext = subsemiring_ext[S]
+
+    /// The subset of semiring elements belonging to this subsemiring.
+    define as_set(self) -> Set[S] {
+        Set[S].new(self.contains)
+    }
+
+    /// The common part of two subsemirings.
+    let intersection: (Subsemiring[S], Subsemiring[S]) -> Subsemiring[S] = subsemiring_intersection
+}
+
+instance Subsemiring[S: Semiring]: Meet {
+    define meet(self, other: Subsemiring[S]) -> Subsemiring[S] {
+        self.intersection(other)
+    }
+}
+
+theorem zero_add_submonoid_intersection_left[M: AddMonoid](s: AddSubmonoid[M]) {
+    zero_add_submonoid[M].intersection(s) = zero_add_submonoid[M]
+}
+
+theorem full_add_submonoid_intersection_left[M: AddMonoid](s: AddSubmonoid[M]) {
+    full_add_submonoid[M].intersection(s) = s
+}
+
+theorem add_submonoid_closure_idempotent[M: AddMonoid](a: Set[M]) {
+    add_submonoid_closure(add_submonoid_closure(a).as_set) = add_submonoid_closure(a)
+}
+
+define add_submonoid_set_closure[M: AddMonoid](a: Set[M]) -> Set[M] {
+    add_submonoid_closure(a).as_set
+}
+
+theorem add_submonoid_set_closure_at[M: AddMonoid](a: Set[M]) {
+    add_submonoid_set_closure(a) = add_submonoid_closure(a).as_set
+}
+
+theorem add_submonoid_set_closure_extensive[M: AddMonoid](a: Set[M]) {
+    a.subset(add_submonoid_set_closure(a))
+}
+
+theorem add_submonoid_set_closure_mono[M: AddMonoid](a: Set[M], b: Set[M]) {
+    a.subset(b) implies add_submonoid_set_closure(a).subset(add_submonoid_set_closure(b))
+}
+
+theorem add_submonoid_set_closure_idempotent[M: AddMonoid](a: Set[M]) {
+    add_submonoid_set_closure(add_submonoid_set_closure(a)) = add_submonoid_set_closure(a)
+}
+
+theorem add_submonoid_set_closure_is_monotone[M: AddMonoid] {
+    is_subset_monotone_map(add_submonoid_set_closure[M])
+}
+
+theorem add_submonoid_set_closure_is_extensive[M: AddMonoid] {
+    is_set_extensive_map(add_submonoid_set_closure[M])
+}
+
+theorem add_submonoid_set_closure_is_idempotent[M: AddMonoid] {
+    is_set_idempotent_map(add_submonoid_set_closure[M])
+}
+
+theorem add_submonoid_set_closure_operator[M: AddMonoid] {
+    is_set_closure_operator(add_submonoid_set_closure[M])
+}
+
+theorem zero_add_subgroup_intersection_left[G: AddGroup](s: AddSubgroup[G]) {
+    zero_add_subgroup[G].intersection(s) = zero_add_subgroup[G]
+}
+
+theorem full_add_subgroup_intersection_left[G: AddGroup](s: AddSubgroup[G]) {
+    full_add_subgroup[G].intersection(s) = s
+}
+
+theorem add_subgroup_closure_idempotent[G: AddGroup](a: Set[G]) {
+    add_subgroup_closure(add_subgroup_closure(a).as_set) = add_subgroup_closure(a)
+}
+
+define add_subgroup_set_closure[G: AddGroup](a: Set[G]) -> Set[G] {
+    add_subgroup_closure(a).as_set
+}
+
+theorem add_subgroup_set_closure_at[G: AddGroup](a: Set[G]) {
+    add_subgroup_set_closure(a) = add_subgroup_closure(a).as_set
+}
+
+theorem add_subgroup_set_closure_extensive[G: AddGroup](a: Set[G]) {
+    a.subset(add_subgroup_set_closure(a))
+}
+
+theorem add_subgroup_set_closure_mono[G: AddGroup](a: Set[G], b: Set[G]) {
+    a.subset(b) implies add_subgroup_set_closure(a).subset(add_subgroup_set_closure(b))
+}
+
+theorem add_subgroup_set_closure_idempotent[G: AddGroup](a: Set[G]) {
+    add_subgroup_set_closure(add_subgroup_set_closure(a)) = add_subgroup_set_closure(a)
+}
+
+theorem add_subgroup_set_closure_is_monotone[G: AddGroup] {
+    is_subset_monotone_map(add_subgroup_set_closure[G])
+}
+
+theorem add_subgroup_set_closure_is_extensive[G: AddGroup] {
+    is_set_extensive_map(add_subgroup_set_closure[G])
+}
+
+theorem add_subgroup_set_closure_is_idempotent[G: AddGroup] {
+    is_set_idempotent_map(add_subgroup_set_closure[G])
+}
+
+theorem add_subgroup_set_closure_operator[G: AddGroup] {
+    is_set_closure_operator(add_subgroup_set_closure[G])
+}
+
+theorem zero_submodule_intersection_left[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
+    zero_submodule(s.carrier).intersection(s) = zero_submodule(s.carrier)
+}
+
+theorem full_submodule_intersection_left[R: Ring, M: AddCommGroup](s: Submodule[R, M]) {
+    full_submodule(s.carrier).intersection(s) = s
+}
+
+theorem submodule_closure_idempotent[R: Ring, M: AddCommGroup](carrier: Module[R, M], a: Set[M]) {
+    submodule_closure(carrier, submodule_closure(carrier, a).as_set) = submodule_closure(carrier, a)
+}
+
+define submodule_set_closure[R: Ring, M: AddCommGroup](carrier: Module[R, M], a: Set[M]) -> Set[M] {
+    submodule_closure(carrier, a).as_set
+}
+
+theorem submodule_set_closure_at[R: Ring, M: AddCommGroup](carrier: Module[R, M], a: Set[M]) {
+    submodule_set_closure(carrier, a) = submodule_closure(carrier, a).as_set
+}
+
+theorem submodule_set_closure_extensive[R: Ring, M: AddCommGroup](carrier: Module[R, M], a: Set[M]) {
+    a.subset(submodule_set_closure(carrier, a))
+}
+
+theorem submodule_set_closure_mono[R: Ring, M: AddCommGroup](
+    carrier: Module[R, M], a: Set[M], b: Set[M]
+) {
+    a.subset(b) implies submodule_set_closure(carrier, a).subset(submodule_set_closure(carrier, b))
+}
+
+theorem submodule_set_closure_idempotent[R: Ring, M: AddCommGroup](carrier: Module[R, M], a: Set[M]) {
+    submodule_set_closure(carrier, submodule_set_closure(carrier, a)) =
+        submodule_set_closure(carrier, a)
+}
+
+theorem submodule_set_closure_is_monotone[R: Ring, M: AddCommGroup](carrier: Module[R, M]) {
+    is_subset_monotone_map(submodule_set_closure(carrier))
+}
+
+theorem submodule_set_closure_is_extensive[R: Ring, M: AddCommGroup](carrier: Module[R, M]) {
+    is_set_extensive_map(submodule_set_closure(carrier))
+}
+
+theorem submodule_set_closure_is_idempotent[R: Ring, M: AddCommGroup](carrier: Module[R, M]) {
+    is_set_idempotent_map(submodule_set_closure(carrier))
+}
+
+theorem submodule_set_closure_operator[R: Ring, M: AddCommGroup](carrier: Module[R, M]) {
+    is_set_closure_operator(submodule_set_closure(carrier))
+}
+
+define ideal_family_as_set[R: CommRing, I](family: I -> Ideal[R], i: I) -> Set[R] {
+    family(i).as_set
+}
+
+theorem ideal_indexed_inter_as_set[R: CommRing, I](family: I -> Ideal[R]) {
+    ideal_indexed_inter(family).as_set = indexed_intersection(ideal_family_as_set(family))
+}
+
+define ideal_indexed_sum[R: CommRing, I](family: I -> Ideal[R]) -> Ideal[R] {
+    Ideal[R].closure(indexed_union(ideal_family_as_set(family)))
+}
+
+theorem ideal_indexed_sum_contains_family[R: CommRing, I](family: I -> Ideal[R], i: I, x: R) {
+    family(i).contains(x) implies ideal_indexed_sum(family).contains(x)
+}
+
+theorem ideal_indexed_sum_family_subset[R: CommRing, I](family: I -> Ideal[R], i: I) {
+    bundled_ideal_subset(family(i), ideal_indexed_sum(family))
+}
+
+theorem ideal_indexed_sum_subset_elim[R: CommRing, I](family: I -> Ideal[R], c: Ideal[R], i: I, x: R) {
+    bundled_ideal_subset(ideal_indexed_sum(family), c) and family(i).contains(x) implies c.contains(x)
+}
+
+theorem ideal_indexed_sum_subset_of_family_subset[R: CommRing, I](family: I -> Ideal[R], c: Ideal[R]) {
+    (forall(i: I) { bundled_ideal_subset(family(i), c) })
+        implies bundled_ideal_subset(ideal_indexed_sum(family), c)
+}
+
+theorem ideal_indexed_sum_subset_iff[R: CommRing, I](family: I -> Ideal[R], c: Ideal[R]) {
+    bundled_ideal_subset(ideal_indexed_sum(family), c) =
+        forall(i: I) { bundled_ideal_subset(family(i), c) }
+}
+
+theorem ideal_indexed_sum_monotone[R: CommRing, I](family: I -> Ideal[R], g: I -> Ideal[R]) {
+    (forall(i: I) { bundled_ideal_subset(family(i), g(i)) })
+        implies bundled_ideal_subset(ideal_indexed_sum(family), ideal_indexed_sum(g))
+}
+
+theorem spec_zariski_closed_inter[R: CommRing](s: Set[Spec[R]], t: Set[Spec[R]]) {
+    spec_zariski_closed(s) and spec_zariski_closed(t)
+        implies spec_zariski_closed(s.intersection(t))
+}
+
+theorem spec_basic_open_family_inter[R: CommRing](s: Set[Spec[R]], t: Set[Spec[R]]) {
+    spec_basic_open_family(s) and spec_basic_open_family(t)
+        implies spec_basic_open_family(s.intersection(t))
+}
+
+theorem spec_zariski_open_inter[R: CommRing](s: Set[Spec[R]], t: Set[Spec[R]]) {
+    spec_zariski_open(s) and spec_zariski_open(t)
+        implies spec_zariski_open(s.intersection(t))
+}
+
+theorem empty_subsemigroup_intersection_left[S: Semigroup](s: Subsemigroup[S]) {
+    empty_subsemigroup[S].intersection(s) = empty_subsemigroup[S]
+}
+
+theorem full_subsemigroup_intersection_left[S: Semigroup](s: Subsemigroup[S]) {
+    full_subsemigroup[S].intersection(s) = s
+}
+
+theorem subsemigroup_closure_idempotent[S: Semigroup](a: Set[S]) {
+    subsemigroup_closure(subsemigroup_closure(a).as_set) = subsemigroup_closure(a)
+}
+
+define subsemigroup_set_closure[S: Semigroup](a: Set[S]) -> Set[S] {
+    subsemigroup_closure(a).as_set
+}
+
+theorem subsemigroup_set_closure_at[S: Semigroup](a: Set[S]) {
+    subsemigroup_set_closure(a) = subsemigroup_closure(a).as_set
+}
+
+theorem subsemigroup_set_closure_extensive[S: Semigroup](a: Set[S]) {
+    a.subset(subsemigroup_set_closure(a))
+}
+
+theorem subsemigroup_set_closure_mono[S: Semigroup](a: Set[S], b: Set[S]) {
+    a.subset(b) implies subsemigroup_set_closure(a).subset(subsemigroup_set_closure(b))
+}
+
+theorem subsemigroup_set_closure_idempotent[S: Semigroup](a: Set[S]) {
+    subsemigroup_set_closure(subsemigroup_set_closure(a)) = subsemigroup_set_closure(a)
+}
+
+theorem subsemigroup_set_closure_is_monotone[S: Semigroup] {
+    is_subset_monotone_map(subsemigroup_set_closure[S])
+}
+
+theorem subsemigroup_set_closure_is_extensive[S: Semigroup] {
+    is_set_extensive_map(subsemigroup_set_closure[S])
+}
+
+theorem subsemigroup_set_closure_is_idempotent[S: Semigroup] {
+    is_set_idempotent_map(subsemigroup_set_closure[S])
+}
+
+theorem subsemigroup_set_closure_operator[S: Semigroup] {
+    is_set_closure_operator(subsemigroup_set_closure[S])
 }
