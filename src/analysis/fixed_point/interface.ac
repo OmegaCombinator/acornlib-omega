@@ -1,0 +1,2445 @@
+typeclass M: MetricSpace {
+    /// Every metric space must have a distance function
+    distance: (M, M) -> Real
+
+    /// Rule: the distance from a point to itself is zero
+    self_distance_is_zero(x: M) {
+        x.distance(x) = 0
+    }
+
+    /// Rule: distance zero means the points are equal
+    dist_zero_imp_eq(x: M, y: M) {
+        x.distance(y) = 0 implies x = y
+    }
+
+    /// Rule: distance must be symmetric
+    symmetric(x: M, y: M) {
+        x.distance(y) = y.distance(x)
+    }
+
+    /// Rule: distance must satisfy the triangle inequality
+    triangle(x: M, y: M, z: M) {
+        x.distance(z) <= x.distance(y) + y.distance(z)
+    }
+}
+
+typeclass M: CompleteMetricSpace extends MetricSpace {
+    /// Rule: every Cauchy sequence has a limit.
+    cauchy_metric_imp_tendsto(q: Nat -> M) {
+        is_cauchy_metric(q) implies exists(a: M) {
+            tendsto_metric(q, a)
+        }
+    }
+}
+
+typeclass G: NormedAddCommGroup extends AddCommGroup {
+    /// The norm of a group element.
+    norm: G -> Real
+
+    /// Rule: only the zero element has norm zero.
+    norm_eq_zero_imp_zero(x: G) {
+        x.norm = 0 implies x = G.0
+    }
+
+    /// Rule: the zero element has norm zero.
+    norm_zero {
+        G.0.norm = 0
+    }
+
+    /// Rule: the norm is invariant under negation.
+    norm_neg(x: G) {
+        (-x).norm = x.norm
+    }
+
+    /// Rule: the norm satisfies the triangle inequality.
+    norm_triangle(x: G, y: G) {
+        (x + y).norm <= x.norm + y.norm
+    }
+}
+
+typeclass K: NormedField extends Field, NormedAddCommGroup {
+    /// Rule: the norm is multiplicative on the field.
+    norm_mul(a: K, b: K) {
+        (a * b).norm = a.norm * b.norm
+    }
+}
+
+typeclass T: TopologicalSpace {
+    /// True if the given subset is open in the topology.
+    is_open: Set[T] -> Bool
+
+    /// Rule: the empty set is open.
+    open_empty {
+        T.is_open(Set[T].empty_set)
+    }
+
+    /// Rule: the whole space is open.
+    open_universal {
+        T.is_open(Set[T].universal_set)
+    }
+
+    /// Rule: the intersection of two open sets is open.
+    open_inter(s: Set[T], t: Set[T]) {
+        T.is_open(s) and T.is_open(t) implies T.is_open(s.intersection(t))
+    }
+
+    /// Rule: the union of any family of open sets is open.
+    open_big_union(c: Set[T] -> Bool) {
+        (forall(s: Set[T]) { c(s) implies T.is_open(s) })
+            implies T.is_open(big_union(c))
+    }
+}
+
+typeclass M: MetricTopologicalSpace extends MetricSpace, TopologicalSpace {
+    /// Compatibility axiom: topological openness agrees with metric openness.
+    topological_open_eq_metric_open(s: Set[M]) {
+        M.is_open(s) = is_open_metric(s)
+    }
+}
+
+inductive Color {
+    /// Red means nothing. It's just different from green and blue.
+    red
+
+    /// Green is not red or blue.
+    green
+
+    /// Blue is not red or green.
+    blue
+}
+
+inductive TopoExample {
+    /// First sample point.
+    a
+
+    /// Second sample point.
+    b
+}
+
+structure Subspace[T: TopologicalSpace, a: Set[T]] {
+    /// The underlying ambient point.
+    value: T
+} constraint {
+    a.contains(value)
+}
+
+inductive DiscreteFour {
+    /// First point.
+    d0
+
+    /// Second point.
+    d1
+
+    /// Third point.
+    d2
+
+    /// Fourth point.
+    d3
+}
+
+inductive IndiscreteTwo {
+    /// First point.
+    i0
+
+    /// Second point.
+    i1
+}
+
+theorem cauchy_seq_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat) {
+    is_cauchy_seq(a) and tends_to_infinity(f) implies is_cauchy_seq(compose(a, f))
+}
+
+theorem cauchy_seq_shift_add(a: Nat -> Real, k: Nat) {
+    is_cauchy_seq(a) implies is_cauchy_seq(compose(a, k.add))
+}
+
+theorem cauchy_seq_subsequence(a: Nat -> Real, f: Nat -> Nat) {
+    is_cauchy_seq(a) and is_subsequence_index(f) implies is_cauchy_seq(subsequence(a, f))
+}
+
+theorem cauchy_seq_tail_subsequence(a: Nat -> Real, k: Nat) {
+    is_cauchy_seq(a) implies is_cauchy_seq(subsequence(a, k.add))
+}
+
+theorem closed_set_contains_eventual_compose_cauchy_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a) and tends_to_infinity(f)
+    implies s.contains(limit(compose(a, f)))
+}
+
+theorem closed_set_contains_eventual_shift_add_cauchy_limit(s: Set[Real], a: Nat -> Real, k: Nat) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a)
+    implies s.contains(limit(compose(a, k.add)))
+}
+
+theorem closed_set_contains_eventual_subsequence_cauchy_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a) and is_subsequence_index(f)
+    implies s.contains(limit(subsequence(a, f)))
+}
+
+define iterate[T](f: T -> T, n: Nat, x: T) -> T {
+    match n {
+        Nat.zero {
+            x
+        }
+        Nat.suc(pred) {
+            f(iterate(f, pred, x))
+        }
+    }
+}
+
+theorem iterate_zero[T](f: T -> T, x: T) {
+    iterate(f, Nat.0, x) = x
+}
+
+theorem iterate_one[T](f: T -> T, x: T) {
+    iterate(f, Nat.1, x) = f(x)
+}
+
+theorem iterate_suc[T](f: T -> T, n: Nat, x: T) {
+    iterate(f, n.suc, x) = f(iterate(f, n, x))
+}
+
+theorem iterate_suc_inner[T](f: T -> T, n: Nat, x: T) {
+    iterate(f, n.suc, x) = iterate(f, n, f(x))
+}
+
+theorem iterate_add[T](f: T -> T, m: Nat, n: Nat, x: T) {
+    iterate(f, m + n, x) = iterate(f, m, iterate(f, n, x))
+}
+
+define orbit_contains[T](f: T -> T, x: T, y: T) -> Bool {
+    exists(n: Nat) {
+        y = iterate(f, n, x)
+    }
+}
+
+define orbit[T](f: T -> T, x: T) -> Set[T] {
+    Set[T].new(orbit_contains(f, x))
+}
+
+theorem orbit_contains_self[T](f: T -> T, x: T) {
+    orbit(f, x).contains(x)
+}
+
+theorem orbit_contains_iterate[T](f: T -> T, x: T, n: Nat) {
+    orbit(f, x).contains(iterate(f, n, x))
+}
+
+define is_invariant[T](f: T -> T, s: Set[T]) -> Bool {
+    forall(x: T) {
+        s.contains(x) implies s.contains(f(x))
+    }
+}
+
+theorem invariant_step_iterate[T](f: T -> T, s: Set[T], x: T, n: Nat) {
+    (forall(z: T) { s.contains(z) implies s.contains(f(z)) })
+        and s.contains(x)
+        implies s.contains(iterate(f, n, x))
+}
+
+theorem is_invariant_iterate[T](f: T -> T, s: Set[T], x: T, n: Nat) {
+    is_invariant(f, s) and s.contains(x) implies s.contains(iterate(f, n, x))
+}
+
+theorem orbit_is_invariant[T](f: T -> T, x: T) {
+    is_invariant(f, orbit(f, x))
+}
+
+define is_fixed_point[T](f: T -> T, x: T) -> Bool {
+    f(x) = x
+}
+
+theorem iterate_at_fixed[T](f: T -> T, x: T, n: Nat) {
+    f(x) = x implies iterate(f, n, x) = x
+}
+
+theorem iterate_fixed_point[T](f: T -> T, x: T, n: Nat) {
+    is_fixed_point(f, x) implies iterate(f, n, x) = x
+}
+
+theorem is_fixed_point_step[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_fixed_point(f, f(x))
+}
+
+define fixed_point_set[T](f: T -> T) -> Set[T] {
+    Set[T].new(is_fixed_point(f))
+}
+
+theorem fixed_point_set_invariant[T](f: T -> T) {
+    is_invariant(f, fixed_point_set(f))
+}
+
+define is_periodic_point[T](f: T -> T, x: T, n: Nat) -> Bool {
+    n != Nat.0 and iterate(f, n, x) = x
+}
+
+define is_periodic[T](f: T -> T, x: T) -> Bool {
+    exists(n: Nat) {
+        is_periodic_point(f, x, n)
+    }
+}
+
+theorem is_fixed_point_periodic_one[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_periodic_point(f, x, Nat.1)
+}
+
+theorem is_fixed_point_is_periodic[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_periodic(f, x)
+}
+
+theorem iterate_periodic_multiple[T](f: T -> T, x: T, n: Nat, k: Nat) {
+    is_periodic_point(f, x, n) implies iterate(f, k * n, x) = x
+}
+
+theorem periodic_orbit_returns[T](f: T -> T, x: T, n: Nat) {
+    is_periodic_point(f, x, n) implies orbit(f, x).contains(iterate(f, n, x))
+}
+
+define is_prime_period[T](f: T -> T, x: T, n: Nat) -> Bool {
+    is_periodic_point(f, x, n)
+        and forall(m: Nat) {
+            m < n and m != Nat.0 implies iterate(f, m, x) != x
+        }
+}
+
+theorem is_periodic_point_step[T](f: T -> T, x: T, n: Nat) {
+    is_periodic_point(f, x, n) implies is_periodic_point(f, f(x), n)
+}
+
+theorem is_periodic_step[T](f: T -> T, x: T) {
+    is_periodic(f, x) implies is_periodic(f, f(x))
+}
+
+define periodic_point_set[T](f: T -> T) -> Set[T] {
+    Set[T].new(is_periodic(f))
+}
+
+theorem periodic_point_set_contains_step[T](f: T -> T, x: T) {
+    periodic_point_set(f).contains(x) implies periodic_point_set(f).contains(f(x))
+}
+
+theorem periodic_point_set_invariant[T](f: T -> T) {
+    is_invariant(f, periodic_point_set(f))
+}
+
+define has_period_dividing[T](f: T -> T, x: T, n: Nat) -> Bool {
+    n != Nat.0 and iterate(f, n, x) = x
+}
+
+theorem has_period_dividing_iff_periodic_point[T](f: T -> T, x: T, n: Nat) {
+    has_period_dividing(f, x, n) = is_periodic_point(f, x, n)
+}
+
+theorem prime_period_has_period_dividing[T](f: T -> T, x: T, n: Nat) {
+    is_prime_period(f, x, n) implies has_period_dividing(f, x, n)
+}
+
+define prime_period_set[T](f: T -> T, n: Nat) -> Set[T] {
+    Set[T].new(function(x: T) { is_prime_period(f, x, n) })
+}
+
+define period_dividing_set[T](f: T -> T, n: Nat) -> Set[T] {
+    Set[T].new(function(x: T) { has_period_dividing(f, x, n) })
+}
+
+theorem prime_period_set_subset_period_dividing_set[T](f: T -> T, n: Nat) {
+    prime_period_set(f, n).subset(period_dividing_set(f, n))
+}
+
+theorem period_dividing_set_subset_periodic[T](f: T -> T, n: Nat) {
+    period_dividing_set(f, n).subset(periodic_point_set(f))
+}
+
+theorem fixed_point_is_prime_period_one[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_prime_period(f, x, Nat.1)
+}
+
+theorem prime_period_one_iff_fixed_point[T](f: T -> T, x: T) {
+    is_prime_period(f, x, Nat.1) = is_fixed_point(f, x)
+}
+
+theorem is_periodic_point_iterate[T](f: T -> T, x: T, n: Nat, k: Nat) {
+    is_periodic_point(f, x, n) implies is_periodic_point(f, iterate(f, k, x), n)
+}
+
+theorem is_periodic_iterate[T](f: T -> T, x: T, k: Nat) {
+    is_periodic(f, x) implies is_periodic(f, iterate(f, k, x))
+}
+
+theorem orbit_subset_invariant[T](f: T -> T, s: Set[T], x: T) {
+    is_invariant(f, s) and s.contains(x) implies orbit(f, x).subset(s)
+}
+
+theorem orbit_subset_self[T](f: T -> T, x: T) {
+    orbit(f, x).subset(orbit(f, x))
+}
+
+define backward_orbit_contains[T](f: T -> T, k: T -> T, x: T, y: T) -> Bool {
+    exists(n: Nat) {
+        y = iterate(k, n, x)
+    }
+}
+
+define backward_orbit[T](f: T -> T, k: T -> T, x: T) -> Set[T] {
+    Set[T].new(backward_orbit_contains(f, k, x))
+}
+
+theorem backward_orbit_contains_self[T](f: T -> T, k: T -> T, x: T) {
+    backward_orbit(f, k, x).contains(x)
+}
+
+theorem backward_orbit_contains_iterate[T](f: T -> T, k: T -> T, x: T, n: Nat) {
+    backward_orbit(f, k, x).contains(iterate(k, n, x))
+}
+
+define full_orbit_contains[T](f: T -> T, k: T -> T, x: T, y: T) -> Bool {
+    orbit_contains(f, x, y) or backward_orbit_contains(f, k, x, y)
+}
+
+define full_orbit[T](f: T -> T, k: T -> T, x: T) -> Set[T] {
+    Set[T].new(full_orbit_contains(f, k, x))
+}
+
+theorem full_orbit_contains_forward[T](f: T -> T, k: T -> T, x: T, y: T) {
+    orbit(f, x).contains(y) implies full_orbit(f, k, x).contains(y)
+}
+
+theorem full_orbit_contains_backward[T](f: T -> T, k: T -> T, x: T, y: T) {
+    backward_orbit(f, k, x).contains(y) implies full_orbit(f, k, x).contains(y)
+}
+
+theorem full_orbit_contains_self[T](f: T -> T, k: T -> T, x: T) {
+    full_orbit(f, k, x).contains(x)
+}
+
+theorem full_orbit_contains_iterate[T](f: T -> T, k: T -> T, x: T, n: Nat) {
+    full_orbit(f, k, x).contains(iterate(f, n, x))
+}
+
+theorem full_orbit_contains_backward_iterate[T](f: T -> T, k: T -> T, x: T, n: Nat) {
+    full_orbit(f, k, x).contains(iterate(k, n, x))
+}
+
+define is_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U) -> Bool {
+    forall(x: T) {
+        h(f(x)) = g(h(x))
+    }
+}
+
+define is_conjugacy[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) -> Bool {
+    is_semiconjugacy(h, f, g)
+        and forall(x: T) { k(h(x)) = x }
+        and forall(y: U) { h(k(y)) = y }
+}
+
+theorem iterate_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U, x: T, n: Nat) {
+    is_semiconjugacy(h, f, g) implies h(iterate(f, n, x)) = iterate(g, n, h(x))
+}
+
+theorem orbit_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U, x: T, y: T) {
+    is_semiconjugacy(h, f, g) and orbit(f, x).contains(y)
+        implies orbit(g, h(x)).contains(h(y))
+}
+
+theorem fixed_point_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U, x: T) {
+    is_semiconjugacy(h, f, g) and is_fixed_point(f, x)
+        implies is_fixed_point(g, h(x))
+}
+
+theorem periodic_point_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U, x: T, n: Nat) {
+    is_semiconjugacy(h, f, g) and is_periodic_point(f, x, n)
+        implies is_periodic_point(g, h(x), n)
+}
+
+theorem periodic_semiconjugacy[T, U](h: T -> U, f: T -> T, g: U -> U, x: T) {
+    is_semiconjugacy(h, f, g) and is_periodic(f, x)
+        implies is_periodic(g, h(x))
+}
+
+theorem conjugacy_is_semiconjugacy[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_semiconjugacy(h, f, g)
+}
+
+theorem conjugacy_injective[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_injective_fn(h)
+}
+
+theorem conjugacy_surjective[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_surjective_fn(h)
+}
+
+theorem conjugacy_bijection[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_bijection_fn(h)
+}
+
+theorem conjugacy_inverse_injective[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_injective_fn(k)
+}
+
+theorem conjugacy_inverse_surjective[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_surjective_fn(k)
+}
+
+theorem conjugacy_inverse_bijection[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_bijection_fn(k)
+}
+
+theorem conjugacy_reverse_semiconjugacy[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_semiconjugacy(k, g, f)
+}
+
+theorem conjugacy_fixed_point_iff[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T) {
+    is_conjugacy(h, k, f, g) implies is_fixed_point(f, x) = is_fixed_point(g, h(x))
+}
+
+theorem conjugacy_orbit_reverse[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T, y: U) {
+    is_conjugacy(h, k, f, g) and orbit(g, h(x)).contains(y) implies orbit(f, x).contains(k(y))
+}
+
+theorem conjugacy_orbit_forward_inverse_image[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T, y: U) {
+    is_conjugacy(h, k, f, g) and orbit(f, x).contains(k(y)) implies orbit(g, h(x)).contains(y)
+}
+
+theorem identity_is_semiconjugacy[T](f: T -> T) {
+    is_semiconjugacy(function(x: T) { x }, f, f)
+}
+
+theorem semiconjugacy_compose[T, U, V](h: T -> U, j: U -> V, jh: T -> V,
+        f: T -> T, g: U -> U, e: V -> V) {
+    is_semiconjugacy(h, f, g) and is_semiconjugacy(j, g, e)
+        and (forall(x: T) { jh(x) = j(h(x)) })
+        implies is_semiconjugacy(jh, f, e)
+}
+
+theorem identity_is_conjugacy[T](f: T -> T) {
+    is_conjugacy(identity_fn[T], identity_fn[T], f, f)
+}
+
+theorem conjugacy_inverse_is_conjugacy[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U) {
+    is_conjugacy(h, k, f, g) implies is_conjugacy(k, h, g, f)
+}
+
+theorem conjugacy_compose[T, U, V](h: T -> U, k: U -> T, j: U -> V, l: V -> U,
+        f: T -> T, g: U -> U, e: V -> V) {
+    is_conjugacy(h, k, f, g) and is_conjugacy(j, l, g, e) implies
+        is_conjugacy(compose(j, h), compose(k, l), f, e)
+}
+
+define iterate_fixed_point_set[T](f: T -> T, n: Nat) -> Set[T] {
+    fixed_point_set(function(x: T) { iterate(f, n, x) })
+}
+
+theorem conjugacy_iterate_self_forward[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) and iterate(f, n, x) = x
+        implies iterate(g, n, h(x)) = h(x)
+}
+
+theorem conjugacy_iterate_self_backward[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) and iterate(g, n, h(x)) = h(x)
+        implies iterate(f, n, x) = x
+}
+
+theorem conjugacy_has_period_dividing_iff[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies
+        has_period_dividing(f, x, n) = has_period_dividing(g, h(x), n)
+}
+
+theorem conjugacy_periodic_point_iff[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies
+        is_periodic_point(f, x, n) = is_periodic_point(g, h(x), n)
+}
+
+theorem conjugacy_periodic_iff[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T
+) {
+    is_conjugacy(h, k, f, g) implies is_periodic(f, x) = is_periodic(g, h(x))
+}
+
+theorem forall_nat_apply(p: Nat -> Bool, m: Nat) {
+    (forall(q: Nat) { p(q) }) implies p(m)
+}
+
+theorem prime_period_minimal_from_forall[T](f: T -> T, x: T, n: Nat, m: Nat) {
+    (forall(q: Nat) { q < n and q != Nat.0 implies iterate(f, q, x) != x })
+        and m < n and m != Nat.0 implies iterate(f, m, x) != x
+}
+
+theorem conjugacy_prime_period_iff[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies
+        is_prime_period(f, x, n) = is_prime_period(g, h(x), n)
+}
+
+theorem conjugacy_orbit_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T
+) {
+    is_conjugacy(h, k, f, g) implies set_image(orbit(f, x), h) = orbit(g, h(x))
+}
+
+theorem conjugacy_fixed_point_set_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U
+) {
+    is_conjugacy(h, k, f, g) implies set_image(fixed_point_set(f), h) = fixed_point_set(g)
+}
+
+theorem conjugacy_iterate_fixed_point_set_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies
+        set_image(iterate_fixed_point_set(f, n), h) = iterate_fixed_point_set(g, n)
+}
+
+theorem conjugacy_periodic_point_set_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U
+) {
+    is_conjugacy(h, k, f, g) implies set_image(periodic_point_set(f), h) = periodic_point_set(g)
+}
+
+theorem conjugacy_period_dividing_set_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies set_image(period_dividing_set(f, n), h) = period_dividing_set(g, n)
+}
+
+theorem conjugacy_prime_period_set_image_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    n: Nat
+) {
+    is_conjugacy(h, k, f, g) implies set_image(prime_period_set(f, n), h) = prime_period_set(g, n)
+}
+
+theorem conjugacy_orbit_contains_inverse_eq[T, U](
+    h: T -> U,
+    k: U -> T,
+    f: T -> T,
+    g: U -> U,
+    x: T,
+    y: U
+) {
+    is_conjugacy(h, k, f, g) implies
+        orbit(g, h(x)).contains(y) = orbit(f, x).contains(k(y))
+}
+
+theorem fixed_point_set_subset_periodic_point_set[T](f: T -> T) {
+    fixed_point_set(f).subset(periodic_point_set(f))
+}
+
+theorem period_dividing_set_invariant[T](f: T -> T, n: Nat) {
+    is_invariant(f, period_dividing_set(f, n))
+}
+
+theorem prime_period_set_subset_periodic_point_set[T](f: T -> T, n: Nat) {
+    prime_period_set(f, n).subset(periodic_point_set(f))
+}
+
+theorem periodic_orbit_subset_periodic_point_set[T](f: T -> T, x: T) {
+    is_periodic(f, x) implies orbit(f, x).subset(periodic_point_set(f))
+}
+
+theorem orbit_semiconjugacy_image_subset[T, U](h: T -> U, f: T -> T, g: U -> U, x: T) {
+    is_semiconjugacy(h, f, g) implies set_image(orbit(f, x), h).subset(orbit(g, h(x)))
+}
+
+theorem fixed_point_set_semiconjugacy_image_subset[T, U](h: T -> U, f: T -> T, g: U -> U) {
+    is_semiconjugacy(h, f, g) implies set_image(fixed_point_set(f), h).subset(fixed_point_set(g))
+}
+
+theorem period_dividing_set_semiconjugacy_image_subset[T, U](h: T -> U, f: T -> T, g: U -> U, n: Nat) {
+    is_semiconjugacy(h, f, g) implies
+        set_image(period_dividing_set(f, n), h).subset(period_dividing_set(g, n))
+}
+
+theorem periodic_point_set_semiconjugacy_image_subset[T, U](h: T -> U, f: T -> T, g: U -> U) {
+    is_semiconjugacy(h, f, g) implies
+        set_image(periodic_point_set(f), h).subset(periodic_point_set(g))
+}
+
+theorem orbit_contains_iff[T](f: T -> T, x: T, y: T) {
+    orbit(f, x).contains(y) = orbit_contains(f, x, y)
+}
+
+theorem prime_period_set_contains_eq[T](f: T -> T, n: Nat, x: T) {
+    prime_period_set(f, n).contains(x) = is_prime_period(f, x, n)
+}
+
+theorem fixed_point_set_membership_iff[T](f: T -> T, x: T) {
+    fixed_point_set(f).contains(x) = is_fixed_point(f, x)
+}
+
+theorem periodic_point_set_membership_iff[T](f: T -> T, x: T) {
+    periodic_point_set(f).contains(x) = is_periodic(f, x)
+}
+
+theorem period_dividing_set_membership_iff[T](f: T -> T, n: Nat, x: T) {
+    period_dividing_set(f, n).contains(x) = has_period_dividing(f, x, n)
+}
+
+theorem prime_period_set_membership_iff[T](f: T -> T, n: Nat, x: T) {
+    prime_period_set(f, n).contains(x) = is_prime_period(f, x, n)
+}
+
+theorem invariant_orbit_member[T](f: T -> T, s: Set[T], x: T, y: T) {
+    is_invariant(f, s) and s.contains(x) and orbit(f, x).contains(y) implies s.contains(y)
+}
+
+theorem orbit_member_periodic_point_same_period[T](f: T -> T, x: T, y: T, n: Nat) {
+    is_periodic_point(f, x, n) and orbit(f, x).contains(y) implies is_periodic_point(f, y, n)
+}
+
+theorem orbit_member_period_dividing_same_period[T](f: T -> T, x: T, y: T, n: Nat) {
+    has_period_dividing(f, x, n) and orbit(f, x).contains(y) implies has_period_dividing(f, y, n)
+}
+
+theorem period_dividing_orbit_subset[T](f: T -> T, x: T, n: Nat) {
+    period_dividing_set(f, n).contains(x) implies orbit(f, x).subset(period_dividing_set(f, n))
+}
+
+theorem periodic_orbit_iterate_periodic[T](f: T -> T, x: T, k: Nat) {
+    periodic_point_set(f).contains(x) implies periodic_point_set(f).contains(iterate(f, k, x))
+}
+
+theorem semiconjugacy_orbit_member[T, U](h: T -> U, f: T -> T, g: U -> U, x: T, y: T) {
+    is_semiconjugacy(h, f, g) and orbit(f, x).contains(y) implies orbit(g, h(x)).contains(h(y))
+}
+
+theorem semiconjugacy_fixed_point_set_member[T, U](h: T -> U, f: T -> T, g: U -> U, x: T) {
+    is_semiconjugacy(h, f, g) and fixed_point_set(f).contains(x) implies
+    fixed_point_set(g).contains(h(x))
+}
+
+theorem semiconjugacy_period_dividing_set_member[T, U](h: T -> U, f: T -> T, g: U -> U, x: T, n: Nat) {
+    is_semiconjugacy(h, f, g) and period_dividing_set(f, n).contains(x) implies
+    period_dividing_set(g, n).contains(h(x))
+}
+
+theorem semiconjugacy_periodic_point_set_member[T, U](h: T -> U, f: T -> T, g: U -> U, x: T) {
+    is_semiconjugacy(h, f, g) and periodic_point_set(f).contains(x) implies
+    periodic_point_set(g).contains(h(x))
+}
+
+theorem conjugacy_fixed_point_set_member_iff[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T) {
+    is_conjugacy(h, k, f, g) implies
+    fixed_point_set(f).contains(x) = fixed_point_set(g).contains(h(x))
+}
+
+theorem conjugacy_period_dividing_set_member_iff[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T, n: Nat) {
+    is_conjugacy(h, k, f, g) implies
+    period_dividing_set(f, n).contains(x) = period_dividing_set(g, n).contains(h(x))
+}
+
+theorem conjugacy_periodic_point_set_member_iff[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T) {
+    is_conjugacy(h, k, f, g) implies
+    periodic_point_set(f).contains(x) = periodic_point_set(g).contains(h(x))
+}
+
+theorem conjugacy_prime_period_set_member_iff[T, U](h: T -> U, k: U -> T, f: T -> T, g: U -> U, x: T, n: Nat) {
+    is_conjugacy(h, k, f, g) implies
+    prime_period_set(f, n).contains(x) = prime_period_set(g, n).contains(h(x))
+}
+
+define is_pre_fixed_point[P: PartialOrder](f: P -> P, x: P) -> Bool {
+    f(x) <= x
+}
+
+define is_post_fixed_point[P: PartialOrder](f: P -> P, x: P) -> Bool {
+    x <= f(x)
+}
+
+define pre_fixed_point_set[P: PartialOrder](f: P -> P) -> Set[P] {
+    Set[P].new(is_pre_fixed_point(f))
+}
+
+define post_fixed_point_set[P: PartialOrder](f: P -> P) -> Set[P] {
+    Set[P].new(is_post_fixed_point(f))
+}
+
+theorem fixed_point_set_contains_eq[T](f: T -> T, x: T) {
+    fixed_point_set(f).contains(x) = is_fixed_point(f, x)
+}
+
+theorem pre_fixed_point_set_contains_eq[P: PartialOrder](f: P -> P, x: P) {
+    pre_fixed_point_set(f).contains(x) = is_pre_fixed_point(f, x)
+}
+
+theorem post_fixed_point_set_contains_eq[P: PartialOrder](f: P -> P, x: P) {
+    post_fixed_point_set(f).contains(x) = is_post_fixed_point(f, x)
+}
+
+theorem is_fixed_point_iff_is_fixed_by[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) = is_fixed_by(f, x)
+}
+
+theorem fixed_point_of_fixed_by[T](f: T -> T, x: T) {
+    is_fixed_by(f, x) implies is_fixed_point(f, x)
+}
+
+theorem fixed_by_of_fixed_point[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_fixed_by(f, x)
+}
+
+theorem fixed_point_set_contains_eq_fixed_by[T](f: T -> T, x: T) {
+    fixed_point_set(f).contains(x) = is_fixed_by(f, x)
+}
+
+theorem fixed_point_is_pre_fixed[P: PartialOrder](f: P -> P, x: P) {
+    is_fixed_point(f, x) implies is_pre_fixed_point(f, x)
+}
+
+theorem fixed_point_is_post_fixed[P: PartialOrder](f: P -> P, x: P) {
+    is_fixed_point(f, x) implies is_post_fixed_point(f, x)
+}
+
+theorem fixed_point_of_pre_and_post[P: PartialOrder](f: P -> P, x: P) {
+    is_pre_fixed_point(f, x) and is_post_fixed_point(f, x) implies is_fixed_point(f, x)
+}
+
+theorem fixed_point_iff_pre_and_post[P: PartialOrder](f: P -> P, x: P) {
+    is_fixed_point(f, x) = (is_pre_fixed_point(f, x) and is_post_fixed_point(f, x))
+}
+
+theorem fixed_point_set_subset_pre_fixed_point_set[P: PartialOrder](f: P -> P) {
+    fixed_point_set(f).subset(pre_fixed_point_set(f))
+}
+
+theorem fixed_point_set_subset_post_fixed_point_set[P: PartialOrder](f: P -> P) {
+    fixed_point_set(f).subset(post_fixed_point_set(f))
+}
+
+theorem pre_post_fixed_point_sets_subset_fixed_point_set[P: PartialOrder](f: P -> P) {
+    pre_fixed_point_set(f).intersection(post_fixed_point_set(f)).subset(fixed_point_set(f))
+}
+
+theorem fixed_point_set_eq_pre_post_intersection[P: PartialOrder](f: P -> P) {
+    fixed_point_set(f) = pre_fixed_point_set(f).intersection(post_fixed_point_set(f))
+}
+
+theorem identity_fixed_point[T](x: T) {
+    is_fixed_point(function(y: T) { y }, x)
+}
+
+theorem fixed_point_iterate[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies f(f(x)) = x
+}
+
+theorem monotone_pre_fixed_point_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies is_pre_fixed_point(f, f(x))
+}
+
+theorem monotone_post_fixed_point_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies is_post_fixed_point(f, f(x))
+}
+
+theorem monotone_fixed_point_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and is_fixed_point(f, x) implies is_fixed_point(f, f(x))
+}
+
+theorem closure_operator_post_fixed_point[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) implies is_post_fixed_point(close, x)
+}
+
+theorem kernel_operator_pre_fixed_point[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) implies is_pre_fixed_point(kernel, x)
+}
+
+theorem closure_operator_image_fixed_point[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) implies is_fixed_point(close, close(x))
+}
+
+theorem kernel_operator_image_fixed_point[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) implies is_fixed_point(kernel, kernel(x))
+}
+
+theorem closure_operator_image_mem_fixed_point_set[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) implies fixed_point_set(close).contains(close(x))
+}
+
+theorem kernel_operator_image_mem_fixed_point_set[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) implies fixed_point_set(kernel).contains(kernel(x))
+}
+
+theorem closure_operator_fixed_point_of_pre_fixed[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) and is_pre_fixed_point(close, x) implies is_fixed_point(close, x)
+}
+
+theorem kernel_operator_fixed_point_of_post_fixed[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) and is_post_fixed_point(kernel, x) implies is_fixed_point(kernel, x)
+}
+
+theorem closure_operator_pre_fixed_iff_fixed_point[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) implies (is_pre_fixed_point(close, x) = is_fixed_point(close, x))
+}
+
+theorem kernel_operator_post_fixed_iff_fixed_point[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) implies (is_post_fixed_point(kernel, x) = is_fixed_point(kernel, x))
+}
+
+theorem closure_operator_pre_fixed_set_subset_fixed_point_set[P: PartialOrder](close: P -> P) {
+    is_closure_operator(close) implies pre_fixed_point_set(close).subset(fixed_point_set(close))
+}
+
+theorem kernel_operator_post_fixed_set_subset_fixed_point_set[P: PartialOrder](kernel: P -> P) {
+    is_kernel_operator(kernel) implies post_fixed_point_set(kernel).subset(fixed_point_set(kernel))
+}
+
+theorem closure_operator_fixed_point_set_eq_pre_fixed_point_set[P: PartialOrder](close: P -> P) {
+    is_closure_operator(close) implies fixed_point_set(close) = pre_fixed_point_set(close)
+}
+
+theorem kernel_operator_fixed_point_set_eq_post_fixed_point_set[P: PartialOrder](kernel: P -> P) {
+    is_kernel_operator(kernel) implies fixed_point_set(kernel) = post_fixed_point_set(kernel)
+}
+
+theorem galois_closure_post_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies is_post_fixed_point(galois_closure(lower, upper), a)
+}
+
+theorem galois_kernel_pre_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies is_pre_fixed_point(galois_kernel(lower, upper), b)
+}
+
+theorem galois_closure_image_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_point(galois_closure(lower, upper), galois_closure(lower, upper, a))
+}
+
+theorem galois_kernel_image_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    is_fixed_point(galois_kernel(lower, upper), galois_kernel(lower, upper, b))
+}
+
+theorem galois_closure_pre_fixed_iff_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    a: A
+) {
+    is_galois_connection(lower, upper) implies
+    (is_pre_fixed_point(galois_closure(lower, upper), a) =
+        is_fixed_point(galois_closure(lower, upper), a))
+}
+
+theorem galois_kernel_post_fixed_iff_fixed_point[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A,
+    b: B
+) {
+    is_galois_connection(lower, upper) implies
+    (is_post_fixed_point(galois_kernel(lower, upper), b) =
+        is_fixed_point(galois_kernel(lower, upper), b))
+}
+
+theorem galois_closure_fixed_point_set_eq_pre_fixed_point_set[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies
+    fixed_point_set(galois_closure(lower, upper)) =
+        pre_fixed_point_set(galois_closure(lower, upper))
+}
+
+theorem galois_kernel_fixed_point_set_eq_post_fixed_point_set[A: PartialOrder, B: PartialOrder](
+    lower: A -> B,
+    upper: B -> A
+) {
+    is_galois_connection(lower, upper) implies
+    fixed_point_set(galois_kernel(lower, upper)) =
+        post_fixed_point_set(galois_kernel(lower, upper))
+}
+
+theorem monotone_post_le_pre[P: PartialOrder](f: P -> P, a: P, b: P) {
+    is_monotone(f) and is_post_fixed_point(f, a) and is_pre_fixed_point(f, b) and a <= b
+        implies f(a) <= f(b)
+}
+
+theorem monotone_iterate_pre_fixed[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies iterate(f, n, x) <= x
+}
+
+theorem monotone_iterate_post_fixed[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies x <= iterate(f, n, x)
+}
+
+theorem monotone_iterate_fixed_point[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_fixed_point(f, x) implies iterate(f, n, x) = x
+}
+
+theorem monotone_iterate_pre_fixed_descending[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies iterate(f, n.suc, x) <= iterate(f, n, x)
+}
+
+theorem monotone_iterate_post_fixed_ascending[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies iterate(f, n, x) <= iterate(f, n.suc, x)
+}
+
+theorem monotone_pre_fixed_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies is_pre_fixed_point(f, iterate(f, n, x))
+}
+
+theorem monotone_post_fixed_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies is_post_fixed_point(f, iterate(f, n, x))
+}
+
+theorem monotone_fixed_point_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_fixed_point(f, x) implies is_fixed_point(f, iterate(f, n, x))
+}
+
+theorem monotone_iterate_pre_fixed_distance[P: PartialOrder](f: P -> P, x: P, m: Nat, k: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies iterate(f, m + k, x) <= iterate(f, m, x)
+}
+
+theorem monotone_iterate_le_of_le[P: PartialOrder](f: P -> P, a: P, b: P, n: Nat) {
+    is_monotone(f) and a <= b implies iterate(f, n, a) <= iterate(f, n, b)
+}
+
+theorem monotone_iterate_sandwich_middle[P: PartialOrder](f: P -> P, x: P, y: P, n: Nat) {
+    is_monotone(f) and y <= x implies iterate(f, n, y) <= iterate(f, n, x)
+}
+
+theorem monotone_iterate_post_fixed_distance[P: PartialOrder](f: P -> P, x: P, m: Nat, k: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies iterate(f, m, x) <= iterate(f, m + k, x)
+}
+
+theorem monotone_post_fixed_iterate_le_of_le[P: PartialOrder](f: P -> P, a: P, x: P, n: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, a) and a <= x
+    implies a <= iterate(f, n, x)
+}
+
+theorem monotone_iterate_le_pre_fixed_of_le[P: PartialOrder](f: P -> P, x: P, b: P, n: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, b) and x <= b
+    implies iterate(f, n, x) <= b
+}
+
+theorem monotone_iterate_between_post_and_pre[P: PartialOrder](
+    f: P -> P,
+    a: P,
+    x: P,
+    b: P,
+    n: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, a) and is_pre_fixed_point(f, b) and
+    a <= x and x <= b
+    implies a <= iterate(f, n, x) and iterate(f, n, x) <= b
+}
+
+theorem monotone_post_fixed_le_pre_fixed_iterate_lower[P: PartialOrder](
+    f: P -> P,
+    a: P,
+    b: P,
+    n: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, a) and is_pre_fixed_point(f, b) and a <= b
+    implies a <= iterate(f, n, b)
+}
+
+theorem monotone_post_fixed_le_pre_fixed_iterate_upper[P: PartialOrder](
+    f: P -> P,
+    a: P,
+    b: P,
+    n: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, a) and is_pre_fixed_point(f, b) and a <= b
+    implies iterate(f, n, a) <= b
+}
+
+theorem monotone_iterate_pre_fixed_anti_index[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    k: Nat,
+    m: Nat
+) {
+    is_monotone(f) and is_pre_fixed_point(f, x) and k <= m
+    implies iterate(f, m, x) <= iterate(f, k, x)
+}
+
+theorem monotone_iterate_post_fixed_mono_index[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    k: Nat,
+    m: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, x) and k <= m
+    implies iterate(f, k, x) <= iterate(f, m, x)
+}
+
+theorem fixed_point_iterate_eq[T](f: T -> T, x: T, n: Nat) {
+    is_fixed_point(f, x) implies iterate(f, n, x) = x
+}
+
+theorem fixed_point_iterate_eq_iterate[T](f: T -> T, x: T, m: Nat, n: Nat) {
+    is_fixed_point(f, x) implies iterate(f, m, x) = iterate(f, n, x)
+}
+
+theorem monotone_fixed_point_set_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and fixed_point_set(f).contains(x) implies fixed_point_set(f).contains(f(x))
+}
+
+theorem monotone_pre_fixed_point_set_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and pre_fixed_point_set(f).contains(x) implies pre_fixed_point_set(f).contains(f(x))
+}
+
+theorem monotone_post_fixed_point_set_apply[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and post_fixed_point_set(f).contains(x) implies post_fixed_point_set(f).contains(f(x))
+}
+
+theorem monotone_fixed_point_set_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and fixed_point_set(f).contains(x)
+        implies fixed_point_set(f).contains(iterate(f, n, x))
+}
+
+theorem monotone_pre_fixed_point_set_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and pre_fixed_point_set(f).contains(x)
+        implies pre_fixed_point_set(f).contains(iterate(f, n, x))
+}
+
+theorem monotone_post_fixed_point_set_iterate[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and post_fixed_point_set(f).contains(x)
+        implies post_fixed_point_set(f).contains(iterate(f, n, x))
+}
+
+theorem monotone_apply_pre_fixed_is_pre_fixed[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies is_pre_fixed_point(f, f(x))
+}
+
+theorem monotone_apply_post_fixed_is_post_fixed[P: PartialOrder](f: P -> P, x: P) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies is_post_fixed_point(f, f(x))
+}
+
+theorem monotone_iterate_pre_fixed_le_lower_index[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    k: Nat,
+    m: Nat
+) {
+    is_monotone(f) and is_pre_fixed_point(f, x) and k <= m
+    implies iterate(f, m, x) <= iterate(f, k, x)
+}
+
+theorem monotone_iterate_post_fixed_le_higher_index[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    k: Nat,
+    m: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, x) and k <= m
+    implies iterate(f, k, x) <= iterate(f, m, x)
+}
+
+theorem monotone_iterate_pre_fixed_le_f[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_pre_fixed_point(f, x) implies iterate(f, n.suc, x) <= f(x)
+}
+
+theorem monotone_iterate_post_fixed_ge_f[P: PartialOrder](f: P -> P, x: P, n: Nat) {
+    is_monotone(f) and is_post_fixed_point(f, x) implies f(x) <= iterate(f, n.suc, x)
+}
+
+theorem monotone_iterate_pre_fixed_sandwich[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    i: Nat,
+    j: Nat,
+    n: Nat
+) {
+    is_monotone(f) and is_pre_fixed_point(f, x) and i <= j and j <= n
+    implies iterate(f, n, x) <= iterate(f, i, x)
+}
+
+theorem monotone_iterate_post_fixed_sandwich[P: PartialOrder](
+    f: P -> P,
+    x: P,
+    i: Nat,
+    j: Nat,
+    n: Nat
+) {
+    is_monotone(f) and is_post_fixed_point(f, x) and i <= j and j <= n
+    implies iterate(f, i, x) <= iterate(f, n, x)
+}
+
+theorem closure_operator_fixed_point_eq[P: PartialOrder](close: P -> P, x: P) {
+    is_closure_operator(close) and is_fixed_point(close, x) implies close(x) = x
+}
+
+theorem kernel_operator_fixed_point_eq[P: PartialOrder](kernel: P -> P, x: P) {
+    is_kernel_operator(kernel) and is_fixed_point(kernel, x) implies kernel(x) = x
+}
+
+theorem monotone_iterate_lower_of_le_pre_fixed[P: PartialOrder](
+    f: P -> P,
+    a: P,
+    b: P,
+    n: Nat
+) {
+    is_monotone(f) and is_pre_fixed_point(f, b) and a <= b
+    implies iterate(f, n, a) <= iterate(f, n, b) and iterate(f, n, b) <= b
+}
+
+theorem monotone_fixed_point_set_closed[P: PartialOrder](f: P -> P) {
+    is_monotone(f) implies forall(x: P) {
+        fixed_point_set(f).contains(x) implies fixed_point_set(f).contains(f(x))
+    }
+}
+
+theorem monotone_pre_fixed_point_set_closed[P: PartialOrder](f: P -> P) {
+    is_monotone(f) implies forall(x: P) {
+        pre_fixed_point_set(f).contains(x) implies pre_fixed_point_set(f).contains(f(x))
+    }
+}
+
+theorem monotone_post_fixed_point_set_closed[P: PartialOrder](f: P -> P) {
+    is_monotone(f) implies forall(x: P) {
+        post_fixed_point_set(f).contains(x) implies post_fixed_point_set(f).contains(f(x))
+    }
+}
+
+theorem fixed_point_of_compose_of_common[T](f: T -> T, g: T -> T, x: T) {
+    is_fixed_point(f, x) and is_fixed_point(g, x) implies is_fixed_point(compose(f, g), x)
+}
+
+theorem fixed_point_of_compose_self[T](f: T -> T, x: T) {
+    is_fixed_point(f, x) implies is_fixed_point(compose(f, f), x)
+}
+
+theorem fixed_point_of_outer_of_compose[T](f: T -> T, g: T -> T, x: T) {
+    is_fixed_point(g, x) and is_fixed_point(compose(f, g), x) implies is_fixed_point(f, x)
+}
+
+theorem fixed_point_compose_identity_left[T](f: T -> T, x: T) {
+    is_fixed_point(compose(identity_fn[T], f), x) = is_fixed_point(f, x)
+}
+
+theorem fixed_point_compose_identity_right[T](f: T -> T, x: T) {
+    is_fixed_point(compose(f, identity_fn[T]), x) = is_fixed_point(f, x)
+}
+
+define common_fixed_point_set[T](f: T -> T, g: T -> T) -> Set[T] {
+    fixed_point_set(f).intersection(fixed_point_set(g))
+}
+
+theorem common_fixed_point_set_contains_eq[T](f: T -> T, g: T -> T, x: T) {
+    common_fixed_point_set(f, g).contains(x) = (is_fixed_point(f, x) and is_fixed_point(g, x))
+}
+
+theorem common_fixed_point_set_comm[T](f: T -> T, g: T -> T) {
+    common_fixed_point_set(f, g) = common_fixed_point_set(g, f)
+}
+
+theorem common_fixed_point_set_subset_left[T](f: T -> T, g: T -> T) {
+    common_fixed_point_set(f, g).subset(fixed_point_set(f))
+}
+
+theorem common_fixed_point_set_subset_right[T](f: T -> T, g: T -> T) {
+    common_fixed_point_set(f, g).subset(fixed_point_set(g))
+}
+
+theorem identity_is_fixed_point[T](x: T) {
+    is_fixed_point(identity_fn[T], x)
+}
+
+theorem identity_is_pre_fixed_point[P: PartialOrder](x: P) {
+    is_pre_fixed_point(identity_fn[P], x)
+}
+
+theorem identity_is_post_fixed_point[P: PartialOrder](x: P) {
+    is_post_fixed_point(identity_fn[P], x)
+}
+
+theorem common_fixed_point_set_self[T](f: T -> T) {
+    common_fixed_point_set(f, f) = fixed_point_set(f)
+}
+
+theorem common_fixed_point_set_identity_left[T](g: T -> T) {
+    common_fixed_point_set(identity_fn[T], g) = fixed_point_set(g)
+}
+
+theorem common_fixed_point_set_identity_right[T](f: T -> T) {
+    common_fixed_point_set(f, identity_fn[T]) = fixed_point_set(f)
+}
+
+theorem pre_fixed_point_of_compose[P: PartialOrder](f: P -> P, g: P -> P, x: P) {
+    is_monotone(f) and is_pre_fixed_point(f, x) and is_pre_fixed_point(g, x)
+    implies is_pre_fixed_point(compose(f, g), x)
+}
+
+theorem post_fixed_point_of_compose[P: PartialOrder](f: P -> P, g: P -> P, x: P) {
+    is_monotone(f) and is_post_fixed_point(f, x) and is_post_fixed_point(g, x)
+    implies is_post_fixed_point(compose(f, g), x)
+}
+
+define common_pre_fixed_point_set[P: PartialOrder](f: P -> P, g: P -> P) -> Set[P] {
+    pre_fixed_point_set(f).intersection(pre_fixed_point_set(g))
+}
+
+define common_post_fixed_point_set[P: PartialOrder](f: P -> P, g: P -> P) -> Set[P] {
+    post_fixed_point_set(f).intersection(post_fixed_point_set(g))
+}
+
+theorem common_pre_fixed_point_set_contains_eq[P: PartialOrder](f: P -> P, g: P -> P, x: P) {
+    common_pre_fixed_point_set(f, g).contains(x) =
+        (is_pre_fixed_point(f, x) and is_pre_fixed_point(g, x))
+}
+
+theorem common_post_fixed_point_set_contains_eq[P: PartialOrder](f: P -> P, g: P -> P, x: P) {
+    common_post_fixed_point_set(f, g).contains(x) =
+        (is_post_fixed_point(f, x) and is_post_fixed_point(g, x))
+}
+
+theorem common_pre_fixed_point_set_comm[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_pre_fixed_point_set(f, g) = common_pre_fixed_point_set(g, f)
+}
+
+theorem common_post_fixed_point_set_comm[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_post_fixed_point_set(f, g) = common_post_fixed_point_set(g, f)
+}
+
+theorem common_pre_fixed_point_set_subset_left[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_pre_fixed_point_set(f, g).subset(pre_fixed_point_set(f))
+}
+
+theorem common_pre_fixed_point_set_subset_right[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_pre_fixed_point_set(f, g).subset(pre_fixed_point_set(g))
+}
+
+theorem common_post_fixed_point_set_subset_left[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_post_fixed_point_set(f, g).subset(post_fixed_point_set(f))
+}
+
+theorem common_post_fixed_point_set_subset_right[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_post_fixed_point_set(f, g).subset(post_fixed_point_set(g))
+}
+
+theorem common_pre_fixed_point_set_self[P: PartialOrder](f: P -> P) {
+    common_pre_fixed_point_set(f, f) = pre_fixed_point_set(f)
+}
+
+theorem common_post_fixed_point_set_self[P: PartialOrder](f: P -> P) {
+    common_post_fixed_point_set(f, f) = post_fixed_point_set(f)
+}
+
+theorem common_fixed_point_set_eq_common_pre_post_intersection[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g) =
+        common_pre_fixed_point_set(f, g).intersection(common_post_fixed_point_set(f, g))
+}
+
+theorem common_fixed_point_set_subset_common_pre[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(common_pre_fixed_point_set(f, g))
+}
+
+theorem common_fixed_point_set_subset_common_post[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(common_post_fixed_point_set(f, g))
+}
+
+theorem common_pre_fixed_point_set_identity_left[P: PartialOrder](g: P -> P) {
+    common_pre_fixed_point_set(identity_fn[P], g) = pre_fixed_point_set(g)
+}
+
+theorem common_pre_fixed_point_set_identity_right[P: PartialOrder](f: P -> P) {
+    common_pre_fixed_point_set(f, identity_fn[P]) = pre_fixed_point_set(f)
+}
+
+theorem common_post_fixed_point_set_identity_left[P: PartialOrder](g: P -> P) {
+    common_post_fixed_point_set(identity_fn[P], g) = post_fixed_point_set(g)
+}
+
+theorem common_post_fixed_point_set_identity_right[P: PartialOrder](f: P -> P) {
+    common_post_fixed_point_set(f, identity_fn[P]) = post_fixed_point_set(f)
+}
+
+theorem common_fixed_point_set_subset_pre_fixed_left[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(pre_fixed_point_set(f))
+}
+
+theorem common_fixed_point_set_subset_pre_fixed_right[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(pre_fixed_point_set(g))
+}
+
+theorem common_fixed_point_set_subset_post_fixed_left[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(post_fixed_point_set(f))
+}
+
+theorem common_fixed_point_set_subset_post_fixed_right[P: PartialOrder](f: P -> P, g: P -> P) {
+    common_fixed_point_set(f, g).subset(post_fixed_point_set(g))
+}
+
+theorem common_fixed_point_set_subset_compose[T](f: T -> T, g: T -> T) {
+    common_fixed_point_set(f, g).subset(fixed_point_set(compose(f, g)))
+}
+
+theorem common_pre_fixed_point_set_subset_compose[P: PartialOrder](f: P -> P, g: P -> P) {
+    is_monotone(f) implies
+        common_pre_fixed_point_set(f, g).subset(pre_fixed_point_set(compose(f, g)))
+}
+
+theorem common_post_fixed_point_set_subset_compose[P: PartialOrder](f: P -> P, g: P -> P) {
+    is_monotone(f) implies
+        common_post_fixed_point_set(f, g).subset(post_fixed_point_set(compose(f, g)))
+}
+
+define logistic_map(r: Real, x: Real) -> Real {
+    r * x * (Real.1 - x)
+}
+
+theorem logistic_map_zero(r: Real) {
+    logistic_map(r, Real.0) = Real.0
+}
+
+theorem logistic_map_zero_fixed_point(r: Real) {
+    is_fixed_point(logistic_map(r), Real.0)
+}
+
+theorem one_sub_sub_cancel(a: Real) {
+    Real.1 - (Real.1 - a) = a
+}
+
+theorem logistic_map_second_fixed_point(r: Real) {
+    r != Real.0 implies logistic_map(r, Real.1 - Real.1 / r) = Real.1 - Real.1 / r
+}
+
+theorem logistic_map_second_fixed_point_fp(r: Real) {
+    r != Real.0 implies is_fixed_point(logistic_map(r), Real.1 - Real.1 / r)
+}
+
+define is_contraction(f: Real -> Real, c: Real) -> Bool {
+    Real.0 <= c and c < Real.1
+        and forall(x: Real, y: Real) {
+            (f(x) - f(y)).abs <= c * (x - y).abs
+        }
+}
+
+theorem is_contraction_apply(f: Real -> Real, c: Real, x: Real, y: Real) {
+    is_contraction(f, c) implies (f(x) - f(y)).abs <= c * (x - y).abs
+}
+
+theorem is_contraction_intro(f: Real -> Real, c: Real) {
+    Real.0 <= c and c < Real.1
+        and (forall(x: Real, y: Real) { (f(x) - f(y)).abs <= c * (x - y).abs })
+    implies is_contraction(f, c)
+}
+
+theorem is_contraction_constant_lt_one(f: Real -> Real, c: Real) {
+    is_contraction(f, c) implies c < Real.1
+}
+
+theorem is_contraction_constant_nonneg(f: Real -> Real, c: Real) {
+    is_contraction(f, c) implies Real.0 <= c
+}
+
+theorem contraction_fixed_point_unique(f: Real -> Real, c: Real, x: Real, y: Real) {
+    is_contraction(f, c) and f(x) = x and f(y) = y implies x = y
+}
+
+define babylonian_step(a: Real, x: Real) -> Real {
+    (x + a / x) * Real.one_half
+}
+
+define babylonian_seq(a: Real, x0: Real, n: Nat) -> Real {
+    iterate(babylonian_step(a), n, x0)
+}
+
+theorem babylonian_seq_zero(a: Real, x0: Real) {
+    babylonian_seq(a, x0, Nat.0) = x0
+}
+
+theorem babylonian_seq_suc(a: Real, x0: Real, n: Nat) {
+    babylonian_seq(a, x0, n.suc) = babylonian_step(a, babylonian_seq(a, x0, n))
+}
+
+theorem babylonian_step_fixed_point(a: Real, y: Real) {
+    y * y = a and y != Real.0 implies babylonian_step(a, y) = y
+}
+
+theorem babylonian_has_fixed_point(a: Real) {
+    a > Real.0 implies exists(y: Real) {
+        y != Real.0 and y * y = a and babylonian_step(a, y) = y
+    }
+}
+
+let quarter: Real = Real.one_half * Real.one_half
+
+let three_quarters: Real = Real.1 - quarter
+
+define tent(x: Real) -> Real {
+    if x <= Real.one_half {
+        two * x
+    } else {
+        two * (Real.1 - x)
+    }
+}
+
+theorem one_half_lt_one {
+    Real.one_half < Real.1
+}
+
+theorem quarter_lte_one_half {
+    quarter <= Real.one_half
+}
+
+theorem two_mul_quarter_eq_one_half {
+    two * quarter = Real.one_half
+}
+
+theorem tent_quarter {
+    tent(quarter) = Real.one_half
+}
+
+theorem quarter_positive {
+    quarter > Real.0
+}
+
+theorem one_half_minus_quarter {
+    Real.one_half - quarter = quarter
+}
+
+theorem three_quarters_eq_half_plus_quarter {
+    three_quarters = Real.one_half + quarter
+}
+
+theorem three_quarters_gt_one_half {
+    Real.one_half < three_quarters
+}
+
+theorem one_minus_three_quarters {
+    Real.1 - three_quarters = quarter
+}
+
+theorem tent_three_quarters {
+    tent(three_quarters) = Real.one_half
+}
+
+define is_derivative_at(f: Real -> Real, df: Real -> Real, xstar: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(delta: Real) {
+            delta.is_positive and forall(h: Real) {
+                h != Real.0 and h.abs < delta
+                implies ((f(xstar + h) - f(xstar)) / h - df(xstar)).abs < eps
+            }
+        }
+    }
+}
+
+define is_stable_fixed_point(f: Real -> Real, xstar: Real) -> Bool {
+    is_fixed_point(f, xstar)
+        and forall(eps: Real) {
+            eps.is_positive implies exists(delta: Real) {
+                delta.is_positive and forall(x0: Real) {
+                    (x0 - xstar).abs < delta
+                    implies forall(n: Nat) {
+                        (iterate(f, n, x0) - xstar).abs < eps
+                    }
+                }
+            }
+        }
+}
+
+theorem bounded_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and tends_to_infinity(f) implies is_bounded_seq(compose(a, f))
+}
+
+theorem bounded_shift_add(a: Nat -> Real, k: Nat) {
+    is_bounded_seq(a) implies is_bounded_seq(compose(a, k.add))
+}
+
+theorem bounded_subsequence(a: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and is_subsequence_index(f) implies is_bounded_seq(subsequence(a, f))
+}
+
+theorem vanishes_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and tends_to_infinity(f) implies vanishes(compose(a, f))
+}
+
+theorem vanishes_shift_add(a: Nat -> Real, k: Nat) {
+    vanishes(a) implies vanishes(compose(a, k.add))
+}
+
+theorem vanishes_subsequence(a: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and is_subsequence_index(f) implies vanishes(subsequence(a, f))
+}
+
+theorem bounded_add_seq_compose_tends_to_infinity(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b) and tends_to_infinity(f)
+    implies is_bounded_seq(add_seq(compose(a, f), compose(b, f)))
+}
+
+theorem vanishes_add_seq_compose_tends_to_infinity(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and vanishes(b) and tends_to_infinity(f)
+    implies vanishes(add_seq(compose(a, f), compose(b, f)))
+}
+
+theorem bounded_mul_seq_compose_tends_to_infinity(c: Real, a: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and tends_to_infinity(f)
+    implies is_bounded_seq(mul_seq(c, compose(a, f)))
+}
+
+theorem vanishes_mul_seq_compose_tends_to_infinity(c: Real, a: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and tends_to_infinity(f)
+    implies vanishes(mul_seq(c, compose(a, f)))
+}
+
+theorem bounded_prod_seq_compose_tends_to_infinity(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b) and tends_to_infinity(f)
+    implies is_bounded_seq(prod_seq(compose(a, f), compose(b, f)))
+}
+
+theorem bounded_mul_vanishing_seq_compose_tends_to_infinity(
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat
+) {
+    is_bounded_seq(a) and vanishes(b) and tends_to_infinity(f)
+    implies vanishes(prod_seq(compose(a, f), compose(b, f)))
+}
+
+theorem vanishing_mul_bounded_seq_compose_tends_to_infinity(
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat
+) {
+    vanishes(a) and is_bounded_seq(b) and tends_to_infinity(f)
+    implies vanishes(prod_seq(compose(a, f), compose(b, f)))
+}
+
+theorem bounded_add_seq_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b)
+    implies is_bounded_seq(add_seq(compose(a, k.add), compose(b, k.add)))
+}
+
+theorem vanishes_add_seq_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    vanishes(a) and vanishes(b)
+    implies vanishes(add_seq(compose(a, k.add), compose(b, k.add)))
+}
+
+theorem bounded_prod_seq_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b)
+    implies is_bounded_seq(prod_seq(compose(a, k.add), compose(b, k.add)))
+}
+
+theorem bounded_mul_vanishing_seq_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    is_bounded_seq(a) and vanishes(b)
+    implies vanishes(prod_seq(compose(a, k.add), compose(b, k.add)))
+}
+
+theorem bounded_add_seq_subsequence(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b) and is_subsequence_index(f)
+    implies is_bounded_seq(add_seq(subsequence(a, f), subsequence(b, f)))
+}
+
+theorem vanishes_add_seq_subsequence(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and vanishes(b) and is_subsequence_index(f)
+    implies vanishes(add_seq(subsequence(a, f), subsequence(b, f)))
+}
+
+theorem bounded_prod_seq_subsequence(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and is_bounded_seq(b) and is_subsequence_index(f)
+    implies is_bounded_seq(prod_seq(subsequence(a, f), subsequence(b, f)))
+}
+
+theorem bounded_mul_vanishing_seq_subsequence(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    is_bounded_seq(a) and vanishes(b) and is_subsequence_index(f)
+    implies vanishes(prod_seq(subsequence(a, f), subsequence(b, f)))
+}
+
+theorem vanishing_mul_bounded_seq_subsequence(a: Nat -> Real, b: Nat -> Real, f: Nat -> Nat) {
+    vanishes(a) and is_bounded_seq(b) and is_subsequence_index(f)
+    implies vanishes(prod_seq(subsequence(a, f), subsequence(b, f)))
+}
+
+let two_pi = pi + pi
+
+define sin_nt(n: Nat, x: Real) -> Real {
+    (from_nat[Real](n) * x).sin
+}
+
+define cos_nt(n: Nat, x: Real) -> Real {
+    (from_nat[Real](n) * x).cos
+}
+
+define fourier_cos_integrand(f: Real -> Real, n: Nat, x: Real) -> Real {
+    f(x) * cos_nt(n, x)
+}
+
+define fourier_sin_integrand(f: Real -> Real, n: Nat, x: Real) -> Real {
+    f(x) * sin_nt(n, x)
+}
+
+define fourier_cos_coeff(f: Real -> Real, n: Nat) -> Real {
+    integral(fourier_cos_integrand(f, n), Real.0, two_pi) / pi
+}
+
+define fourier_sin_coeff(f: Real -> Real, n: Nat) -> Real {
+    integral(fourier_sin_integrand(f, n), Real.0, two_pi) / pi
+}
+
+theorem two_pi_pos {
+    Real.0 < two_pi
+}
+
+theorem two_pi_nonneg {
+    Real.0 <= two_pi
+}
+
+define fn_sincos(x: Real) -> Real {
+    pointwise_mul(Real.sin, Real.cos, x)
+}
+
+define fn_sin_sq(x: Real) -> Real {
+    pointwise_mul(Real.sin, Real.sin, x)
+}
+
+define fn_cos_sq(x: Real) -> Real {
+    pointwise_mul(Real.cos, Real.cos, x)
+}
+
+define fn_sin_sin2(x: Real) -> Real {
+    x.sin * (two * x).sin
+}
+
+define fn_x_sin(x: Real) -> Real {
+    identity_fn[Real](x) * x.sin
+}
+
+theorem sin_double(x: Real) {
+    (two * x).sin = two * x.sin * x.cos
+}
+
+theorem sub_add_cancel(a: Real, b: Real) {
+    (a - b) + b = a
+}
+
+theorem add_sub_sub_cancel(a: Real, b: Real, c: Real) {
+    (a - b) + (b - c) = a - c
+}
+
+theorem add_sub_add_cancel(a: Real, b: Real, c: Real) {
+    (a + b) - (b + c) = a - c
+}
+
+theorem add_self_two(a: Real) {
+    a + a = two * a
+}
+
+theorem add_add_sub_cancel(a: Real, b: Real) {
+    (a + b) + a - b = a + a
+}
+
+theorem sub_add_add_cancel(a: Real, b: Real) {
+    (a + b) - a + b = b + b
+}
+
+theorem pythag_mul(x: Real) {
+    x.sin * x.sin + x.cos * x.cos = Real.1
+}
+
+theorem half_pythag_sin_sq(x: Real) {
+    Real.1 + x.sin * x.sin - x.cos * x.cos = two * (x.sin * x.sin)
+}
+
+theorem half_pythag_cos_sq(x: Real) {
+    Real.1 - x.sin * x.sin + x.cos * x.cos = two * (x.cos * x.cos)
+}
+
+theorem half_twice(a: Real) {
+    (Real.1 / two) * (two * a) = a
+}
+
+theorem half_pythag_then_sin(x: Real) {
+    (Real.1 / two) * (Real.1 + x.sin * x.sin - x.cos * x.cos) = x.sin * x.sin
+}
+
+theorem half_pythag_then_cos(x: Real) {
+    (Real.1 / two) * (Real.1 - x.sin * x.sin + x.cos * x.cos) = x.cos * x.cos
+}
+
+theorem one_add_two_is_three {
+    Real.1 + two = from_nat[Real](Nat.3)
+}
+
+theorem one_nonneg {
+    Real.0 <= Real.1
+}
+
+theorem abs_le_one_imp_upper(a: Real) {
+    a.abs <= Real.1 implies a <= Real.1
+}
+
+theorem abs_le_one_imp_lower(a: Real) {
+    a.abs <= Real.1 implies -Real.1 <= a
+}
+
+theorem abs_le_imp_lower(a: Real, b: Real) {
+    a.abs <= b implies -b <= a
+}
+
+theorem abs_le_imp_upper(a: Real, b: Real) {
+    a.abs <= b implies a <= b
+}
+
+theorem abs_mul_le_one(s: Real, t: Real) {
+    s.abs <= Real.1 and t.abs <= Real.1 implies (s * t).abs <= Real.1
+}
+
+theorem fn_sincos_abs_le_one(x: Real) {
+    fn_sincos(x).abs <= Real.1
+}
+
+theorem fn_sin_sq_abs_le_one(x: Real) {
+    fn_sin_sq(x).abs <= Real.1
+}
+
+theorem fn_cos_sq_abs_le_one(x: Real) {
+    fn_cos_sq(x).abs <= Real.1
+}
+
+theorem fn_sin_sin2_abs_le_one(x: Real) {
+    fn_sin_sin2(x).abs <= Real.1
+}
+
+theorem fn_x_sin_abs_le_two_pi(x: Real) {
+    interval_contains(Real.0, two_pi, x) implies fn_x_sin(x).abs <= two_pi
+}
+
+theorem fn_sincos_lipschitz_m2(u: Real, v: Real) {
+    (fn_sincos(u) - fn_sincos(v)).abs <= two * (u - v).abs
+}
+
+theorem sin_add_abs_le_two(u: Real, v: Real) {
+    (u.sin + v.sin).abs <= two
+}
+
+theorem fn_sin_sq_lipschitz_m2(u: Real, v: Real) {
+    (fn_sin_sq(u) - fn_sin_sq(v)).abs <= two * (u - v).abs
+}
+
+theorem cos_add_abs_le_two(u: Real, v: Real) {
+    (u.cos + v.cos).abs <= two
+}
+
+theorem fn_cos_sq_lipschitz_m2(u: Real, v: Real) {
+    (fn_cos_sq(u) - fn_cos_sq(v)).abs <= two * (u - v).abs
+}
+
+theorem fn_sin_sin2_lipschitz_m3(u: Real, v: Real) {
+    (fn_sin_sin2(u) - fn_sin_sin2(v)).abs <= from_nat[Real](Nat.3) * (u - v).abs
+}
+
+theorem fn_x_sin_lipschitz_on(u: Real, v: Real) {
+    interval_contains(Real.0, two_pi, u) and interval_contains(Real.0, two_pi, v)
+    implies
+    (fn_x_sin(u) - fn_x_sin(v)).abs <= (Real.1 + two_pi) * (u - v).abs
+}
+
+define g_sincos(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two), pointwise_mul(Real.sin, Real.sin), x)
+}
+
+define g_sin_sq(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two),
+        pointwise_add(identity_fn[Real], pointwise_neg(pointwise_mul(Real.sin, Real.cos))), x)
+}
+
+define g_cos_sq(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](Real.1 / two),
+        pointwise_add(identity_fn[Real], pointwise_mul(Real.sin, Real.cos)), x)
+}
+
+define g_sin_sin2(x: Real) -> Real {
+    pointwise_mul(constant[Real, Real](two / from_nat[Real](Nat.3)),
+        pointwise_mul(pointwise_mul(Real.sin, Real.sin), Real.sin), x)
+}
+
+define g_x_sin(x: Real) -> Real {
+    pointwise_add(Real.sin, pointwise_neg(pointwise_mul(identity_fn[Real], Real.cos)), x)
+}
+
+theorem g_sincos_has_derivative {
+    is_derivative_fn(g_sincos, fn_sincos)
+}
+
+theorem g_sin_sq_has_derivative {
+    is_derivative_fn(g_sin_sq, fn_sin_sq)
+}
+
+theorem g_cos_sq_has_derivative {
+    is_derivative_fn(g_cos_sq, fn_cos_sq)
+}
+
+theorem g_sin_sin2_has_derivative {
+    is_derivative_fn(g_sin_sin2, fn_sin_sin2)
+}
+
+theorem g_x_sin_has_derivative {
+    is_derivative_fn(g_x_sin, fn_x_sin)
+}
+
+theorem g_sincos_continuous {
+    continuous(g_sincos)
+}
+
+theorem g_sin_sq_continuous {
+    continuous(g_sin_sq)
+}
+
+theorem g_cos_sq_continuous {
+    continuous(g_cos_sq)
+}
+
+theorem g_sin_sin2_continuous {
+    continuous(g_sin_sin2)
+}
+
+theorem g_x_sin_continuous {
+    continuous(g_x_sin)
+}
+
+theorem fn_sincos_integrable {
+    is_integrable(fn_sincos, Real.0, two_pi)
+}
+
+theorem fn_sin_sq_integrable {
+    is_integrable(fn_sin_sq, Real.0, two_pi)
+}
+
+theorem fn_cos_sq_integrable {
+    is_integrable(fn_cos_sq, Real.0, two_pi)
+}
+
+theorem fn_sin_sin2_integrable {
+    is_integrable(fn_sin_sin2, Real.0, two_pi)
+}
+
+theorem fn_x_sin_integrable {
+    is_integrable(fn_x_sin, Real.0, two_pi)
+}
+
+theorem integral_sin_mul_cos_zero {
+    integral(fn_sincos, Real.0, two_pi) = Real.0
+}
+
+theorem integral_sin_sq_zero_two_pi {
+    integral(fn_sin_sq, Real.0, two_pi) = pi
+}
+
+theorem integral_cos_sq_zero_two_pi {
+    integral(fn_cos_sq, Real.0, two_pi) = pi
+}
+
+theorem integral_sin_sin2_zero {
+    integral(fn_sin_sin2, Real.0, two_pi) = Real.0
+}
+
+theorem integral_x_sin_zero_two_pi {
+    integral(fn_x_sin, Real.0, two_pi) = -two_pi
+}
+
+theorem fourier_sin_coeff_identity_one {
+    fourier_sin_coeff(identity_fn[Real], Nat.1) = -two
+}
+
+theorem two_pi_eq_pi_add_pi {
+    two * pi = pi + pi
+}
+
+theorem sin_two_pi_value {
+    (two * pi).sin = Real.0
+}
+
+theorem cos_two_pi_value {
+    (two * pi).cos = Real.1
+}
+
+theorem integral_sin_zero_two_pi {
+    integral(Real.sin, Real.0, two * pi) = Real.0
+}
+
+theorem integral_cos_zero_two_pi {
+    integral(Real.cos, Real.0, two * pi) = Real.0
+}
+
+theorem integral_cos_zero_pi {
+    integral(Real.cos, Real.0, pi) = Real.0
+}
+
+theorem integral_sin_zero_pi_restated {
+    integral(Real.sin, Real.0, pi) = two
+}
+
+theorem cos_double(x: Real) {
+    (two * x).cos = x.cos * x.cos - x.sin * x.sin
+}
+
+theorem ring_add_sub_comm(a: Real, b: Real) {
+    a + b - (b - a) = a + a
+}
+
+theorem ring_sub_sub_comm(a: Real, b: Real) {
+    (a + b) - (a - b) = b + b
+}
+
+theorem ring_add_sub_comm_b(a: Real, b: Real) {
+    a + b + (a - b) = a + a
+}
+
+theorem sin_sq_times_two(x: Real) {
+    two * (x.sin * x.sin) = Real.1 - (two * x).cos
+}
+
+theorem cos_sq_times_two(x: Real) {
+    two * (x.cos * x.cos) = Real.1 + (two * x).cos
+}
+
+theorem product_to_sum_sin_cos(x: Real, y: Real) {
+    two * x.sin * y.cos = (x + y).sin + (x - y).sin
+}
+
+theorem product_to_sum_sin_sin(x: Real, y: Real) {
+    two * x.sin * y.sin = (x - y).cos - (x + y).cos
+}
+
+theorem product_to_sum_cos_cos(x: Real, y: Real) {
+    two * x.cos * y.cos = (x + y).cos + (x - y).cos
+}
+
+define sincos(x: Real) -> Real {
+    x.sin * x.cos
+}
+
+theorem sincos_abs_le_one(x: Real) {
+    sincos(x).abs <= Real.1
+}
+
+theorem sincos_le_one(x: Real) {
+    sincos(x) <= Real.1
+}
+
+theorem sincos_ge_neg_one(x: Real) {
+    -Real.1 <= sincos(x)
+}
+
+theorem sincos_lipschitz_m2(u: Real, v: Real) {
+    (sincos(u) - sincos(v)).abs <= two * (u - v).abs
+}
+
+theorem sincos_continuous {
+    continuous(sincos)
+}
+
+define sin_sq_fn(x: Real) -> Real {
+    x.sin * x.sin
+}
+
+define sincos_antiderivative(x: Real) -> Real {
+    Real.one_half * sin_sq_fn(x)
+}
+
+theorem sin_sq_derivative {
+    is_derivative_fn(sin_sq_fn, pointwise_mul(constant[Real, Real](two), sincos))
+}
+
+theorem sincos_antiderivative_derivative {
+    is_derivative_fn(sincos_antiderivative, sincos)
+}
+
+theorem sincos_antiderivative_continuous {
+    continuous(sincos_antiderivative)
+}
+
+theorem sincos_integrable_zero_two_pi {
+    is_integrable(sincos, Real.0, two * pi)
+}
+
+theorem integral_sincos_zero_two_pi {
+    integral(sincos, Real.0, two * pi) = Real.0
+}
+
+define cos_harmonic(x: Real, k: Nat) -> Real {
+    (from_nat[Real](k) * x).cos
+}
+
+define cos_harmonic_sum(x: Real, n: Nat) -> Real {
+    partial(compose(cos_harmonic(x), Nat.suc), n)
+}
+
+define half_angle_harmonic(x: Real, k: Nat) -> Real {
+    ((from_nat[Real](k) + Real.one_half) * x).sin
+}
+
+define half_angle_diff(x: Real, i: Nat) -> Real {
+    half_angle_harmonic(x, i.suc) - half_angle_harmonic(x, i)
+}
+
+theorem half_angle_diff_telescopes(x: Real, n: Nat) {
+    partial(half_angle_diff(x), n) = half_angle_harmonic(x, n) - half_angle_harmonic(x, Nat.0)
+}
+
+theorem half_angle_diff_expansion(x: Real, i: Nat) {
+    two * (x * Real.one_half).sin * cos_harmonic(x, i.suc) = half_angle_diff(x, i)
+}
+
+theorem dirichlet_kernel_identity(x: Real, n: Nat) {
+    two * (x * Real.one_half).sin * (Real.one_half + cos_harmonic_sum(x, n)) = half_angle_harmonic(x, n)
+}
+
+theorem sin_nt_zero_harmonic(x: Real) {
+    sin_nt(Nat.0, x) = Real.0
+}
+
+theorem cos_nt_zero_harmonic(x: Real) {
+    cos_nt(Nat.0, x) = Real.1
+}
+
+theorem sin_nt_at_zero(k: Nat) {
+    sin_nt(k, Real.0) = Real.0
+}
+
+theorem cos_nt_at_zero(k: Nat) {
+    cos_nt(k, Real.0) = Real.1
+}
+
+theorem sin_nt_suc_at_two_pi(k: Nat) {
+    sin_nt(k.suc, two_pi) = sin_nt(k, two_pi) * two_pi.cos + cos_nt(k, two_pi) * two_pi.sin
+}
+
+theorem sin_nt_two_pi_zero(k: Nat) {
+    sin_nt(k, two_pi) = Real.0
+}
+
+theorem cos_nt_suc_at_two_pi(k: Nat) {
+    cos_nt(k.suc, two_pi) = cos_nt(k, two_pi) * two_pi.cos - sin_nt(k, two_pi) * two_pi.sin
+}
+
+theorem cos_nt_two_pi_one(k: Nat) {
+    cos_nt(k, two_pi) = Real.1
+}
+
+theorem sin_nt_suc_decomp(k: Nat, x: Real) {
+    sin_nt(k.suc, x) = sin_nt(k, x) * x.cos + cos_nt(k, x) * x.sin
+}
+
+theorem cos_nt_suc_decomp(k: Nat, x: Real) {
+    cos_nt(k.suc, x) = cos_nt(k, x) * x.cos - sin_nt(k, x) * x.sin
+}
+
+theorem ring_deriv_sin_rearrange(a: Real, b: Real, c: Real, d: Real) {
+    -a + b + (c - d) = b - d + (c - a)
+}
+
+theorem sin_deriv_expr_eq(m: Nat, x: Real) {
+    (sin_nt(m, x) * -x.sin + x.cos * (from_nat[Real](m) * cos_nt(m, x))) +
+        (cos_nt(m, x) * x.cos + x.sin * -(from_nat[Real](m) * sin_nt(m, x))) = from_nat[Real](m.suc) * cos_nt(m.suc, x)
+
+}
+
+theorem ring_neg_sum(a: Real, b: Real) {
+    -a + -b = -(a + b)
+}
+
+theorem ring_cos_inside(k: Real, u: Real, v: Real) {
+    (v + k * u) + (u + k * v) = k * u + k * v + u + v
+}
+
+theorem ring_deriv_cos_rearrange(k: Real, u: Real, v: Real) {
+    (-v + -(k * u)) + -(u + k * v) = -(k * u + k * v + u + v)
+}
+
+theorem cos_deriv_expr_eq(m: Nat, x: Real) {
+    (cos_nt(m, x) * -x.sin + x.cos * -(from_nat[Real](m) * sin_nt(m, x))) +
+        -(sin_nt(m, x) * x.cos + x.sin * (from_nat[Real](m) * cos_nt(m, x))) = -(from_nat[Real](m.suc) * sin_nt(m.suc, x))
+
+}
+
+theorem sin_nt_continuous(k: Nat) {
+    continuous(sin_nt(k))
+}
+
+theorem cos_nt_continuous(k: Nat) {
+    continuous(cos_nt(k))
+}
+
+define sin_deriv_expr_fn(m: Nat) -> (Real -> Real) {
+    pointwise_add(pointwise_add(pointwise_mul(sin_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))), pointwise_add(pointwise_mul(cos_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))))
+
+
+
+}
+
+theorem sin_deriv_expr_fn_apply(m: Nat, x: Real) {
+    sin_deriv_expr_fn(m, x) = (sin_nt(m, x) * -x.sin + x.cos * (from_nat[Real](m) * cos_nt(m, x))) +
+
+        (cos_nt(m, x) * x.cos + x.sin * -(from_nat[Real](m) * sin_nt(m, x)))
+}
+
+define cos_deriv_expr_fn(m: Nat) -> (Real -> Real) {
+    pointwise_add(pointwise_add(pointwise_mul(cos_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))), pointwise_neg(pointwise_add(pointwise_mul(sin_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m))))))
+
+
+
+}
+
+theorem cos_deriv_expr_fn_apply(m: Nat, x: Real) {
+    cos_deriv_expr_fn(m, x) = (cos_nt(m, x) * -x.sin + x.cos * -(from_nat[Real](m) * sin_nt(m, x))) +
+
+        -(sin_nt(m, x) * x.cos + x.sin * (from_nat[Real](m) * cos_nt(m, x)))
+}
+
+theorem sin_deriv_expr_fn_eq(m: Nat) {
+    pointwise_add(pointwise_add(pointwise_mul(sin_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))), pointwise_add(pointwise_mul(cos_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m)))))) = pointwise_mul(constant[Real, Real](from_nat[Real](m.suc)), cos_nt(m.suc))
+
+
+
+
+}
+
+theorem cos_deriv_expr_fn_eq(m: Nat) {
+    pointwise_add(pointwise_add(pointwise_mul(cos_nt(m), pointwise_neg(Real.sin)), pointwise_mul(Real.cos, pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m)), sin_nt(m))))), pointwise_neg(pointwise_add(pointwise_mul(sin_nt(m), Real.cos), pointwise_mul(Real.sin, pointwise_mul(constant[Real, Real](from_nat[Real](m)), cos_nt(m)))))) = pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](m.suc)), sin_nt(m.suc)))
+
+
+
+
+}
+
+theorem sin_nt_derivative(k: Nat) {
+    is_derivative_fn(sin_nt(k), pointwise_mul(constant[Real, Real](from_nat[Real](k)), cos_nt(k)))
+}
+
+theorem cos_nt_derivative(k: Nat) {
+    is_derivative_fn(cos_nt(k), pointwise_neg(pointwise_mul(constant[Real, Real](from_nat[Real](k)), sin_nt(k))))
+}
+
+theorem from_nat_nonneg_real(k: Nat) {
+    Real.0 <= from_nat[Real](k)
+}
+
+theorem from_nat_abs(k: Nat) {
+    (from_nat[Real](k)).abs = from_nat[Real](k)
+}
+
+theorem sin_nt_lipschitz(k: Nat, u: Real, v: Real) {
+    (sin_nt(k, u) - sin_nt(k, v)).abs <= from_nat[Real](k) * (u - v).abs
+}
+
+theorem cos_nt_lipschitz(k: Nat, u: Real, v: Real) {
+    (cos_nt(k, u) - cos_nt(k, v)).abs <= from_nat[Real](k) * (u - v).abs
+}
+
+theorem sin_nt_abs_le_one(k: Nat, x: Real) {
+    (sin_nt(k, x)).abs <= Real.1
+}
+
+theorem cos_nt_abs_le_one(k: Nat, x: Real) {
+    (cos_nt(k, x)).abs <= Real.1
+}
+
+define g_sin_nt(k: Nat) -> (Real -> Real) {
+    pointwise_neg(pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](k)), cos_nt(k)))
+}
+
+define g_cos_nt(k: Nat) -> (Real -> Real) {
+    pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](k)), sin_nt(k))
+}
+
+theorem from_nat_suc_ne_zero_from_pos(k: Nat) {
+    Nat.0 < k implies from_nat[Real](k) != Real.0
+}
+
+theorem g_cos_nt_has_derivative(k: Nat) {
+    Nat.0 < k implies is_derivative_fn(g_cos_nt(k), cos_nt(k))
+}
+
+theorem g_sin_nt_has_derivative(k: Nat) {
+    Nat.0 < k implies is_derivative_fn(g_sin_nt(k), sin_nt(k))
+}
+
+theorem g_cos_nt_continuous(k: Nat) {
+    continuous(g_cos_nt(k))
+}
+
+theorem g_sin_nt_continuous(k: Nat) {
+    continuous(g_sin_nt(k))
+}
+
+theorem sin_nt_integrable(k: Nat) {
+    is_integrable(sin_nt(k.suc), Real.0, two_pi)
+}
+
+theorem integral_sin_nt_zero(k: Nat) {
+    integral(sin_nt(k.suc), Real.0, two_pi) = Real.0
+}
+
+theorem cos_nt_integrable(k: Nat) {
+    is_integrable(cos_nt(k.suc), Real.0, two_pi)
+}
+
+theorem integral_cos_nt_zero(k: Nat) {
+    integral(cos_nt(k.suc), Real.0, two_pi) = Real.0
+}
+
+theorem integral_one_zero_two_pi {
+    integral(constant[Real, Real](Real.1), Real.0, two_pi) = two_pi
+}
+
+define dirichlet_kernel(t: Real, n: Nat) -> Real {
+    Real.1 + two * cos_harmonic_sum(t, n)
+}
+
+theorem dirichlet_kernel_scaled(t: Real, n: Nat) {
+    (t * Real.one_half).sin * dirichlet_kernel(t, n) = half_angle_harmonic(t, n)
+}
+
+theorem dirichlet_kernel_closed_form(t: Real, n: Nat) {
+    (t * Real.one_half).sin != Real.0
+    implies dirichlet_kernel(t, n) = half_angle_harmonic(t, n) / (t * Real.one_half).sin
+}
+
+define seq_apply(seq: Nat -> (Real -> Real), x: Real, i: Nat) -> Real {
+    seq(i, x)
+}
+
+define fn_partial_seq(seq: Nat -> (Real -> Real), n: Nat, x: Real) -> Real {
+    partial(seq_apply(seq, x), n)
+}
+
+define seq_abs(a: Nat -> Real, i: Nat) -> Real {
+    (a(i)).abs
+}
+
+theorem partial_triangle_abs(a: Nat -> Real, n: Nat) {
+    partial(a, n).abs <= partial(seq_abs(a), n)
+}
+
+theorem derivative_fn_fn_partial_seq(seq: Nat -> (Real -> Real), dseq: Nat -> (Real -> Real), n: Nat) {
+    (forall(i: Nat) { i < n implies is_derivative_fn(seq(i), dseq(i)) })
+    implies is_derivative_fn(fn_partial_seq(seq, n), fn_partial_seq(dseq, n))
+}
+
+define seq_cos(i: Nat) -> (Real -> Real) {
+    cos_nt(i.suc)
+}
+
+define seq_sin_over_k(i: Nat) -> (Real -> Real) {
+    pointwise_mul(constant[Real, Real](Real.1 / from_nat[Real](i.suc)), sin_nt(i.suc))
+}
+
+theorem seq_sin_over_k_derivative(i: Nat) {
+    is_derivative_fn(seq_sin_over_k(i), cos_nt(i.suc))
+}
+
+define dirichlet_deriv_fn(n: Nat) -> (Real -> Real) {
+    pointwise_add(constant[Real, Real](Real.1), pointwise_mul(constant[Real, Real](two), fn_partial_seq(seq_cos, n)))
+
+}
+
+define dirichlet_kernel_fn(n: Nat, t: Real) -> Real {
+    dirichlet_kernel(t, n)
+}
+
+theorem fn_partial_seq_cos_eq_sum(t: Real, n: Nat) {
+    fn_partial_seq(seq_cos, n, t) = cos_harmonic_sum(t, n)
+}
+
+theorem dirichlet_deriv_fn_eq_kernel(n: Nat) {
+    dirichlet_deriv_fn(n) = dirichlet_kernel_fn(n)
+}
+
+define g_dirichlet(n: Nat) -> (Real -> Real) {
+    pointwise_add(identity_fn[Real], pointwise_mul(constant[Real, Real](two), fn_partial_seq(seq_sin_over_k, n)))
+
+}
+
+theorem g_dirichlet_has_derivative(n: Nat) {
+    is_derivative_fn(g_dirichlet(n), dirichlet_kernel_fn(n))
+}
+
+theorem partial_const_seq(f: Nat -> Real, n: Nat, c: Real) {
+    (forall(i: Nat) { i < n implies f(i) = c }) implies partial(f, n) = from_nat[Real](n) * c
+}
+
+theorem partial_lte_self(f: Nat -> Real, g: Nat -> Real, n: Nat) {
+    (forall(i: Nat) { i < n implies f(i) <= g(i) }) implies partial(f, n) <= partial(g, n)
+}
+
+define seq_neg(a: Nat -> Real, i: Nat) -> Real {
+    -(a(i))
+}
+
+define seq_diff(a: Nat -> Real, b: Nat -> Real, i: Nat) -> Real {
+    a(i) - b(i)
+}

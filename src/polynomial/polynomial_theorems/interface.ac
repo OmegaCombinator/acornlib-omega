@@ -1,0 +1,498 @@
+theorem polynomial_linear_root_inverse[F: Field](a: F, b: F) {
+    a != F.0 implies polynomial_eval(linear_polynomial(a, b), -b * a.inverse) = F.0
+}
+
+theorem polynomial_linear_has_root[F: Field](a: F, b: F) {
+    a != F.0 implies exists(x: F) {
+        polynomial_eval(linear_polynomial(a, b), x) = F.0
+    }
+}
+
+theorem polynomial_root_constant[R: Semiring](r: R, x: R) {
+    (polynomial_eval(polynomial_constant(r), x) = R.0) = (r = R.0)
+}
+
+theorem polynomial_root_monomial_one[F: Field](r: F, x: F) {
+    (polynomial_eval(polynomial_monomial(Nat.1, r), x) = F.0) = (r = F.0 or x = F.0)
+}
+
+theorem polynomial_root_product_iff[F: Field](p: Polynomial[F], q: Polynomial[F], x: F) {
+    (polynomial_eval(polynomial_mul(p, q), x) = F.0) =
+        (polynomial_eval(p, x) = F.0 or polynomial_eval(q, x) = F.0)
+}
+
+theorem polynomial_root_linear_product[F: Field](a: F, b: F, x: F) {
+    (polynomial_eval(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -b)), x) = F.0) = (x = a or x = b)
+}
+
+theorem polynomial_shift_root[R: CommRing](p: Polynomial[R], a: R, r: R) {
+    (polynomial_eval(p, r) = R.0) = (polynomial_shift_eval(p, a, r - a) = R.0)
+}
+
+theorem polynomial_scale_eval_of_mul[R: CommRing](p: Polynomial[R], c: R, x: R) {
+    polynomial_scale_eval(p, c, x) = polynomial_eval(p, c * x)
+}
+
+theorem polynomial_root_scale_field[F: Field](p: Polynomial[F], c: F, r: F) {
+    c != F.0 implies
+    (polynomial_eval(p, r) = F.0) = (polynomial_scale_eval(p, c, r * c.inverse) = F.0)
+}
+
+theorem polynomial_root_shift_zero[R: CommRing](p: Polynomial[R], a: R) {
+    (polynomial_eval(p, a) = R.0) = (polynomial_shift_eval(p, a, R.0) = R.0)
+}
+
+theorem polynomial_root_zero_point[R: Semiring](p: Polynomial[R]) {
+    (polynomial_eval(p, R.0) = R.0) = (p.coeff(Nat.0) = R.0)
+}
+
+theorem polynomial_root_monomial_power[F: Field](n: Nat, r: F, x: F) {
+    (polynomial_eval(polynomial_monomial(n.suc, r), x) = F.0) =
+        (r = F.0 or x.pow(n.suc) = F.0)
+}
+
+define polynomial_double_root[R: CommRing](p: Polynomial[R], a: R) -> Bool {
+    polynomial_divides(polynomial_mul(linear_polynomial(R.1, -a), linear_polynomial(R.1, -a)),
+        p)
+}
+
+theorem polynomial_square_root_unique[F: Field](a: F, x: F) {
+    (polynomial_eval(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -a)), x) = F.0) = (x = a)
+}
+
+theorem polynomial_square_root_at_a[R: CommRing](a: R) {
+    polynomial_eval(polynomial_mul(linear_polynomial(R.1, -a),
+        linear_polynomial(R.1, -a)), a) = R.0
+}
+
+theorem polynomial_double_root_implies_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_double_root(p, a) implies polynomial_eval(p, a) = R.0
+}
+
+theorem polynomial_double_root_eval[R: CommRing](p: Polynomial[R], a: R, x: R) {
+    polynomial_double_root(p, a) implies
+    exists(q: Polynomial[R]) {
+        polynomial_eval(p, x) =
+            polynomial_eval(polynomial_mul(linear_polynomial(R.1, -a),
+                linear_polynomial(R.1, -a)), x) * polynomial_eval(q, x)
+    }
+}
+
+theorem cubic_vieta_factorization[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_mul(polynomial_mul(linear_polynomial(R.1, -r1),
+        linear_polynomial(R.1, -r2)), linear_polynomial(R.1, -r3)) =
+        cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3))
+}
+
+theorem cubic_root_vieta_a[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r1) = R.0
+}
+
+theorem cubic_root_vieta_b[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r2) = R.0
+}
+
+theorem cubic_root_vieta_c[R: CommRing](r1: R, r2: R, r3: R) {
+    polynomial_eval(cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)), r3) = R.0
+}
+
+theorem vieta_cubic_coeff_quadratic[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.2) = -(r1 + r2 + r3)
+}
+
+theorem vieta_cubic_coeff_linear[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.1) = r1 * r2 + r1 * r3 + r2 * r3
+}
+
+theorem vieta_cubic_coeff_constant[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.0) = -(r1 * r2 * r3)
+}
+
+theorem vieta_cubic_coeff_leading[R: CommRing](r1: R, r2: R, r3: R) {
+    cubic_polynomial(R.1, -(r1 + r2 + r3), r1 * r2 + r1 * r3 + r2 * r3, -(r1 * r2 * r3)).coeff(Nat.3) = R.1
+}
+
+theorem polynomial_quotient_support_bounded_by_pred[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(polynomial_quotient(p, a, n.suc), n)
+}
+
+theorem polynomial_eq_zero_of_root_quotient_eq_zero[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n.suc) and
+        polynomial_eval(p, a) = F.0 and
+        polynomial_quotient(p, a, n.suc) = Polynomial[F].zero
+    implies p = Polynomial[F].zero
+}
+
+theorem polynomial_quotient_ne_zero_of_root[F: Field](
+    p: Polynomial[F],
+    a: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n.suc) and
+        p != Polynomial[F].zero and
+        polynomial_eval(p, a) = F.0
+    implies polynomial_quotient(p, a, n.suc) != Polynomial[F].zero
+}
+
+define polynomial_roots_on_list[F: Field](p: Polynomial[F], roots: List[F]) -> Bool {
+    forall(x: F) {
+        roots.contains(x) implies polynomial_eval(p, x) = F.0
+    }
+}
+
+theorem polynomial_roots_on_list_tail[F: Field](
+    p: Polynomial[F],
+    head: F,
+    tail: List[F]
+) {
+    polynomial_roots_on_list(p, List.cons(head, tail)) implies
+        polynomial_roots_on_list(p, tail)
+}
+
+theorem polynomial_quotient_root_of_distinct_root[F: Field](
+    p: Polynomial[F],
+    a: F,
+    x: F,
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        polynomial_eval(p, a) = F.0 and
+        polynomial_eval(p, x) = F.0 and
+        x != a
+    implies polynomial_eval(polynomial_quotient(p, a, n), x) = F.0
+}
+
+theorem polynomial_roots_on_list_quotient_tail[F: Field](
+    p: Polynomial[F],
+    head: F,
+    tail: List[F],
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        List.cons(head, tail).is_unique and
+        polynomial_roots_on_list(p, List.cons(head, tail))
+    implies polynomial_roots_on_list(polynomial_quotient(p, head, n), tail)
+}
+
+define polynomial_root_list_bound_property[F: Field](n: Nat) -> Bool {
+    forall(p: Polynomial[F], roots: List[F]) {
+        polynomial_support_bounded_by(p, n) and
+            p != Polynomial[F].zero and
+            roots.is_unique and
+            polynomial_roots_on_list(p, roots)
+        implies roots.length < n
+    }
+}
+
+theorem polynomial_root_list_length_lt_support_bound[F: Field](
+    p: Polynomial[F],
+    roots: List[F],
+    n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and
+        p != Polynomial[F].zero and
+        roots.is_unique and
+        polynomial_roots_on_list(p, roots)
+    implies roots.length < n
+}
+
+define rationalise(p: Polynomial[Int]) -> Polynomial[Rat] {
+    polynomial_map(int_to_rat_hom, p)
+}
+
+theorem rationalise_coeff(p: Polynomial[Int], n: Nat) {
+    rationalise(p).coeff(n) = Rat.from_int(p.coeff(n))
+}
+
+theorem rationalise_ne_zero(p: Polynomial[Int]) {
+    p != Polynomial[Int].zero implies rationalise(p) != Polynomial[Rat].zero
+}
+
+theorem rationalise_support_bounded_by(p: Polynomial[Int], n: Nat) {
+    polynomial_support_bounded_by(p, n)
+        implies polynomial_support_bounded_by(rationalise(p), n)
+}
+
+define int_roots_on_list(p: Polynomial[Int], roots: List[Int]) -> Bool {
+    forall(x: Int) {
+        roots.contains(x) implies polynomial_eval(p, x) = Int.0
+    }
+}
+
+theorem int_agreement_gives_roots(
+    p: Polynomial[Int], q: Polynomial[Int], points: List[Int]
+) {
+    int_agrees_on_list(p, q, points) implies int_roots_on_list(p.sub(q), points)
+}
+
+theorem int_roots_rationalise(p: Polynomial[Int], roots: List[Int]) {
+    int_roots_on_list(p, roots)
+        implies polynomial_roots_on_list(rationalise(p), map(roots, Rat.from_int))
+}
+
+theorem int_polynomial_root_list_length_lt_support_bound(
+    p: Polynomial[Int], roots: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) and p != Polynomial[Int].zero
+        and roots.is_unique and int_roots_on_list(p, roots)
+        implies roots.length < n
+}
+
+define int_solutions_on_list(p: Polynomial[Int], c: Int, roots: List[Int]) -> Bool {
+    forall(x: Int) {
+        roots.contains(x) implies polynomial_eval(p, x) = c
+    }
+}
+
+theorem int_solutions_are_roots(p: Polynomial[Int], c: Int, roots: List[Int]) {
+    int_solutions_on_list(p, c, roots)
+        implies int_roots_on_list(p.sub(Polynomial[Int].constant(c)), roots)
+}
+
+theorem int_polynomial_value_list_length_lt_support_bound(
+    p: Polynomial[Int], c: Int, roots: List[Int], n: Nat
+) {
+    polynomial_support_bounded_by(p.sub(Polynomial[Int].constant(c)), n)
+        and p.sub(Polynomial[Int].constant(c)) != Polynomial[Int].zero
+        and roots.is_unique and int_solutions_on_list(p, c, roots)
+        implies roots.length < n
+}
+
+define polynomial_pow[R: Semiring](p: Polynomial[R], k: Nat) -> Polynomial[R] {
+    match k {
+        Nat.zero {
+            Polynomial[R].one
+        }
+        Nat.suc(pred) {
+            polynomial_mul(p, polynomial_pow(p, pred))
+        }
+    }
+}
+
+theorem polynomial_pow_zero[R: Semiring](p: Polynomial[R]) {
+    polynomial_pow(p, Nat.0) = Polynomial[R].one
+}
+
+theorem polynomial_pow_suc[R: Semiring](p: Polynomial[R], k: Nat) {
+    polynomial_pow(p, k.suc) = polynomial_mul(p, polynomial_pow(p, k))
+}
+
+theorem polynomial_pow_one[R: CommRing](p: Polynomial[R]) {
+    polynomial_pow(p, Nat.1) = p
+}
+
+theorem polynomial_pow_add[R: CommRing](p: Polynomial[R], m: Nat, n: Nat) {
+    polynomial_pow(p, m + n) = polynomial_mul(polynomial_pow(p, m), polynomial_pow(p, n))
+}
+
+theorem polynomial_mul_linear_coeff[R: CommRing](a: R, b: R, q: Polynomial[R], k: Nat) {
+    k >= Nat.1 implies
+    polynomial_mul(linear_polynomial(a, b), q).coeff(k) =
+        linear_polynomial(a, b).coeff(Nat.0) * q.coeff(k) +
+        linear_polynomial(a, b).coeff(Nat.1) * q.coeff(k - Nat.1)
+}
+
+theorem polynomial_mul_x_minus_a_coeff[R: CommRing](a: R, q: Polynomial[R], k: Nat) {
+    k >= Nat.1 implies
+    polynomial_mul(linear_polynomial(R.1, -a), q).coeff(k) =
+        (-a) * q.coeff(k) + q.coeff(k - Nat.1)
+}
+
+theorem polynomial_mul_x_minus_a_coeff_zero[R: CommRing](a: R, q: Polynomial[R]) {
+    polynomial_mul(linear_polynomial(R.1, -a), q).coeff(Nat.0) = (-a) * q.coeff(Nat.0)
+}
+
+theorem multiplicity_coeff_quotient_recurrence[R: Semiring](c: Nat -> R, a: R, n: Nat, i: Nat) {
+    i < n implies
+    coeff_quotient(c, a, n.suc, i) = c(i.suc) + a * coeff_quotient(c, a, n.suc, i.suc)
+}
+
+theorem multiplicity_quotient_recurrence[R: Semiring](p: Polynomial[R], a: R, n: Nat, i: Nat) {
+    i < n implies
+    polynomial_quotient(p, a, n.suc).coeff(i) =
+        p.coeff(i.suc) + a * polynomial_quotient(p, a, n.suc).coeff(i.suc)
+}
+
+theorem multiplicity_quotient_zero_coeff[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_quotient(p, a, n.suc).coeff(Nat.0) = coeff_eval(coeff_tail(p.coeff), a, n)
+}
+
+theorem multiplicity_quotient_diagonal_zero[R: Semiring](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_quotient(p, a, n.suc).coeff(n) = R.0
+}
+
+theorem polynomial_mul_linear_quotient_eq[R: CommRing](p: Polynomial[R], a: R, n: Nat) {
+    polynomial_support_bounded_by(p, n) and polynomial_eval(p, a) = R.0 implies
+    polynomial_mul(linear_polynomial(R.1, -a), polynomial_quotient(p, a, n.suc)) = p
+}
+
+theorem polynomial_root_imp_linear_divides[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_divides(linear_polynomial(R.1, -a), p)
+}
+
+theorem polynomial_linear_divides_imp_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_divides(linear_polynomial(R.1, -a), p) implies polynomial_eval(p, a) = R.0
+}
+
+theorem polynomial_linear_divides_iff_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_divides(linear_polynomial(R.1, -a), p) = (polynomial_eval(p, a) = R.0)
+}
+
+define polynomial_root_multiplicity_at_least[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat
+) -> Bool {
+    polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k), p)
+}
+
+theorem polynomial_root_multiplicity_one_iff_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_root_multiplicity_at_least(p, a, Nat.1) = (polynomial_eval(p, a) = R.0)
+}
+
+theorem polynomial_root_multiplicity_at_least_monotone[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat, j: Nat
+) {
+    polynomial_root_multiplicity_at_least(p, a, k) and j <= k implies
+        polynomial_root_multiplicity_at_least(p, a, j)
+}
+
+define polynomial_root_multiplicity_exact[R: CommRing](
+    p: Polynomial[R], a: R, k: Nat
+) -> Bool {
+    polynomial_root_multiplicity_at_least(p, a, k) and
+        not polynomial_root_multiplicity_at_least(p, a, k.suc)
+}
+
+theorem polynomial_root_multiplicity_exact_divides[R: CommRing](p: Polynomial[R], a: R, k: Nat) {
+    polynomial_root_multiplicity_exact(p, a, k) implies
+        polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k), p)
+}
+
+theorem polynomial_root_multiplicity_exact_not_next[R: CommRing](p: Polynomial[R], a: R, k: Nat) {
+    polynomial_root_multiplicity_exact(p, a, k) implies
+        not polynomial_divides(polynomial_pow(linear_polynomial(R.1, -a), k.suc), p)
+}
+
+define linear_factor_product[F: Field](roots: List[F]) -> Polynomial[F] {
+    match roots {
+        List.nil {
+            Polynomial[F].one
+        }
+        List.cons(head, tail) {
+            polynomial_mul(linear_polynomial(F.1, -head), linear_factor_product(tail))
+        }
+    }
+}
+
+theorem multiplicity_root_mul_left[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
+}
+
+theorem polynomial_two_roots_product_divides[F: Field](p: Polynomial[F], a: F, b: F) {
+    a != b and polynomial_eval(p, a) = F.0 and polynomial_eval(p, b) = F.0 implies
+    polynomial_divides(polynomial_mul(linear_polynomial(F.1, -a),
+        linear_polynomial(F.1, -b)), p)
+}
+
+theorem polynomial_coprime_linear_product_divides[F: Field](
+    f: Polynomial[F], a: F, p: Polynomial[F]
+) {
+    polynomial_divides(f, p) and polynomial_divides(linear_polynomial(F.1, -a), p) and
+    polynomial_eval(f, a) != F.0
+    implies polynomial_divides(polynomial_mul(linear_polynomial(F.1, -a), f), p)
+}
+
+theorem linear_factor_product_eval_ne_zero[F: Field](roots: List[F], a: F) {
+    roots.is_unique and not roots.contains(a) implies
+    polynomial_eval(linear_factor_product(roots), a) != F.0
+}
+
+theorem polynomial_root_list_product_divides[F: Field](p: Polynomial[F], roots: List[F]) {
+    roots.is_unique and polynomial_roots_on_list(p, roots) implies
+    polynomial_divides(linear_factor_product(roots), p)
+}
+
+theorem polynomial_root_count_le_degree[F: Field](p: Polynomial[F], roots: List[F], d: Nat) {
+    polynomial_degree_le(p, d) and p != Polynomial[F].zero and roots.is_unique and
+        polynomial_roots_on_list(p, roots)
+    implies roots.length <= d
+}
+
+define polynomial_deriv_coeff[R: Semiring](p: Polynomial[R], n: Nat) -> R {
+    from_nat[R](n.suc) * p.coeff(n.suc)
+}
+
+theorem polynomial_deriv_coeff_has_support_in_range[R: Semiring](
+    p: Polynomial[R], n: Nat
+) {
+    polynomial_support_bounded_by(p, n) implies
+    has_support_in(polynomial_deriv_coeff(p), fs_from_list[Nat](n.range))
+}
+
+theorem polynomial_deriv_coeff_is_finitely_supported[R: Semiring](p: Polynomial[R]) {
+    is_finitely_supported(polynomial_deriv_coeff(p))
+}
+
+let polynomial_deriv[R: Semiring](p: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(polynomial_deriv_coeff(p)) = Option.some(result)
+}
+
+theorem polynomial_deriv_coeff_apply[R: Semiring](p: Polynomial[R], n: Nat) {
+    polynomial_deriv(p).coeff(n) = from_nat[R](n.suc) * p.coeff(n.suc)
+}
+
+theorem polynomial_deriv_constant_zero[R: Semiring](r: R) {
+    polynomial_deriv(polynomial_constant(r)) = Polynomial[R].zero
+}
+
+theorem polynomial_deriv_add[R: Semiring](p: Polynomial[R], q: Polynomial[R]) {
+    polynomial_deriv(p + q) = polynomial_deriv(p) + polynomial_deriv(q)
+}
+
+theorem polynomial_deriv_monomial[R: CommRing](n: Nat, r: R) {
+    polynomial_deriv(polynomial_monomial(n.suc, r)) =
+        polynomial_monomial(n, from_nat[R](n.suc) * r)
+}
+
+theorem polynomial_deriv_linear[R: CommRing](a: R, b: R) {
+    polynomial_deriv(linear_polynomial(a, b)) = polynomial_constant(a)
+}
+
+theorem polynomial_deriv_linear_factor[R: CommRing](a: R) {
+    polynomial_deriv(linear_polynomial(R.1, -a)) = polynomial_constant(R.1)
+}
+
+theorem polynomial_deriv_x_minus_a_mul[R: CommRing](a: R, r: Polynomial[R]) {
+    polynomial_deriv(polynomial_mul(linear_polynomial(R.1, -a), r)) =
+        r + polynomial_mul(linear_polynomial(R.1, -a), polynomial_deriv(r))
+}
+
+theorem polynomial_double_root_imp_deriv_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_double_root(p, a) implies polynomial_eval(polynomial_deriv(p), a) = R.0
+}
+
+theorem polynomial_root_and_deriv_root_imp_double_root[R: CommRing](p: Polynomial[R], a: R) {
+    polynomial_eval(p, a) = R.0 and polynomial_eval(polynomial_deriv(p), a) = R.0 implies
+    polynomial_double_root(p, a)
+}
+
+define polynomial_squarefree[R: CommRing](p: Polynomial[R]) -> Bool {
+    forall(a: R) {
+        not polynomial_double_root(p, a)
+    }
+}
+
+theorem polynomial_squarefree_iff_no_common_root_with_deriv[R: CommRing](p: Polynomial[R]) {
+    polynomial_squarefree(p) = (not exists(a: R) {
+        polynomial_eval(p, a) = R.0 and polynomial_eval(polynomial_deriv(p), a) = R.0
+    })
+}

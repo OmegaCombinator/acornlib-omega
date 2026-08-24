@@ -1,0 +1,849 @@
+theorem list_pair_product_filter_length_sum_rows[T, U](left: List[T], right: List[U],
+    pred: Pair[T, U] -> Bool) {
+    list_pair_product(left, right).filter(pred).length =
+    sum[Nat](map[T, Nat](left, list_pair_product_row_filter_length_fn(right, pred)))
+}
+
+theorem list_pair_with_left_split_filter_length_of_left[T, U](x: T, right: List[U],
+    lp: T -> Bool, rp: U -> Bool) {
+    lp(x) implies list_pair_with_left(x, right).filter(
+        list_pair_product_split_filter_pred(lp, rp)).length = right.filter(rp).length
+}
+
+theorem list_pair_with_left_split_filter_length_of_not_left[T, U](x: T, right: List[U],
+    lp: T -> Bool, rp: U -> Bool) {
+    not lp(x) implies list_pair_with_left(x, right).filter(
+        list_pair_product_split_filter_pred(lp, rp)).length = Nat.0
+}
+
+theorem list_pair_product_filter_length_product[T, U](left: List[T], right: List[U],
+    lp: T -> Bool, rp: U -> Bool) {
+    list_pair_product(left, right).filter(list_pair_product_split_filter_pred(lp, rp)).length =
+    right.filter(rp).length * left.filter(lp).length
+}
+
+theorem list_pair_product_map_mul_sum[T, U](left: List[T], right: List[U], f: T -> Nat,
+    g: U -> Nat) {
+    sum(map(list_pair_product(left, right), pair_product_map_value(f, g))) =
+        sum(map(left, f)) * sum(map(right, g))
+}
+
+theorem sum_filter_indicator_value[T](items: List[T], c: Nat, pred: T -> Bool) {
+    sum(map(items, filter_indicator_value(c, pred))) = c * items.filter(pred).length
+}
+
+define row_encode(m: Nat) -> (Pair[Nat, Nat] -> Nat) {
+    function(p: Pair[Nat, Nat]) { p.second * m + p.first }
+}
+
+define rectangle_values(m: Nat, n: Nat) -> List[Nat] {
+    map[Pair[Nat, Nat], Nat](list_pair_product[Nat, Nat](m.range, n.range), row_encode(m))
+}
+
+theorem row_decomposition_unique(m: Nat, a: Nat, b: Nat, c: Nat, d: Nat) {
+    m != Nat.0 and a < m and c < m and b * m + a = d * m + c implies a = c and b = d
+}
+
+theorem row_encode_locally_injective(m: Nat, n: Nat) {
+    m != Nat.0 implies forall(p: Pair[Nat, Nat], q: Pair[Nat, Nat]) {
+        list_pair_product[Nat, Nat](m.range, n.range).contains(p) and
+        list_pair_product[Nat, Nat](m.range, n.range).contains(q) and
+        row_encode(m)(p) = row_encode(m)(q) implies p = q
+    }
+}
+
+theorem rectangle_values_contains_imp_lt(m: Nat, n: Nat, x: Nat) {
+    rectangle_values(m, n).contains(x) implies x < m * n
+}
+
+theorem rectangle_values_contains_of_lt(m: Nat, n: Nat, x: Nat) {
+    m != Nat.0 and x < m * n implies rectangle_values(m, n).contains(x)
+}
+
+theorem rectangle_values_contains_iff(m: Nat, n: Nat, x: Nat) {
+    m != Nat.0 implies rectangle_values(m, n).contains(x) = (x < m * n)
+}
+
+theorem rectangle_values_unique(m: Nat, n: Nat) {
+    m != Nat.0 implies rectangle_values(m, n).is_unique
+}
+
+theorem rectangle_values_same_contains_range(m: Nat, n: Nat, x: Nat) {
+    m != Nat.0 implies rectangle_values(m, n).contains(x) = (m * n).range.contains(x)
+}
+
+theorem rectangle_values_filter_permutation_range_filter(m: Nat, n: Nat, pred: Nat -> Bool) {
+    m != Nat.0 implies is_permutation(
+        rectangle_values(m, n).filter(pred),
+        (m * n).range.filter(pred))
+}
+
+theorem rectangle_values_filter_length_range(m: Nat, n: Nat, pred: Nat -> Bool) {
+    m != Nat.0 implies rectangle_values(m, n).filter(pred).length =
+        (m * n).range.filter(pred).length
+}
+
+define row_encode_filter_pred(m: Nat, pred: Nat -> Bool) -> (Pair[Nat, Nat] -> Bool) {
+    function(p: Pair[Nat, Nat]) { pred(row_encode(m)(p)) }
+}
+
+theorem rectangle_values_filter_length_pair_product(m: Nat, n: Nat, pred: Nat -> Bool) {
+    rectangle_values(m, n).filter(pred).length =
+        list_pair_product[Nat, Nat](m.range, n.range).filter(row_encode_filter_pred(m, pred)).length
+}
+
+theorem row_encode_filter_length_range(m: Nat, n: Nat, pred: Nat -> Bool) {
+    m != Nat.0 implies
+    list_pair_product[Nat, Nat](m.range, n.range).filter(row_encode_filter_pred(m, pred)).length =
+        (m * n).range.filter(pred).length
+}
+
+theorem finite_set_product_contains_eq[T, U](a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]) {
+    finite_set_product(a, b).contains(p) = (a.contains(p.first) and b.contains(p.second))
+}
+
+theorem finite_set_product_contains_pair[T, U](a: FiniteSet[T], b: FiniteSet[U], x: T, y: U) {
+    a.contains(x) and b.contains(y) implies finite_set_product(a, b).contains(Pair.new(x, y))
+}
+
+theorem finite_set_product_contains_left[T, U](a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]) {
+    finite_set_product(a, b).contains(p) implies a.contains(p.first)
+}
+
+theorem finite_set_product_contains_right[T, U](a: FiniteSet[T], b: FiniteSet[U], p: Pair[T, U]) {
+    finite_set_product(a, b).contains(p) implies b.contains(p.second)
+}
+
+theorem finite_set_product_fs_from_list_contains_eq[T](items: List[T], x: T) {
+    fs_from_list(items).contains(x) = items.contains(x)
+}
+
+theorem list_pair_product_contains_imp_finite_set_product_from_list_contains[T, U](left: List[T],
+    right: List[U], p: Pair[T, U]) {
+    list_pair_product(left, right).contains(p) implies
+    finite_set_product(fs_from_list(left), fs_from_list(right)).contains(p)
+}
+
+theorem finite_set_product_from_list_contains_imp_list_pair_product_contains[T, U](left: List[T],
+    right: List[U], p: Pair[T, U]) {
+    finite_set_product(fs_from_list(left), fs_from_list(right)).contains(p) implies
+    list_pair_product(left, right).contains(p)
+}
+
+theorem finite_set_product_from_list_eq[T, U](left: List[T], right: List[U]) {
+    finite_set_product(fs_from_list(left), fs_from_list(right)) =
+    fs_from_list(list_pair_product(left, right))
+}
+
+define insert_into_subset[A](x: A, s: FiniteSet[A]) -> FiniteSet[A] {
+    s.insert(x)
+}
+
+define list_subsets[A](items: List[A]) -> List[FiniteSet[A]] {
+    match items {
+        List.nil[A] {
+            List.singleton[FiniteSet[A]](FiniteSet.empty[A])
+        }
+        List.cons[A](head, tail) {
+            list_subsets[A](tail) + map[FiniteSet[A], FiniteSet[A]](
+                list_subsets[A](tail),
+                insert_into_subset[A](head)
+            )
+        }
+    }
+}
+
+theorem list_subsets_exact[A](items: List[A], t: FiniteSet[A]) { list_subsets[A](items).contains(t) = t.subset_eq(FiniteSet.from_list[A](items)) }
+
+theorem list_subsets_length[A](items: List[A]) {
+    list_subsets[A](items).length = Nat.2.pow(items.length)
+}
+
+theorem list_subsets_unique[A](items: List[A]) {
+    items.is_unique implies list_subsets[A](items).is_unique
+}
+
+define finite_powerset_from_list[A](items: List[A]) -> FiniteSet[FiniteSet[A]] {
+    fs_from_list[FiniteSet[A]](list_subsets[A](items))
+}
+
+theorem finite_powerset_from_list_exact[A](items: List[A]) {
+    forall(s: FiniteSet[A]) {
+        finite_powerset_from_list[A](items).contains(s) = s.subset_eq(FiniteSet.from_list[A](items))
+    }
+}
+
+theorem finite_powerset_from_list_cardinality[A](items: List[A]) {
+    items.is_unique implies finite_powerset_from_list[A](items).cardinality_is(Nat.2.pow(items.length))
+}
+
+theorem unique_cons_not_contains[T](head: T, tail: List[T]) {
+    List.cons(head, tail).is_unique implies not tail.contains(head)
+}
+
+theorem filter_preserves_unique[T](list: List[T], f: T -> Bool) {
+    list.is_unique implies list.filter(f).is_unique
+}
+
+theorem filter_add[T](left: List[T], right: List[T], f: T -> Bool) {
+    (left + right).filter(f) = left.filter(f) + right.filter(f)
+}
+
+define list_k_subsets[A](items: List[A], k: Nat) -> List[FiniteSet[A]] {
+    list_subsets[A](items).filter(function(s: FiniteSet[A]) { s.cardinality_is(k) })
+}
+
+theorem list_k_subsets_exact[A](items: List[A], k: Nat, t: FiniteSet[A]) {
+    list_k_subsets[A](items, k).contains(t) =
+        (t.subset_eq(FiniteSet.from_list[A](items)) and t.cardinality_is(k))
+}
+
+define finite_k_subsets_from_list[A](items: List[A], k: Nat) -> FiniteSet[FiniteSet[A]] {
+    fs_from_list[FiniteSet[A]](list_k_subsets[A](items, k))
+}
+
+theorem finite_k_subsets_from_list_exact[A](items: List[A], k: Nat, t: FiniteSet[A]) {
+    finite_k_subsets_from_list[A](items, k).contains(t) =
+        (t.subset_eq(FiniteSet.from_list[A](items)) and t.cardinality_is(k))
+}
+
+theorem list_k_subsets_unique[A](items: List[A], k: Nat) {
+    items.is_unique implies list_k_subsets[A](items, k).is_unique
+}
+
+theorem finite_k_subsets_from_list_cardinality_is_length[A](items: List[A], k: Nat) {
+    items.is_unique implies finite_k_subsets_from_list[A](items, k).cardinality_is(list_k_subsets[A](items, k).length)
+}
+
+theorem list_k_subsets_cons_suc_length[A](head: A, tail: List[A], k: Nat) {
+    List.cons[A](head, tail).is_unique implies
+    list_k_subsets[A](List.cons[A](head, tail), k.suc).length =
+        list_k_subsets[A](tail, k.suc).length + list_k_subsets[A](tail, k).length
+}
+
+let finite_k_subsets[T](s: FiniteSet[T], k: Nat) -> result: FiniteSet[FiniteSet[T]] satisfy {
+    exists(items: List[T]) {
+        fs_from_list(items) = s and items.is_unique and
+        result = finite_k_subsets_from_list[T](items, k)
+    }
+}
+
+theorem finite_k_subsets_exact[T](s: FiniteSet[T], k: Nat) {
+    forall(t: FiniteSet[T]) {
+        finite_k_subsets[T](s, k).contains(t) = (t.subset_eq(s) and t.cardinality_is(k))
+    }
+}
+
+theorem finite_k_subsets_from_list_eq_of_unique_list[T](s: FiniteSet[T], k: Nat, items: List[T]) {
+    fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k) = finite_k_subsets_from_list[T](items, k)
+}
+
+theorem finite_k_subsets_cardinality_from_list_length[T](s: FiniteSet[T], k: Nat) {
+    forall(items: List[T]) {
+        fs_from_list[T](items) = s and items.is_unique implies
+        finite_k_subsets[T](s, k).cardinality_is(list_k_subsets[T](items, k).length)
+    }
+}
+
+theorem empty_multiplicity[T](item: T) {
+    Multiset.empty[T].multiplicity(item) = Nat.0
+}
+
+theorem singleton_multiplicity_self[T](item: T) {
+    Multiset.singleton(item).multiplicity(item) = Nat.1
+}
+
+theorem singleton_multiplicity_other[T](item: T, other: T) {
+    item != other implies Multiset.singleton(item).multiplicity(other) = Nat.0
+}
+
+theorem insert_multiplicity_self[T](a: Multiset[T], item: T) {
+    a.insert(item).multiplicity(item) = a.multiplicity(item).suc
+}
+
+theorem insert_multiplicity_other[T](a: Multiset[T], item: T, other: T) {
+    item != other implies a.insert(item).multiplicity(other) = a.multiplicity(other)
+}
+
+theorem add_multiplicity[T](a: Multiset[T], b: Multiset[T], item: T) {
+    (a + b).multiplicity(item) = a.multiplicity(item) + b.multiplicity(item)
+}
+
+theorem filter_multiplicity_true[T](a: Multiset[T], pred: T -> Bool, item: T) {
+    pred(item) implies a.filter(pred).multiplicity(item) = a.multiplicity(item)
+}
+
+theorem filter_multiplicity_false[T](a: Multiset[T], pred: T -> Bool, item: T) {
+    not pred(item) implies a.filter(pred).multiplicity(item) = Nat.0
+}
+
+theorem filter_contains_iff[T](a: Multiset[T], pred: T -> Bool, item: T) {
+    a.filter(pred).contains(item) = (a.contains(item) and pred(item))
+}
+
+theorem multiset_filter_add[T](a: Multiset[T], b: Multiset[T], pred: T -> Bool) {
+    (a + b).filter(pred) = a.filter(pred) + b.filter(pred)
+}
+
+theorem multiset_add_empty_right[T](a: Multiset[T]) {
+    a + Multiset.empty[T] = a
+}
+
+theorem multiset_empty_add[T](a: Multiset[T]) {
+    Multiset.empty[T] + a = a
+}
+
+theorem multiset_add_comm[T](a: Multiset[T], b: Multiset[T]) {
+    a + b = b + a
+}
+
+theorem multiset_add_assoc[T](a: Multiset[T], b: Multiset[T], c: Multiset[T]) {
+    (a + b) + c = a + (b + c)
+}
+
+theorem contains_iff_positive_multiplicity[T](a: Multiset[T], item: T) {
+    a.contains(item) = (a.multiplicity(item) > Nat.0)
+}
+
+theorem empty_not_contains[T](item: T) {
+    not Multiset.empty[T].contains(item)
+}
+
+theorem singleton_contains_iff[T](item: T, x: T) {
+    Multiset.singleton(item).contains(x) = (x = item)
+}
+
+theorem insert_contains_self[T](a: Multiset[T], item: T) {
+    a.insert(item).contains(item)
+}
+
+theorem insert_contains_iff[T](a: Multiset[T], item: T, x: T) {
+    a.insert(item).contains(x) = (x = item or a.contains(x))
+}
+
+theorem multiset_add_contains_left[T](a: Multiset[T], b: Multiset[T], x: T) {
+    a.contains(x) implies (a + b).contains(x)
+}
+
+theorem multiset_add_contains_right[T](a: Multiset[T], b: Multiset[T], x: T) {
+    b.contains(x) implies (a + b).contains(x)
+}
+
+theorem add_contains_iff[T](a: Multiset[T], b: Multiset[T], x: T) {
+    (a + b).contains(x) = (a.contains(x) or b.contains(x))
+}
+
+theorem multiset_add_is_empty_iff[T](a: Multiset[T], b: Multiset[T]) {
+    (a + b).is_empty = (a.is_empty and b.is_empty)
+}
+
+theorem singleton_not_empty[T](item: T) {
+    not Multiset.singleton(item).is_empty
+}
+
+theorem insert_not_empty[T](a: Multiset[T], item: T) {
+    not a.insert(item).is_empty
+}
+
+theorem is_empty_iff_eq_empty[T](a: Multiset[T]) {
+    a.is_empty = (a = Multiset.empty[T])
+}
+
+theorem from_list_multiplicity[T](items: List[T], item: T) {
+    Multiset.from_list(items).multiplicity(item) = items.count(item)
+}
+
+theorem from_list_nil[T] {
+    Multiset.from_list(List.nil[T]) = Multiset.empty[T]
+}
+
+theorem list_count_cons_self[T](head: T, tail: List[T]) {
+    List.cons(head, tail).count(head) = Nat.1 + tail.count(head)
+}
+
+theorem from_list_cons[T](head: T, tail: List[T]) {
+    Multiset.from_list(List.cons(head, tail)) = Multiset.from_list(tail).insert(head)
+}
+
+theorem from_list_singleton[T](item: T) {
+    Multiset.from_list(List.singleton(item)) = Multiset.singleton(item)
+}
+
+theorem from_list_append[T](left: List[T], right: List[T]) {
+    Multiset.from_list(left + right) = Multiset.from_list(left) + Multiset.from_list(right)
+}
+
+theorem from_list_filter[T](items: List[T], pred: T -> Bool) {
+    Multiset.from_list(items.filter(pred)) = Multiset.from_list(items).filter(pred)
+}
+
+theorem from_list_contains[T](items: List[T], item: T) {
+    Multiset.from_list(items).contains(item) = items.contains(item)
+}
+
+theorem from_list_filter_contains[T](items: List[T], pred: T -> Bool, item: T) {
+    Multiset.from_list(items.filter(pred)).contains(item) = (items.contains(item) and pred(item))
+}
+
+theorem permutation_imp_from_list_eq[T](a: List[T], b: List[T]) {
+    is_permutation(a, b) implies Multiset.from_list(a) = Multiset.from_list(b)
+}
+
+theorem from_list_eq_imp_permutation[T](a: List[T], b: List[T]) {
+    Multiset.from_list(a) = Multiset.from_list(b) implies is_permutation(a, b)
+}
+
+theorem from_list_eq_iff_permutation[T](a: List[T], b: List[T]) {
+    (Multiset.from_list(a) = Multiset.from_list(b)) = is_permutation(a, b)
+}
+
+theorem from_list_support_contains_list[T](items: List[T], item: T) {
+    FiniteSet.from_list(items).contains(item) = items.contains(item)
+}
+
+theorem from_list_support_contains[T](items: List[T], item: T) {
+    FiniteSet.from_list(items).contains(item) = Multiset.from_list(items).contains(item)
+}
+
+theorem from_list_multiplicity_zero_of_not_in_support[T](items: List[T], item: T) {
+    not FiniteSet.from_list(items).contains(item) implies
+    Multiset.from_list(items).multiplicity(item) = Nat.0
+}
+
+theorem from_list_supported_by_list_elements[T](items: List[T]) {
+    forall(x: T) {
+        not FiniteSet.from_list(items).contains(x) implies
+        Multiset.from_list(items).multiplicity(x) = Nat.0
+    }
+}
+
+theorem from_list_has_finite_support_witness[T](items: List[T]) {
+    exists(support: FiniteSet[T]) {
+        forall(x: T) {
+            not support.contains(x) implies Multiset.from_list(items).multiplicity(x) = Nat.0
+        }
+    }
+}
+
+define multiset_has_list_card[T](m: Multiset[T], n: Nat) -> Bool {
+    exists(items: List[T]) {
+        m = Multiset.from_list(items) and items.length = n
+    }
+}
+
+theorem from_list_has_list_card[T](items: List[T]) {
+    multiset_has_list_card(Multiset.from_list(items), multiset_card_from_list(items))
+}
+
+theorem multiset_card_from_list_eq_of_from_list_eq[T](a: List[T], b: List[T]) {
+    Multiset.from_list(a) = Multiset.from_list(b) implies
+        multiset_card_from_list(a) = multiset_card_from_list(b)
+}
+
+theorem multiset_empty_has_list_card_zero[T] {
+    multiset_has_list_card(Multiset.empty[T], Nat.0)
+}
+
+theorem multiset_singleton_has_list_card_one[T](item: T) {
+    multiset_has_list_card(Multiset.singleton(item), Nat.1)
+}
+
+theorem multiset_insert_has_list_card_suc[T](m: Multiset[T], item: T, n: Nat) {
+    multiset_has_list_card(m, n) implies multiset_has_list_card(m.insert(item), n.suc)
+}
+
+theorem multiset_card_from_list_append[T](left: List[T], right: List[T]) {
+    multiset_card_from_list(left + right) = multiset_card_from_list(left) + multiset_card_from_list(right)
+}
+
+theorem multiset_filter_has_list_card_from_filter[T](items: List[T], pred: T -> Bool) {
+    multiset_has_list_card(Multiset.from_list(items).filter(pred), items.filter(pred).length)
+}
+
+theorem multiset_filter_preserves_list_card[T](m: Multiset[T], pred: T -> Bool, n: Nat) {
+    multiset_has_list_card(m, n) implies exists(k: Nat) {
+        multiset_has_list_card(m.filter(pred), k)
+    }
+}
+
+theorem multiset_add_has_list_card_add[T](a: Multiset[T], b: Multiset[T], n: Nat, k: Nat) {
+    multiset_has_list_card(a, n) and multiset_has_list_card(b, k)
+        implies multiset_has_list_card(a + b, n + k)
+}
+
+define multiset_support_contains[T](m: Multiset[T], item: T) -> Bool {
+    m.contains(item)
+}
+
+define multiset_support[T](m: Multiset[T]) -> Set[T] {
+    Set[T].new(multiset_support_contains(m))
+}
+
+theorem multiset_support_contains_eq[T](m: Multiset[T], item: T) {
+    multiset_support(m).contains(item) = m.contains(item)
+}
+
+theorem multiset_support_contains_iff_positive_multiplicity[T](m: Multiset[T], item: T) {
+    multiset_support(m).contains(item) = (m.multiplicity(item) > Nat.0)
+}
+
+theorem multiset_support_filter_contains[T](m: Multiset[T], pred: T -> Bool, item: T) {
+    multiset_support(m.filter(pred)).contains(item) =
+        (multiset_support(m).contains(item) and pred(item))
+}
+
+theorem multiset_support_from_list_filter_contains[T](items: List[T], pred: T -> Bool, item: T) {
+    multiset_support(Multiset.from_list(items).filter(pred)).contains(item) =
+        (items.contains(item) and pred(item))
+}
+
+theorem multiset_support_from_list_contains[T](items: List[T], item: T) {
+    multiset_support(Multiset.from_list(items)).contains(item) = items.contains(item)
+}
+
+theorem multiset_support_add_contains[T](a: Multiset[T], b: Multiset[T], item: T) {
+    multiset_support(a + b).contains(item) =
+        (multiset_support(a).contains(item) or multiset_support(b).contains(item))
+}
+
+theorem multiset_empty_has_finite_support[T] {
+    Multiset.empty[T].has_finite_support
+}
+
+theorem multiset_from_list_has_finite_support[T](items: List[T]) {
+    Multiset.from_list(items).has_finite_support
+}
+
+theorem multiset_singleton_has_finite_support[T](item: T) {
+    Multiset.singleton(item).has_finite_support
+}
+
+theorem multiset_insert_eq_add_singleton[T](a: Multiset[T], item: T) {
+    a.insert(item) = a + Multiset.singleton(item)
+}
+
+theorem multiset_add_has_support_in_union[T](a: Multiset[T], b: Multiset[T],
+        support_a: FiniteSet[T], support_b: FiniteSet[T]) {
+    (forall(x: T) { not support_a.contains(x) implies a.multiplicity(x) = Nat.0 }) and
+    (forall(x: T) { not support_b.contains(x) implies b.multiplicity(x) = Nat.0 })
+    implies forall(x: T) {
+        not fs_union(support_a, support_b).contains(x) implies (a + b).multiplicity(x) = Nat.0
+    }
+}
+
+theorem multiset_add_preserves_finite_support[T](a: Multiset[T], b: Multiset[T]) {
+    a.has_finite_support and b.has_finite_support implies (a + b).has_finite_support
+}
+
+theorem multiset_add_has_finite_support_iff[T](a: Multiset[T], b: Multiset[T]) {
+    (a + b).has_finite_support = (a.has_finite_support and b.has_finite_support)
+}
+
+theorem multiset_insert_preserves_finite_support[T](a: Multiset[T], item: T) {
+    a.has_finite_support implies a.insert(item).has_finite_support
+}
+
+theorem multiset_filter_preserves_finite_support[T](a: Multiset[T], pred: T -> Bool) {
+    a.has_finite_support implies a.filter(pred).has_finite_support
+}
+
+theorem range_set_contains_eq(n: Nat, x: Nat) {
+    range_set(n).contains(x) = (x < n)
+}
+
+theorem range_set_contains(n: Nat, x: Nat) {
+    x < n implies range_set(n).contains(x)
+}
+
+theorem range_set_lt(n: Nat, x: Nat) {
+    range_set(n).contains(x) implies x < n
+}
+
+theorem range_set_suc(n: Nat, x: Nat) {
+    range_set(n.suc).contains(x) = (range_set(n).contains(x) or x = n)
+}
+
+theorem two_parts_three(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.3 implies (a = Nat.2 and b = Nat.1)
+}
+
+theorem two_parts_four_small(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 and a < Nat.3 implies (a = Nat.2 and b = Nat.2)
+}
+
+theorem two_parts_four_big(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 and not a < Nat.3 implies (a = Nat.3 and b = Nat.1)
+}
+
+theorem two_parts_four(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.4 implies (a = Nat.3 and b = Nat.1) or (a = Nat.2 and b = Nat.2)
+
+}
+
+theorem three_parts_three(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.3 implies a = Nat.1 and b = Nat.1 and c = Nat.1
+}
+
+theorem three_parts_four(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.4 implies a = Nat.2 and b = Nat.1 and c = Nat.1
+}
+
+theorem four_parts_four(a: Nat, b: Nat, c: Nat, d: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and b <= a and c <= b and d <= c and
+        a + b + c + d = Nat.4 implies a = Nat.1 and b = Nat.1 and c = Nat.1 and d = Nat.1
+}
+
+theorem partition_set_contains_eq(n: Nat, parts: List[Nat]) {
+    partition_set(n).contains(parts) = is_partition_of_n(n, parts)
+}
+
+theorem partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    partition_set(n).contains(parts) = is_partition(parts, n)
+}
+
+define prepend_alphabet(alphabet: List[Nat], inners: List[List[Nat]]) -> List[List[Nat]] {
+    match alphabet {
+        List.nil {
+            List.nil[List[Nat]]
+        }
+        List.cons(a, t) {
+            prepend_a(a, inners) + prepend_alphabet(t, inners)
+        }
+    }
+}
+
+define lists_of_length(alphabet: List[Nat], len: Nat) -> List[List[Nat]] {
+    match len {
+        Nat.zero {
+            List.singleton[List[Nat]](List.nil[Nat])
+        }
+        Nat.suc(k) {
+            prepend_alphabet(alphabet, lists_of_length(alphabet, k))
+        }
+    }
+}
+
+define all_lengths(alphabet: List[Nat], max_len: Nat) -> List[List[Nat]] {
+    match max_len {
+        Nat.zero {
+            lists_of_length(alphabet, Nat.zero)
+        }
+        Nat.suc(k) {
+            all_lengths(alphabet, k) + lists_of_length(alphabet, k.suc)
+        }
+    }
+}
+
+theorem prepend_alphabet_contains(alphabet: List[Nat], inners: List[List[Nat]], a: Nat, rest: List[Nat]) {
+    alphabet.contains(a) and inners.contains(rest) implies prepend_alphabet(alphabet, inners).contains(List.cons(a, rest))
+}
+
+theorem lists_of_length_contains(alphabet: List[Nat], parts: List[Nat], len: Nat) {
+    parts.length = len and (forall(x: Nat) { parts.contains(x) implies alphabet.contains(x) })
+    implies lists_of_length(alphabet, len).contains(parts)
+}
+
+theorem all_lengths_contains(alphabet: List[Nat], parts: List[Nat], max_len: Nat) {
+    parts.length <= max_len and (forall(x: Nat) { parts.contains(x) implies alphabet.contains(x) })
+    implies all_lengths(alphabet, max_len).contains(parts)
+}
+
+theorem contains_le_sum(l: List[Nat], x: Nat) {
+    l.contains(x) implies x <= sum(l)
+}
+
+theorem contains_list_2(x: List[Nat], a: List[Nat], b: List[Nat]) {
+    x = b implies List.cons(a, List.cons(b, List.nil[List[Nat]])).contains(x)
+}
+
+theorem contains_list_3(x: List[Nat], a: List[Nat], b: List[Nat], c: List[Nat]) {
+    x = c implies List.cons(a, List.cons(b, List.cons(c, List.nil[List[Nat]]))).contains(x)
+}
+
+theorem contains_list_4(x: List[Nat], a: List[Nat], b: List[Nat], c: List[Nat], d: List[Nat]) {
+    x = d implies List.cons(a, List.cons(b, List.cons(c, List.cons(d, List.nil[List[Nat]])))).contains(x)
+}
+
+theorem partitions_one_contains(l: List[Nat]) {
+    is_partition(l, Nat.1) implies partitions_one.contains(l)
+}
+
+theorem partitions_two_contains(l: List[Nat]) {
+    is_partition(l, Nat.2) implies partitions_two.contains(l)
+}
+
+theorem partitions_three_contains(l: List[Nat]) {
+    is_partition(l, Nat.3) implies partitions_three.contains(l)
+}
+
+theorem add_cons_cons(h1: List[Nat], h2: List[Nat], rest: List[List[Nat]]) {
+    List.cons(h1, List.cons(h2, List.nil[List[Nat]])) + rest = List.cons(h1, List.cons(h2, rest))
+}
+
+theorem add_cons_cons_cons(h1: List[Nat], h2: List[Nat], h3: List[Nat], rest: List[List[Nat]]) {
+    List.cons(h1, List.cons(h2, List.cons(h3, List.nil[List[Nat]]))) + rest =
+        List.cons(h1, List.cons(h2, List.cons(h3, rest)))
+}
+
+theorem partitions_four_contains(l: List[Nat]) {
+    is_partition(l, Nat.4) implies partitions_four.contains(l)
+}
+
+theorem partitions_four_membership(l: List[Nat]) {
+    partitions_four.contains(l) implies is_partition(l, Nat.4)
+}
+
+theorem filter_all_keep[T](l: List[T], f: T -> Bool) {
+    (forall(x: T) { l.contains(x) implies f(x) }) implies l.filter(f) = l
+}
+
+theorem partition_parts_at_most_n(parts: List[Nat], n: Nat) {
+    is_partition(parts, n) implies forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+define is_partition_at_most(parts: List[Nat], n: Nat) -> Bool {
+    is_partition(parts, n) and forall(x: Nat) { parts.contains(x) implies x <= n }
+}
+
+theorem partition_at_most_char(parts: List[Nat], n: Nat) {
+    is_partition_at_most(parts, n) = is_partition(parts, n)
+}
+
+define is_partition_at_most_of_n(n: Nat, parts: List[Nat]) -> Bool {
+    is_partition_at_most(parts, n)
+}
+
+define partition_at_most_set(n: Nat) -> Set[List[Nat]] {
+    Set.new(is_partition_at_most_of_n(n))
+}
+
+theorem partition_at_most_set_contains_iff(n: Nat, parts: List[Nat]) {
+    partition_at_most_set(n).contains(parts) = is_partition(parts, n)
+}
+
+theorem partition_at_most_set_eq(n: Nat) {
+    partition_at_most_set(n) = partition_set(n)
+}
+
+theorem partition_at_most_set_finite(n: Nat) {
+    partition_at_most_set(n).is_finite
+}
+
+theorem p_counts_parts_at_most_n(n: Nat) {
+    partition_at_most_set(n).cardinality_is(partition_count(n))
+}
+
+theorem odd_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    odd_partition_set(n).contains(parts) = is_odd_part_partition(parts, n)
+}
+
+theorem distinct_partition_set_contains_iff(n: Nat, parts: List[Nat]) {
+    distinct_partition_set(n).contains(parts) = is_distinct_part_partition(parts, n)
+}
+
+theorem pentagonal_recurrence_four {
+    partition_count(Nat.4) = partition_count(Nat.3) + partition_count(Nat.2)
+}
+
+theorem two_parts_five(a: Nat, b: Nat) {
+    Nat.1 <= b and b <= a and a + b = Nat.5 implies (a = Nat.4 and b = Nat.1) or (a = Nat.3 and b = Nat.2)
+}
+
+theorem three_parts_five(a: Nat, b: Nat, c: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and b <= a and c <= b and
+        a + b + c = Nat.5 implies (a = Nat.3 and b = Nat.1 and c = Nat.1) or (a = Nat.2 and b = Nat.2 and c = Nat.1)
+}
+
+theorem four_parts_five(a: Nat, b: Nat, c: Nat, d: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and b <= a and c <= b and d <= c and
+        a + b + c + d = Nat.5 implies a = Nat.2 and b = Nat.1 and c = Nat.1 and d = Nat.1
+}
+
+theorem five_parts_five(a: Nat, b: Nat, c: Nat, d: Nat, e: Nat) {
+    Nat.1 <= a and Nat.1 <= b and Nat.1 <= c and Nat.1 <= d and Nat.1 <= e and
+        b <= a and c <= b and d <= c and e <= d and
+        a + (b + (c + (d + e))) = Nat.5 implies a = Nat.1 and b = Nat.1 and c = Nat.1 and d = Nat.1 and e = Nat.1
+}
+
+theorem parts_le_head(a: Nat, t: List[Nat], x: Nat) {
+    non_increasing(List.cons(a, t)) and t.contains(x) implies x <= a
+}
+
+theorem partitions_five_contains(l: List[Nat]) {
+    is_partition(l, Nat.5) implies partitions_five.contains(l)
+}
+
+theorem partitions_five_membership(l: List[Nat]) {
+    partitions_five.contains(l) implies is_partition(l, Nat.5)
+}
+
+theorem not_contains_p5_a {
+    not List.cons(p5_b, List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))))).contains(p5_a)
+}
+
+theorem not_contains_p5_b {
+    not List.cons(p5_c, List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))))).contains(p5_b)
+}
+
+theorem not_contains_p5_c {
+    not List.cons(p5_d, List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])))).contains(p5_c)
+}
+
+theorem not_contains_p5_d {
+    not List.cons(p5_e, List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]]))).contains(p5_d)
+}
+
+theorem not_contains_p5_e {
+    not List.cons(p5_f, List.cons(p5_g, List.nil[List[Nat]])).contains(p5_e)
+}
+
+theorem not_contains_p5_f {
+    not List.cons(p5_g, List.nil[List[Nat]]).contains(p5_f)
+}
+
+let finite_powerset[T](s: FiniteSet[T]) -> result: FiniteSet[FiniteSet[T]] satisfy {
+    exists(items: List[T]) {
+        fs_from_list(items) = s and items.is_unique and
+        result = finite_powerset_from_list[T](items)
+    }
+}
+
+theorem finite_powerset_exact[T](s: FiniteSet[T]) {
+    forall(t: FiniteSet[T]) {
+        finite_powerset[T](s).contains(t) = t.subset_eq(s)
+    }
+}
+
+theorem finite_powerset_cardinality[T](s: FiniteSet[T], n: Nat) {
+    s.cardinality_is(n) implies finite_powerset[T](s).cardinality_is(Nat.2.pow(n))
+}
+
+theorem finite_set_sum_insert[T, A: AddCommMonoid](s: FiniteSet[T], item: T, f: T -> A) {
+    not s.contains(item) implies finite_set_sum(fs_insert(s, item), f) = f(item) + finite_set_sum(s, f)
+}
+
+theorem finite_set_sum_add[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A, g: T -> A) {
+    finite_set_sum(s, f) + finite_set_sum(s, g) = finite_set_sum(s, add_fn(f, g))
+}
+
+theorem finite_set_sum_disjoint_union[T, A: AddCommMonoid](a: FiniteSet[T], b: FiniteSet[T], f: T -> A) {
+    a.is_disjoint(b) implies
+        finite_set_sum(fs_union(a, b), f) = finite_set_sum(a, f) + finite_set_sum(b, f)
+}
+
+theorem list_pair_product_fubini_rows[T, U, A: AddCommMonoid](left: List[T], right: List[U],
+    f: Pair[T, U] -> A) {
+    sum[A](map(list_pair_product(left, right), f)) =
+        sum[A](map(left, list_pair_product_row_sum_fn(right, f)))
+}
+
+theorem finite_set_sum_product_from_lists_eq_list_pair_product_sum[T, U, A: AddCommMonoid](
+    left: List[T], right: List[U], f: Pair[T, U] -> A
+) {
+    left.is_unique and right.is_unique implies
+    finite_set_sum(finite_set_product(fs_from_list(left), fs_from_list(right)), f) =
+    sum[A](map(list_pair_product(left, right), f))
+}

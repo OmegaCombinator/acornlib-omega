@@ -1,0 +1,885 @@
+theorem uniform_limit_continuous_on_eps_form(f: Nat -> Real -> Real, a: Real, b: Real, g: Real -> Real) {
+    uniform_converges_on(f, a, b, g) and (forall(n: Nat) { continuous(f(n)) })
+    implies
+    forall(x0: Real) {
+        (a < x0 and x0 < b) implies
+        forall(eps: Real) {
+            eps.is_positive implies exists(delta: Real) {
+                delta.is_positive and continuous_condition(g, x0, delta, eps)
+            }
+        }
+    }
+}
+
+theorem uniform_limit_continuous_on(f: Nat -> Real -> Real, a: Real, b: Real, g: Real -> Real) {
+    uniform_converges_on(f, a, b, g) and (forall(n: Nat) { continuous(f(n)) })
+    implies
+    forall(x0: Real) {
+        (a < x0 and x0 < b) implies continuous_at(g, x0)
+    }
+}
+
+define integral_sequence(f: Nat -> Real -> Real, a: Real, b: Real, n: Nat) -> Real {
+    integral(f(n), a, b)
+}
+
+theorem lte_sub_imp_lte_add(a: Real, b: Real, c: Real) {
+    a - b <= c implies a <= c + b
+}
+
+theorem lte_imp_lte_sub(a: Real, b: Real, c: Real) {
+    a <= b + c implies a - c <= b
+}
+
+theorem exists_eps_mul_lt(m: Real, eps: Real) {
+    Real.0 <= m and eps.is_positive
+    implies
+    exists(eps3: Real) {
+        eps3.is_positive and eps3 * m < eps
+    }
+}
+
+theorem interval_inf_eps_close(f: Real -> Real, g: Real -> Real, x: Real, y: Real, eps: Real, lb_f: Real, lb_g: Real) {
+    x <= y and
+    (forall(t: Real) { interval_contains(x, y, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies g(t) - eps <= f(t) })
+    implies
+    interval_inf(g, x, y) - eps <= interval_inf(f, x, y)
+}
+
+theorem interval_sup_eps_close(f: Real -> Real, g: Real -> Real, x: Real, y: Real, eps: Real, ub_f: Real, ub_g: Real) {
+    x <= y and
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= ub_f }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies g(t) <= ub_g }) and
+    (forall(t: Real) { interval_contains(x, y, t) implies f(t) <= g(t) + eps })
+    implies
+    interval_sup(f, x, y) - eps <= interval_sup(g, x, y)
+}
+
+theorem lower_sum_eps_close(f: Real -> Real, g: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, eps: Real, lb_f: Real, lb_g: Real) {
+    is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_f <= f(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb_g <= g(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies g(t) - eps <= f(t) })
+    implies
+    lower_sum(g, p, n) <= lower_sum(f, p, n) + eps * (b - a)
+}
+
+theorem upper_sum_eps_close(f: Real -> Real, g: Real -> Real, p: Nat -> Real, a: Real, b: Real, n: Nat, eps: Real, ub_f: Real, ub_g: Real) {
+    is_partition(p, a, b, n) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub_f }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies g(t) <= ub_g }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= g(t) + eps })
+    implies
+    upper_sum(f, p, n) <= upper_sum(g, p, n) + eps * (b - a)
+}
+
+theorem uniform_eps_slack_lower(f: Nat -> Real -> Real, a: Real, b: Real, g: Real -> Real, n: Nat, eps: Real) {
+    (forall(x: Real) { interval_contains(a, b, x) implies f(n, x).is_close(g(x), eps) })
+    implies
+    (forall(t: Real) { interval_contains(a, b, t) implies g(t) - eps <= f(n, t) })
+}
+
+theorem uniform_eps_slack_upper(f: Nat -> Real -> Real, a: Real, b: Real, g: Real -> Real, n: Nat, eps: Real) {
+    (forall(x: Real) { interval_contains(a, b, x) implies f(n, x).is_close(g(x), eps) })
+    implies
+    (forall(t: Real) { interval_contains(a, b, t) implies f(n, t) <= g(t) + eps })
+}
+
+theorem uniform_converges_integral_interchange(f: Nat -> Real -> Real, a: Real, b: Real, g: Real -> Real, lb: Real, ub: Real) {
+    a <= b and
+    uniform_converges_on(f, a, b, g) and
+    is_integrable(g, a, b) and
+    (forall(n: Nat) { is_integrable(f(n), a, b) }) and
+    (forall(n: Nat, t: Real) { interval_contains(a, b, t) implies lb <= f(n, t) }) and
+    (forall(n: Nat, t: Real) { interval_contains(a, b, t) implies f(n, t) <= ub }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= g(t) }) and
+    (forall(t: Real) { interval_contains(a, b, t) implies g(t) <= ub })
+    implies
+    converges_to(integral_sequence(f, a, b), integral(g, a, b))
+}
+
+define uniform_pdf(x: Real) -> Real {
+    if interval_contains(Real.0, Real.1, x) { Real.1 } else { Real.0 }
+}
+
+theorem uniform_pdf_one_on_unit(x: Real) {
+    interval_contains(Real.0, Real.1, x) implies uniform_pdf(x) = Real.1
+}
+
+theorem uniform_pdf_zero_outside_unit(x: Real) {
+    not interval_contains(Real.0, Real.1, x) implies uniform_pdf(x) = Real.0
+}
+
+theorem uniform_pdf_nonneg(x: Real) {
+    Real.0 <= uniform_pdf(x)
+}
+
+theorem uniform_pdf_le_one(x: Real) {
+    uniform_pdf(x) <= Real.1
+}
+
+theorem uniform_pdf_integrable_unit {
+    is_integrable(uniform_pdf, Real.0, Real.1)
+}
+
+theorem uniform_pdf_integral_unit {
+    integral(uniform_pdf, Real.0, Real.1) = Real.1
+}
+
+define uniform_mass_weighted(rv: Real -> Real, x: Real) -> Real {
+    rv(x) * uniform_pdf(x)
+}
+
+define uniform_expectation(rv: Real -> Real) -> Real {
+    integral(uniform_mass_weighted(rv), Real.0, Real.1)
+}
+
+theorem uniform_mean_unit {
+    uniform_expectation(identity_fn[Real]) = Real.one_half
+}
+
+define uniform_variance_integrand(x: Real) -> Real {
+    centered_square_unit(x) * uniform_pdf(x)
+}
+
+define uniform_variance(rv: Real -> Real) -> Real {
+    integral(uniform_variance_integrand, Real.0, Real.1)
+}
+
+theorem uniform_variance_unit {
+    uniform_variance(identity_fn[Real]) = (Real.1 / (Real.1 + Real.1 + Real.1)) * (Real.one_half * Real.one_half)
+}
+
+define uniform_cdf_unit(x: Real) -> Real {
+    integral(uniform_pdf, Real.0, x)
+}
+
+theorem uniform_cdf_unit_value(x: Real) {
+    interval_contains(Real.0, Real.1, x) implies uniform_cdf_unit(x) = x
+}
+
+define even_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.2)
+}
+
+define odd_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.1)
+}
+
+define odd_shifted_term(k: Nat) -> Real {
+    from_nat[Real](Nat.2 * k + Nat.3)
+}
+
+define wallis_factor(k: Nat) -> Real {
+    (from_nat[Real](Nat.2 * k) / from_nat[Real](Nat.2 * k - Nat.1)) *
+    (from_nat[Real](Nat.2 * k) / from_nat[Real](Nat.2 * k + Nat.1))
+}
+
+define wallis_term(k: Nat) -> Real {
+    (from_nat[Real](Nat.2 * k + Nat.2) / from_nat[Real](Nat.2 * k + Nat.1)) *
+    (from_nat[Real](Nat.2 * k + Nat.2) / from_nat[Real](Nat.2 * k + Nat.3))
+}
+
+define even_prod(n: Nat) -> Real {
+    finite_real_product(even_term, n)
+}
+
+define odd_prod(n: Nat) -> Real {
+    finite_real_product(odd_term, n)
+}
+
+define odd_shifted_prod(n: Nat) -> Real {
+    finite_real_product(odd_shifted_term, n)
+}
+
+define wallis_partial(n: Nat) -> Real {
+    finite_real_product(wallis_term, n)
+}
+
+theorem even_term_eq(k: Nat) {
+    even_term(k) = from_nat[Real](Nat.2 * k + Nat.2)
+}
+
+theorem odd_term_eq(k: Nat) {
+    odd_term(k) = from_nat[Real](Nat.2 * k + Nat.1)
+}
+
+theorem odd_shifted_term_eq(k: Nat) {
+    odd_shifted_term(k) = from_nat[Real](Nat.2 * k + Nat.3)
+}
+
+theorem even_term_pos(k: Nat) {
+    even_term(k) > Real.0
+}
+
+theorem odd_term_pos(k: Nat) {
+    odd_term(k) > Real.0
+}
+
+theorem odd_shifted_term_pos(k: Nat) {
+    odd_shifted_term(k) > Real.0
+}
+
+theorem wallis_odd_den_ne_zero(k: Nat) {
+    from_nat[Real](Nat.2 * k + Nat.1) != Real.0
+}
+
+theorem wallis_shifted_den_ne_zero(k: Nat) {
+    from_nat[Real](Nat.2 * k + Nat.3) != Real.0
+}
+
+theorem wallis_term_eq(k: Nat) {
+    wallis_term(k) = (from_nat[Real](Nat.2 * k + Nat.2) / from_nat[Real](Nat.2 * k + Nat.1)) *
+        (from_nat[Real](Nat.2 * k + Nat.2) / from_nat[Real](Nat.2 * k + Nat.3))
+}
+
+theorem two_mul_suc_add(k: Nat) {
+    Nat.2 * (k + Nat.1) = Nat.2 * k + Nat.2
+}
+
+theorem two_mul_suc_sub_one(k: Nat) {
+    Nat.2 * (k + Nat.1) - Nat.1 = Nat.2 * k + Nat.1
+}
+
+theorem two_mul_suc_add_one(k: Nat) {
+    Nat.2 * (k + Nat.1) + Nat.1 = Nat.2 * k + Nat.3
+}
+
+theorem wallis_term_factor(k: Nat) {
+    wallis_term(k) = wallis_factor(k + Nat.1)
+}
+
+theorem wallis_partial_suc(k: Nat) {
+    wallis_partial(k.suc) = wallis_partial(k) * wallis_term(k)
+}
+
+theorem even_prod_suc(k: Nat) {
+    even_prod(k.suc) = even_prod(k) * even_term(k)
+}
+
+theorem odd_prod_suc(k: Nat) {
+    odd_prod(k.suc) = odd_prod(k) * odd_term(k)
+}
+
+theorem odd_shifted_prod_suc(k: Nat) {
+    odd_shifted_prod(k.suc) = odd_shifted_prod(k) * odd_shifted_term(k)
+}
+
+theorem even_prod_zero {
+    even_prod(Nat.0) = Real.1
+}
+
+theorem odd_prod_zero {
+    odd_prod(Nat.0) = Real.1
+}
+
+theorem odd_shifted_prod_zero {
+    odd_shifted_prod(Nat.0) = Real.1
+}
+
+theorem wallis_field_step(e: Real, o: Real, s: Real, a: Real, b: Real, c: Real) {
+    o != Real.0 and s != Real.0 and b != Real.0 and c != Real.0 implies
+    (e * a).pow(Nat.2) / ((o * b) * (s * c)) =
+    (e.pow(Nat.2) / (o * s)) * (a / b) * (a / c)
+}
+
+theorem odd_term_positive_on(n: Nat) {
+    positive_on(odd_term, n)
+}
+
+theorem odd_shifted_term_positive_on(n: Nat) {
+    positive_on(odd_shifted_term, n)
+}
+
+theorem odd_prod_pos(n: Nat) {
+    odd_prod(n) > Real.0
+}
+
+theorem odd_shifted_prod_pos(n: Nat) {
+    odd_shifted_prod(n) > Real.0
+}
+
+theorem odd_prod_ne_zero(n: Nat) {
+    odd_prod(n) != Real.0
+}
+
+theorem odd_shifted_prod_ne_zero(n: Nat) {
+    odd_shifted_prod(n) != Real.0
+}
+
+theorem wallis_telescoping_step(k: Nat) {
+    wallis_partial(k) = even_prod(k).pow(Nat.2) / (odd_prod(k) * odd_shifted_prod(k))
+    implies
+    wallis_partial(k.suc) = even_prod(k.suc).pow(Nat.2) / (odd_prod(k.suc) * odd_shifted_prod(k.suc))
+}
+
+theorem wallis_partial_telescoping(n: Nat) {
+    wallis_partial(n) = even_prod(n).pow(Nat.2) / (odd_prod(n) * odd_shifted_prod(n))
+}
+
+theorem wallis_term_pos(k: Nat) {
+    wallis_term(k) > Real.0
+}
+
+theorem wallis_term_positive_on(n: Nat) {
+    positive_on(wallis_term, n)
+}
+
+theorem wallis_partial_pos(n: Nat) {
+    wallis_partial(n) > Real.0
+}
+
+define zeta2_term(k: Nat) -> Real {
+    Real.1 / (from_nat[Real](k.suc) * from_nat[Real](k.suc))
+}
+
+define zeta2_tel_term(k: Nat) -> Real {
+    harmonic(k) - harmonic(k.suc)
+}
+
+define zeta2_neg_harmonic(k: Nat) -> Real {
+    -harmonic(k)
+}
+
+theorem recip_diff(a: Real, b: Real) {
+    a != Real.0 and b != Real.0
+    implies Real.1 / a - Real.1 / b = (b - a) / (a * b)
+}
+
+theorem recip_sq_le_twice_tel_diff(a: Real, b: Real) {
+    a > Real.0 and b > Real.0 and b = a + Real.1 and Real.1 <= a
+    implies Real.1 / (a * a) <= (Real.1 + Real.1) * (Real.1 / a - Real.1 / b)
+}
+
+theorem zeta2_term_pos(k: Nat) {
+    zeta2_term(k) > Real.0
+}
+
+theorem zeta2_term_nonneg(k: Nat) {
+    Real.0 <= zeta2_term(k)
+}
+
+theorem zeta2_term_le_majorant(k: Nat) {
+    zeta2_term(k) <= (Real.1 + Real.1) * zeta2_tel_term(k)
+}
+
+theorem zeta2_tel_diff(k: Nat) {
+    diff_step(zeta2_neg_harmonic, k) = zeta2_tel_term(k)
+}
+
+theorem zeta2_tel_partial(n: Nat) {
+    partial(zeta2_tel_term, n) = Real.1 - harmonic(n)
+}
+
+theorem zeta2_tel_partial_le_one(n: Nat) {
+    partial(zeta2_tel_term, n) <= Real.1
+}
+
+theorem zeta2_partial_le_two(n: Nat) {
+    partial(zeta2_term, n) <= (Real.1 + Real.1)
+}
+
+theorem zeta2_converges {
+    converges(partial(zeta2_term))
+}
+
+theorem zeta2_converges_to_limit {
+    converges_to(partial(zeta2_term), limit(partial(zeta2_term)))
+}
+
+theorem zeta2_partial_basel_form(k: Nat) {
+    partial(function(n: Nat) {
+        Real.1 / ((from_nat[Real](n) + Real.1) * (from_nat[Real](n) + Real.1))
+    }, k) = partial(zeta2_term, k)
+}
+
+theorem harmonic_decreasing {
+    is_decreasing_seq(harmonic)
+}
+
+theorem mercator_partial_two {
+    partial(alt_term(harmonic), Nat.2) = Real.1 / from_nat[Real](Nat.2)
+}
+
+theorem mercator_partial_four {
+    partial(alt_term(harmonic), Nat.4) = from_nat[Real](Nat.7) / from_nat[Real](Nat.12)
+}
+
+define ps_term(a: Nat -> Real, x: Real, n: Nat) -> Real {
+    a(n) * x.pow(n)
+}
+
+define ps_sum(a: Nat -> Real, x: Real) -> Real {
+    limit(partial(ps_term(a, x)))
+}
+
+define ps_diff_coeff(a: Nat -> Real, n: Nat) -> Real {
+    Real.from_rat(Rat.from_nat(n.suc)) * a(n.suc)
+}
+
+define ps_diff_term(a: Nat -> Real, x: Real, n: Nat) -> Real {
+    ps_term(ps_diff_coeff(a), x, n)
+}
+
+define ps_int_coeff(a: Nat -> Real, n: Nat) -> Real {
+    a(n) / Real.from_rat(Rat.from_nat(n.suc))
+}
+
+define ps_int_term(a: Nat -> Real, x: Real, n: Nat) -> Real {
+    a(n) * x.pow(n.suc) / Real.from_rat(Rat.from_nat(n.suc))
+}
+
+theorem converges_to_pointwise_eq(q: Nat -> Real, r: Nat -> Real, a: Real) {
+    (forall(n: Nat) { q(n) = r(n) }) implies (converges_to(q, a) implies converges_to(r, a))
+}
+
+theorem converges_pointwise_eq(q: Nat -> Real, r: Nat -> Real) {
+    (forall(n: Nat) { q(n) = r(n) }) implies (converges(q) implies converges(r))
+}
+
+theorem limit_pointwise_eq(s: Nat -> Real, t: Nat -> Real) {
+    (forall(n: Nat) { s(n) = t(n) }) and converges(s)
+    implies
+    limit(t) = limit(s)
+}
+
+theorem mul_recip_prod_cancel(a: Real, b: Real) {
+    a != Real.0 and b != Real.0 implies a * (Real.1 / (a * b)) = Real.1 / b
+}
+
+theorem mul_div_prod_cancel(a: Real, b: Real, c: Real) {
+    a != Real.0 and b != Real.0 implies a * (c / (a * b)) = c / b
+}
+
+theorem recip_div(a: Real, b: Real) {
+    a != Real.0 and b != Real.0 implies (Real.1 / b) / a = Real.1 / (a * b)
+}
+
+theorem div_nonneg_le_self(c: Real, d: Real) {
+    Real.0 <= c and Real.1 <= d implies c / d <= c
+}
+
+define exp_coeff(n: Nat) -> Real {
+    Real.1 / Real.from_rat(Rat.from_nat(n.factorial))
+}
+
+theorem ps_term_exp_coeff(x: Real, n: Nat) {
+    ps_term(exp_coeff, x, n) = exp_term(x, n)
+}
+
+theorem exp_diff_coeff_eq_exp_coeff(n: Nat) {
+    ps_diff_coeff(exp_coeff, n) = exp_coeff(n)
+}
+
+theorem exp_int_coeff_eq_shifted(n: Nat) {
+    ps_int_coeff(exp_coeff, n) = exp_coeff(n.suc)
+}
+
+theorem ps_diff_term_exp_coeff_eq_exp_term(x: Real, n: Nat) {
+    ps_diff_term(exp_coeff, x, n) = exp_term(x, n)
+}
+
+theorem ps_int_term_exp_coeff_eq_shift(x: Real, n: Nat) {
+    ps_int_term(exp_coeff, x, n) = exp_term(x, n.suc)
+}
+
+theorem exp_diff_series_eq_exp(x: Real) {
+    limit(partial(ps_diff_term(exp_coeff, x))) = x.exp
+}
+
+theorem exp_int_series_eq_exp_sub_one(x: Real) {
+    limit(partial(ps_int_term(exp_coeff, x))) = x.exp - Real.1
+}
+
+define sin_diff_term(x: Real, n: Nat) -> Real {
+    Real.from_rat(Rat.from_nat(Nat.2 * n + Nat.1)) * alternating_sign[Real](n) *
+        x.pow(Nat.2 * n) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.1).factorial))
+}
+
+theorem sin_diff_term_eq_cos_term(x: Real, n: Nat) {
+    sin_diff_term(x, n) = cos_term(x, n)
+}
+
+define cos_diff_term(x: Real, n: Nat) -> Real {
+    Real.from_rat(Rat.from_nat(Nat.2 * n + Nat.2)) * alternating_sign[Real](n.suc) *
+        x.pow(Nat.2 * n + Nat.1) / Real.from_rat(Rat.from_nat((Nat.2 * n + Nat.2).factorial))
+}
+
+theorem cos_diff_term_eq_neg_sin_term(x: Real, n: Nat) {
+    cos_diff_term(x, n) = -sin_term(x, n)
+}
+
+theorem sin_diff_series_eq_cos(x: Real) {
+    limit(partial(sin_diff_term(x))) = x.cos
+}
+
+theorem cos_diff_series_eq_neg_sin(x: Real) {
+    limit(partial(cos_diff_term(x))) = -x.sin
+}
+
+theorem ps_int_coeff_abs_le(a: Nat -> Real, n: Nat) {
+    ps_int_coeff(a, n).abs <= a(n).abs
+}
+
+theorem ps_int_term_abs_le(a: Nat -> Real, x: Real, n: Nat) {
+    ps_int_term(a, x, n).abs <= x.abs * ps_term(a, x, n).abs
+}
+
+theorem ps_int_term_abs_converges_of_abs_converges(a: Nat -> Real, x: Real) {
+    absolutely_converges(ps_term(a, x)) implies absolutely_converges(ps_int_term(a, x))
+}
+
+define mercator_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * x.pow(n.suc) / Real.from_rat(Rat.from_nat(n.suc))
+}
+
+define mercator_sum(x: Real) -> Real {
+    limit(partial(mercator_term(x)))
+}
+
+define mercator_diff_term(x: Real, n: Nat) -> Real {
+    alternating_sign[Real](n) * x.pow(n)
+}
+
+theorem mercator_term_abs(x: Real, n: Nat) {
+    mercator_term(x, n).abs = x.abs.pow(n.suc) / Real.from_rat(Rat.from_nat(n.suc))
+}
+
+theorem mercator_term_abs_le_geom(x: Real, n: Nat) {
+    mercator_term(x, n).abs <= x.abs * x.abs.pow(n)
+}
+
+theorem mercator_term_abs_converges_small(x: Real) {
+    x.abs < Real.1 implies absolutely_converges(mercator_term(x))
+}
+
+theorem mercator_diff_coeff(n: Nat) {
+    Real.from_rat(Rat.from_nat(n.suc)) * (Real.1 / Real.from_rat(Rat.from_nat(n.suc))) = Real.1
+}
+
+theorem mercator_diff_term_eq_alt_pow(x: Real, n: Nat) {
+    mercator_diff_term(x, n) = (-x).pow(n)
+}
+
+theorem alt_geom_series_eq_recip(x: Real) {
+    x.abs < Real.1 implies limit(partial((-x).pow)) = Real.1 / (Real.1 + x)
+}
+
+theorem mercator_diff_series_eq_recip(x: Real) {
+    x.abs < Real.1 implies limit(partial(mercator_diff_term(x))) = Real.1 / (Real.1 + x)
+}
+
+theorem mercator_series_at_one_converges {
+    converges(partial(mercator_term(Real.1)))
+}
+
+define ps_conv_radii_contains(a: Nat -> Real, r: Real) -> Bool {
+    Real.0 <= r and absolutely_converges(power_series_term(a, r))
+}
+
+define ps_conv_radii_set(a: Nat -> Real) -> Set[Real] {
+    Set[Real].new(ps_conv_radii_contains(a))
+}
+
+theorem ps_conv_radii_set_contains_iff(a: Nat -> Real, r: Real) {
+    ps_conv_radii_set(a).contains(r) = ps_conv_radii_contains(a, r)
+}
+
+define is_ps_radius(a: Nat -> Real, rho: Real) -> Bool {
+    is_set_supremum(ps_conv_radii_set(a), rho)
+}
+
+theorem ps_term_at_zero_zero(a: Nat -> Real) {
+    power_series_term(a, Real.0, Nat.0) = a(Nat.0)
+}
+
+theorem ps_term_at_zero_tail(a: Nat -> Real, n: Nat) {
+    n >= Nat.1 implies power_series_term(a, Real.0, n) = Real.0
+}
+
+theorem ps_abs_partial_at_zero_suc(a: Nat -> Real, n: Nat) {
+    partial(abs_fn(power_series_term(a, Real.0)), n.suc) = a(Nat.0).abs
+}
+
+theorem ps_conv_radii_contains_zero(a: Nat -> Real) {
+    ps_conv_radii_set(a).contains(Real.0)
+}
+
+theorem ps_radius_nonneg(a: Nat -> Real, rho: Real) {
+    is_ps_radius(a, rho) implies Real.0 <= rho
+}
+
+theorem ps_abs_conv_inside_radius(a: Nat -> Real, x: Real, rho: Real) {
+    is_ps_radius(a, rho) and x.abs < rho
+    implies absolutely_converges(power_series_term(a, x))
+}
+
+theorem ps_conv_radii_contains_below(a: Nat -> Real, x: Real, r: Real) {
+    converges(partial(power_series_term(a, x))) and x != Real.0
+    and Real.0 <= r and r < x.abs
+    implies ps_conv_radii_set(a).contains(r)
+}
+
+theorem ps_conv_imp_radius_ub(a: Nat -> Real, x: Real, rho: Real) {
+    converges(partial(power_series_term(a, x))) and is_ps_radius(a, rho)
+    implies x.abs <= rho
+}
+
+theorem ps_radius_exists_of_divergence(a: Nat -> Real, x1: Real) {
+    not absolutely_converges(power_series_term(a, x1))
+    implies exists(rho: Real) { is_ps_radius(a, rho) }
+}
+
+theorem ps_term_eq_power_series_term(a: Nat -> Real, x: Real, n: Nat) {
+    ps_term(a, x, n) = power_series_term(a, x, n)
+}
+
+theorem exp_series_abs_conv_everywhere(r: Real) {
+    absolutely_converges(power_series_term(exp_coeff, r))
+}
+
+theorem exp_radii_contains_every_nonneg(r: Real) {
+    Real.0 <= r implies ps_conv_radii_set(exp_coeff).contains(r)
+}
+
+theorem exp_radii_set_unbounded {
+    forall(m: Real) {
+        exists(r: Real) {
+            ps_conv_radii_set(exp_coeff).contains(r) and m < r
+        }
+    }
+}
+
+theorem exp_series_radius_infinite {
+    not exists(rho: Real) { is_ps_radius(exp_coeff, rho) }
+}
+
+define abel_seq(a: Nat -> Real, x: Real, n: Nat) -> Real {
+    partial(a, n.suc) * x.pow(n)
+}
+
+define abel_center_seq(a: Nat -> Real, s: Real, x: Real, n: Nat) -> Real {
+    (partial(a, n.suc) - s) * x.pow(n)
+}
+
+define abel_diff_abs(a: Nat -> Real, s: Real, n: Nat) -> Real {
+    (partial(a, n.suc) - s).abs
+}
+
+theorem pow_le_one(x: Real, n: Nat) {
+    Real.0 <= x and x <= Real.1 implies x.pow(n) <= Real.1
+}
+
+theorem converges_to_intro(q: Nat -> Real, a: Real) {
+    (forall(eps: Real) { eps.is_positive implies exists(n: Nat) { tail_bound(q, a, n, eps) } })
+    implies converges_to(q, a)
+}
+
+theorem abs_add_le(a: Real, b: Real) {
+    (a + b).abs <= a.abs + b.abs
+}
+
+theorem geom_partial_sum_eq(r: Real, n: Nat) {
+    partial(r.pow, n) * (Real.1 - r) = Real.1 - r.pow(n)
+}
+
+theorem abel_seq_split(a: Nat -> Real, s: Real, x: Real, n: Nat) {
+    abel_seq(a, x, n) = abel_center_seq(a, s, x, n) + s * x.pow(n)
+}
+
+theorem abel_finite_identity(a: Nat -> Real, x: Real, n: Nat) {
+    partial(power_series_term(a, x), n) =
+        (Real.1 - x) * partial(abel_seq(a, x), n) + partial(a, n) * x.pow(n)
+}
+
+theorem abel_center_abs_conv(a: Nat -> Real, s: Real, x: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    implies absolutely_converges(abel_center_seq(a, s, x))
+}
+
+theorem abel_seq_partial_split(a: Nat -> Real, s: Real, x: Real, n: Nat) {
+    partial(abel_seq(a, x), n) =
+        partial(abel_center_seq(a, s, x), n) + s * partial(x.pow, n)
+}
+
+theorem abel_ps_conv(a: Nat -> Real, x: Real) {
+    converges(partial(a)) and Real.0 <= x and x < Real.1
+    implies converges(partial(power_series_term(a, x)))
+}
+
+theorem ps_sum_eq_power_series_limit(a: Nat -> Real, x: Real) {
+    converges(partial(power_series_term(a, x)))
+    implies ps_sum(a, x) = limit(partial(power_series_term(a, x)))
+}
+
+theorem abel_center_converges(a: Nat -> Real, s: Real, x: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    implies converges(partial(abel_center_seq(a, s, x)))
+}
+
+theorem abel_seq_converges(a: Nat -> Real, s: Real, x: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    implies converges(partial(abel_seq(a, x)))
+}
+
+theorem abel_limit_center_identity(a: Nat -> Real, s: Real, x: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    implies ps_sum(a, x) - s =
+        (Real.1 - x) * limit(partial(abel_center_seq(a, s, x)))
+}
+
+theorem abel_center_term_abs_le_diff(a: Nat -> Real, s: Real, x: Real, k: Nat) {
+    Real.0 <= x and x <= Real.1
+    implies abs_fn(abel_center_seq(a, s, x))(k) <= abel_diff_abs(a, s, k)
+}
+
+theorem abel_tail_limit_bound(a: Nat -> Real, s: Real, x: Real, n0: Nat, eps: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    and (forall(k: Nat) { n0 <= k implies abel_diff_abs(a, s, k) < eps })
+    implies limit(partial(tail(abel_center_seq(a, s, x), n0))).abs <= eps * x.pow(n0) / (Real.1 - x)
+}
+
+theorem abel_estimate(a: Nat -> Real, s: Real, x: Real, n0: Nat, eps: Real) {
+    converges_to(partial(a), s) and Real.0 <= x and x < Real.1
+    and (forall(k: Nat) { n0 <= k implies abel_diff_abs(a, s, k) < eps })
+    implies (ps_sum(a, x) - s).abs <= (Real.1 - x) * partial(abel_diff_abs(a, s), n0) + eps * x.pow(n0)
+}
+
+theorem half_plus_half(eps: Real) {
+    eps / two + eps / two = eps
+}
+
+theorem abel_theorem_at(a: Nat -> Real, s: Real, q: Nat -> Real) {
+    converges_to(partial(a), s)
+    and (forall(n: Nat) { Real.0 <= q(n) and q(n) < Real.1 })
+    and converges_to(q, Real.1)
+    implies converges_to(compose(ps_sum(a), q), s)
+}
+
+theorem abel_theorem(a: Nat -> Real, q: Nat -> Real) {
+    converges(partial(a))
+    and (forall(n: Nat) { Real.0 <= q(n) and q(n) < Real.1 })
+    and converges_to(q, Real.1)
+    implies converges_to(compose(ps_sum(a), q), limit(partial(a)))
+}
+
+theorem geometric_series_converges(r: Real) {
+    r.abs < Real.1 implies converges(partial(r.pow))
+}
+
+theorem geometric_series_sum(r: Real) {
+    r.abs < Real.1 implies limit(partial(r.pow)) = Real.1 / (Real.1 - r)
+}
+
+theorem p_series_two_converges {
+    converges(partial(zeta2_term))
+}
+
+theorem p_series_two_partials_le_two(n: Nat) {
+    partial(zeta2_term, n) <= Real.1 + Real.1
+}
+
+theorem ratio_test_series_abs_converges(a: Nat -> Real, l: Real) {
+    converges_to(ratio_seq(a), l) and l < Real.1 and always_nonzero(a)
+    implies absolutely_converges(a)
+}
+
+theorem ratio_test_series_converges(a: Nat -> Real, l: Real) {
+    converges_to(ratio_seq(a), l) and l < Real.1 and always_nonzero(a)
+    implies converges(partial(a))
+}
+
+theorem alternating_series_test_series_converges(a: Nat -> Real) {
+    is_decreasing_seq(a) and vanishes(a) implies converges(partial(alt_term(a)))
+}
+
+theorem real_add_two_lower(a: Real, b: Real, u: Real, v: Real) {
+    a >= u and b >= v implies a + b >= u + v
+}
+
+theorem from_nat_suc_mul_recip_step(x: Nat, d: Nat) {
+    from_nat[Real](x.suc) * (Real.1 / from_nat[Real](d)) = from_nat[Real](x) * (Real.1 / from_nat[Real](d)) + (Real.1 / from_nat[Real](d))
+}
+
+theorem partial_real_lower_step_generic(f: Nat -> Real, x: Nat, d: Nat) {
+    partial(f, x) >= from_nat[Real](x) * (Real.1 / from_nat[Real](d)) and
+    f(x) >= Real.1 / from_nat[Real](d) implies
+    partial(f, x.suc) >= from_nat[Real](x.suc) * (Real.1 / from_nat[Real](d))
+}
+
+theorem lte_suc_imp_lt(a: Nat, b: Nat) {
+    a.suc <= b implies a < b
+}
+
+theorem harmonic_block_partial_lower_step(n: Nat, x: Nat) {
+    n > Nat.0 and x.suc <= n and
+    partial(function(k: Nat) { harmonic(n + k) }, x) >= from_nat[Real](x) * (Real.1 / from_nat[Real](n + n)) implies
+    partial(function(k: Nat) { harmonic(n + k) }, x.suc) >= from_nat[Real](x.suc) * (Real.1 / from_nat[Real](n + n))
+}
+
+theorem harmonic_block_partial_lower(n: Nat, m: Nat) {
+    n > Nat.0 and m <= n implies
+    partial(function(k: Nat) { harmonic(n + k) }, m) >= from_nat[Real](m) * (Real.1 / from_nat[Real](n + n))
+}
+
+theorem two_mul_one_half_real {
+    (Real.1 + Real.1) * Real.one_half = Real.1
+}
+
+theorem half_is_inverse_two {
+    Real.one_half = (Real.1 + Real.1).inverse
+}
+
+theorem real_one_div_two_eq_half {
+    Real.1 / (Real.1 + Real.1) = Real.one_half
+}
+
+theorem real_half_ratio_nonzero(a: Real) {
+    a != Real.0 implies a * (Real.1 / ((Real.1 + Real.1) * a)) = Real.one_half
+}
+
+theorem from_nat_suc_half_ratio(k: Nat) {
+    from_nat[Real](k.suc) * (Real.1 / from_nat[Real](k.suc + k.suc)) = Real.one_half
+}
+
+theorem nat_pos_ne_zero_atomic(n: Nat) {
+    n > Nat.0 implies n != Nat.0
+}
+
+theorem from_nat_half_ratio_ne_zero(n: Nat) {
+    n != Nat.0 implies from_nat[Real](n) * (Real.1 / from_nat[Real](n + n)) = Real.one_half
+}
+
+theorem from_nat_half_ratio(n: Nat) {
+    n > Nat.0 implies from_nat[Real](n) * (Real.1 / from_nat[Real](n + n)) = Real.one_half
+}
+
+theorem harmonic_block_lower(n: Nat) {
+    n > Nat.0 implies partial(function(k: Nat) { harmonic(n + k) }, n) >= Real.one_half
+}
+
+theorem partial_add_shift_real(f: Nat -> Real, n: Nat, m: Nat) {
+    partial(f, n + m) = partial(f, n) + partial(function(k: Nat) { f(n + k) }, m)
+}
+
+theorem harmonic_tail_half_jump(k: Nat) {
+    k > Nat.0 implies partial(harmonic, k + k) >= partial(harmonic, k) + Real.one_half
+}
+
+theorem real_one_half_is_positive {
+    Real.one_half.is_positive
+}
+
+theorem converges_has_half_cauchy_bound(q: Nat -> Real) {
+    converges(q) implies exists(n: Nat) { cauchy_bound(q, n, Real.one_half) }
+}
+
+theorem not_close_if_ge_half(a: Real, b: Real) {
+    b >= a + Real.one_half implies not b.is_close(a, Real.one_half)
+}
+
+theorem harmonic_series_diverges {
+    not converges(partial(harmonic))
+}

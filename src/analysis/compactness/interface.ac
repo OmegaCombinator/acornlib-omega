@@ -1,0 +1,1850 @@
+theorem continuous_image_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y,
+    s: Set[X]
+) {
+    is_continuous(f) and is_compact[X](s) implies is_compact[Y](set_image(s, f))
+}
+
+define cover_adjoin_complement[T](s: Set[T], c: Set[T] -> Bool, u: Set[T]) -> Bool {
+    c(u) or u = s.c
+}
+
+theorem cover_adjoin_complement_open_sets[T: TopologicalSpace](s: Set[T], c: Set[T] -> Bool) {
+    is_closed[T](s) and (forall(u: Set[T]) { c(u) implies T.is_open(u) })
+        implies forall(u: Set[T]) { cover_adjoin_complement[T](s, c, u) implies T.is_open(u) }
+}
+
+theorem cover_adjoin_complement_is_open_cover_of_superset[T: TopologicalSpace](
+    s: Set[T],
+    k: Set[T],
+    c: Set[T] -> Bool
+) {
+    is_closed[T](s) and is_open_cover[T](c, s)
+        implies is_open_cover[T](cover_adjoin_complement[T](s, c), k)
+}
+
+define cover_restrict_to_family[T](c: Set[T] -> Bool, items: List[Set[T]]) -> List[Set[T]] {
+    items.filter(c)
+}
+
+theorem cover_restrict_to_family_is_subfamily[T](c: Set[T] -> Bool, items: List[Set[T]]) {
+    is_subfamily[T](c, cover_restrict_to_family[T](c, items))
+}
+
+theorem cover_restrict_to_family_covers_closed_member[T](
+    s: Set[T],
+    c: Set[T] -> Bool,
+    items: List[Set[T]],
+    x: T
+) {
+    is_subfamily[T](cover_adjoin_complement[T](s, c), items) and s.contains(x)
+        and list_union_of_sets[T](items).contains(x)
+        implies list_union_of_sets[T](cover_restrict_to_family[T](c, items)).contains(x)
+}
+
+theorem cover_restrict_to_family_finite_subcover[T](
+    s: Set[T],
+    c: Set[T] -> Bool,
+    items: List[Set[T]]
+) {
+    is_subfamily[T](cover_adjoin_complement[T](s, c), items)
+        and s.subset(list_union_of_sets[T](items))
+        implies exists(filtered: List[Set[T]]) {
+            is_subfamily[T](c, filtered) and s.subset(list_union_of_sets[T](filtered))
+        }
+}
+
+theorem closed_subset_of_compact_is_compact[T: TopologicalSpace](s: Set[T], k: Set[T]) {
+    s.subset(k) and is_closed[T](s) and is_compact[T](k) implies is_compact[T](s)
+}
+
+theorem closed_subset_of_compact_union_is_compact[T: TopologicalSpace](
+    s: Set[T],
+    a: Set[T],
+    b: Set[T]
+) {
+    is_closed[T](s) and s.subset(a.union(b)) and is_compact[T](a) and is_compact[T](b)
+        implies is_compact[T](s)
+}
+
+theorem closed_subset_of_continuous_image_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y,
+    k: Set[X],
+    s: Set[Y]
+) {
+    is_continuous[X, Y](f) and is_compact[X](k) and is_closed[Y](s)
+        and s.subset(set_image[X, Y](k, f)) implies is_compact[Y](s)
+}
+
+theorem cover_restrict_to_family_finite_subcover_of_subset[T](
+    s: Set[T],
+    closed: Set[T],
+    c: Set[T] -> Bool,
+    items: List[Set[T]]
+) {
+    s.subset(closed) and is_subfamily[T](cover_adjoin_complement[T](closed, c), items)
+        and s.subset(list_union_of_sets[T](items))
+        implies exists(filtered: List[Set[T]]) {
+            is_subfamily[T](c, filtered) and s.subset(list_union_of_sets[T](filtered))
+        }
+}
+
+theorem cover_adjoin_complement_is_open_cover_of_subspace_closed_subset_ambient[T: TopologicalSpace](
+    carrier: Set[T],
+    s: Set[T],
+    closed: Set[T],
+    c: Set[T] -> Bool
+) {
+    is_closed[T](closed) and is_open_cover[T](c, s) and s = closed.intersection(carrier)
+        implies is_open_cover[T](cover_adjoin_complement[T](closed, c), carrier)
+}
+
+theorem compact_of_subspace_closed_subset[T: TopologicalSpace](carrier: Set[T], s: Set[T]) {
+    is_compact[T](carrier) and is_closed_in_subspace[T](carrier, s) implies is_compact[T](s)
+}
+
+theorem compact_inter_closed_is_compact[T: TopologicalSpace](carrier: Set[T], closed: Set[T]) {
+    is_compact[T](carrier) and is_closed[T](closed) implies is_compact[T](carrier.intersection(closed))
+}
+
+theorem continuous_image_closed_subset_of_compact_is_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y,
+    s: Set[X],
+    carrier: Set[X]
+) {
+    is_continuous[X, Y](f) and is_closed[X](s) and s.subset(carrier) and is_compact[X](carrier)
+        implies is_compact[Y](set_image[X, Y](s, f))
+}
+
+theorem continuous_image_subspace_closed_subset_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y,
+    carrier: Set[X],
+    s: Set[X]
+) {
+    is_continuous[X, Y](f) and is_compact[X](carrier) and is_closed_in_subspace[X](carrier, s)
+        implies is_compact[Y](set_image[X, Y](s, f))
+}
+
+theorem compact_inter_preimage_closed_is_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y,
+    carrier: Set[X],
+    closed: Set[Y]
+) {
+    is_continuous[X, Y](f) and is_compact[X](carrier) and is_closed[Y](closed)
+        implies is_compact[X](carrier.intersection(set_preimage[X, Y](f, closed)))
+}
+
+theorem continuous_preimage_clopen[X: TopologicalSpace, Y: TopologicalSpace](
+        f: X -> Y, s: Set[Y]) {
+    is_continuous(f) and is_clopen[Y](Y.is_open, s)
+        implies is_clopen[X](X.is_open, set_preimage(f, s))
+}
+
+theorem surjective_preimage_nonempty[X, Y](f: X -> Y, s: Set[Y]) {
+    is_surjective_fn(f) and s != Set[Y].empty_set implies
+        set_preimage(f, s) != Set[X].empty_set
+}
+
+theorem preimage_disjoint_of_disjoint[X, Y](f: X -> Y, u: Set[Y], v: Set[Y]) {
+    u.is_disjoint(v) implies set_preimage(f, u).is_disjoint(set_preimage(f, v))
+}
+
+theorem preimage_union_universal_of_union_universal[X, Y](f: X -> Y,
+        u: Set[Y], v: Set[Y]) {
+    u.union(v) = Set[Y].universal_set implies
+        set_preimage(f, u).union(set_preimage(f, v)) = Set[X].universal_set
+}
+
+theorem continuous_surjective_preimage_disconnection[X: TopologicalSpace, Y: TopologicalSpace](
+        f: X -> Y, u: Set[Y], v: Set[Y]) {
+    is_continuous(f) and is_surjective_fn(f)
+        and is_disconnection[Y](Y.is_open, u, v)
+        implies is_disconnection[X](X.is_open, set_preimage(f, u), set_preimage(f, v))
+}
+
+theorem surjective_continuous_connected_image[X: TopologicalSpace, Y: TopologicalSpace](
+        f: X -> Y) {
+    is_continuous(f) and is_surjective_fn(f) and is_connected[X](X.is_open)
+        implies is_connected[Y](Y.is_open)
+}
+
+theorem subset_union_difference_eq[K](a: Set[K], b: Set[K]) {
+    a.subset(b) implies a.union(b.difference(a)) = b
+}
+
+theorem inter_difference_self_empty[K](a: Set[K], b: Set[K]) {
+    a.intersection(b.difference(a)) = Set[K].empty_set
+}
+
+theorem frontier_subset_closure[T: TopologicalSpace](s: Set[T]) {
+    frontier(s).subset(closure(s))
+}
+
+theorem frontier_subset_closure_compl[T: TopologicalSpace](s: Set[T]) {
+    frontier(s).subset(closure(s.c))
+}
+
+theorem closure_eq_interior_union_frontier[T: TopologicalSpace](s: Set[T]) {
+    closure(s) = interior(s).union(frontier(s))
+}
+
+theorem interior_inter_frontier_empty[T: TopologicalSpace](s: Set[T]) {
+    interior(s).intersection(frontier(s)) = Set[T].empty_set
+}
+
+theorem open_frontier_eq_closure_diff_self[T: TopologicalSpace](s: Set[T]) {
+    T.is_open(s) implies frontier(s) = closure(s).difference(s)
+}
+
+theorem closed_frontier_eq_self_diff_interior[T: TopologicalSpace](s: Set[T]) {
+    is_closed[T](s) implies frontier(s) = s.difference(interior(s))
+}
+
+theorem closed_frontier_subset_self[T: TopologicalSpace](s: Set[T]) {
+    is_closed[T](s) implies frontier(s).subset(s)
+}
+
+theorem is_clopen_of_open_closed[T: TopologicalSpace](s: Set[T]) {
+    T.is_open(s) and is_closed[T](s) implies is_clopen[T](T.is_open, s)
+}
+
+theorem is_clopen_iff_open_closed[T: TopologicalSpace](s: Set[T]) {
+    is_clopen[T](T.is_open, s) = (T.is_open(s) and is_closed[T](s))
+}
+
+theorem frontier_empty_of_clopen[T: TopologicalSpace](s: Set[T]) {
+    is_clopen[T](T.is_open, s) implies frontier[T](s) = Set[T].empty_set
+}
+
+theorem clopen_of_frontier_empty[T: TopologicalSpace](s: Set[T]) {
+    frontier[T](s) = Set[T].empty_set implies is_clopen[T](T.is_open, s)
+}
+
+theorem frontier_empty_iff_clopen[T: TopologicalSpace](s: Set[T]) {
+    (frontier[T](s) = Set[T].empty_set) = is_clopen[T](T.is_open, s)
+}
+
+theorem connected_frontier_empty_trivial[T: TopologicalSpace](s: Set[T]) {
+    is_connected[T](T.is_open) and frontier[T](s) = Set[T].empty_set
+        implies s = Set[T].empty_set or s = Set[T].universal_set
+}
+
+theorem connected_nonempty_frontier_empty_universal[T: TopologicalSpace](s: Set[T]) {
+    is_connected[T](T.is_open) and frontier[T](s) = Set[T].empty_set and s != Set[T].empty_set
+        implies s = Set[T].universal_set
+}
+
+theorem generated_topology_basis_is_topological_basis[T](beta: GeneratedTopologyBasis[T]) {
+    is_topological_basis(beta.pred)
+}
+
+theorem generated_topology_basis_covers[T](beta: GeneratedTopologyBasis[T]) {
+    basis_covers(beta.pred)
+}
+
+define generated_topology_open[T](
+    beta: GeneratedTopologyBasis[T], u: Set[GeneratedTopology[T, beta]]
+) -> Bool {
+    exists(v: Set[T]) {
+        generated_open(beta.pred, v) and forall(p: GeneratedTopology[T, beta]) {
+            u.contains(p) = v.contains(p.value)
+        }
+    }
+}
+
+instance GeneratedTopology[T, beta: GeneratedTopologyBasis[T]]: TopologicalSpace {
+    let is_open: Set[GeneratedTopology[T, beta]] -> Bool = generated_topology_open[T](beta)
+}
+
+theorem generated_topology_open_empty[T](beta: GeneratedTopologyBasis[T]) {
+    generated_topology_open[T](beta, Set[GeneratedTopology[T, beta]].empty_set)
+}
+
+theorem generated_topology_open_universal[T](beta: GeneratedTopologyBasis[T]) {
+    generated_topology_open[T](beta, Set[GeneratedTopology[T, beta]].universal_set)
+}
+
+theorem generated_topology_basic_open[T](
+    beta: GeneratedTopologyBasis[T], s: Set[T], u: Set[GeneratedTopology[T, beta]]
+) {
+    beta.pred(s) and forall(p: GeneratedTopology[T, beta]) {
+        u.contains(p) = s.contains(p.value)
+    } implies generated_topology_open[T](beta, u)
+}
+
+theorem generated_topology_open_inter[T](
+    beta: GeneratedTopologyBasis[T], u: Set[GeneratedTopology[T, beta]], w: Set[GeneratedTopology[T, beta]]
+) {
+    generated_topology_open[T](beta, u) and generated_topology_open[T](beta, w)
+        implies generated_topology_open[T](beta, u.intersection(w))
+}
+
+define generated_topology_witness_family[T](
+    beta: GeneratedTopologyBasis[T], fam: Set[GeneratedTopology[T, beta]] -> Bool, v: Set[T]
+) -> Bool {
+    generated_open(beta.pred, v) and exists(u: Set[GeneratedTopology[T, beta]]) {
+        fam(u) and forall(p: GeneratedTopology[T, beta]) {
+            u.contains(p) = v.contains(p.value)
+        }
+    }
+}
+
+theorem generated_topology_open_big_union[T](
+    beta: GeneratedTopologyBasis[T], fam: Set[GeneratedTopology[T, beta]] -> Bool
+) {
+    (forall(u: Set[GeneratedTopology[T, beta]]) {
+        fam(u) implies generated_topology_open[T](beta, u)
+    }) implies generated_topology_open[T](beta, big_union(fam))
+}
+
+theorem is_homeomorphism_intro[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    (is_continuous(f) and is_continuous(g)
+        and (forall(x: X) { g(f(x)) = x })
+        and (forall(y: Y) { f(g(y)) = y }))
+        implies is_homeomorphism[X, Y](f, g)
+}
+
+theorem homeomorphism_compose_continuous_fwd[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace](
+    f1: X -> Y, g1: Y -> X, f2: Y -> Z, g2: Z -> Y) {
+    is_homeomorphism[X, Y](f1, g1) and is_homeomorphism[Y, Z](f2, g2)
+        implies is_continuous(compose(f2, f1))
+}
+
+theorem homeomorphism_compose_continuous_inv[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace](
+    f1: X -> Y, g1: Y -> X, f2: Y -> Z, g2: Z -> Y) {
+    is_homeomorphism[X, Y](f1, g1) and is_homeomorphism[Y, Z](f2, g2)
+        implies is_continuous(compose(g1, g2))
+}
+
+theorem homeomorphism_compose_left_inv_all[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace](
+    f1: X -> Y, g1: Y -> X, f2: Y -> Z, g2: Z -> Y) {
+    is_homeomorphism[X, Y](f1, g1) and is_homeomorphism[Y, Z](f2, g2)
+        implies forall(x: X) { compose(g1, g2)(compose(f2, f1)(x)) = x }
+}
+
+theorem homeomorphism_compose_right_inv_all[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace](
+    f1: X -> Y, g1: Y -> X, f2: Y -> Z, g2: Z -> Y) {
+    is_homeomorphism[X, Y](f1, g1) and is_homeomorphism[Y, Z](f2, g2)
+        implies forall(z: Z) { compose(f2, f1)(compose(g1, g2)(z)) = z }
+}
+
+theorem homeomorphism_compose[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace](
+    f1: X -> Y, g1: Y -> X, f2: Y -> Z, g2: Z -> Y) {
+    is_homeomorphism[X, Y](f1, g1) and is_homeomorphism[Y, Z](f2, g2)
+        implies is_homeomorphism[X, Z](compose(f2, f1), compose(g1, g2))
+}
+
+theorem homeomorphism_inverse[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies is_homeomorphism[Y, X](g, f)
+}
+
+theorem homeomorphism_forward_injective[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies is_injective_fn(f)
+}
+
+theorem homeomorphism_forward_surjective[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies is_surjective_fn(f)
+}
+
+theorem homeomorphism_forward_bijection[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies is_bijection_fn(f)
+}
+
+theorem homeomorphism_image_eq_inverse_preimage[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) implies set_image(s, f) = set_preimage(g, s)
+}
+
+theorem homeomorphism_preimage_eq_inverse_image[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) implies set_preimage(f, t) = set_image(t, g)
+}
+
+theorem homeomorphism_image_preimage_eq[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) implies set_image(set_preimage(f, t), f) = t
+}
+
+theorem homeomorphism_preimage_image_eq[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) implies set_preimage(f, set_image(s, f)) = s
+}
+
+theorem homeomorphism_image_subset_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, a: Set[X], b: Set[X]) {
+    is_homeomorphism[X, Y](f, g) implies
+    (set_image(a, f).subset(set_image(b, f)) = a.subset(b))
+}
+
+theorem homeomorphism_preimage_subset_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, a: Set[Y], b: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) implies
+    (set_preimage(f, a).subset(set_preimage(f, b)) = a.subset(b))
+}
+
+theorem homeomorphism_preimage_open[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and Y.is_open(t) implies X.is_open(set_preimage(f, t))
+}
+
+theorem homeomorphism_preimage_closed[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and is_closed[Y](t) implies is_closed[X](set_preimage(f, t))
+}
+
+theorem homeomorphism_image_open[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) and X.is_open(s) implies Y.is_open(set_image(s, f))
+}
+
+theorem homeomorphism_image_closed[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) and is_closed[X](s) implies is_closed[Y](set_image(s, f))
+}
+
+theorem homeomorphism_preimage_clopen[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and is_clopen[Y](Y.is_open, t)
+        implies is_clopen[X](X.is_open, set_preimage(f, t))
+}
+
+theorem homeomorphism_preimage_empty_imp_empty[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and set_preimage(f, t) = Set[X].empty_set
+        implies t = Set[Y].empty_set
+}
+
+theorem homeomorphism_preimage_universal_imp_universal[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and set_preimage(f, t) = Set[X].universal_set
+        implies t = Set[Y].universal_set
+}
+
+theorem homeomorphism_preserves_connected_via_clopen[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_connected_via_clopen[X](X.is_open)
+        implies is_connected_via_clopen[Y](Y.is_open)
+}
+
+theorem homeomorphism_image_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) and is_compact[X](s)
+        implies is_compact[Y](set_image(s, f))
+}
+
+theorem homeomorphism_preimage_compact[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) and is_compact[Y](t)
+        implies is_compact[X](set_preimage(f, t))
+}
+
+theorem homeomorphism_image_compact_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, s: Set[X]) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_compact[X](s) = is_compact[Y](set_image(s, f)))
+}
+
+theorem homeomorphism_preimage_compact_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X, t: Set[Y]) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_compact[Y](t) = is_compact[X](set_preimage(f, t)))
+}
+
+theorem homeomorphism_preserves_connected[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_connected[X](X.is_open)
+        implies is_connected[Y](Y.is_open)
+}
+
+theorem homeomorphism_reflects_connected[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_connected[Y](Y.is_open)
+        implies is_connected[X](X.is_open)
+}
+
+theorem homeomorphism_connected_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_connected[X](X.is_open) = is_connected[Y](Y.is_open))
+}
+
+theorem homeomorphism_preserves_t0[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_t0_space[X](X.is_open)
+        implies is_t0_space[Y](Y.is_open)
+}
+
+theorem homeomorphism_reflects_t0[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_t0_space[Y](Y.is_open)
+        implies is_t0_space[X](X.is_open)
+}
+
+theorem homeomorphism_t0_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_t0_space[X](X.is_open) = is_t0_space[Y](Y.is_open))
+}
+
+theorem homeomorphism_preserves_t1[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_t1_space[X](X.is_open)
+        implies is_t1_space[Y](Y.is_open)
+}
+
+theorem homeomorphism_reflects_t1[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_t1_space[Y](Y.is_open)
+        implies is_t1_space[X](X.is_open)
+}
+
+theorem homeomorphism_t1_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_t1_space[X](X.is_open) = is_t1_space[Y](Y.is_open))
+}
+
+theorem homeomorphism_preserves_hausdorff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_hausdorff[X](X.is_open)
+        implies is_hausdorff[Y](Y.is_open)
+}
+
+theorem homeomorphism_reflects_hausdorff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) and is_hausdorff[Y](Y.is_open)
+        implies is_hausdorff[X](X.is_open)
+}
+
+theorem homeomorphism_hausdorff_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, g: Y -> X) {
+    is_homeomorphism[X, Y](f, g) implies
+        (is_hausdorff[X](X.is_open) = is_hausdorff[Y](Y.is_open))
+}
+
+theorem pair_map_continuous[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace, W: TopologicalSpace](
+    f: X -> Z, g: Y -> W
+) {
+    is_continuous(f) and is_continuous(g)
+        implies is_continuous(pair_map[X, Y, Z, W](f, g))
+}
+
+define above_point(lower: Real, x: Real) -> Bool {
+    lower < x
+}
+
+define below_point(upper: Real, x: Real) -> Bool {
+    x < upper
+}
+
+define at_or_above_point(lower: Real, x: Real) -> Bool {
+    lower <= x
+}
+
+define at_or_below_point(upper: Real, x: Real) -> Bool {
+    x <= upper
+}
+
+define open_upper_ray_set(lower: Real) -> Set[Real] {
+    Set[Real].new(above_point(lower))
+}
+
+define open_lower_ray_set(upper: Real) -> Set[Real] {
+    Set[Real].new(below_point(upper))
+}
+
+define closed_upper_ray_set(lower: Real) -> Set[Real] {
+    Set[Real].new(at_or_above_point(lower))
+}
+
+define closed_lower_ray_set(upper: Real) -> Set[Real] {
+    Set[Real].new(at_or_below_point(upper))
+}
+
+theorem open_upper_ray_set_contains_eq(lower: Real, x: Real) {
+    open_upper_ray_set(lower).contains(x) = (lower < x)
+}
+
+theorem open_lower_ray_set_contains_eq(upper: Real, x: Real) {
+    open_lower_ray_set(upper).contains(x) = (x < upper)
+}
+
+theorem closed_upper_ray_set_contains_eq(lower: Real, x: Real) {
+    closed_upper_ray_set(lower).contains(x) = (lower <= x)
+}
+
+theorem closed_lower_ray_set_contains_eq(upper: Real, x: Real) {
+    closed_lower_ray_set(upper).contains(x) = (x <= upper)
+}
+
+theorem positive_half_lt_bound(eps: Real, bound: Real) {
+    eps.is_positive and eps + eps < bound implies eps < bound
+}
+
+theorem sub_lt_self_of_pos(a: Real, b: Real) {
+    b.is_positive implies a - b < a
+}
+
+theorem real_open_upper_ray_set(lower: Real) {
+    real_is_open(open_upper_ray_set(lower))
+}
+
+theorem real_open_lower_ray_set(upper: Real) {
+    real_is_open(open_lower_ray_set(upper))
+}
+
+theorem closed_upper_ray_set_eq_complement_open_lower_ray_set(lower: Real) {
+    closed_upper_ray_set(lower) = open_lower_ray_set(lower).c
+}
+
+theorem closed_lower_ray_set_eq_complement_open_upper_ray_set(upper: Real) {
+    closed_lower_ray_set(upper) = open_upper_ray_set(upper).c
+}
+
+theorem open_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    open_interval_set(lower, upper) = open_upper_ray_set(lower).intersection(open_lower_ray_set(upper))
+}
+
+theorem closed_interval_set_eq_ray_intersection(lower: Real, upper: Real) {
+    closed_interval_set(lower, upper) = closed_upper_ray_set(lower).intersection(closed_lower_ray_set(upper))
+}
+
+theorem real_complement_of_open_is_closed(s: Set[Real]) {
+    Real.is_open(s) implies is_closed[Real](s.c)
+}
+
+theorem real_complement_of_closed_is_open(s: Set[Real]) {
+    is_closed[Real](s) implies Real.is_open(s.c)
+}
+
+theorem real_union_of_open_is_open(s: Set[Real], t: Set[Real]) {
+    Real.is_open(s) and Real.is_open(t) implies Real.is_open(s.union(t))
+}
+
+theorem real_intersection_of_closed_is_closed(s: Set[Real], t: Set[Real]) {
+    is_closed[Real](s) and is_closed[Real](t) implies is_closed[Real](s.intersection(t))
+}
+
+theorem real_big_union_of_open_is_open(c: Set[Real] -> Bool) {
+    (forall(s: Set[Real]) { c(s) implies Real.is_open(s) })
+        implies Real.is_open(big_union(c))
+}
+
+theorem real_closed_upper_ray_set(lower: Real) {
+    is_closed[Real](closed_upper_ray_set(lower))
+}
+
+theorem real_closed_lower_ray_set(upper: Real) {
+    is_closed[Real](closed_lower_ray_set(upper))
+}
+
+theorem open_interval_set_is_open(lower: Real, upper: Real) {
+    Real.is_open(open_interval_set(lower, upper))
+}
+
+theorem closed_interval_set_is_closed(lower: Real, upper: Real) {
+    is_closed[Real](closed_interval_set(lower, upper))
+}
+
+theorem nonempty_from_neq_empty(s: Set[Real]) {
+    s != Set[Real].empty_set implies exists(x: Real) { s.contains(x) }
+}
+
+theorem supremum_approximation(s: Set[Real], c: Real, eps: Real) {
+    is_set_supremum(s, c) and eps.is_positive implies exists(z: Real) {
+        s.contains(z) and c - eps < z
+    }
+}
+
+theorem no_disconnection_with_order(u: Set[Real], v: Set[Real], x: Real, y: Real) {
+    not (real_is_open(u) and real_is_open(v) and u.is_disjoint(v)
+        and u.union(v) = Set[Real].universal_set and u.contains(x) and v.contains(y) and x < y)
+}
+
+theorem real_line_is_connected {
+    is_connected[Real](real_is_open)
+}
+
+theorem singleton_interval_subset(lower: Real, u: Set[Real]) {
+    u.contains(lower) implies closed_interval_set(lower, lower).subset(u)
+}
+
+theorem reversed_interval_set_is_empty(lower: Real, upper: Real) {
+    not lower <= upper implies closed_interval_set(lower, upper) = Set[Real].empty_set
+}
+
+theorem interval_subset_union_intervals(a: Real, x: Real, y: Real) {
+    closed_interval_set(a, y).subset(closed_interval_set(a, x).union(closed_interval_set(x, y)))
+}
+
+theorem union_subset_of_union(a: Set[Real], b: Set[Real], u: Set[Real], v: Set[Real]) {
+    a.subset(u) and b.subset(v) implies a.union(b).subset(u.union(v))
+}
+
+define finitely_coverable(c: Set[Real] -> Bool, a: Real, x: Real) -> Bool {
+    exists(items: List[Set[Real]]) {
+        is_subfamily[Real](c, items) and closed_interval_set(a, x).subset(list_union_of_sets[Real](items))
+    }
+}
+
+define prefix_member(c: Set[Real] -> Bool, lower: Real, upper: Real, x: Real) -> Bool {
+    lower <= x and x <= upper and finitely_coverable(c, lower, x)
+}
+
+define prefix_set(c: Set[Real] -> Bool, lower: Real, upper: Real) -> Set[Real] {
+    Set[Real].new(prefix_member(c, lower, upper))
+}
+
+theorem prefix_set_contains_eq(c: Set[Real] -> Bool, lower: Real, upper: Real, x: Real) {
+    prefix_set(c, lower, upper).contains(x) =
+        (lower <= x and x <= upper and finitely_coverable(c, lower, x))
+}
+
+theorem extend_finite_subcover(c: Set[Real] -> Bool, a: Real, x: Real, y: Real,
+    u: Set[Real], items: List[Set[Real]]) {
+    finitely_coverable(c, a, x) and c(u) and a <= x and x <= y
+        and closed_interval_set(x, y).subset(u)
+    implies finitely_coverable(c, a, y)
+}
+
+theorem interval_after_ball_subset(m: Real, eps: Real, s: Real, u: Set[Real]) {
+    m - eps < s and s <= m and eps.is_positive
+        and (forall(w: Real) { w.is_close(m, eps) implies u.contains(w) })
+    implies closed_interval_set(s, m).subset(u)
+}
+
+theorem interval_before_ball_subset(m: Real, eps: Real, y: Real, u: Set[Real]) {
+    y < m + eps and m <= y and eps.is_positive
+        and (forall(w: Real) { w.is_close(m, eps) implies u.contains(w) })
+    implies closed_interval_set(m, y).subset(u)
+}
+
+theorem heine_borel_closed_interval(lower: Real, upper: Real) {
+    is_compact[Real](closed_interval_set(lower, upper))
+}
+
+define continuous_on_closed(f: Real -> Real, lower: Real, upper: Real) -> Bool {
+    forall(x: Real) {
+        closed_interval_set(lower, upper).contains(x) implies continuous_at(f, x)
+    }
+}
+
+define uniform_on_condition(f: Real -> Real, lower: Real, upper: Real, delta: Real, eps: Real) -> Bool {
+    forall(x: Real, y: Real) {
+        closed_interval_set(lower, upper).contains(x) and
+        closed_interval_set(lower, upper).contains(y) and
+        x.is_close(y, delta)
+        implies f(x).is_close(f(y), eps)
+    }
+}
+
+define uniform_on(f: Real -> Real, lower: Real, upper: Real) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(delta: Real) {
+            delta.is_positive and uniform_on_condition(f, lower, upper, delta, eps)
+        }
+    }
+}
+
+define is_unbounded(f: Nat -> Nat) -> Bool {
+    forall(bound: Nat) {
+        exists(n: Nat) {
+            bound < f(n)
+        }
+    }
+}
+
+theorem metric_subsequence_tendsto[M: MetricSpace](q: Nat -> M, f: Nat -> Nat, a: M) {
+    is_monotone(f) and is_unbounded(f) and tendsto_metric(q, a)
+    implies tendsto_metric(compose(q, f), a)
+}
+
+theorem intermediate_value_on_closed_interval(f: Real -> Real, a: Real, b: Real, t: Real) {
+    continuous(f) and a <= b and f(a) <= t and t <= f(b)
+    implies exists(c: Real) { a <= c and c <= b and f(c) = t }
+}
+
+theorem heine_borel_closed_interval_is_compact(a: Real, b: Real) {
+    is_compact[Real](closed_interval_set(a, b))
+}
+
+theorem real_is_open_imp_is_open_metric(s: Set[Real]) {
+    Real.is_open(s) implies is_open_metric(s)
+}
+
+theorem is_open_metric_imp_real_is_open(s: Set[Real]) {
+    is_open_metric(s) implies Real.is_open(s)
+}
+
+theorem real_is_open_eq_is_open_metric(s: Set[Real]) {
+    Real.is_open(s) = is_open_metric(s)
+}
+
+theorem closed_interval_is_closed_metric(lo: Real, hi: Real) {
+    is_closed_metric(closed_interval_set(lo, hi))
+}
+
+theorem closed_interval_cauchy_metric_has_limit_in_interval(q: Nat -> Real, lo: Real, hi: Real) {
+    (forall(n: Nat) { closed_interval_set(lo, hi).contains(q(n)) }) and is_cauchy_metric(q)
+    implies exists(a: Real) { closed_interval_set(lo, hi).contains(a) and tendsto_metric(q, a) }
+}
+
+define is_sequentially_compact[M: MetricSpace](s: Set[M]) -> Bool {
+    forall(q: Nat -> M) {
+        (forall(n: Nat) { s.contains(q(n)) }) implies exists(f: Nat -> Nat, a: M) {
+            is_monotone(f) and is_unbounded(f) and s.contains(a) and tendsto_metric(compose(q, f), a)
+        }
+    }
+}
+
+theorem is_sequentially_compact_iff[M: MetricSpace](s: Set[M]) {
+    is_sequentially_compact(s) = forall(q: Nat -> M) {
+        (forall(n: Nat) { s.contains(q(n)) }) implies exists(f: Nat -> Nat, a: M) {
+            is_monotone(f) and is_unbounded(f) and s.contains(a) and tendsto_metric(compose(q, f), a)
+        }
+    }
+}
+
+theorem sequentially_compact_subsequence[M: MetricSpace](s: Set[M], p: Nat -> M) {
+    is_sequentially_compact(s) and (forall(n: Nat) { s.contains(p(n)) }) implies exists(f: Nat -> Nat, b: M) {
+        is_monotone(f) and is_unbounded(f) and s.contains(b) and tendsto_metric(compose(p, f), b)
+    }
+}
+
+theorem cauchy_metric_convergent_subsequence_imp_convergent[M: MetricSpace](
+    q: Nat -> M, f: Nat -> Nat, a: M) {
+    is_cauchy_metric(q) and is_monotone(f) and is_unbounded(f) and tendsto_metric(compose(q, f), a) implies tendsto_metric(q, a)
+}
+
+theorem sequentially_compact_imp_complete[M: MetricSpace] {
+    is_sequentially_compact[M](Set[M].universal_set) implies forall(q: Nat -> M) {
+        is_cauchy_metric(q) implies exists(a: M) { tendsto_metric(q, a) }
+    }
+}
+
+theorem sequentially_compact_contains_limits[M: MetricSpace](s: Set[M], q: Nat -> M, a: M) {
+    is_sequentially_compact(s) and (forall(n: Nat) { s.contains(q(n)) }) and tendsto_metric(q, a) implies s.contains(a)
+}
+
+theorem closed_interval_is_sequentially_compact(lo: Real, hi: Real) {
+    is_sequentially_compact[Real](closed_interval_set(lo, hi))
+}
+
+theorem closed_interval_seq_compact_iff_compact(lo: Real, hi: Real) {
+    is_sequentially_compact[Real](closed_interval_set(lo, hi)) = is_compact[Real](closed_interval_set(lo, hi))
+}
+
+theorem sequentially_compact_image[M: MetricTopologicalSpace, N: MetricTopologicalSpace](
+    s: Set[M], f: M -> N) {
+    is_sequentially_compact(s) and is_continuous(f) implies is_sequentially_compact(set_image(s, f))
+}
+
+theorem sequentially_compact_imp_bounded[M: MetricSpace](s: Set[M]) {
+    is_sequentially_compact(s) implies is_bounded(s)
+}
+
+theorem continuous_seq_compact_bounded_above[M: MetricTopologicalSpace](s: Set[M], f: M -> Real) {
+    is_sequentially_compact(s) and is_continuous(f) implies exists(b: Real) {
+        forall(y: M) { s.contains(y) implies f(y) <= b }
+    }
+}
+
+theorem continuous_seq_compact_bounded_below[M: MetricTopologicalSpace](s: Set[M], f: M -> Real) {
+    is_sequentially_compact(s) and is_continuous(f) implies exists(b: Real) {
+        forall(y: M) { s.contains(y) implies b <= f(y) }
+    }
+}
+
+theorem closed_interval_left_local(a: Real, b: Real, x: Real) {
+    closed_interval(a, b, x) implies a <= x
+}
+
+theorem closed_interval_right_local(a: Real, b: Real, x: Real) {
+    closed_interval(a, b, x) implies x <= b
+}
+
+define is_connected_set[T: TopologicalSpace](s: Set[T]) -> Bool {
+    not exists(u: Set[T], v: Set[T]) {
+        is_open_in_subspace(s, u) and is_open_in_subspace(s, v) and u != Set[T].empty_set and v != Set[T].empty_set and u.is_disjoint(v) and u.union(v) = s
+    }
+}
+
+theorem is_connected_set_iff[T: TopologicalSpace](s: Set[T]) {
+    is_connected_set(s) = not exists(u: Set[T], v: Set[T]) {
+        is_open_in_subspace(s, u) and is_open_in_subspace(s, v) and u != Set[T].empty_set and v != Set[T].empty_set and u.is_disjoint(v) and u.union(v) = s
+    }
+}
+
+theorem no_relative_disconnection_with_order(
+    a: Set[Real], u: Set[Real], v: Set[Real], x: Real, y: Real) {
+    not (is_open_in_subspace[Real](a, u) and is_open_in_subspace[Real](a, v) and u.is_disjoint(v) and u.union(v) = a and u.contains(x) and v.contains(y) and x < y and closed_interval_set(x, y).subset(a))
+}
+
+theorem nonempty_from_neq_empty_generic[K](t: Set[K]) {
+    t != Set[K].empty_set implies exists(x: K) { t.contains(x) }
+}
+
+theorem nonempty_of_contains[K](t: Set[K], x: K) {
+    t.contains(x) implies t != Set[K].empty_set
+}
+
+define is_order_convex_set(a: Set[Real]) -> Bool {
+    forall(x: Real, y: Real, z: Real) {
+        a.contains(x) and a.contains(y) and x <= z and z <= y implies a.contains(z)
+    }
+}
+
+theorem is_order_convex_set_iff(a: Set[Real]) {
+    is_order_convex_set(a) = forall(x: Real, y: Real, z: Real) {
+        a.contains(x) and a.contains(y) and x <= z and z <= y implies a.contains(z)
+    }
+}
+
+theorem closed_interval_set_is_order_convex(lower: Real, upper: Real) {
+    is_order_convex_set(closed_interval_set(lower, upper))
+}
+
+theorem order_convex_imp_connected_set(a: Set[Real]) {
+    is_order_convex_set(a) implies is_connected_set[Real](a)
+}
+
+theorem closed_interval_is_connected_set(lower: Real, upper: Real) {
+    is_connected_set[Real](closed_interval_set(lower, upper))
+}
+
+theorem connected_set_order_convex_forall(a: Set[Real]) {
+    is_connected_set[Real](a) implies forall(x: Real, y: Real, z: Real) {
+        a.contains(x) and a.contains(y) and x <= z and z <= y implies a.contains(z)
+    }
+}
+
+theorem connected_set_imp_order_convex(a: Set[Real]) {
+    is_connected_set[Real](a) implies is_order_convex_set(a)
+}
+
+theorem connected_set_iff_order_convex(a: Set[Real]) {
+    is_connected_set[Real](a) = is_order_convex_set(a)
+}
+
+theorem continuous_image_connected_set[X: TopologicalSpace, Y: TopologicalSpace](
+    f: X -> Y, s: Set[X]) {
+    is_continuous(f) and is_connected_set[X](s) implies is_connected_set[Y](set_image(s, f))
+}
+
+define is_subspace_separable[T: TopologicalSpace](s: Set[T]) -> Bool {
+    exists(d: Set[T]) {
+        d.subset(s) and is_countable[T](d) and s.subset(closure(d))
+    }
+}
+
+theorem separable_union_of_separable[T: TopologicalSpace](s: Set[T], t: Set[T]) {
+    is_subspace_separable[T](s) and is_subspace_separable[T](t) implies
+        is_subspace_separable[T](s.union(t))
+}
+
+define subspace_inclusion[T: TopologicalSpace](a: Set[T], p: Subspace[T, a]) -> T {
+    p.value
+}
+
+theorem subspace_inclusion_preimage_contains[T: TopologicalSpace](
+    a: Set[T], v: Set[T], p: Subspace[T, a]
+) {
+    set_preimage(subspace_inclusion[T](a), v).contains(p) = v.contains(p.value)
+}
+
+theorem subspace_inclusion_continuous[T: TopologicalSpace](a: Set[T]) {
+    is_continuous(subspace_inclusion[T](a))
+}
+
+define subspace_carrier_set[T: TopologicalSpace](a: Set[T], u: Set[T]) -> Set[Subspace[T, a]] {
+    set_preimage(subspace_inclusion[T](a), u)
+}
+
+theorem subspace_carrier_set_contains[T: TopologicalSpace](
+    a: Set[T], u: Set[T], p: Subspace[T, a]
+) {
+    subspace_carrier_set(a, u).contains(p) = u.contains(p.value)
+}
+
+theorem subspace_carrier_set_trace_eq[T: TopologicalSpace](a: Set[T], u: Set[T], v: Set[T]) {
+    u = v.intersection(a) implies subspace_carrier_set(a, u) = subspace_carrier_set(a, v)
+}
+
+theorem subspace_carrier_set_compl_eq[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    subspace_carrier_set(a, u).c = subspace_carrier_set(a, u.c)
+}
+
+theorem subspace_carrier_set_open_from_ambient[T: TopologicalSpace](a: Set[T], v: Set[T]) {
+    T.is_open(v) implies Subspace[T, a].is_open(subspace_carrier_set(a, v))
+}
+
+theorem subspace_carrier_set_open_of_open_in_subspace[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    is_open_in_subspace[T](a, u) implies Subspace[T, a].is_open(subspace_carrier_set(a, u))
+}
+
+theorem subspace_open_in_subspace_of_carrier_witness[T: TopologicalSpace](a: Set[T], u: Set[T], v: Set[T]) {
+    T.is_open(v) and
+        (forall(p: Subspace[T, a]) { subspace_carrier_set(a, u).contains(p) = v.contains(p.value) })
+        implies is_open_in_subspace[T](a, u.intersection(a))
+}
+
+theorem subspace_open_in_subspace_of_carrier_open[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    Subspace[T, a].is_open(subspace_carrier_set(a, u))
+        implies is_open_in_subspace[T](a, u.intersection(a))
+}
+
+theorem subspace_carrier_open_iff[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    Subspace[T, a].is_open(subspace_carrier_set(a, u)) =
+        is_open_in_subspace[T](a, u.intersection(a))
+}
+
+theorem subspace_carrier_set_closed_from_ambient[T: TopologicalSpace](a: Set[T], c: Set[T]) {
+    is_closed[T](c) implies is_closed[Subspace[T, a]](subspace_carrier_set(a, c))
+}
+
+theorem subspace_carrier_set_closed_of_closed_in_subspace[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    is_closed_in_subspace[T](a, u) implies is_closed[Subspace[T, a]](subspace_carrier_set(a, u))
+}
+
+theorem subspace_closed_in_subspace_of_carrier_closed[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    is_closed[Subspace[T, a]](subspace_carrier_set(a, u))
+        implies is_closed_in_subspace[T](a, u.intersection(a))
+}
+
+theorem subspace_carrier_closed_iff[T: TopologicalSpace](a: Set[T], u: Set[T]) {
+    is_closed[Subspace[T, a]](subspace_carrier_set(a, u)) =
+        is_closed_in_subspace[T](a, u.intersection(a))
+}
+
+theorem sum_inl_continuous[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_continuous(sum_inl[X, Y])
+}
+
+theorem sum_inr_continuous[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_continuous(sum_inr[X, Y])
+}
+
+theorem compose_tends_to_infinity_cluster_subset_closed_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and tends_to_infinity(f) and is_closed_set(s)
+    implies sequence_cluster_set(compose(a, f)).subset(s)
+}
+
+theorem compose_tends_to_infinity_cluster_subset_compact_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and tends_to_infinity(f) and is_compact_real_set(s)
+    implies sequence_cluster_set(compose(a, f)).subset(s)
+}
+
+theorem compose_tends_to_infinity_cluster_bounded_of_eventually_in_compact(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and tends_to_infinity(f) and is_compact_real_set(s)
+    implies is_bounded_real_set(sequence_cluster_set(compose(a, f)))
+}
+
+theorem shift_add_cluster_subset_closed_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    k: Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_closed_set(s)
+    implies sequence_cluster_set(compose(a, k.add)).subset(s)
+}
+
+theorem shift_add_cluster_subset_compact_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    k: Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_compact_real_set(s)
+    implies sequence_cluster_set(compose(a, k.add)).subset(s)
+}
+
+theorem shift_add_cluster_bounded_of_eventually_in_compact(
+    s: Set[Real],
+    a: Nat -> Real,
+    k: Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_compact_real_set(s)
+    implies is_bounded_real_set(sequence_cluster_set(compose(a, k.add)))
+}
+
+theorem subsequence_cluster_subset_closed_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_subsequence_index(f) and is_closed_set(s)
+    implies sequence_cluster_set(subsequence(a, f)).subset(s)
+}
+
+theorem subsequence_cluster_subset_compact_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_subsequence_index(f) and is_compact_real_set(s)
+    implies sequence_cluster_set(subsequence(a, f)).subset(s)
+}
+
+theorem subsequence_cluster_bounded_of_eventually_in_compact(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    seq_eventually_in_real_set(s, a) and is_subsequence_index(f) and is_compact_real_set(s)
+    implies is_bounded_real_set(sequence_cluster_set(subsequence(a, f)))
+}
+
+theorem eventually_equal_cluster_subset_closed_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and is_closed_set(s)
+    implies sequence_cluster_set(b).subset(s)
+}
+
+theorem eventually_equal_cluster_subset_compact_of_eventually_in(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and is_compact_real_set(s)
+    implies sequence_cluster_set(b).subset(s)
+}
+
+theorem eventually_equal_cluster_bounded_of_eventually_in_compact(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and is_compact_real_set(s)
+    implies is_bounded_real_set(sequence_cluster_set(b))
+}
+
+theorem eventual_compose_tends_to_infinity_limit_in_closure(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    seq_eventually_in_real_set(s, a) and tends_to_infinity(f) and converges_to(compose(a, f), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventual_compose_tends_to_infinity_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and tends_to_infinity(f) and
+    converges_to(compose(a, f), x)
+    implies s.contains(x)
+}
+
+theorem eventual_shift_add_limit_in_closure(s: Set[Real], a: Nat -> Real, k: Nat, x: Real) {
+    seq_eventually_in_real_set(s, a) and converges_to(compose(a, k.add), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventual_shift_add_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    k: Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and converges_to(compose(a, k.add), x)
+    implies s.contains(x)
+}
+
+theorem eventual_subsequence_limit_in_closure(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    seq_eventually_in_real_set(s, a) and is_subsequence_index(f) and converges_to(subsequence(a, f), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventual_subsequence_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_subsequence_index(f) and
+    converges_to(subsequence(a, f), x)
+    implies s.contains(x)
+}
+
+theorem eventually_equal_compose_tends_to_infinity_limit_in_closure(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and tends_to_infinity(f) and
+    converges_to(compose(b, f), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventually_equal_compose_tends_to_infinity_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and
+    tends_to_infinity(f) and converges_to(compose(b, f), x)
+    implies s.contains(x)
+}
+
+theorem eventually_equal_shift_add_limit_in_closure(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    k: Nat,
+    x: Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and
+    converges_to(compose(b, k.add), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventually_equal_shift_add_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    k: Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and
+    converges_to(compose(b, k.add), x)
+    implies s.contains(x)
+}
+
+theorem eventually_equal_subsequence_limit_in_closure(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and is_subsequence_index(f) and
+    converges_to(subsequence(b, f), x)
+    implies closure(s).contains(x)
+}
+
+theorem closed_set_contains_eventually_equal_subsequence_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    b: Nat -> Real,
+    f: Nat -> Nat,
+    x: Real
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and seq_eventually_equal_real(a, b) and
+    is_subsequence_index(f) and converges_to(subsequence(b, f), x)
+    implies s.contains(x)
+}
+
+define box[X, Y](u: Set[X], v: Set[Y]) -> Set[Pair[X, Y]] {
+    Set[Pair[X, Y]].new(box_contains(u, v))
+}
+
+theorem box_intersection_eq[X, Y](u: Set[X], v: Set[Y], u2: Set[X], v2: Set[Y]) {
+    box(u, v).intersection(box(u2, v2)) = box(u.intersection(u2), v.intersection(v2))
+}
+
+theorem box_inter[X, Y](
+    u1: Set[X], v1: Set[Y], u2: Set[X], v2: Set[Y]) {
+    box(u1, v1).intersection(box(u2, v2)) = box(u1.intersection(u2), v1.intersection(v2))
+}
+
+theorem fan_out_preimage_box[Z, X, Y](
+    f: Z -> X, g: Z -> Y, u: Set[X], v: Set[Y]) {
+    set_preimage(fan_out[Z, X, Y](f, g), box(u, v))
+        = set_preimage(f, u).intersection(set_preimage(g, v))
+}
+
+theorem fan_out_preimage_box_open[Z: TopologicalSpace, X: TopologicalSpace, Y: TopologicalSpace](
+    f: Z -> X, g: Z -> Y, u: Set[X], v: Set[Y]) {
+    is_continuous(f) and is_continuous(g) and X.is_open(u) and Y.is_open(v)
+        implies Z.is_open(set_preimage(fan_out[Z, X, Y](f, g), box(u, v)))
+}
+
+theorem pair_map_preimage_box[X, Y, Z, W](
+    f: X -> Z, g: Y -> W, u: Set[Z], v: Set[W]) {
+    set_preimage(pair_map[X, Y, Z, W](f, g), box(u, v))
+        = box(set_preimage(f, u), set_preimage(g, v))
+}
+
+define is_box[X: TopologicalSpace, Y: TopologicalSpace](b: Set[Pair[X, Y]]) -> Bool {
+    exists(u: Set[X], v: Set[Y]) {
+        X.is_open(u) and Y.is_open(v) and b = box(u, v)
+    }
+}
+
+theorem is_box_covers[X: TopologicalSpace, Y: TopologicalSpace] {
+    basis_covers(is_box[X, Y])
+}
+
+theorem is_box_filters[X: TopologicalSpace, Y: TopologicalSpace] {
+    basis_filters(is_box[X, Y])
+}
+
+theorem is_box_is_topological_basis[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_topological_basis(is_box[X, Y])
+}
+
+theorem box_is_box[X: TopologicalSpace, Y: TopologicalSpace](u: Set[X], v: Set[Y]) {
+    X.is_open(u) and Y.is_open(v) implies is_box[X, Y](box(u, v))
+}
+
+theorem box_generated_open[X: TopologicalSpace, Y: TopologicalSpace](
+    u: Set[X], v: Set[Y]) {
+    X.is_open(u) and Y.is_open(v) implies generated_open(is_box[X, Y], box(u, v))
+}
+
+define is_open_in_product[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]]) -> Bool {
+    generated_open(is_box[X, Y], s)
+}
+
+instance Pair[X: TopologicalSpace, Y: TopologicalSpace]: TopologicalSpace {
+    let is_open: Set[Pair[X, Y]] -> Bool = is_open_in_product[X, Y]
+}
+
+define pair_distance[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) -> Real {
+    (p.first.distance(q.first)).max(p.second.distance(q.second))
+}
+
+theorem first_distance_le_pair_distance[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) {
+    p.first.distance(q.first) <= pair_distance(p, q)
+}
+
+theorem second_distance_le_pair_distance[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) {
+    p.second.distance(q.second) <= pair_distance(p, q)
+}
+
+theorem pair_distance_lt_iff_components_lt[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) < r = (p.first.distance(q.first) < r and p.second.distance(q.second) < r)
+}
+
+theorem pair_distance_le_iff_components_le[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) <= r = (p.first.distance(q.first) <= r and p.second.distance(q.second) <= r)
+}
+
+theorem pair_distance_lt_imp_first_distance_lt[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) < r implies p.first.distance(q.first) < r
+}
+
+theorem pair_distance_lt_imp_second_distance_lt[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) < r implies p.second.distance(q.second) < r
+}
+
+theorem pair_distance_lt_of_components_lt[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    p.first.distance(q.first) < r and p.second.distance(q.second) < r implies pair_distance(p, q) < r
+}
+
+theorem pair_distance_le_imp_first_distance_le[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) <= r implies p.first.distance(q.first) <= r
+}
+
+theorem pair_distance_le_imp_second_distance_le[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    pair_distance(p, q) <= r implies p.second.distance(q.second) <= r
+}
+
+theorem pair_distance_le_of_components_le[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Real) {
+    p.first.distance(q.first) <= r and p.second.distance(q.second) <= r implies pair_distance(p, q) <= r
+}
+
+theorem pair_distance_self[M: MetricSpace, N: MetricSpace](p: Pair[M, N]) {
+    pair_distance(p, p) = 0
+}
+
+theorem pair_distance_symmetric[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) {
+    pair_distance(p, q) = pair_distance(q, p)
+}
+
+theorem pair_distance_swap[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) {
+    pair_distance(p.swap, q.swap) = pair_distance(p, q)
+}
+
+theorem pair_distance_pair_map_le_of_component_bounds[M: MetricSpace, N: MetricSpace, P: MetricSpace, Q: MetricSpace](
+    f: M -> P,
+    g: N -> Q,
+    p: Pair[M, N],
+    q: Pair[M, N],
+    r: Real
+) {
+    f(p.first).distance(f(q.first)) <= r and g(p.second).distance(g(q.second)) <= r implies
+        pair_distance(pair_map(f, g, p), pair_map(f, g, q)) <= r
+}
+
+theorem pair_distance_pair_map_le_of_components_nonexpansive[M: MetricSpace, N: MetricSpace, P: MetricSpace, Q: MetricSpace](
+    f: M -> P,
+    g: N -> Q,
+    p: Pair[M, N],
+    q: Pair[M, N]
+) {
+    pair_map_components_nonexpansive(f, g) implies
+        pair_distance(pair_map(f, g, p), pair_map(f, g, q)) <= pair_distance(p, q)
+}
+
+theorem pair_distance_zero_imp_eq[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) {
+    pair_distance(p, q) = 0 implies p = q
+}
+
+theorem pair_distance_triangle[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N], r: Pair[M, N]) {
+    pair_distance(p, r) <= pair_distance(p, q) + pair_distance(q, r)
+}
+
+define covers_nat(system: List[Pair[Nat, Nat]]) -> (Nat -> Bool) {
+    match system {
+        List.nil {
+            none_pred
+        }
+        List.cons(head, tail) {
+            or_pred(in_residue_class(head.first, head.second), covers_nat(tail))
+        }
+    }
+}
+
+define system_density_real(system: List[Pair[Nat, Nat]]) -> Real {
+    match system {
+        List.nil {
+            Real.0
+        }
+        List.cons(head, tail) {
+            Real.1 / from_nat[Real](head.first) + system_density_real(tail)
+        }
+    }
+}
+
+define system_reduced(system: List[Pair[Nat, Nat]]) -> Bool {
+    forall(cl: Pair[Nat, Nat]) {
+        system.contains(cl) implies cl.second < cl.first
+    }
+}
+
+theorem covers_nat_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    covers_nat(List.cons(head, tail))
+        = or_pred(in_residue_class(head.first, head.second), covers_nat(tail))
+}
+
+theorem covers_nat_nil {
+    covers_nat(List.nil[Pair[Nat, Nat]]) = none_pred
+}
+
+theorem system_density_real_cons(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_density_real(List.cons(head, tail))
+        = Real.1 / from_nat[Real](head.first) + system_density_real(tail)
+}
+
+theorem system_density_real_nil {
+    system_density_real(List.nil[Pair[Nat, Nat]]) = Real.0
+}
+
+theorem system_reduced_head(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_reduced(List.cons(head, tail)) implies head.second < head.first
+}
+
+theorem system_reduced_tail(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_reduced(List.cons(head, tail)) implies system_reduced(tail)
+}
+
+theorem upper_density_covers_nat_le(system: List[Pair[Nat, Nat]]) {
+    system_reduced(system)
+        implies upper_density(covers_nat(system)) <= system_density_real(system)
+}
+
+define head_disjoint_nat(head: Pair[Nat, Nat], rest: List[Pair[Nat, Nat]]) -> Bool {
+    disjoint_pred(in_residue_class(head.first, head.second), covers_nat(rest))
+}
+
+theorem disjoint_cons_bound(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    head.second < head.first and head_disjoint_nat(head, tail)
+        and system_density_real(tail) <= lower_density(covers_nat(tail))
+        implies system_density_real(List.cons(head, tail))
+            <= lower_density(covers_nat(List.cons(head, tail)))
+}
+
+define is_suffix_of(part: List[Pair[Nat, Nat]], whole: List[Pair[Nat, Nat]]) -> Bool {
+    exists(front: List[Pair[Nat, Nat]]) {
+        front + part = whole
+    }
+}
+
+theorem is_suffix_of_refl(whole: List[Pair[Nat, Nat]]) {
+    is_suffix_of(whole, whole)
+}
+
+theorem is_suffix_of_cons(part: List[Pair[Nat, Nat]], head: Pair[Nat, Nat],
+    tail: List[Pair[Nat, Nat]]) {
+    is_suffix_of(part, tail) implies is_suffix_of(part, List.cons(head, tail))
+}
+
+define system_disjoint_nat(system: List[Pair[Nat, Nat]]) -> Bool {
+    forall(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+        is_suffix_of(List.cons(head, tail), system) implies head_disjoint_nat(head, tail)
+    }
+}
+
+theorem system_disjoint_nat_head(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_disjoint_nat(List.cons(head, tail)) implies head_disjoint_nat(head, tail)
+}
+
+theorem system_disjoint_nat_tail(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+    system_disjoint_nat(List.cons(head, tail)) implies system_disjoint_nat(tail)
+}
+
+theorem system_density_real_le_lower_density(system: List[Pair[Nat, Nat]]) {
+    system_reduced(system) and system_disjoint_nat(system)
+        implies system_density_real(system) <= lower_density(covers_nat(system))
+}
+
+theorem disjoint_system_density_le_one(system: List[Pair[Nat, Nat]]) {
+    system_reduced(system) and system_disjoint_nat(system)
+        implies system_density_real(system) <= Real.1
+}
+
+define box_contains[X, Y](u: Set[X], v: Set[Y], p: Pair[X, Y]) -> Bool {
+    u.contains(p.first) and v.contains(p.second)
+}
+
+theorem box_contains_eq[X, Y](u: Set[X], v: Set[Y], p: Pair[X, Y]) {
+    box(u, v).contains(p) = (u.contains(p.first) and v.contains(p.second))
+}
+
+theorem universal_pair_is_box[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_box[X, Y](Set[Pair[X, Y]].universal_set)
+}
+
+theorem box_inter_is_box[X: TopologicalSpace, Y: TopologicalSpace](
+    b1: Set[Pair[X, Y]], b2: Set[Pair[X, Y]]) {
+    is_box[X, Y](b1) and is_box[X, Y](b2) implies is_box[X, Y](b1.intersection(b2))
+}
+
+theorem box_inter_is_box_with_point[X: TopologicalSpace, Y: TopologicalSpace](
+    b1: Set[Pair[X, Y]], b2: Set[Pair[X, Y]], p: Pair[X, Y]) {
+    is_box[X, Y](b1) and is_box[X, Y](b2) and b1.contains(p) and b2.contains(p)
+        implies is_box[X, Y](b1.intersection(b2)) and b1.intersection(b2).contains(p)
+}
+
+theorem is_box_filters_at[X: TopologicalSpace, Y: TopologicalSpace](
+    b1: Set[Pair[X, Y]], b2: Set[Pair[X, Y]], p: Pair[X, Y]) {
+    is_box[X, Y](b1) and is_box[X, Y](b2) and b1.contains(p) and b2.contains(p)
+        implies exists(w: Set[Pair[X, Y]]) {
+            is_box[X, Y](w) and w.contains(p) and w.subset(b1.intersection(b2))
+        }
+}
+
+theorem is_open_in_product_iff[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]]) {
+    is_open_in_product[X, Y](s) = generated_open(is_box[X, Y], s)
+}
+
+theorem is_open_in_product_imp_generated_open[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]]) {
+    is_open_in_product[X, Y](s) implies generated_open(is_box[X, Y], s)
+}
+
+theorem generated_open_imp_is_open_in_product[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]]) {
+    generated_open(is_box[X, Y], s) implies is_open_in_product[X, Y](s)
+}
+
+theorem product_open_empty[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_open_in_product[X, Y](Set[Pair[X, Y]].empty_set)
+}
+
+theorem product_open_universal[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_open_in_product[X, Y](Set[Pair[X, Y]].universal_set)
+}
+
+theorem box_empty_left[X, Y](v: Set[Y]) {
+    box(Set[X].empty_set, v) = Set[Pair[X, Y]].empty_set
+}
+
+theorem box_empty_right[X, Y](u: Set[X]) {
+    box(u, Set[Y].empty_set) = Set[Pair[X, Y]].empty_set
+}
+
+theorem box_is_open_in_product[X: TopologicalSpace, Y: TopologicalSpace](
+    u: Set[X], v: Set[Y]) {
+    X.is_open(u) and Y.is_open(v) implies is_open_in_product[X, Y](box(u, v))
+}
+
+theorem product_open_inter[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]], t: Set[Pair[X, Y]]) {
+    is_open_in_product[X, Y](s) and is_open_in_product[X, Y](t)
+        implies is_open_in_product[X, Y](s.intersection(t))
+}
+
+theorem product_open_big_union[X: TopologicalSpace, Y: TopologicalSpace](
+    c: Set[Pair[X, Y]] -> Bool) {
+    (forall(s: Set[Pair[X, Y]]) { c(s) implies is_open_in_product[X, Y](s) })
+        implies is_open_in_product[X, Y](big_union(c))
+}
+
+theorem pair_is_open_eq[X: TopologicalSpace, Y: TopologicalSpace](
+    s: Set[Pair[X, Y]]) {
+    Pair[X, Y].is_open(s) = is_open_in_product[X, Y](s)
+}
+
+theorem box_open[X: TopologicalSpace, Y: TopologicalSpace](u: Set[X], v: Set[Y]) {
+    X.is_open(u) and Y.is_open(v) implies Pair[X, Y].is_open(box(u, v))
+}
+
+define pair_fst[X, Y](p: Pair[X, Y]) -> X {
+    p.first
+}
+
+define pair_snd[X, Y](p: Pair[X, Y]) -> Y {
+    p.second
+}
+
+theorem pair_fst_preimage_eq[X, Y](u: Set[X]) {
+    set_preimage(pair_fst[X, Y], u) = box(u, Set[Y].universal_set)
+}
+
+theorem pair_snd_preimage_eq[X, Y](v: Set[Y]) {
+    set_preimage(pair_snd[X, Y], v) = box(Set[X].universal_set, v)
+}
+
+theorem box_eq_inter_preimages[X, Y](u: Set[X], v: Set[Y]) {
+    box(u, v) = set_preimage(pair_fst[X, Y], u).intersection(set_preimage(pair_snd[X, Y], v))
+}
+
+theorem pair_fst_continuous[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_continuous(pair_fst[X, Y])
+}
+
+theorem pair_snd_continuous[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_continuous(pair_snd[X, Y])
+}
+
+theorem pair_fst_compose_fan_out[Z, X, Y](f: Z -> X, g: Z -> Y) {
+    compose(pair_fst[X, Y], fan_out[Z, X, Y](f, g)) = f
+}
+
+theorem pair_snd_compose_fan_out[Z, X, Y](f: Z -> X, g: Z -> Y) {
+    compose(pair_snd[X, Y], fan_out[Z, X, Y](f, g)) = g
+}
+
+theorem pair_map_preimage_box_open[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace, W: TopologicalSpace](
+    f: X -> Z, g: Y -> W, u: Set[Z], v: Set[W]) {
+    is_continuous(f) and is_continuous(g) and Z.is_open(u) and W.is_open(v)
+        implies Pair[X, Y].is_open(set_preimage(pair_map[X, Y, Z, W](f, g), box(u, v)))
+}
+
+theorem pair_map_preimage_product_open_neighborhood[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace, W: TopologicalSpace](
+    f: X -> Z, g: Y -> W, s: Set[Pair[Z, W]], p: Pair[X, Y]
+) {
+    is_continuous(f) and is_continuous(g)
+    and Pair[Z, W].is_open(s)
+    and set_preimage(pair_map[X, Y, Z, W](f, g), s).contains(p)
+    implies is_neighborhood(set_preimage(pair_map[X, Y, Z, W](f, g), s), p)
+}
+
+theorem pair_map_preimage_product_open[X: TopologicalSpace, Y: TopologicalSpace, Z: TopologicalSpace, W: TopologicalSpace](
+    f: X -> Z, g: Y -> W, s: Set[Pair[Z, W]]
+) {
+    is_continuous(f) and is_continuous(g) and Pair[Z, W].is_open(s)
+        implies Pair[X, Y].is_open(set_preimage(pair_map[X, Y, Z, W](f, g), s))
+}
+
+define is_open_in_sum[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) -> Bool {
+    X.is_open(sum_left_preimage(w)) and Y.is_open(sum_right_preimage(w))
+}
+
+instance Sum[X: TopologicalSpace, Y: TopologicalSpace]: TopologicalSpace {
+    let is_open: Set[Sum[X, Y]] -> Bool = is_open_in_sum[X, Y]
+}
+
+define sum_left_preimage_contains[T, U](w: Set[Sum[T, U]], x: T) -> Bool {
+    w.contains(Sum.inl[T, U](x))
+}
+
+define sum_left_preimage[T, U](w: Set[Sum[T, U]]) -> Set[T] {
+    Set[T].new(sum_left_preimage_contains(w))
+}
+
+define sum_right_preimage_contains[T, U](w: Set[Sum[T, U]], y: U) -> Bool {
+    w.contains(Sum.inr[T, U](y))
+}
+
+define sum_right_preimage[T, U](w: Set[Sum[T, U]]) -> Set[U] {
+    Set[U].new(sum_right_preimage_contains(w))
+}
+
+theorem sum_left_preimage_contains_eq[T, U](w: Set[Sum[T, U]], x: T) {
+    sum_left_preimage(w).contains(x) = w.contains(Sum.inl[T, U](x))
+}
+
+theorem sum_right_preimage_contains_eq[T, U](w: Set[Sum[T, U]], y: U) {
+    sum_right_preimage(w).contains(y) = w.contains(Sum.inr[T, U](y))
+}
+
+theorem sum_left_preimage_empty[T, U] {
+    sum_left_preimage[T, U](Set[Sum[T, U]].empty_set) = Set[T].empty_set
+}
+
+theorem sum_right_preimage_empty[T, U] {
+    sum_right_preimage[T, U](Set[Sum[T, U]].empty_set) = Set[U].empty_set
+}
+
+theorem sum_left_preimage_universal[T, U] {
+    sum_left_preimage[T, U](Set[Sum[T, U]].universal_set) = Set[T].universal_set
+}
+
+theorem sum_right_preimage_universal[T, U] {
+    sum_right_preimage[T, U](Set[Sum[T, U]].universal_set) = Set[U].universal_set
+}
+
+theorem sum_left_preimage_inter[T, U](w1: Set[Sum[T, U]], w2: Set[Sum[T, U]]) {
+    sum_left_preimage(w1.intersection(w2))
+        = sum_left_preimage(w1).intersection(sum_left_preimage(w2))
+}
+
+theorem sum_right_preimage_inter[T, U](w1: Set[Sum[T, U]], w2: Set[Sum[T, U]]) {
+    sum_right_preimage(w1.intersection(w2))
+        = sum_right_preimage(w1).intersection(sum_right_preimage(w2))
+}
+
+define sum_left_preimage_family_contains[T, U](c: Set[Sum[T, U]] -> Bool, t: Set[T]) -> Bool {
+    exists(s: Set[Sum[T, U]]) {
+        c(s) and t = sum_left_preimage(s)
+    }
+}
+
+define sum_left_preimage_family[T, U](c: Set[Sum[T, U]] -> Bool) -> (Set[T] -> Bool) {
+    sum_left_preimage_family_contains(c)
+}
+
+define sum_right_preimage_family_contains[T, U](c: Set[Sum[T, U]] -> Bool, t: Set[U]) -> Bool {
+    exists(s: Set[Sum[T, U]]) {
+        c(s) and t = sum_right_preimage(s)
+    }
+}
+
+define sum_right_preimage_family[T, U](c: Set[Sum[T, U]] -> Bool) -> (Set[U] -> Bool) {
+    sum_right_preimage_family_contains(c)
+}
+
+theorem sum_left_preimage_family_eq[T, U](c: Set[Sum[T, U]] -> Bool, t: Set[T]) {
+    sum_left_preimage_family(c)(t) = exists(s: Set[Sum[T, U]]) {
+        c(s) and t = sum_left_preimage(s)
+    }
+}
+
+theorem sum_right_preimage_family_eq[T, U](c: Set[Sum[T, U]] -> Bool, t: Set[U]) {
+    sum_right_preimage_family(c)(t) = exists(s: Set[Sum[T, U]]) {
+        c(s) and t = sum_right_preimage(s)
+    }
+}
+
+theorem sum_left_preimage_big_union[T, U](c: Set[Sum[T, U]] -> Bool) {
+    sum_left_preimage(big_union(c)) = big_union(sum_left_preimage_family(c))
+}
+
+theorem sum_right_preimage_big_union[T, U](c: Set[Sum[T, U]] -> Bool) {
+    sum_right_preimage(big_union(c)) = big_union(sum_right_preimage_family(c))
+}
+
+theorem sum_open_empty[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_open_in_sum[X, Y](Set[Sum[X, Y]].empty_set)
+}
+
+theorem sum_open_universal[X: TopologicalSpace, Y: TopologicalSpace] {
+    is_open_in_sum[X, Y](Set[Sum[X, Y]].universal_set)
+}
+
+theorem sum_open_inter_left[X: TopologicalSpace, Y: TopologicalSpace](
+    w1: Set[Sum[X, Y]], w2: Set[Sum[X, Y]]) {
+    X.is_open(sum_left_preimage(w1)) and X.is_open(sum_left_preimage(w2))
+        implies X.is_open(sum_left_preimage(w1.intersection(w2)))
+}
+
+theorem sum_open_inter_right[X: TopologicalSpace, Y: TopologicalSpace](
+    w1: Set[Sum[X, Y]], w2: Set[Sum[X, Y]]) {
+    Y.is_open(sum_right_preimage(w1)) and Y.is_open(sum_right_preimage(w2))
+        implies Y.is_open(sum_right_preimage(w1.intersection(w2)))
+}
+
+theorem is_open_in_sum_iff[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    is_open_in_sum[X, Y](w) = (X.is_open(sum_left_preimage(w)) and Y.is_open(sum_right_preimage(w)))
+}
+
+theorem is_open_in_sum_intro[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    X.is_open(sum_left_preimage(w)) and Y.is_open(sum_right_preimage(w))
+        implies is_open_in_sum[X, Y](w)
+}
+
+theorem is_open_in_sum_left[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    is_open_in_sum[X, Y](w) implies X.is_open(sum_left_preimage(w))
+}
+
+theorem is_open_in_sum_right[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    is_open_in_sum[X, Y](w) implies Y.is_open(sum_right_preimage(w))
+}
+
+theorem is_open_in_sum_both[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    is_open_in_sum[X, Y](w) implies
+        X.is_open(sum_left_preimage(w)) and Y.is_open(sum_right_preimage(w))
+}
+
+theorem sum_open_inter[X: TopologicalSpace, Y: TopologicalSpace](
+    w1: Set[Sum[X, Y]], w2: Set[Sum[X, Y]]) {
+    is_open_in_sum[X, Y](w1) and is_open_in_sum[X, Y](w2)
+        implies is_open_in_sum[X, Y](w1.intersection(w2))
+}
+
+theorem sum_open_big_union_left[X: TopologicalSpace, Y: TopologicalSpace](
+    c: Set[Sum[X, Y]] -> Bool) {
+    (forall(s: Set[Sum[X, Y]]) { c(s) implies is_open_in_sum[X, Y](s) })
+        implies X.is_open(sum_left_preimage(big_union(c)))
+}
+
+theorem sum_open_big_union_right[X: TopologicalSpace, Y: TopologicalSpace](
+    c: Set[Sum[X, Y]] -> Bool) {
+    (forall(s: Set[Sum[X, Y]]) { c(s) implies is_open_in_sum[X, Y](s) })
+        implies Y.is_open(sum_right_preimage(big_union(c)))
+}
+
+theorem sum_open_big_union[X: TopologicalSpace, Y: TopologicalSpace](
+    c: Set[Sum[X, Y]] -> Bool) {
+    (forall(s: Set[Sum[X, Y]]) { c(s) implies is_open_in_sum[X, Y](s) })
+        implies is_open_in_sum[X, Y](big_union(c))
+}
+
+theorem sum_is_open_eq[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
+    Sum[X, Y].is_open(w) = is_open_in_sum[X, Y](w)
+}
+
+theorem sum_inl_preimage_eq[X, Y](w: Set[Sum[X, Y]]) {
+    set_preimage(sum_inl[X, Y], w) = sum_left_preimage(w)
+}
+
+theorem sum_inr_preimage_eq[X, Y](w: Set[Sum[X, Y]]) {
+    set_preimage(sum_inr[X, Y], w) = sum_right_preimage(w)
+}

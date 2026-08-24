@@ -4,12 +4,7 @@ from order import LinearOrder, PartialOrder, lte_antisymm, lte_trans,
     min_assoc_rev, max_assoc_rev, min_is_one, max_is_one, min_lte_left, min_lte_right,
     lte_max_left, lte_max_right
 from order import closed_interval
-from list.list_lattice import list_lower_bound, list_upper_bound,
-    list_lower_bound_nil, list_upper_bound_nil,
-    list_lower_bound_cons_iff, list_upper_bound_cons_iff,
-    list_lower_bound_add_iff, list_upper_bound_add_iff,
-    list_lower_bound_singleton_iff, list_upper_bound_singleton_iff,
-    list_lower_bound_append_iff, list_upper_bound_append_iff
+from list.list_lattice import list_lower_bound, list_upper_bound, list_lower_bound_nil, list_upper_bound_nil, list_lower_bound_cons_iff, list_upper_bound_cons_iff, list_lower_bound_add_iff, list_upper_bound_add_iff, list_lower_bound_singleton_iff, list_upper_bound_singleton_iff, list_lower_bound_append_iff, list_upper_bound_append_iff
 
 /// Theorems about lists of ordered types.
 
@@ -114,6 +109,22 @@ theorem upper_bound_monotone[T: LinearOrder](list: List[T], ub1: T, ub2: T) {
     // Induction
     forall(head: T, tail: List[T]) {
         if p(tail) {
+            p(tail)
+            if is_upper_bound(List.cons(head, tail), ub1) and ub1 <= ub2 {
+                is_upper_bound(List.cons(head, tail), ub1) = (head <= ub1 and is_upper_bound(tail, ub1))
+                head <= ub1 and is_upper_bound(tail, ub1)
+                head <= ub1
+                is_upper_bound(tail, ub1)
+                ub1 <= ub2
+                is_upper_bound(tail, ub1) and ub1 <= ub2 implies is_upper_bound(tail, ub2)
+                is_upper_bound(tail, ub2)
+                lte_trans(head, ub1, ub2)
+                head <= ub2
+                head <= ub2 and is_upper_bound(tail, ub2)
+                is_upper_bound(List.cons(head, tail), ub2) = (head <= ub2 and is_upper_bound(tail, ub2))
+                is_upper_bound(List.cons(head, tail), ub2)
+            }
+            is_upper_bound(List.cons(head, tail), ub1) and ub1 <= ub2 implies is_upper_bound(List.cons(head, tail), ub2)
             p(List.cons(head, tail))
         }
     }
@@ -883,10 +894,25 @@ theorem lower_bound_monotone[T: LinearOrder](list: List[T], lb1: T, lb2: T) {
     // Induction
     forall(head: T, tail: List[T]) {
         if p(tail) {
+            p(tail)
+            if is_lower_bound(List.cons(head, tail), lb1) and lb2 <= lb1 {
+                is_lower_bound(List.cons(head, tail), lb1) = (lb1 <= head and is_lower_bound(tail, lb1))
+                lb1 <= head and is_lower_bound(tail, lb1)
+                lb1 <= head
+                is_lower_bound(tail, lb1)
+                lb2 <= lb1
+                is_lower_bound(tail, lb1) and lb2 <= lb1 implies is_lower_bound(tail, lb2)
+                is_lower_bound(tail, lb2)
+                lte_trans(lb2, lb1, head)
+                lb2 <= head
+                lb2 <= head and is_lower_bound(tail, lb2)
+                is_lower_bound(List.cons(head, tail), lb2) = (lb2 <= head and is_lower_bound(tail, lb2))
+                is_lower_bound(List.cons(head, tail), lb2)
+            }
+            is_lower_bound(List.cons(head, tail), lb1) and lb2 <= lb1 implies is_lower_bound(List.cons(head, tail), lb2)
             p(List.cons(head, tail))
         }
     }
-
 }
 
 /// Recursive list lower bounds are the same as membership-predicate lower bounds.
@@ -1304,8 +1330,11 @@ theorem contains_bounded_by_interval_imp_interval_bound[T: LinearOrder](list: Li
     if lib(order).is_bounded_by_interval(list.contains, lower, upper) {
         lib(order).bounded_by_interval_imp_lower_bound(list.contains, lower, upper)
         contains_lower_bound_imp_lower_bound(list, lower)
+        is_lower_bound(list, lower)
         lib(order).bounded_by_interval_imp_upper_bound(list.contains, lower, upper)
         contains_upper_bound_imp_upper_bound(list, upper)
+        is_upper_bound(list, upper)
+        is_lower_bound(list, lower) and is_upper_bound(list, upper)
         bounds_imp_interval_bound(list, lower, upper)
         is_interval_bound(list, lower, upper)
     }

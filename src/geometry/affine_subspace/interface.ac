@@ -1,0 +1,3390 @@
+structure Point2[T] {
+    /// The x-coordinate.
+    x: T
+
+    /// The y-coordinate.
+    y: T
+}
+
+structure Point2Segment[T] {
+    /// The first endpoint.
+    start: Point2[T]
+
+    /// The second endpoint.
+    end: Point2[T]
+}
+
+structure Point3[T] {
+    /// The x-coordinate.
+    x: T
+
+    /// The y-coordinate.
+    y: T
+
+    /// The z-coordinate.
+    z: T
+}
+
+define affine_zero_vadd_constraint[V: AddCommGroup, P](vadd: V -> P -> P) -> Bool {
+    forall(p: P) {
+        vadd(V.0, p) = p
+    }
+}
+
+define affine_vsub_vadd_constraint[V: AddCommGroup, P](
+    vadd: V -> P -> P, vsub: P -> P -> V) -> Bool {
+    forall(p: P, q: P) {
+        vadd(vsub(p, q), q) = p
+    }
+}
+
+define affine_vadd_vsub_constraint[V: AddCommGroup, P](
+    vadd: V -> P -> P, vsub: P -> P -> V) -> Bool {
+    forall(v: V, p: P) {
+        vsub(vadd(v, p), p) = v
+    }
+}
+
+let affine_subspace_empty_contains[P]: P -> Bool = function(p: P) {
+    false
+}
+
+let affine_subspace_univ_contains[P]: P -> Bool = function(p: P) {
+    true
+}
+
+define affine_subspace_singleton_contains[P](p: P, x: P) -> Bool {
+    x = p
+}
+
+define affine_span_intersection_src[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) -> Bool {
+    src1(x) and src2(x)
+}
+
+theorem affine_span_intersection_src_iff[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) {
+    affine_span_intersection_src(src1, src2, x) =
+        (src1(x) and src2(x))
+}
+
+theorem affine_span_intersection_src_comm[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) {
+    affine_span_intersection_src(src1, src2, x) =
+        affine_span_intersection_src(src2, src1, x)
+}
+
+theorem affine_span_intersection_src_assoc[P](
+    src1: P -> Bool, src2: P -> Bool, src3: P -> Bool, x: P
+) {
+    affine_span_intersection_src(
+        affine_span_intersection_src(src1, src2), src3, x) =
+        affine_span_intersection_src(
+            src1, affine_span_intersection_src(src2, src3), x)
+}
+
+theorem affine_span_intersection_src_idempotent[P](
+    src: P -> Bool, x: P
+) {
+    affine_span_intersection_src(src, src, x) = src(x)
+}
+
+define affine_span_union_src[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) -> Bool {
+    src1(x) or src2(x)
+}
+
+theorem affine_span_union_src_iff[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) {
+    affine_span_union_src(src1, src2, x) = (src1(x) or src2(x))
+}
+
+theorem affine_span_union_src_idempotent[P](
+    src: P -> Bool, x: P
+) {
+    affine_span_union_src(src, src, x) = src(x)
+}
+
+theorem affine_span_intersection_union_absorption[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) {
+    affine_span_intersection_src(
+        src1, affine_span_union_src(src1, src2), x) = src1(x)
+}
+
+theorem affine_span_union_intersection_absorption[P](
+    src1: P -> Bool, src2: P -> Bool, x: P
+) {
+    affine_span_union_src(
+        src1, affine_span_intersection_src(src1, src2), x) = src1(x)
+}
+
+theorem affine_span_intersection_union_distrib[P](
+    src1: P -> Bool, src2: P -> Bool, src3: P -> Bool, x: P
+) {
+    affine_span_intersection_src(
+        src1, affine_span_union_src(src2, src3), x) =
+        affine_span_union_src(
+            affine_span_intersection_src(src1, src2),
+            affine_span_intersection_src(src1, src3), x)
+}
+
+theorem affine_span_union_intersection_distrib[P](
+    src1: P -> Bool, src2: P -> Bool, src3: P -> Bool, x: P
+) {
+    affine_span_union_src(
+        src1, affine_span_intersection_src(src2, src3), x) =
+        affine_span_intersection_src(
+            affine_span_union_src(src1, src2),
+            affine_span_union_src(src1, src3), x)
+}
+
+theorem affine_span_intersection_src_mono[P](
+    src1: P -> Bool,
+    src2: P -> Bool,
+    dst1: P -> Bool,
+    dst2: P -> Bool
+) {
+    ((forall(x: P) { src1(x) implies dst1(x) })
+    and (forall(x: P) { src2(x) implies dst2(x) })) implies
+    forall(x: P) {
+        affine_span_intersection_src(src1, src2, x) implies
+            affine_span_intersection_src(dst1, dst2, x)
+    }
+}
+
+define affine_span_singleton_src[P](p: P, x: P) -> Bool {
+    x = p
+}
+
+let point2_zero[T: AddCommMonoid]: Point2[T] = Point2.new(T.0, T.0)
+
+attributes Point2[T: AddCommMonoid] {
+    /// The origin of the coordinate plane.
+    let zero: Point2[T] = point2_zero[T]
+
+    /// The componentwise sum of two points.
+    define add(self, other: Point2[T]) -> Point2[T] {
+        Point2.new(self.x + other.x, self.y + other.y)
+    }
+}
+
+theorem point2_ext[T](p: Point2[T], q: Point2[T]) {
+    p.x = q.x and p.y = q.y implies p = q
+}
+
+theorem point2_eta[T](p: Point2[T]) {
+    Point2.new(p.x, p.y) = p
+}
+
+theorem point2_new_x[T](x: T, y: T) {
+    Point2.new(x, y).x = x
+}
+
+theorem point2_new_y[T](x: T, y: T) {
+    Point2.new(x, y).y = y
+}
+
+theorem point2_zero_x[T: AddCommMonoid] {
+    point2_zero[T].x = T.0
+}
+
+theorem point2_zero_y[T: AddCommMonoid] {
+    point2_zero[T].y = T.0
+}
+
+theorem point2_segment_ext[T](s: Point2Segment[T], t: Point2Segment[T]) {
+    s.start = t.start and s.end = t.end implies s = t
+}
+
+define point2_list_last_or[T: OrderedField](default: Point2[T], xs: List[Point2[T]]) -> Point2[T] {
+    match xs {
+        List.nil {
+            default
+        }
+        List.cons(head, tail) {
+            point2_list_last_or(head, tail)
+        }
+    }
+}
+
+theorem point2_list_last_or_nil[T: OrderedField](default: Point2[T]) {
+    point2_list_last_or(default, List.nil[Point2[T]]) = default
+}
+
+theorem point2_list_last_or_cons[T: OrderedField](default: Point2[T], head: Point2[T], tail: List[Point2[T]]) {
+    point2_list_last_or(default, List.cons(head, tail)) = point2_list_last_or(head, tail)
+}
+
+theorem point2_reverse_triple_list[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    reverse(List.cons(a, List.cons(b, List.cons(c, List.nil[Point2[T]])))) =
+    List.cons(c, List.cons(b, List.cons(a, List.nil[Point2[T]])))
+}
+
+theorem point2_reverse_quad_list[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T], d: Point2[T]) {
+    reverse(List.cons(a, List.cons(b, List.cons(c, List.cons(d, List.nil[Point2[T]]))))) =
+    List.cons(d, List.cons(c, List.cons(b, List.cons(a, List.nil[Point2[T]]))))
+}
+
+theorem real_ne_zero_one {
+    Real.0 != Real.1
+}
+
+theorem real_ne_one_zero {
+    Real.1 != Real.0
+}
+
+theorem real_lt_0_1 {
+    Real.0 < Real.1
+}
+
+theorem real_from_int_from_nat(n: Nat) {
+    Real.from_int(Int.from_nat(n)) = from_nat[Real](n)
+}
+
+define is_lattice_coords(p: Point2[Real], m: Int, n: Int) -> Bool {
+    p.x = Real.from_int(m) and p.y = Real.from_int(n)
+}
+
+define is_lattice_point(p: Point2[Real]) -> Bool {
+    exists(m: Int, n: Int) {
+        is_lattice_coords(p, m, n)
+    }
+}
+
+theorem is_lattice_point_of_coords(p: Point2[Real], m: Int, n: Int) {
+    p.x = Real.from_int(m) and p.y = Real.from_int(n) implies is_lattice_point(p)
+}
+
+define is_lattice_polygon(points: List[Point2[Real]]) -> Bool {
+    match points {
+        List.nil {
+            true
+        }
+        List.cons(head, tail) {
+            is_lattice_point(head) and is_lattice_polygon(tail)
+        }
+    }
+}
+
+theorem is_lattice_polygon_nil {
+    is_lattice_polygon(List.nil[Point2[Real]])
+}
+
+theorem is_lattice_polygon_intro(head: Point2[Real], tail: List[Point2[Real]]) {
+    (is_lattice_point(head) and is_lattice_polygon(tail)) implies
+    is_lattice_polygon(List.cons(head, tail))
+}
+
+define lattice_point_count(s: FiniteSet[Point2[Real]]) -> Nat {
+    fs_card(finite_set_filter(s, is_lattice_point))
+}
+
+theorem point2_ne_of_x_ne(p: Point2[Real], q: Point2[Real]) {
+    p.x != q.x implies p != q
+}
+
+theorem point2_ne_of_y_ne(p: Point2[Real], q: Point2[Real]) {
+    p.y != q.y implies p != q
+}
+
+let q00: Point2[Real] = Point2.new(Real.0, Real.0)
+
+let q10: Point2[Real] = Point2.new(Real.1, Real.0)
+
+let q11: Point2[Real] = Point2.new(Real.1, Real.1)
+
+let q01: Point2[Real] = Point2.new(Real.0, Real.1)
+
+let unit_square: List[Point2[Real]] =
+    List.cons(q00, List.cons(q10, List.cons(q11, List.cons(q01, List.nil[Point2[Real]]))))
+
+let unit_square_boundary: FiniteSet[Point2[Real]] =
+    fs_insert(fs_insert(fs_insert(fs_insert(FiniteSet.empty[Point2[Real]], q01), q11), q10), q00)
+
+let unit_square_interior: FiniteSet[Point2[Real]] = FiniteSet.empty[Point2[Real]]
+
+theorem is_lattice_point_q00 {
+    is_lattice_point(q00)
+}
+
+theorem is_lattice_point_q10 {
+    is_lattice_point(q10)
+}
+
+theorem is_lattice_point_q11 {
+    is_lattice_point(q11)
+}
+
+theorem is_lattice_point_q01 {
+    is_lattice_point(q01)
+}
+
+theorem is_lattice_polygon_unit_square {
+    is_lattice_polygon(unit_square)
+}
+
+theorem unit_square_corners_distinct {
+    q00 != q10 and q10 != q11 and q11 != q01 and q01 != q00 and
+    q00 != q11 and q10 != q01
+}
+
+theorem unit_square_boundary_card {
+    fs_card(unit_square_boundary) = Nat.4
+}
+
+theorem unit_square_interior_card {
+    fs_card(unit_square_interior) = Nat.0
+}
+
+theorem unit_square_boundary_lattice_count {
+    lattice_point_count(unit_square_boundary) = Nat.4
+}
+
+theorem lattice_point_count_empty {
+    lattice_point_count(FiniteSet.empty[Point2[Real]]) = Nat.0
+}
+
+theorem unit_square_interior_lattice_count {
+    lattice_point_count(unit_square_interior) = Nat.0
+}
+
+let r00: Point2[Real] = Point2.new(Real.0, Real.0)
+
+let r10: Point2[Real] = Point2.new(Real.1, Real.0)
+
+let r11: Point2[Real] = Point2.new(Real.1, Real.1)
+
+let r01: Point2[Real] = Point2.new(Real.0, Real.1)
+
+let unit_rect_interior: FiniteSet[Point2[Real]] = FiniteSet.empty[Point2[Real]]
+
+theorem is_lattice_point_r00 {
+    is_lattice_point(r00)
+}
+
+theorem is_lattice_point_r10 {
+    is_lattice_point(r10)
+}
+
+theorem is_lattice_point_r11 {
+    is_lattice_point(r11)
+}
+
+theorem is_lattice_point_r01 {
+    is_lattice_point(r01)
+}
+
+theorem unit_rect_interior_card {
+    fs_card(unit_rect_interior) = Nat.0
+}
+
+theorem unit_rect_interior_lattice_count {
+    lattice_point_count(unit_rect_interior) = Nat.0
+}
+
+let t00: Point2[Real] = Point2.new(Real.0, Real.0)
+
+let t10: Point2[Real] = Point2.new(Real.1, Real.0)
+
+let t01: Point2[Real] = Point2.new(Real.0, Real.1)
+
+let p11: Point2[Real] = Point2.new(Real.1, Real.1)
+
+theorem is_lattice_point_t00 {
+    is_lattice_point(t00)
+}
+
+theorem is_lattice_point_t10 {
+    is_lattice_point(t10)
+}
+
+theorem is_lattice_point_t01 {
+    is_lattice_point(t01)
+}
+
+theorem is_lattice_point_p11 {
+    is_lattice_point(p11)
+}
+
+let point3_zero[T: AddCommMonoid]: Point3[T] = Point3.new(T.0, T.0, T.0)
+
+attributes Point3[T: AddCommMonoid] {
+    /// The origin of the coordinate space.
+    let zero: Point3[T] = point3_zero[T]
+
+    /// The componentwise sum of two points.
+    define add(self, other: Point3[T]) -> Point3[T] {
+        Point3.new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+attributes Point2[T: AddCommGroup] {
+    /// The componentwise additive inverse of a point.
+    define neg(self) -> Point2[T] {
+        Point2.new(-self.x, -self.y)
+    }
+
+    /// The componentwise difference of two points.
+    define sub(self, other: Point2[T]) -> Point2[T] {
+        Point2.new(self.x - other.x, self.y - other.y)
+    }
+
+    /// Translation by a coordinate displacement.
+    define translate(self, displacement: Point2[T]) -> Point2[T] {
+        self.add(displacement)
+    }
+}
+
+attributes Point3[T: AddCommGroup] {
+    /// The componentwise additive inverse of a point.
+    define neg(self) -> Point3[T] {
+        Point3.new(-self.x, -self.y, -self.z)
+    }
+
+    /// The componentwise difference of two points.
+    define sub(self, other: Point3[T]) -> Point3[T] {
+        Point3.new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+
+    /// Translation by a coordinate displacement.
+    define translate(self, displacement: Point3[T]) -> Point3[T] {
+        self.add(displacement)
+    }
+}
+
+attributes Point2[T: CommRing] {
+    /// Scalar multiplication of both coordinates.
+    define smul(self, scalar: T) -> Point2[T] {
+        Point2.new(scalar * self.x, scalar * self.y)
+    }
+
+    /// The dot product of two coordinate points.
+    define dot(self, other: Point2[T]) -> T {
+        self.x * other.x + self.y * other.y
+    }
+
+    /// The signed two-dimensional cross product determinant.
+    define cross(self, other: Point2[T]) -> T {
+        self.x * other.y - self.y * other.x
+    }
+
+    /// The squared coordinate norm.
+    define norm_sq(self) -> T {
+        self.dot(self)
+    }
+
+    /// The squared coordinate distance to another point.
+    define dist_sq(self, other: Point2[T]) -> T {
+        self.sub(other).norm_sq
+    }
+
+    /// The point with parameter `t` on the directed line to `other`.
+    define param_line(self, other: Point2[T], t: T) -> Point2[T] {
+        self.add(other.sub(self).smul(t))
+    }
+
+    /// The signed orientation determinant of three points.
+    define orientation(self, b: Point2[T], c: Point2[T]) -> T {
+        b.sub(self).cross(c.sub(self))
+    }
+
+    /// True when three points are collinear.
+    define collinear(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.orientation(b, c) = T.0
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when three points form a strict left turn.
+    define left_turn(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.orientation(b, c) > T.0
+    }
+
+    /// True when three points form a strict right turn.
+    define right_turn(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.orientation(b, c) < T.0
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when `p` lies strictly to the left of the directed line from `self` to `b`.
+    define left_of_line(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.left_turn(b, p)
+    }
+
+    /// True when `p` lies strictly to the right of the directed line from `self` to `b`.
+    define right_of_line(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.right_turn(b, p)
+    }
+
+    /// True when two points lie strictly on the same side of a directed line.
+    define same_strict_side(self, b: Point2[T], p: Point2[T], q: Point2[T]) -> Bool {
+        (self.left_of_line(b, p) and self.left_of_line(b, q)) or
+        (self.right_of_line(b, p) and self.right_of_line(b, q))
+    }
+
+    /// True when two points lie strictly on opposite sides of a directed line.
+    define opposite_strict_sides(self, b: Point2[T], p: Point2[T], q: Point2[T]) -> Bool {
+        (self.left_of_line(b, p) and self.right_of_line(b, q)) or
+        (self.right_of_line(b, p) and self.left_of_line(b, q))
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// The signed doubled area of an oriented triangle.
+    define triangle_area2(self, b: Point2[T], c: Point2[T]) -> T {
+        self.orientation(b, c)
+    }
+
+    /// True when an oriented triangle has positive signed doubled area.
+    define triangle_ccw(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.triangle_area2(b, c) > T.0
+    }
+
+    /// True when an oriented triangle has negative signed doubled area.
+    define triangle_cw(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.triangle_area2(b, c) < T.0
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when three points form a nonnegative oriented turn.
+    define weak_left_turn(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.orientation(b, c) >= T.0
+    }
+
+    /// True when three points form a nonpositive oriented turn.
+    define weak_right_turn(self, b: Point2[T], c: Point2[T]) -> Bool {
+        self.orientation(b, c) <= T.0
+    }
+}
+
+attributes Point3[T: CommRing] {
+    /// Scalar multiplication of all three coordinates.
+    define smul(self, scalar: T) -> Point3[T] {
+        Point3.new(scalar * self.x, scalar * self.y, scalar * self.z)
+    }
+
+    /// The dot product of two coordinate points.
+    define dot(self, other: Point3[T]) -> T {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    /// The vector cross product of two coordinate points.
+    define cross(self, other: Point3[T]) -> Point3[T] {
+        Point3.new(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x)
+    }
+
+    /// The squared coordinate norm.
+    define norm_sq(self) -> T {
+        self.dot(self)
+    }
+
+    /// The squared coordinate distance to another point.
+    define dist_sq(self, other: Point3[T]) -> T {
+        self.sub(other).norm_sq
+    }
+
+    /// The point with parameter `t` on the directed line to `other`.
+    define param_line(self, other: Point3[T], t: T) -> Point3[T] {
+        self.add(other.sub(self).smul(t))
+    }
+}
+
+attributes Point2[T: CommRing] {
+    /// True when two points are orthogonal as coordinate vectors.
+    define orthogonal(self, other: Point2[T]) -> Bool {
+        self.dot(other) = T.0
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when `p` lies on the circle with this center and squared radius.
+    define on_circle(self, radius_sq: T, p: Point2[T]) -> Bool {
+        p.dist_sq(self) = radius_sq
+    }
+
+    /// True when two points lie on the same circle with this center and squared radius.
+    define same_circle(self, radius_sq: T, p: Point2[T], q: Point2[T]) -> Bool {
+        self.on_circle(radius_sq, p) and self.on_circle(radius_sq, q)
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when `p` lies on the line through `self` and `b`.
+    define on_line(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.collinear(b, p)
+    }
+
+    /// True when `p` lies on the closed segment from `self` to `b`.
+    define on_segment(self, b: Point2[T], p: Point2[T]) -> Bool {
+        exists(t: T) {
+            T.0 <= t and t <= T.1 and p = self.param_line(b, t)
+        }
+    }
+
+    /// True when `p` lies between `self` and `b`, inclusive.
+    define between(self, p: Point2[T], b: Point2[T]) -> Bool {
+        self.on_segment(b, p)
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when `p` lies on the ray starting at `self` and passing through `b`.
+    define on_ray(self, b: Point2[T], p: Point2[T]) -> Bool {
+        exists(t: T) {
+            T.0 <= t and p = self.param_line(b, t)
+        }
+    }
+}
+
+attributes Point2[T: OrderedField] {
+    /// True when a point lies in the open left half-plane of a directed line.
+    define in_open_left_halfplane(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.left_of_line(b, p)
+    }
+
+    /// True when a point lies in the open right half-plane of a directed line.
+    define in_open_right_halfplane(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.right_of_line(b, p)
+    }
+
+    /// True when a point lies in the closed left half-plane of a directed line.
+    define in_closed_left_halfplane(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.orientation(b, p) >= T.0
+    }
+
+    /// True when a point lies in the closed right half-plane of a directed line.
+    define in_closed_right_halfplane(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.orientation(b, p) <= T.0
+    }
+
+    /// True when a point lies on the boundary line of a directed half-plane.
+    define on_halfplane_boundary(self, b: Point2[T], p: Point2[T]) -> Bool {
+        self.on_line(b, p)
+    }
+
+    /// True when two points lie in a common closed half-plane of a directed line.
+    define same_closed_halfplane(self, b: Point2[T], p: Point2[T], q: Point2[T]) -> Bool {
+        (self.in_closed_left_halfplane(b, p) and self.in_closed_left_halfplane(b, q)) or
+        (self.in_closed_right_halfplane(b, p) and self.in_closed_right_halfplane(b, q))
+    }
+
+    /// True when two points lie in opposite open half-planes of a directed line.
+    define opposite_open_halfplanes(self, b: Point2[T], p: Point2[T], q: Point2[T]) -> Bool {
+        (self.in_open_left_halfplane(b, p) and self.in_open_right_halfplane(b, q)) or
+        (self.in_open_right_halfplane(b, p) and self.in_open_left_halfplane(b, q))
+    }
+}
+
+attributes Point2Segment[T: OrderedField] {
+    /// True when a point lies on the closed segment.
+    define contains(self, p: Point2[T]) -> Bool {
+        self.start.on_segment(self.end, p)
+    }
+
+    /// The segment with its endpoints reversed.
+    define reverse(self) -> Point2Segment[T] {
+        Point2Segment.new(self.end, self.start)
+    }
+
+    /// The segment obtained by translating both endpoints.
+    define translate(self, v: Point2[T]) -> Point2Segment[T] {
+        Point2Segment.new(self.start.translate(v), self.end.translate(v))
+    }
+
+    /// True when two closed segments have a common point.
+    define intersects(self, other: Point2Segment[T]) -> Bool {
+        exists(p: Point2[T]) {
+            self.contains(p) and other.contains(p)
+        }
+    }
+
+    /// True when the two segments cross with endpoints on opposite strict sides.
+    define properly_intersects(self, other: Point2Segment[T]) -> Bool {
+        self.start.opposite_strict_sides(self.end, other.start, other.end) and
+        other.start.opposite_strict_sides(other.end, self.start, self.end)
+    }
+
+    /// True when two segments have an endpoint in common.
+    define shares_endpoint(self, other: Point2Segment[T]) -> Bool {
+        self.start = other.start or self.start = other.end or
+        self.end = other.start or self.end = other.end
+    }
+}
+
+attributes Point3[T: CommRing] {
+    /// True when two points are orthogonal as coordinate vectors.
+    define orthogonal(self, other: Point3[T]) -> Bool {
+        self.dot(other) = T.0
+    }
+}
+
+attributes Point3[T: CommRing] {
+    /// True when `x` lies on the plane through `self` with normal `n`.
+    define on_plane(self, n: Point3[T], x: Point3[T]) -> Bool {
+        n.dot(x.sub(self)) = T.0
+    }
+
+    /// True when `p` lies on the sphere with this center and squared radius.
+    define on_sphere(self, radius_sq: T, p: Point3[T]) -> Bool {
+        p.dist_sq(self) = radius_sq
+    }
+}
+
+define affine_add_vadd_constraint[V: AddCommGroup, P](vadd: V -> P -> P) -> Bool {
+    forall(v: V, w: V, p: P) {
+        vadd(v + w, p) = vadd(v, vadd(w, p))
+    }
+}
+
+define is_affine_space[V: AddCommGroup, P](
+    vadd: V -> P -> P, vsub: P -> P -> V) -> Bool {
+    affine_zero_vadd_constraint(vadd)
+    and affine_add_vadd_constraint(vadd)
+    and affine_vsub_vadd_constraint(vadd, vsub)
+    and affine_vadd_vsub_constraint(vadd, vsub)
+}
+
+structure AffineSpace[V: AddCommGroup, P] {
+    /// Translation of a point by a vector.
+    vadd: V -> P -> P
+    /// Difference of two points, returning the vector from the second to the first.
+    vsub: P -> P -> V
+} constraint {
+    is_affine_space(vadd, vsub)
+}
+
+theorem affine_space_new_vadd_apply[V: AddCommGroup, P](
+    vadd: V -> P -> P, vsub: P -> P -> V, a: AffineSpace[V, P], v: V, p: P
+) {
+    AffineSpace.new(vadd, vsub) = Option.some(a) implies a.vadd(v, p) = vadd(v, p)
+}
+
+theorem affine_space_new_vsub_apply[V: AddCommGroup, P](
+    vadd: V -> P -> P, vsub: P -> P -> V, a: AffineSpace[V, P], p: P, q: P
+) {
+    AffineSpace.new(vadd, vsub) = Option.some(a) implies a.vsub(p, q) = vsub(p, q)
+}
+
+theorem affine_zero_vadd[V: AddCommGroup, P](a: AffineSpace[V, P], p: P) {
+    a.vadd(V.0, p) = p
+}
+
+theorem affine_add_vadd[V: AddCommGroup, P](
+    a: AffineSpace[V, P], v: V, w: V, p: P) {
+    a.vadd(v + w, p) = a.vadd(v, a.vadd(w, p))
+}
+
+theorem affine_vsub_vadd[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P, q: P) {
+    a.vadd(a.vsub(p, q), q) = p
+}
+
+theorem affine_vadd_vsub[V: AddCommGroup, P](
+    a: AffineSpace[V, P], v: V, p: P) {
+    a.vsub(a.vadd(v, p), p) = v
+}
+
+theorem affine_vsub_self[V: AddCommGroup, P](a: AffineSpace[V, P], p: P) {
+    a.vsub(p, p) = V.0
+}
+
+theorem affine_vadd_left_cancel[V: AddCommGroup, P](
+    a: AffineSpace[V, P], v: V, p: P, q: P) {
+    a.vadd(v, p) = a.vadd(v, q) implies p = q
+}
+
+theorem affine_vadd_right_cancel[V: AddCommGroup, P](
+    a: AffineSpace[V, P], v: V, w: V, p: P) {
+    a.vadd(v, p) = a.vadd(w, p) implies v = w
+}
+
+theorem affine_vsub_eq_zero[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P, q: P) {
+    a.vsub(p, q) = V.0 implies p = q
+}
+
+define affine_space_product_vadd[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], v: Pair[V, W], p: Pair[P, Q]
+) -> Pair[P, Q] {
+    Pair.new(a.vadd(v.first, p.first), b.vadd(v.second, p.second))
+}
+
+define affine_space_product_vsub[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], p: Pair[P, Q], q: Pair[P, Q]
+) -> Pair[V, W] {
+    Pair.new(a.vsub(p.first, q.first), b.vsub(p.second, q.second))
+}
+
+theorem affine_space_product_vadd_first[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], v: Pair[V, W], p: Pair[P, Q]
+) {
+    affine_space_product_vadd(a, b, v, p).first = a.vadd(v.first, p.first)
+}
+
+theorem affine_space_product_vadd_second[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], v: Pair[V, W], p: Pair[P, Q]
+) {
+    affine_space_product_vadd(a, b, v, p).second = b.vadd(v.second, p.second)
+}
+
+theorem affine_space_product_vsub_first[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], p: Pair[P, Q], q: Pair[P, Q]
+) {
+    affine_space_product_vsub(a, b, p, q).first = a.vsub(p.first, q.first)
+}
+
+theorem affine_space_product_vsub_second[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], p: Pair[P, Q], q: Pair[P, Q]
+) {
+    affine_space_product_vsub(a, b, p, q).second = b.vsub(p.second, q.second)
+}
+
+theorem affine_space_product_is_affine_space[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q]
+) {
+    is_affine_space(affine_space_product_vadd(a, b), affine_space_product_vsub(a, b))
+}
+
+let affine_space_product[V: AddCommGroup, W: AddCommGroup, P, Q](a: AffineSpace[V, P], b: AffineSpace[W, Q]) -> result: AffineSpace[Pair[V, W], Pair[P, Q]] satisfy {
+    AffineSpace.new(affine_space_product_vadd(a, b), affine_space_product_vsub(a, b)) =
+        Option.some(result)
+}
+
+theorem affine_space_product_vadd_apply[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], v: Pair[V, W], p: Pair[P, Q]
+) {
+    affine_space_product(a, b).vadd(v, p) =
+        Pair.new(a.vadd(v.first, p.first), b.vadd(v.second, p.second))
+}
+
+theorem affine_space_product_vsub_apply[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P], b: AffineSpace[W, Q], p: Pair[P, Q], q: Pair[P, Q]
+) {
+    affine_space_product(a, b).vsub(p, q) =
+        Pair.new(a.vsub(p.first, q.first), b.vsub(p.second, q.second))
+}
+
+let add_comm_group_vadd[V: AddCommGroup]: V -> V -> V = function(v: V, p: V) {
+    v + p
+}
+
+let add_comm_group_vsub[V: AddCommGroup]: V -> V -> V = function(p: V, q: V) {
+    p - q
+}
+
+theorem add_comm_group_is_affine_space[V: AddCommGroup] {
+    is_affine_space(add_comm_group_vadd[V], add_comm_group_vsub[V])
+}
+
+let add_comm_group_as_affine_space[V: AddCommGroup]: AffineSpace[V, V] satisfy {
+    AffineSpace.new(add_comm_group_vadd[V], add_comm_group_vsub[V]) =
+        Option.some(add_comm_group_as_affine_space)
+}
+
+theorem add_comm_group_as_affine_space_vadd[V: AddCommGroup](v: V, p: V) {
+    add_comm_group_as_affine_space[V].vadd(v, p) = v + p
+}
+
+theorem add_comm_group_as_affine_space_vsub[V: AddCommGroup](p: V, q: V) {
+    add_comm_group_as_affine_space[V].vsub(p, q) = p - q
+}
+
+define affine_subspace_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P], contains: P -> Bool) -> Bool {
+    forall(p: P, q: P, r: P) {
+        contains(p) and contains(q) and contains(r)
+            implies contains(a.vadd(a.vsub(p, q), r))
+    }
+}
+
+structure AffineSubspace[V: AddCommGroup, P] {
+    /// The ambient affine space.
+    space: AffineSpace[V, P]
+    /// True if the given point is a member of this affine subspace.
+    contains: P -> Bool
+} constraint {
+    affine_subspace_constraint(space, contains)
+}
+
+theorem affine_subspace_new_contains_apply[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    contains: P -> Bool,
+    s: AffineSubspace[V, P],
+    p: P
+) {
+    AffineSubspace[V, P].new(a, contains) = Option.some(s) implies
+        s.contains(p) = contains(p)
+}
+
+theorem affine_subspace_ext[V: AddCommGroup, P](
+    s: AffineSubspace[V, P],
+    t: AffineSubspace[V, P]) {
+    s.space = t.space and (forall(x: P) { s.contains(x) = t.contains(x) })
+        implies s = t
+}
+
+attributes AffineSubspace[V: AddCommGroup, P] {
+    /// Affine subspace extensionality from equality of ambient space and pointwise membership.
+    let ext = affine_subspace_ext[V, P]
+}
+
+theorem affine_subspace_closed[V: AddCommGroup, P](
+    s: AffineSubspace[V, P],
+    p: P, q: P, r: P) {
+    s.contains(p) and s.contains(q) and s.contains(r)
+        implies s.contains(s.space.vadd(s.space.vsub(p, q), r))
+}
+
+theorem affine_subspace_empty_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P]) {
+    affine_subspace_constraint(a, affine_subspace_empty_contains[P])
+}
+
+theorem affine_subspace_univ_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P]) {
+    affine_subspace_constraint(a, affine_subspace_univ_contains[P])
+}
+
+let affine_subspace_empty[V: AddCommGroup, P](a: AffineSpace[V, P]) -> result: AffineSubspace[V, P] satisfy {
+    AffineSubspace[V, P].new(a, affine_subspace_empty_contains[P]) =
+        Option.some(result)
+}
+
+let affine_subspace_univ[V: AddCommGroup, P](a: AffineSpace[V, P]) -> result: AffineSubspace[V, P] satisfy {
+    AffineSubspace[V, P].new(a, affine_subspace_univ_contains[P]) =
+        Option.some(result)
+}
+
+theorem affine_subspace_univ_space[V: AddCommGroup, P](
+    a: AffineSpace[V, P]
+) {
+    affine_subspace_univ(a).space = a
+}
+
+theorem affine_subspace_empty_not_contains[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P) {
+    not affine_subspace_empty(a).contains(p)
+}
+
+theorem affine_subspace_univ_contains_all[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P) {
+    affine_subspace_univ(a).contains(p)
+}
+
+define affine_subspace_nonempty[V: AddCommGroup, P](
+    a: AffineSubspace[V, P]
+) -> Bool {
+    exists(p: P) {
+        a.contains(p)
+    }
+}
+
+theorem affine_subspace_nonempty_of_contains[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    p: P
+) {
+    a.contains(p) implies affine_subspace_nonempty(a)
+}
+
+theorem affine_subspace_eq_empty_iff_not_nonempty[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    space: AffineSpace[V, P]
+) {
+    a.space = space implies
+        ((a = affine_subspace_empty(space)) =
+            not affine_subspace_nonempty(a))
+}
+
+define affine_subspace_product_contains[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) -> Bool {
+    a.contains(p.first) and b.contains(p.second)
+}
+
+theorem affine_subspace_product_constraint[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_constraint(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b))
+}
+
+let affine_subspace_product[V: AddCommGroup, W: AddCommGroup, P, Q](a: AffineSubspace[V, P], b: AffineSubspace[W, Q]) -> result: AffineSubspace[Pair[V, W], Pair[P, Q]] satisfy {
+    AffineSubspace[Pair[V, W], Pair[P, Q]].new(
+        affine_space_product(a.space, b.space),
+        affine_subspace_product_contains(a, b)) = Option.some(result)
+}
+
+theorem affine_subspace_product_space[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_product(a, b).space =
+        affine_space_product(a.space, b.space)
+}
+
+theorem affine_subspace_product_contains_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) {
+    affine_subspace_product(a, b).contains(p) =
+        (a.contains(p.first) and b.contains(p.second))
+}
+
+theorem affine_subspace_product_univ_right_contains_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSpace[W, Q],
+    p: Pair[P, Q]
+) {
+    affine_subspace_product(a, affine_subspace_univ(b)).contains(p) =
+        a.contains(p.first)
+}
+
+theorem affine_subspace_product_univ_right_contains_of_eq[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSpace[W, Q],
+    p: Pair[P, Q],
+    y: P
+) {
+    y = p.first implies
+        affine_subspace_product(a, affine_subspace_univ(b)).contains(p) =
+            a.contains(y)
+}
+
+theorem affine_subspace_product_univ_left_contains_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) {
+    affine_subspace_product(affine_subspace_univ(a), b).contains(p) =
+        b.contains(p.second)
+}
+
+theorem affine_subspace_product_univ_left_contains_of_eq[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q],
+    y: Q
+) {
+    y = p.second implies
+        affine_subspace_product(affine_subspace_univ(a), b).contains(p) =
+            b.contains(y)
+}
+
+theorem affine_subspace_product_contains_pair_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: P,
+    q: Q
+) {
+    affine_subspace_product(a, b).contains(Pair.new(p, q)) =
+        (a.contains(p) and b.contains(q))
+}
+
+theorem affine_subspace_product_contains_swap_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    p: Pair[P, Q]
+) {
+    affine_subspace_product(b, a).contains(p.swap) =
+        affine_subspace_product(a, b).contains(p)
+}
+
+theorem affine_subspace_product_contains_assoc_left_iff[V: AddCommGroup, W: AddCommGroup, X: AddCommGroup, P, Q, R](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[X, R],
+    p: Pair[P, Pair[Q, R]]
+) {
+    affine_subspace_product(
+        affine_subspace_product(a, b), c).contains(pair_assoc_left(p)) =
+        affine_subspace_product(
+            a, affine_subspace_product(b, c)).contains(p)
+}
+
+theorem affine_subspace_product_contains_assoc_right_iff[V: AddCommGroup, W: AddCommGroup, X: AddCommGroup, P, Q, R](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[X, R],
+    p: Pair[Pair[P, Q], R]
+) {
+    affine_subspace_product(
+        a, affine_subspace_product(b, c)).contains(pair_assoc_right(p)) =
+        affine_subspace_product(
+            affine_subspace_product(a, b), c).contains(p)
+}
+
+theorem affine_subspace_product_nonempty_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_nonempty(affine_subspace_product(a, b)) =
+        (affine_subspace_nonempty(a) and affine_subspace_nonempty(b))
+}
+
+define affine_subspace_intersection_contains[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P], x: P) -> Bool {
+    a.contains(x) and b.contains(x)
+}
+
+theorem affine_subspace_intersection_constraint[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) {
+    a.space = b.space implies
+        affine_subspace_constraint(a.space, affine_subspace_intersection_contains(a, b))
+}
+
+define affine_subspace_subset[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) -> Bool {
+    forall(x: P) {
+        a.contains(x) implies b.contains(x)
+    }
+}
+
+theorem affine_subspace_subset_refl[V: AddCommGroup, P](
+    a: AffineSubspace[V, P]) {
+    affine_subspace_subset(a, a)
+}
+
+theorem affine_subspace_subset_trans[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]) {
+    affine_subspace_subset(a, b) and affine_subspace_subset(b, c)
+        implies affine_subspace_subset(a, c)
+}
+
+theorem affine_subspace_subset_antisymm[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space and affine_subspace_subset(a, b)
+        and affine_subspace_subset(b, a) implies a = b
+}
+
+theorem affine_subspace_product_subset_of_subset_left_right[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q]
+) {
+    affine_subspace_subset(a, c) and affine_subspace_subset(b, d) implies
+        affine_subspace_subset(
+            affine_subspace_product(a, b),
+            affine_subspace_product(c, d))
+}
+
+theorem affine_subspace_product_mono_left[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P]
+) {
+    affine_subspace_subset(a, c) implies
+        affine_subspace_subset(
+            affine_subspace_product(a, b),
+            affine_subspace_product(c, b))
+}
+
+theorem affine_subspace_product_mono_right[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    d: AffineSubspace[W, Q]
+) {
+    affine_subspace_subset(b, d) implies
+        affine_subspace_subset(
+            affine_subspace_product(a, b),
+            affine_subspace_product(a, d))
+}
+
+theorem affine_subspace_subset_left_of_product_subset[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q],
+    q: Q
+) {
+    b.contains(q) and
+    affine_subspace_subset(
+        affine_subspace_product(a, b),
+        affine_subspace_product(c, d)) implies
+        affine_subspace_subset(a, c)
+}
+
+theorem affine_subspace_subset_right_of_product_subset[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q],
+    p: P
+) {
+    a.contains(p) and
+    affine_subspace_subset(
+        affine_subspace_product(a, b),
+        affine_subspace_product(c, d)) implies
+        affine_subspace_subset(b, d)
+}
+
+theorem affine_subspace_product_subset_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q],
+    p: P,
+    q: Q
+) {
+    a.contains(p) and b.contains(q) implies
+        (affine_subspace_subset(
+            affine_subspace_product(a, b),
+            affine_subspace_product(c, d)) =
+        (affine_subspace_subset(a, c) and affine_subspace_subset(b, d)))
+}
+
+theorem affine_subspace_product_eq_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q],
+    p: P,
+    q: Q
+) {
+    a.space = c.space and b.space = d.space
+        and a.contains(p) and b.contains(q) implies
+        ((affine_subspace_product(a, b) =
+            affine_subspace_product(c, d)) =
+        (a = c and b = d))
+}
+
+theorem affine_subspace_product_eq_iff_of_nonempty[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q]
+) {
+    a.space = c.space and b.space = d.space
+        and affine_subspace_nonempty(a)
+        and affine_subspace_nonempty(b) implies
+        ((affine_subspace_product(a, b) =
+            affine_subspace_product(c, d)) =
+        (a = c and b = d))
+}
+
+theorem affine_subspace_product_empty_left[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    affine_subspace_product(affine_subspace_empty(a), b) =
+        affine_subspace_empty(affine_space_product(a, b.space))
+}
+
+theorem affine_subspace_product_empty_right[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSpace[W, Q]
+) {
+    affine_subspace_product(a, affine_subspace_empty(b)) =
+        affine_subspace_empty(affine_space_product(a.space, b))
+}
+
+theorem affine_subspace_product_eq_empty_iff[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q]
+) {
+    (affine_subspace_product(a, b) =
+        affine_subspace_empty(affine_space_product(a.space, b.space))) =
+    ((a = affine_subspace_empty(a.space)) or
+        (b = affine_subspace_empty(b.space)))
+}
+
+theorem affine_subspace_product_univ[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P],
+    b: AffineSpace[W, Q]
+) {
+    affine_subspace_product(
+        affine_subspace_univ(a),
+        affine_subspace_univ(b)) =
+        affine_subspace_univ(affine_space_product(a, b))
+}
+
+theorem affine_subspace_empty_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], b: AffineSubspace[V, P]) {
+    affine_subspace_subset(affine_subspace_empty(a), b)
+}
+
+theorem affine_subspace_subset_univ[V: AddCommGroup, P](
+    a: AffineSpace[V, P], b: AffineSubspace[V, P]) {
+    affine_subspace_subset(b, affine_subspace_univ(a))
+}
+
+define affine_subspace_intersection_total_contains[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P], x: P) -> Bool {
+    a.space = b.space and a.contains(x) and b.contains(x)
+}
+
+theorem affine_subspace_intersection_total_constraint[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) {
+    affine_subspace_constraint(a.space,
+        affine_subspace_intersection_total_contains(a, b))
+}
+
+let affine_subspace_intersection[V: AddCommGroup, P](a: AffineSubspace[V, P], b: AffineSubspace[V, P]) -> result: AffineSubspace[V, P] satisfy {
+    AffineSubspace[V, P].new(a.space, affine_subspace_intersection_total_contains(a, b)) =
+        Option.some(result)
+}
+
+theorem affine_subspace_intersection_space[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) {
+    affine_subspace_intersection(a, b).space = a.space
+}
+
+theorem affine_subspace_intersection_contains_iff[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P], x: P) {
+    a.space = b.space implies
+        (affine_subspace_intersection(a, b).contains(x) =
+            (a.contains(x) and b.contains(x)))
+}
+
+theorem affine_subspace_intersection_subset_left[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) {
+    a.space = b.space implies
+        affine_subspace_subset(affine_subspace_intersection(a, b), a)
+}
+
+theorem affine_subspace_intersection_subset_right[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]) {
+    a.space = b.space implies
+        affine_subspace_subset(affine_subspace_intersection(a, b), b)
+}
+
+theorem affine_subspace_subset_intersection[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P], c: AffineSubspace[V, P]) {
+    a.space = b.space and a.space = c.space and
+        affine_subspace_subset(a, b) and affine_subspace_subset(a, c)
+        implies affine_subspace_subset(a, affine_subspace_intersection(b, c))
+}
+
+theorem affine_subspace_product_intersection[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[W, Q],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[W, Q]
+) {
+    a.space = c.space and b.space = d.space implies
+        affine_subspace_product(
+            affine_subspace_intersection(a, c),
+            affine_subspace_intersection(b, d)) =
+        affine_subspace_intersection(
+            affine_subspace_product(a, b),
+            affine_subspace_product(c, d))
+}
+
+theorem affine_subspace_singleton_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P) {
+    affine_subspace_constraint(a, affine_subspace_singleton_contains[P](p))
+}
+
+let affine_subspace_singleton[V: AddCommGroup, P](a: AffineSpace[V, P], p: P) -> result: AffineSubspace[V, P] satisfy {
+    AffineSubspace[V, P].new(a, affine_subspace_singleton_contains[P](p)) =
+        Option.some(result)
+}
+
+theorem affine_subspace_singleton_space[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P) {
+    affine_subspace_singleton(a, p).space = a
+}
+
+theorem affine_subspace_singleton_contains_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P, x: P) {
+    affine_subspace_singleton(a, p).contains(x) = (x = p)
+}
+
+theorem affine_subspace_singleton_contains_self[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P) {
+    affine_subspace_singleton(a, p).contains(p)
+}
+
+theorem affine_subspace_product_singleton[V: AddCommGroup, W: AddCommGroup, P, Q](
+    a: AffineSpace[V, P],
+    b: AffineSpace[W, Q],
+    p: P,
+    q: Q
+) {
+    affine_subspace_product(
+        affine_subspace_singleton(a, p),
+        affine_subspace_singleton(b, q)) =
+        affine_subspace_singleton(
+            affine_space_product(a, b), Pair.new(p, q))
+}
+
+define affine_span_contains[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool, x: P) -> Bool {
+    forall(s: AffineSubspace[V, P]) {
+        s.space = a and (forall(y: P) { src(y) implies s.contains(y) })
+            implies s.contains(x)
+    }
+}
+
+theorem affine_span_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool) {
+    affine_subspace_constraint(a, affine_span_contains(a, src))
+}
+
+let affine_span[V: AddCommGroup, P](a: AffineSpace[V, P], src: P -> Bool) -> result: AffineSubspace[V, P] satisfy {
+    AffineSubspace[V, P].new(a, affine_span_contains(a, src)) =
+        Option.some(result)
+}
+
+theorem affine_span_space[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool) {
+    affine_span(a, src).space = a
+}
+
+theorem affine_span_contains_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool, x: P) {
+    affine_span(a, src).contains(x) = affine_span_contains(a, src, x)
+}
+
+theorem affine_span_contains_src[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool, x: P) {
+    src(x) implies affine_span(a, src).contains(x)
+}
+
+theorem affine_span_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool, t: AffineSubspace[V, P]) {
+    t.space = a and (forall(y: P) { src(y) implies t.contains(y) })
+        implies affine_subspace_subset(affine_span(a, src), t)
+}
+
+theorem affine_span_subset_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool, t: AffineSubspace[V, P]
+) {
+    t.space = a implies
+        (affine_subspace_subset(affine_span(a, src), t) =
+            forall(y: P) { src(y) implies t.contains(y) })
+}
+
+theorem affine_span_subspace_eq[V: AddCommGroup, P](s: AffineSubspace[V, P]) {
+    affine_span(s.space, s.contains) = s
+}
+
+theorem affine_span_idempotent[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool
+) {
+    affine_span(a, affine_span(a, src).contains) = affine_span(a, src)
+}
+
+theorem affine_span_fixed_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool
+) {
+    (affine_span(a, src).contains = src) =
+        affine_subspace_constraint(a, src)
+}
+
+theorem affine_span_intersection_src_constraint[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool
+) {
+    affine_subspace_constraint(a, src1)
+        and affine_subspace_constraint(a, src2) implies
+        affine_subspace_constraint(
+            a, affine_span_intersection_src(src1, src2))
+}
+
+theorem affine_span_intersection_fixed[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool
+) {
+    affine_span(a, src1).contains = src1
+        and affine_span(a, src2).contains = src2 implies
+        affine_span(a, affine_span_intersection_src(src1, src2)).contains =
+            affine_span_intersection_src(src1, src2)
+}
+
+theorem affine_span_mono[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool) {
+    (forall(y: P) { src1(y) implies src2(y) })
+        implies affine_subspace_subset(affine_span(a, src1), affine_span(a, src2))
+}
+
+theorem affine_span_intersection_subset_left[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, affine_span_intersection_src(src1, src2)),
+        affine_span(a, src1))
+}
+
+theorem affine_span_intersection_subset_right[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, affine_span_intersection_src(src1, src2)),
+        affine_span(a, src2))
+}
+
+theorem affine_span_intersection_mono[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    dst1: P -> Bool,
+    dst2: P -> Bool
+) {
+    ((forall(x: P) { src1(x) implies dst1(x) })
+    and (forall(x: P) { src2(x) implies dst2(x) })) implies
+    affine_subspace_subset(
+        affine_span(a, affine_span_intersection_src(src1, src2)),
+        affine_span(a, affine_span_intersection_src(dst1, dst2)))
+}
+
+theorem affine_span_intersection_eq_of_mutual_src_containment[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    dst1: P -> Bool,
+    dst2: P -> Bool
+) {
+    (((forall(x: P) { src1(x) implies dst1(x) })
+        and (forall(x: P) { src2(x) implies dst2(x) }))
+    and ((forall(x: P) { dst1(x) implies src1(x) })
+        and (forall(x: P) { dst2(x) implies src2(x) }))) implies
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, affine_span_intersection_src(dst1, dst2))
+}
+
+theorem affine_span_intersection_eq_left_of_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src1),
+        affine_span(a, affine_span_intersection_src(src1, src2))) implies
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src1)
+}
+
+theorem affine_span_left_subset_intersection_of_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src1) implies
+    affine_subspace_subset(
+        affine_span(a, src1),
+        affine_span(a, affine_span_intersection_src(src1, src2)))
+}
+
+theorem affine_span_intersection_eq_left_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src1),
+        affine_span(a, affine_span_intersection_src(src1, src2))) =
+    (affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src1))
+}
+
+theorem affine_span_intersection_eq_right_of_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src2),
+        affine_span(a, affine_span_intersection_src(src1, src2))) implies
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src2)
+}
+
+theorem affine_span_right_subset_intersection_of_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src2) implies
+    affine_subspace_subset(
+        affine_span(a, src2),
+        affine_span(a, affine_span_intersection_src(src1, src2)))
+}
+
+theorem affine_span_intersection_eq_right_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src2),
+        affine_span(a, affine_span_intersection_src(src1, src2))) =
+    (affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, src2))
+}
+
+theorem affine_span_subset_union_left[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src1),
+        affine_span(a, affine_span_union_src(src1, src2)))
+}
+
+theorem affine_span_subset_union_right[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_subset(
+        affine_span(a, src2),
+        affine_span(a, affine_span_union_src(src1, src2)))
+}
+
+theorem affine_span_union_subset_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    t: AffineSubspace[V, P]
+) {
+    t.space = a implies
+        (affine_subspace_subset(
+            affine_span(a, affine_span_union_src(src1, src2)), t) =
+        (affine_subspace_subset(affine_span(a, src1), t)
+            and affine_subspace_subset(affine_span(a, src2), t)))
+}
+
+theorem affine_span_congr[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    (forall(y: P) { src1(y) = src2(y) }) implies
+        affine_span(a, src1) = affine_span(a, src2)
+}
+
+theorem affine_span_union_comm[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(src1, src2)) =
+        affine_span(a, affine_span_union_src(src2, src1))
+}
+
+theorem affine_span_union_assoc[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    src3: P -> Bool
+) {
+    affine_span(a,
+        affine_span_union_src(affine_span_union_src(src1, src2), src3)) =
+    affine_span(a,
+        affine_span_union_src(src1, affine_span_union_src(src2, src3)))
+}
+
+theorem affine_span_intersection_comm[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(src1, src2)) =
+        affine_span(a, affine_span_intersection_src(src2, src1))
+}
+
+theorem affine_span_intersection_assoc[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    src3: P -> Bool
+) {
+    affine_span(a,
+        affine_span_intersection_src(
+            affine_span_intersection_src(src1, src2), src3)) =
+    affine_span(a,
+        affine_span_intersection_src(
+            src1, affine_span_intersection_src(src2, src3)))
+}
+
+theorem affine_span_intersection_idempotent[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(src, src)) =
+        affine_span(a, src)
+}
+
+theorem affine_span_union_idempotent[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(src, src)) =
+        affine_span(a, src)
+}
+
+theorem affine_span_intersection_union_absorption_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(
+        src1, affine_span_union_src(src1, src2))) =
+        affine_span(a, src1)
+}
+
+theorem affine_span_union_intersection_absorption_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(
+        src1, affine_span_intersection_src(src1, src2))) =
+        affine_span(a, src1)
+}
+
+theorem affine_span_intersection_union_distrib_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    src3: P -> Bool
+) {
+    affine_span(a, affine_span_intersection_src(
+        src1, affine_span_union_src(src2, src3))) =
+    affine_span(a, affine_span_union_src(
+        affine_span_intersection_src(src1, src2),
+        affine_span_intersection_src(src1, src3)))
+}
+
+theorem affine_span_union_intersection_distrib_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    src1: P -> Bool,
+    src2: P -> Bool,
+    src3: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(
+        src1, affine_span_intersection_src(src2, src3))) =
+    affine_span(a, affine_span_intersection_src(
+        affine_span_union_src(src1, src2),
+        affine_span_union_src(src1, src3)))
+}
+
+theorem affine_span_eq_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    (affine_span(a, src1) = affine_span(a, src2)) =
+        ((forall(y: P) { src1(y) implies affine_span(a, src2).contains(y) })
+        and (forall(y: P) { src2(y) implies affine_span(a, src1).contains(y) }))
+}
+
+theorem affine_span_union_left_closure[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(affine_span(a, src1).contains, src2)) =
+        affine_span(a, affine_span_union_src(src1, src2))
+}
+
+theorem affine_span_union_right_closure[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_span(a, affine_span_union_src(src1, affine_span(a, src2).contains)) =
+        affine_span(a, affine_span_union_src(src1, src2))
+}
+
+define affine_subspace_sup[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]
+) -> AffineSubspace[V, P] {
+    affine_span(a.space, affine_span_union_src(a.contains, b.contains))
+}
+
+define affine_subspace_list_sup_step[V: AddCommGroup, P](
+    item: AffineSubspace[V, P],
+    acc: AffineSubspace[V, P]
+) -> AffineSubspace[V, P] {
+    affine_subspace_sup(item, acc)
+}
+
+define affine_subspace_list_sup_nonempty[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]]
+) -> AffineSubspace[V, P] {
+    fold_right[AffineSubspace[V, P], AffineSubspace[V, P]](
+        tail, affine_subspace_list_sup_step[V, P], head)
+}
+
+theorem affine_subspace_list_sup_nonempty_nil[V: AddCommGroup, P](
+    head: AffineSubspace[V, P]
+) {
+    affine_subspace_list_sup_nonempty(
+        head, List.nil[AffineSubspace[V, P]]) = head
+}
+
+theorem affine_subspace_list_sup_nonempty_cons[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    item: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]]
+) {
+    affine_subspace_list_sup_nonempty(head, List.cons(item, tail)) =
+        affine_subspace_sup(
+            item, affine_subspace_list_sup_nonempty(head, tail))
+}
+
+theorem affine_subspace_sup_eq_span_union[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]
+) {
+    affine_subspace_sup(a, b) =
+        affine_span(a.space, affine_span_union_src(a.contains, b.contains))
+}
+
+theorem affine_subspace_sup_affine_spans_eq_span_union[V: AddCommGroup, P](
+    a: AffineSpace[V, P], src1: P -> Bool, src2: P -> Bool
+) {
+    affine_subspace_sup(affine_span(a, src1), affine_span(a, src2)) =
+        affine_span(a, affine_span_union_src(src1, src2))
+}
+
+theorem affine_subspace_sup_space[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]
+) {
+    affine_subspace_sup(a, b).space = a.space
+}
+
+theorem affine_subspace_list_sup_nonempty_space[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]]
+) {
+    (forall(item: AffineSubspace[V, P]) {
+        tail.contains(item) implies item.space = head.space
+    }) implies
+    affine_subspace_list_sup_nonempty(head, tail).space = head.space
+}
+
+theorem affine_subspace_subset_sup_left[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]
+) {
+    affine_subspace_subset(a, affine_subspace_sup(a, b))
+}
+
+theorem affine_subspace_subset_sup_right[V: AddCommGroup, P](
+    a: AffineSubspace[V, P], b: AffineSubspace[V, P]
+) {
+    affine_subspace_subset(b, affine_subspace_sup(a, b))
+}
+
+theorem affine_subspace_subset_list_sup_nonempty_head[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]]
+) {
+    affine_subspace_subset(
+        head, affine_subspace_list_sup_nonempty(head, tail))
+}
+
+theorem affine_subspace_subset_list_sup_nonempty_tail[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]],
+    member: AffineSubspace[V, P]
+) {
+    tail.contains(member) implies
+        affine_subspace_subset(
+            member, affine_subspace_list_sup_nonempty(head, tail))
+}
+
+theorem affine_subspace_sup_subset_of_subset_left_right[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]
+) {
+    c.space = a.space and affine_subspace_subset(a, c)
+        and affine_subspace_subset(b, c)
+        implies affine_subspace_subset(affine_subspace_sup(a, b), c)
+}
+
+theorem affine_subspace_sup_subset_iff[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]
+) {
+    c.space = a.space implies
+        (affine_subspace_subset(affine_subspace_sup(a, b), c) =
+            (affine_subspace_subset(a, c) and affine_subspace_subset(b, c)))
+}
+
+theorem affine_subspace_list_sup_nonempty_subset_of_upper_bound[V: AddCommGroup, P](
+    head: AffineSubspace[V, P],
+    tail: List[AffineSubspace[V, P]],
+    bound: AffineSubspace[V, P]
+) {
+    (forall(item: AffineSubspace[V, P]) {
+        tail.contains(item) implies item.space = head.space
+    }) and
+    bound.space = head.space and
+    affine_subspace_subset(head, bound) and
+    (forall(item: AffineSubspace[V, P]) {
+        tail.contains(item) implies affine_subspace_subset(item, bound)
+    }) implies
+        affine_subspace_subset(
+            affine_subspace_list_sup_nonempty(head, tail), bound)
+}
+
+theorem affine_subspace_sup_comm[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space implies
+        affine_subspace_sup(a, b) = affine_subspace_sup(b, a)
+}
+
+theorem affine_subspace_sup_idempotent[V: AddCommGroup, P](
+    a: AffineSubspace[V, P]
+) {
+    affine_subspace_sup(a, a) = a
+}
+
+theorem affine_subspace_sup_eq_right_of_subset[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space and affine_subspace_subset(a, b) implies
+        affine_subspace_sup(a, b) = b
+}
+
+theorem affine_subspace_sup_eq_left_of_subset[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space and affine_subspace_subset(b, a) implies
+        affine_subspace_sup(a, b) = a
+}
+
+theorem affine_subspace_subset_iff_sup_eq_right[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space implies
+        (affine_subspace_subset(a, b) =
+            (affine_subspace_sup(a, b) = b))
+}
+
+theorem affine_subspace_subset_iff_sup_eq_left[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P]
+) {
+    a.space = b.space implies
+        (affine_subspace_subset(b, a) =
+            (affine_subspace_sup(a, b) = a))
+}
+
+theorem affine_subspace_sup_eq_sup_iff[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[V, P]
+) {
+    a.space = b.space and a.space = c.space and a.space = d.space implies
+        ((affine_subspace_sup(a, b) = affine_subspace_sup(c, d)) =
+            ((affine_subspace_subset(a, affine_subspace_sup(c, d))
+                and affine_subspace_subset(b, affine_subspace_sup(c, d)))
+            and (affine_subspace_subset(c, affine_subspace_sup(a, b))
+                and affine_subspace_subset(d, affine_subspace_sup(a, b)))))
+}
+
+theorem affine_subspace_empty_sup[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    s: AffineSubspace[V, P]
+) {
+    s.space = a implies
+        affine_subspace_sup(affine_subspace_empty(a), s) = s
+}
+
+theorem affine_subspace_sup_empty[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    s: AffineSubspace[V, P]
+) {
+    s.space = a implies
+        affine_subspace_sup(s, affine_subspace_empty(a)) = s
+}
+
+theorem affine_subspace_sup_univ[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    s: AffineSubspace[V, P]
+) {
+    s.space = a implies
+        affine_subspace_sup(s, affine_subspace_univ(a)) =
+            affine_subspace_univ(a)
+}
+
+theorem affine_subspace_univ_sup[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    s: AffineSubspace[V, P]
+) {
+    s.space = a implies
+        affine_subspace_sup(affine_subspace_univ(a), s) =
+            affine_subspace_univ(a)
+}
+
+theorem affine_subspace_sup_mono_left[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]
+) {
+    a.space = b.space and a.space = c.space
+        and affine_subspace_subset(a, b) implies
+        affine_subspace_subset(
+            affine_subspace_sup(a, c), affine_subspace_sup(b, c))
+}
+
+theorem affine_subspace_sup_mono_right[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]
+) {
+    a.space = b.space and a.space = c.space
+        and affine_subspace_subset(a, b) implies
+        affine_subspace_subset(
+            affine_subspace_sup(c, a), affine_subspace_sup(c, b))
+}
+
+theorem affine_subspace_sup_mono[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P],
+    d: AffineSubspace[V, P]
+) {
+    a.space = b.space and a.space = c.space and a.space = d.space
+        and affine_subspace_subset(a, b) and affine_subspace_subset(c, d)
+        implies affine_subspace_subset(
+            affine_subspace_sup(a, c), affine_subspace_sup(b, d))
+}
+
+theorem affine_subspace_sup_assoc[V: AddCommGroup, P](
+    a: AffineSubspace[V, P],
+    b: AffineSubspace[V, P],
+    c: AffineSubspace[V, P]
+) {
+    a.space = b.space and a.space = c.space implies
+        affine_subspace_sup(affine_subspace_sup(a, b), c) =
+            affine_subspace_sup(a, affine_subspace_sup(b, c))
+}
+
+theorem affine_span_empty_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], t: AffineSubspace[V, P]) {
+    t.space = a implies
+        affine_subspace_subset(affine_span(a, affine_subspace_empty_contains[P]), t)
+}
+
+theorem affine_span_univ_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P]) {
+    affine_subspace_subset(affine_subspace_univ(a),
+        affine_span(a, affine_subspace_univ_contains[P]))
+}
+
+theorem affine_span_empty_eq[V: AddCommGroup, P](a: AffineSpace[V, P]) {
+    affine_span(a, affine_subspace_empty_contains[P]) = affine_subspace_empty(a)
+}
+
+define affine_span_list_src[P](points: List[P], x: P) -> Bool {
+    points.contains(x)
+}
+
+theorem affine_span_list_src_iff[P](points: List[P], x: P) {
+    affine_span_list_src(points, x) = points.contains(x)
+}
+
+theorem affine_span_list_src_nil[P](x: P) {
+    affine_span_list_src(List.nil[P], x) = false
+}
+
+theorem affine_span_list_src_cons[P](
+    head: P, tail: List[P], x: P
+) {
+    affine_span_list_src(List.cons(head, tail), x) =
+        (head = x or affine_span_list_src(tail, x))
+}
+
+theorem affine_span_list_src_add_eq_union[P](
+    left: List[P], right: List[P], x: P
+) {
+    affine_span_list_src(left + right, x) =
+        affine_span_union_src(
+            affine_span_list_src[P](left),
+            affine_span_list_src[P](right), x)
+}
+
+theorem affine_span_list_nil_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P]
+) {
+    affine_span(a, affine_span_list_src[P](List.nil[P])) =
+        affine_subspace_empty(a)
+}
+
+theorem affine_span_list_cons_contains_head[V: AddCommGroup, P](
+    a: AffineSpace[V, P], head: P, tail: List[P]
+) {
+    affine_span(
+        a, affine_span_list_src[P](List.cons(head, tail))).contains(head)
+}
+
+theorem affine_span_list_tail_subset_cons[V: AddCommGroup, P](
+    a: AffineSpace[V, P], head: P, tail: List[P]
+) {
+    affine_subspace_subset(
+        affine_span(a, affine_span_list_src[P](tail)),
+        affine_span(a, affine_span_list_src[P](List.cons(head, tail))))
+}
+
+theorem affine_span_list_cons_eq_tail_of_contains[V: AddCommGroup, P](
+    a: AffineSpace[V, P], head: P, tail: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](tail)).contains(head) implies
+        affine_span(a, affine_span_list_src[P](List.cons(head, tail))) =
+            affine_span(a, affine_span_list_src[P](tail))
+}
+
+theorem affine_span_singleton_eq[V: AddCommGroup, P](a: AffineSpace[V, P], p: P) {
+    affine_span(a, affine_span_singleton_src[P](p)) = affine_subspace_singleton(a, p)
+}
+
+theorem affine_span_list_singleton_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], p: P
+) {
+    affine_span(a, affine_span_list_src[P](List.singleton(p))) =
+        affine_subspace_singleton(a, p)
+}
+
+theorem affine_span_list_src_permutation_eq[P](
+    left: List[P], right: List[P]
+) {
+    is_permutation(left, right) implies
+        forall(x: P) {
+            affine_span_list_src(left, x) =
+                affine_span_list_src(right, x)
+        }
+}
+
+theorem affine_span_list_permutation_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    is_permutation(left, right) implies
+        affine_span(a, affine_span_list_src[P](left)) =
+            affine_span(a, affine_span_list_src[P](right))
+}
+
+theorem affine_span_list_unique_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], points: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](points.unique)) =
+        affine_span(a, affine_span_list_src[P](points))
+}
+
+theorem affine_span_list_src_mono[P](
+    left: List[P], right: List[P]
+) {
+    (forall(x: P) { left.contains(x) implies right.contains(x) }) implies
+        forall(x: P) {
+            affine_span_list_src(left, x) implies
+                affine_span_list_src(right, x)
+        }
+}
+
+theorem affine_span_list_mono[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    (forall(x: P) { left.contains(x) implies right.contains(x) }) implies
+        affine_subspace_subset(
+            affine_span(a, affine_span_list_src[P](left)),
+            affine_span(a, affine_span_list_src[P](right)))
+}
+
+theorem affine_span_list_eq_of_mutual_contains[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    ((forall(x: P) { left.contains(x) implies right.contains(x) })
+        and (forall(x: P) { right.contains(x) implies left.contains(x) }))
+        implies
+            affine_span(a, affine_span_list_src[P](left)) =
+                affine_span(a, affine_span_list_src[P](right))
+}
+
+theorem affine_span_list_subset_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    points: List[P],
+    t: AffineSubspace[V, P]
+) {
+    t.space = a implies
+        (affine_subspace_subset(
+            affine_span(a, affine_span_list_src[P](points)), t) =
+        forall(x: P) { points.contains(x) implies t.contains(x) })
+}
+
+theorem affine_span_list_eq_target_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    points: List[P],
+    t: AffineSubspace[V, P]
+) {
+    t.space = a implies
+        ((affine_span(a, affine_span_list_src[P](points)) = t) =
+        ((forall(x: P) { points.contains(x) implies t.contains(x) })
+        and affine_subspace_subset(
+            t, affine_span(a, affine_span_list_src[P](points)))))
+}
+
+theorem affine_span_list_add_eq_sup[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_subspace_sup(
+            affine_span(a, affine_span_list_src[P](left)),
+            affine_span(a, affine_span_list_src[P](right)))
+}
+
+theorem affine_span_list_add_right_congr[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    right: List[P],
+    replacement: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](right)) =
+        affine_span(a, affine_span_list_src[P](replacement)) implies
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](left + replacement))
+}
+
+theorem affine_span_list_add_left_congr[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    replacement: List[P],
+    right: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](left)) =
+        affine_span(a, affine_span_list_src[P](replacement)) implies
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](replacement + right))
+}
+
+theorem affine_span_list_add_congr[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    left_replacement: List[P],
+    right: List[P],
+    right_replacement: List[P]
+) {
+    (affine_span(a, affine_span_list_src[P](left)) =
+        affine_span(a, affine_span_list_src[P](left_replacement))
+    and affine_span(a, affine_span_list_src[P](right)) =
+        affine_span(a, affine_span_list_src[P](right_replacement))) implies
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(
+            a, affine_span_list_src[P](
+                left_replacement + right_replacement))
+}
+
+theorem affine_span_list_add_comm[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](right + left))
+}
+
+theorem affine_span_list_add_subset_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    right: List[P],
+    t: AffineSubspace[V, P]
+) {
+    t.space = a implies
+        (affine_subspace_subset(
+            affine_span(a, affine_span_list_src[P](left + right)), t) =
+        (affine_subspace_subset(
+            affine_span(a, affine_span_list_src[P](left)), t)
+        and affine_subspace_subset(
+            affine_span(a, affine_span_list_src[P](right)), t)))
+}
+
+theorem affine_span_list_add_eq_left_iff[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    affine_subspace_subset(
+        affine_span(a, affine_span_list_src[P](right)),
+        affine_span(a, affine_span_list_src[P](left))) =
+    (affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](left)))
+}
+
+theorem affine_span_list_add_eq_left_of_right_mem_span[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    (forall(x: P) {
+        right.contains(x) implies
+            affine_span(
+                a, affine_span_list_src[P](left)).contains(x)
+    }) implies
+        affine_span(a, affine_span_list_src[P](left + right)) =
+            affine_span(a, affine_span_list_src[P](left))
+}
+
+theorem affine_span_list_add_self_eq[V: AddCommGroup, P](
+    a: AffineSpace[V, P], points: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](points + points)) =
+        affine_span(a, affine_span_list_src[P](points))
+}
+
+theorem affine_span_list_delete_contained_middle[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    middle: List[P],
+    right: List[P]
+) {
+    (forall(x: P) {
+        middle.contains(x) implies
+            affine_span(
+                a, affine_span_list_src[P](left + right)).contains(x)
+    }) implies
+    affine_span(
+        a, affine_span_list_src[P]((left + middle) + right)) =
+        affine_span(a, affine_span_list_src[P](left + right))
+}
+
+theorem affine_span_list_middle_congr[V: AddCommGroup, P](
+    a: AffineSpace[V, P],
+    left: List[P],
+    middle: List[P],
+    replacement: List[P],
+    right: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](middle)) =
+        affine_span(a, affine_span_list_src[P](replacement)) implies
+    affine_span(
+        a, affine_span_list_src[P]((left + middle) + right)) =
+        affine_span(
+            a, affine_span_list_src[P]((left + replacement) + right))
+}
+
+theorem affine_span_list_add_eq_right_of_subset[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    affine_subspace_subset(
+        affine_span(a, affine_span_list_src[P](left)),
+        affine_span(a, affine_span_list_src[P](right))) implies
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](right))
+}
+
+theorem affine_span_list_left_subset_of_add_eq_right[V: AddCommGroup, P](
+    a: AffineSpace[V, P], left: List[P], right: List[P]
+) {
+    affine_span(a, affine_span_list_src[P](left + right)) =
+        affine_span(a, affine_span_list_src[P](right)) implies
+    affine_subspace_subset(
+        affine_span(a, affine_span_list_src[P](left)),
+        affine_span(a, affine_span_list_src[P](right)))
+}
+
+theorem affine_span_univ_eq[V: AddCommGroup, P](a: AffineSpace[V, P]) {
+    affine_span(a, affine_subspace_univ_contains[P]) = affine_subspace_univ(a)
+}
+
+define affine_map_constraint[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], to_fun: P1 -> P2) -> Bool {
+    forall(p: P1, q: P1, r: P1) {
+        to_fun(s.vadd(s.vsub(p, q), r)) = t.vadd(t.vsub(to_fun(p), to_fun(q)), to_fun(r))
+    }
+}
+
+structure AffineMap[V1: AddCommGroup, P1, V2: AddCommGroup, P2] {
+    /// The source affine space.
+    src: AffineSpace[V1, P1]
+    /// The target affine space.
+    dst: AffineSpace[V2, P2]
+    /// The underlying function on points.
+    to_fun: P1 -> P2
+} constraint {
+    affine_map_constraint(src, dst, to_fun)
+}
+
+theorem affine_map_new_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], to_fun: P1 -> P2,
+    f: AffineMap[V1, P1, V2, P2], p: P1
+) {
+    AffineMap.new(s, t, to_fun) = Option.some(f) implies f.to_fun(p) = to_fun(p)
+}
+
+theorem affine_map_new_src[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], to_fun: P1 -> P2,
+    f: AffineMap[V1, P1, V2, P2]
+) {
+    AffineMap.new(s, t, to_fun) = Option.some(f) implies f.src = s
+}
+
+theorem affine_map_new_dst[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], to_fun: P1 -> P2,
+    f: AffineMap[V1, P1, V2, P2]
+) {
+    AffineMap.new(s, t, to_fun) = Option.some(f) implies f.dst = t
+}
+
+theorem affine_map_ext[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    g: AffineMap[V1, P1, V2, P2]) {
+    f.src = g.src and f.dst = g.dst
+        and (forall(x: P1) { f.to_fun(x) = g.to_fun(x) })
+        implies f = g
+}
+
+attributes AffineMap[V1: AddCommGroup, P1, V2: AddCommGroup, P2] {
+    /// Affine-map extensionality from equality of source, target, and underlying function.
+    let ext = affine_map_ext[V1, P1, V2, P2]
+}
+
+theorem affine_map_preserves[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], p: P1, q: P1, r: P1) {
+    f.to_fun(f.src.vadd(f.src.vsub(p, q), r)) =
+        f.dst.vadd(f.dst.vsub(f.to_fun(p), f.to_fun(q)), f.to_fun(r))
+}
+
+theorem affine_map_id_constraint[V: AddCommGroup, P](a: AffineSpace[V, P]) {
+    affine_map_constraint(a, a, function(x: P) { x })
+}
+
+let affine_map_id[V: AddCommGroup, P](a: AffineSpace[V, P]) -> result: AffineMap[V, P, V, P] satisfy {
+    AffineMap[V, P, V, P].new(a, a, function(x: P) { x }) = Option.some(result)
+}
+
+theorem affine_map_id_apply[V: AddCommGroup, P](a: AffineSpace[V, P], x: P) {
+    affine_map_id(a).to_fun(x) = x
+}
+
+theorem affine_map_id_src[V: AddCommGroup, P](a: AffineSpace[V, P]) {
+    affine_map_id(a).src = a
+}
+
+theorem affine_map_id_dst[V: AddCommGroup, P](a: AffineSpace[V, P]) {
+    affine_map_id(a).dst = a
+}
+
+theorem affine_map_const_constraint[V1: AddCommGroup, P1, V2: AddCommGroup, P2](s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], c: P2) {
+    affine_map_constraint(s, t, function(x: P1) { c })
+}
+
+let affine_map_const[V1: AddCommGroup, P1, V2: AddCommGroup, P2](s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], c: P2) -> result: AffineMap[V1, P1, V2, P2] satisfy {
+    AffineMap[V1, P1, V2, P2].new(s, t, function(x: P1) { c }) = Option.some(result)
+}
+
+theorem affine_map_const_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2](s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], c: P2, x: P1) {
+    affine_map_const(s, t, c).to_fun(x) = c
+}
+
+theorem affine_map_const_src[V1: AddCommGroup, P1, V2: AddCommGroup, P2](s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], c: P2) {
+    affine_map_const(s, t, c).src = s
+}
+
+theorem affine_map_const_dst[V1: AddCommGroup, P1, V2: AddCommGroup, P2](s: AffineSpace[V1, P1], t: AffineSpace[V2, P2], c: P2) {
+    affine_map_const(s, t, c).dst = t
+}
+
+theorem affine_map_compose_pointwise[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3], p: P1, q: P1, r: P1) {
+    f.dst = g.src implies g.to_fun(f.to_fun(f.src.vadd(f.src.vsub(p, q), r))) = g.dst.vadd(g.dst.vsub(g.to_fun(f.to_fun(p)), g.to_fun(f.to_fun(q))), g.to_fun(f.to_fun(r)))
+}
+
+theorem affine_map_compose_constraint[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3]) {
+    f.dst = g.src implies affine_map_constraint(f.src, g.dst, function(x: P1) { g.to_fun(f.to_fun(x)) })
+}
+
+define affine_map_compose[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3]) -> Option[AffineMap[V1, P1, V3, P3]] {
+    AffineMap[V1, P1, V3, P3].new(f.src, g.dst, function(x: P1) { g.to_fun(f.to_fun(x)) })
+}
+
+theorem affine_map_compose_some[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3]) {
+    f.dst = g.src implies exists(h: AffineMap[V1, P1, V3, P3]) {
+        affine_map_compose(f, g) = Option.some(h)
+    }
+}
+
+theorem affine_map_compose_src[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3], h: AffineMap[V1, P1, V3, P3]) {
+    affine_map_compose(f, g) = Option.some(h) implies h.src = f.src
+}
+
+theorem affine_map_compose_dst[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3], h: AffineMap[V1, P1, V3, P3]) {
+    affine_map_compose(f, g) = Option.some(h) implies h.dst = g.dst
+}
+
+theorem affine_map_compose_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2, V3: AddCommGroup, P3](f: AffineMap[V1, P1, V2, P2], g: AffineMap[V2, P2, V3, P3], h: AffineMap[V1, P1, V3, P3], x: P1) {
+    affine_map_compose(f, g) = Option.some(h) implies h.to_fun(x) = g.to_fun(f.to_fun(x))
+}
+
+define affine_map_preimage_contains[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2], x: P1) -> Bool {
+    s.contains(f.to_fun(x))
+}
+
+theorem affine_map_preimage_constraint[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2]) {
+    s.space = f.dst implies affine_subspace_constraint(f.src,
+        affine_map_preimage_contains(f, s))
+}
+
+define affine_map_preimage[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2]) -> Option[AffineSubspace[V1, P1]] {
+    AffineSubspace[V1, P1].new(f.src,
+        affine_map_preimage_contains(f, s))
+}
+
+theorem affine_map_preimage_some[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2]) {
+    s.space = f.dst implies exists(t: AffineSubspace[V1, P1]) {
+        affine_map_preimage(f, s) = Option.some(t)
+    }
+}
+
+theorem affine_map_preimage_space[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2], t: AffineSubspace[V1, P1]) {
+    affine_map_preimage(f, s) = Option.some(t) implies t.space = f.src
+}
+
+theorem affine_map_preimage_contains_iff[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V2, P2], t: AffineSubspace[V1, P1], x: P1) {
+    affine_map_preimage(f, s) = Option.some(t) implies
+        (t.contains(x) = s.contains(f.to_fun(x)))
+}
+
+theorem affine_map_preimage_contains_of_apply_eq[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s: AffineSubspace[V2, P2],
+    t: AffineSubspace[V1, P1],
+    x: P1,
+    y: P2
+) {
+    affine_map_preimage(f, s) = Option.some(t)
+        and f.to_fun(x) = y
+        implies t.contains(x) = s.contains(y)
+}
+
+theorem affine_map_preimage_same_contains[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s: AffineSubspace[V2, P2],
+    t: AffineSubspace[V1, P1],
+    u: AffineSubspace[V1, P1]
+) {
+    affine_map_preimage(f, s) = Option.some(t)
+        and (forall(x: P1) {
+            u.contains(x) = s.contains(f.to_fun(x))
+        })
+        implies forall(x: P1) {
+            t.contains(x) = u.contains(x)
+        }
+}
+
+theorem affine_map_preimage_eq_of_contains[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s: AffineSubspace[V2, P2],
+    t: AffineSubspace[V1, P1],
+    u: AffineSubspace[V1, P1]
+) {
+    affine_map_preimage(f, s) = Option.some(t)
+        and t.space = u.space
+        and (forall(x: P1) {
+            u.contains(x) = s.contains(f.to_fun(x))
+        })
+        implies t = u
+}
+
+theorem affine_map_preimage_some_of_eq[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s: AffineSubspace[V2, P2],
+    t: AffineSubspace[V1, P1],
+    u: AffineSubspace[V1, P1]
+) {
+    affine_map_preimage(f, s) = Option.some(t)
+        and t = u
+        implies affine_map_preimage(f, s) = Option.some(u)
+}
+
+define affine_map_image_contains[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1], y: P2) -> Bool {
+    exists(x: P1) {
+        s.contains(x) and f.to_fun(x) = y
+    }
+}
+
+theorem affine_map_image_constraint[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1]) {
+    s.space = f.src implies affine_subspace_constraint(f.dst,
+        affine_map_image_contains(f, s))
+}
+
+define affine_map_image[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1]) -> Option[AffineSubspace[V2, P2]] {
+    AffineSubspace[V2, P2].new(f.dst,
+        affine_map_image_contains(f, s))
+}
+
+theorem affine_map_image_some[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1]) {
+    s.space = f.src implies exists(t: AffineSubspace[V2, P2]) {
+        affine_map_image(f, s) = Option.some(t)
+    }
+}
+
+theorem affine_map_image_space[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1], t: AffineSubspace[V2, P2]) {
+    affine_map_image(f, s) = Option.some(t) implies t.space = f.dst
+}
+
+theorem affine_map_image_contains_iff[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1], t: AffineSubspace[V2, P2], y: P2) {
+    affine_map_image(f, s) = Option.some(t) implies
+        (t.contains(y) = affine_map_image_contains(f, s, y))
+}
+
+theorem affine_map_image_contains_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], s: AffineSubspace[V1, P1], t: AffineSubspace[V2, P2], x: P1) {
+    affine_map_image(f, s) = Option.some(t) and s.contains(x)
+        implies t.contains(f.to_fun(x))
+}
+
+theorem affine_map_image_mono[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s1: AffineSubspace[V1, P1],
+    s2: AffineSubspace[V1, P1],
+    t1: AffineSubspace[V2, P2],
+    t2: AffineSubspace[V2, P2]) {
+    affine_map_image(f, s1) = Option.some(t1)
+        and affine_map_image(f, s2) = Option.some(t2)
+        and affine_subspace_subset(s1, s2)
+        implies affine_subspace_subset(t1, t2)
+}
+
+theorem affine_map_preimage_mono[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2],
+    s1: AffineSubspace[V2, P2],
+    s2: AffineSubspace[V2, P2],
+    t1: AffineSubspace[V1, P1],
+    t2: AffineSubspace[V1, P1]) {
+    affine_map_preimage(f, s1) = Option.some(t1)
+        and affine_map_preimage(f, s2) = Option.some(t2)
+        and affine_subspace_subset(s1, s2)
+        implies affine_subspace_subset(t1, t2)
+}
+
+define affine_map_set_image_contains[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, y: P2) -> Bool {
+    exists(x: P1) {
+        src(x) and f.to_fun(x) = y
+    }
+}
+
+theorem affine_map_set_image_contains_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, x: P1) {
+    src(x) implies affine_map_set_image_contains(f, src, f.to_fun(x))
+}
+
+theorem affine_span_image_subset_image_span[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, img: AffineSubspace[V2, P2]) {
+    affine_map_image(f, affine_span(f.src, src)) = Option.some(img) implies
+        affine_subspace_subset(
+            affine_span(f.dst, affine_map_set_image_contains(f, src)), img)
+}
+
+theorem affine_span_image_preimage_contains_src[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, pre: AffineSubspace[V1, P1]) {
+    affine_map_preimage(f, affine_span(f.dst, affine_map_set_image_contains(f, src))) = Option.some(pre)
+        implies forall(x: P1) {
+            src(x) implies pre.contains(x)
+        }
+}
+
+theorem affine_map_image_span_subset_span_image[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, img: AffineSubspace[V2, P2]) {
+    affine_map_image(f, affine_span(f.src, src)) = Option.some(img) implies
+        affine_subspace_subset(img,
+            affine_span(f.dst, affine_map_set_image_contains(f, src)))
+}
+
+theorem affine_map_image_affine_span_contains_eq[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, img: AffineSubspace[V2, P2]) {
+    affine_map_image(f, affine_span(f.src, src)) = Option.some(img) implies
+        forall(y: P2) {
+            img.contains(y) = affine_span(f.dst, affine_map_set_image_contains(f, src)).contains(y)
+        }
+}
+
+theorem affine_map_image_affine_span_eq[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, img: AffineSubspace[V2, P2]) {
+    affine_map_image(f, affine_span(f.src, src)) = Option.some(img) implies
+        img = affine_span(f.dst, affine_map_set_image_contains(f, src))
+}
+
+theorem affine_map_image_affine_span_eq_some[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool) {
+    affine_map_image(f, affine_span(f.src, src)) =
+        Option.some(affine_span(f.dst, affine_map_set_image_contains(f, src)))
+}
+
+theorem affine_map_image_affine_span_contains_iff[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, y: P2) {
+    affine_span(f.dst, affine_map_set_image_contains(f, src)).contains(y) =
+        affine_map_image_contains(f, affine_span(f.src, src), y)
+}
+
+theorem affine_map_image_affine_span_contains_apply[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, x: P1) {
+    affine_span(f.src, src).contains(x) implies
+        affine_span(f.dst, affine_map_set_image_contains(f, src)).contains(f.to_fun(x))
+}
+
+theorem affine_map_image_affine_span_contains_witness[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, y: P2) {
+    affine_span(f.dst, affine_map_set_image_contains(f, src)).contains(y) implies
+        exists(x: P1) {
+            affine_span(f.src, src).contains(x) and f.to_fun(x) = y
+        }
+}
+
+theorem affine_map_preimage_affine_span_image_some[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool) {
+    exists(pre: AffineSubspace[V1, P1]) {
+        affine_map_preimage(f, affine_span(f.dst, affine_map_set_image_contains(f, src))) =
+            Option.some(pre)
+    }
+}
+
+theorem affine_span_subset_preimage_affine_span_image[V1: AddCommGroup, P1, V2: AddCommGroup, P2](
+    f: AffineMap[V1, P1, V2, P2], src: P1 -> Bool, pre: AffineSubspace[V1, P1]) {
+    affine_map_preimage(f, affine_span(f.dst, affine_map_set_image_contains(f, src))) =
+        Option.some(pre) implies affine_subspace_subset(affine_span(f.src, src), pre)
+}
+
+theorem point2_add_x[T: AddCommMonoid](p: Point2[T], q: Point2[T]) {
+    p.add(q).x = p.x + q.x
+}
+
+theorem point2_add_y[T: AddCommMonoid](p: Point2[T], q: Point2[T]) {
+    p.add(q).y = p.y + q.y
+}
+
+theorem point2_add_comm[T: AddCommMonoid](p: Point2[T], q: Point2[T]) {
+    p.add(q) = q.add(p)
+}
+
+theorem point2_add_assoc[T: AddCommMonoid](p: Point2[T], q: Point2[T], r: Point2[T]) {
+    p.add(q).add(r) = p.add(q.add(r))
+}
+
+theorem point2_add_zero_right[T: AddCommMonoid](p: Point2[T]) {
+    p.add(point2_zero[T]) = p
+}
+
+theorem point2_add_zero_left[T: AddCommMonoid](p: Point2[T]) {
+    point2_zero[T].add(p) = p
+}
+
+theorem point2_neg_x[T: AddCommGroup](p: Point2[T]) {
+    p.neg.x = -p.x
+}
+
+theorem point2_neg_y[T: AddCommGroup](p: Point2[T]) {
+    p.neg.y = -p.y
+}
+
+theorem point2_sub_x[T: AddCommGroup](p: Point2[T], q: Point2[T]) {
+    p.sub(q).x = p.x - q.x
+}
+
+theorem point2_sub_y[T: AddCommGroup](p: Point2[T], q: Point2[T]) {
+    p.sub(q).y = p.y - q.y
+}
+
+theorem point2_translate_x[T: AddCommGroup](p: Point2[T], displacement: Point2[T]) {
+    p.translate(displacement).x = p.x + displacement.x
+}
+
+theorem point2_translate_y[T: AddCommGroup](p: Point2[T], displacement: Point2[T]) {
+    p.translate(displacement).y = p.y + displacement.y
+}
+
+theorem point2_sub_self[T: AddCommGroup](p: Point2[T]) {
+    p.sub(p) = point2_zero[T]
+}
+
+theorem point2_add_neg_right[T: AddCommGroup](p: Point2[T]) {
+    p.add(p.neg) = point2_zero[T]
+}
+
+theorem point2_smul_x[T: CommRing](p: Point2[T], scalar: T) {
+    p.smul(scalar).x = scalar * p.x
+}
+
+theorem point2_smul_y[T: CommRing](p: Point2[T], scalar: T) {
+    p.smul(scalar).y = scalar * p.y
+}
+
+theorem point2_dot_comm[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.dot(q) = q.dot(p)
+}
+
+theorem point2_cross_self[T: CommRing](p: Point2[T]) {
+    p.cross(p) = T.0
+}
+
+theorem point2_cross_zero_left[T: CommRing](p: Point2[T]) {
+    point2_zero[T].cross(p) = T.0
+}
+
+theorem point2_cross_zero_right[T: CommRing](p: Point2[T]) {
+    p.cross(point2_zero[T]) = T.0
+}
+
+theorem point2_orientation_same_first[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orientation(p, q) = T.0
+}
+
+theorem point2_orientation_same_second[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orientation(q, p) = T.0
+}
+
+theorem point2_orientation_same_third[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orientation(q, q) = T.0
+}
+
+theorem point2_left_turn_eq_orientation_pos[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.left_turn(b, c) = (a.orientation(b, c) > T.0)
+}
+
+theorem point2_right_turn_eq_orientation_neg[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.right_turn(b, c) = (a.orientation(b, c) < T.0)
+}
+
+theorem point2_ring_square_add[T: CommRing](x: T, y: T) {
+    (x + y) * (x + y) = x * x + x * y + (x * y + y * y)
+}
+
+theorem point2_add_repeated_middle[T: AddCommGroup](a: T, b: T, c: T) {
+    a + b + (b + c) = a + (b + b) + c
+}
+
+theorem point2_double_pair_rearrange[T: AddCommGroup](a: T, b: T) {
+    (a + a) + (b + b) = (a + b) + (a + b)
+}
+
+theorem point2_add_pair_rearrange[T: AddCommGroup](a: T, b: T, c: T, d: T) {
+    (a + b) + (c + d) = (a + c) + (b + d)
+}
+
+theorem point2_add_four_last_next_to_first[T: AddCommGroup](a: T, b: T, c: T, d: T) {
+    a + b + c + d = (a + d) + (b + c)
+}
+
+theorem point2_add_six_pair_rearrange[T: AddCommGroup](a: T, b: T, c: T, d: T, e: T, f: T) {
+    (a + b + c) + (d + e + f) = (a + d) + (c + f) + (b + e)
+}
+
+theorem point2_scalar_sub_through[T: AddCommGroup](x: T, y: T, z: T) {
+    (y - x) + (z - y) = z - x
+}
+
+theorem point2_scalar_sub_reverse_neg[T: AddCommGroup](x: T, y: T) {
+    x - y = -(y - x)
+}
+
+theorem point2_scalar_sub_pair_rearrange[T: AddCommGroup](a: T, b: T, c: T, d: T) {
+    (a + b) - (c + d) = (a - c) + (b - d)
+}
+
+theorem point2_pythagoras_rearrange[T: AddCommGroup](xx: T, yy: T, uu: T, vv: T, xu: T, yv: T) {
+    (xx + xu + (xu + uu)) + (yy + yv + (yv + vv)) =
+    (xx + yy) + (uu + vv) + (xu + yv) + (xu + yv)
+}
+
+theorem point2_sub_reverse_neg[T: AddCommGroup](p: Point2[T], q: Point2[T]) {
+    p.sub(q) = q.sub(p).neg
+}
+
+theorem point2_sub_eq_add_neg[T: AddCommGroup](p: Point2[T], q: Point2[T]) {
+    p.sub(q) = p.add(q.neg)
+}
+
+theorem point2_sub_add_sub[T: AddCommGroup](a: Point2[T], b: Point2[T], c: Point2[T], d: Point2[T]) {
+    a.add(b).sub(c.add(d)) = a.sub(c).add(b.sub(d))
+}
+
+theorem point2_sub_through[T: AddCommGroup](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    b.sub(a).add(c.sub(b)) = c.sub(a)
+}
+
+theorem point2_sub_zero_right[T: AddCommGroup](p: Point2[T]) {
+    p.sub(point2_zero[T]) = p
+}
+
+theorem point2_dot_zero_left[T: CommRing](p: Point2[T]) {
+    point2_zero[T].dot(p) = T.0
+}
+
+theorem point2_dot_zero_right[T: CommRing](p: Point2[T]) {
+    p.dot(point2_zero[T]) = T.0
+}
+
+theorem point2_dot_neg_left[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.neg.dot(q) = -p.dot(q)
+}
+
+theorem point2_dot_neg_right[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.dot(q.neg) = -p.dot(q)
+}
+
+theorem point2_dot_add_left[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.add(b).dot(c) = a.dot(c) + b.dot(c)
+}
+
+theorem point2_dot_add_right[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.dot(b.add(c)) = a.dot(b) + a.dot(c)
+}
+
+theorem point2_dot_sub_left[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.sub(b).dot(c) = a.dot(c) - b.dot(c)
+}
+
+theorem point2_dot_sub_right[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.dot(b.sub(c)) = a.dot(b) - a.dot(c)
+}
+
+theorem point2_dot_smul_left[T: CommRing](scalar: T, a: Point2[T], b: Point2[T]) {
+    a.smul(scalar).dot(b) = scalar * a.dot(b)
+}
+
+theorem point2_dot_smul_right[T: CommRing](scalar: T, a: Point2[T], b: Point2[T]) {
+    a.dot(b.smul(scalar)) = scalar * a.dot(b)
+}
+
+theorem point2_norm_sq_smul[T: CommRing](scalar: T, p: Point2[T]) {
+    p.smul(scalar).norm_sq = scalar * scalar * p.norm_sq
+}
+
+theorem point2_cross_neg_left[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.neg.cross(b) = -a.cross(b)
+}
+
+theorem point2_cross_neg_right[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.cross(b.neg) = -a.cross(b)
+}
+
+theorem point2_cross_swap[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.cross(b) = -b.cross(a)
+}
+
+theorem point2_cross_add_left[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.add(b).cross(c) = a.cross(c) + b.cross(c)
+}
+
+theorem point2_cross_add_right[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.cross(b.add(c)) = a.cross(b) + a.cross(c)
+}
+
+theorem point2_cross_smul_left[T: CommRing](scalar: T, a: Point2[T], b: Point2[T]) {
+    a.smul(scalar).cross(b) = scalar * a.cross(b)
+}
+
+theorem point2_cross_smul_right[T: CommRing](scalar: T, a: Point2[T], b: Point2[T]) {
+    a.cross(b.smul(scalar)) = scalar * a.cross(b)
+}
+
+theorem point2_cross_sub_left[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.sub(b).cross(c) = a.cross(c) - b.cross(c)
+}
+
+theorem point2_cross_sub_right[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.cross(b.sub(c)) = a.cross(b) - a.cross(c)
+}
+
+theorem point2_norm_sq_nonneg[T: OrderedField](p: Point2[T]) {
+    p.norm_sq >= T.0
+}
+
+theorem point2_norm_sq_zero[T: CommRing](p: Point2[T]) {
+    p = point2_zero[T] implies p.norm_sq = T.0
+}
+
+theorem point2_norm_sq_neg[T: CommRing](p: Point2[T]) {
+    p.neg.norm_sq = p.norm_sq
+}
+
+theorem point2_norm_sq_add_expansion[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.add(b).norm_sq = a.norm_sq + b.norm_sq + a.dot(b) + a.dot(b)
+}
+
+theorem point2_norm_sq_sub_expansion[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.sub(b).norm_sq = a.norm_sq + b.norm_sq - a.dot(b) - a.dot(b)
+}
+
+theorem point2_dist_sq_self[T: CommRing](p: Point2[T]) {
+    p.dist_sq(p) = T.0
+}
+
+theorem point2_dist_sq_comm[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.dist_sq(q) = q.dist_sq(p)
+}
+
+theorem point2_dist_sq_eq_norm_sq_sub[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.dist_sq(q) = p.sub(q).norm_sq
+}
+
+theorem point2_dist_sq_zero_right[T: CommRing](p: Point2[T]) {
+    p.dist_sq(point2_zero[T]) = p.norm_sq
+}
+
+theorem point2_orthogonal_comm[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orthogonal(q) = q.orthogonal(p)
+}
+
+theorem point2_orthogonal_neg_left[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.neg.orthogonal(q) = p.orthogonal(q)
+}
+
+theorem point2_orthogonal_neg_right[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orthogonal(q.neg) = p.orthogonal(q)
+}
+
+theorem point2_orthogonal_smul_left[T: CommRing](scalar: T, p: Point2[T], q: Point2[T]) {
+    p.orthogonal(q) implies p.smul(scalar).orthogonal(q)
+}
+
+theorem point2_orthogonal_smul_right[T: CommRing](scalar: T, p: Point2[T], q: Point2[T]) {
+    p.orthogonal(q) implies p.orthogonal(q.smul(scalar))
+}
+
+theorem point2_pythagoras_vectors[T: CommRing](p: Point2[T], q: Point2[T]) {
+    p.orthogonal(q) implies p.add(q).norm_sq = p.norm_sq + q.norm_sq
+}
+
+theorem point2_pythagoras_points_from_ab[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    b.sub(a).orthogonal(c.sub(b)) implies
+    c.sub(a).norm_sq = b.sub(a).norm_sq + c.sub(b).norm_sq
+}
+
+theorem point2_pythagoras_points[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.sub(b).orthogonal(c.sub(b)) implies
+    c.sub(a).norm_sq = b.sub(a).norm_sq + c.sub(b).norm_sq
+}
+
+theorem point2_smul_zero_left[T: CommRing](p: Point2[T]) {
+    p.smul(T.0) = point2_zero[T]
+}
+
+theorem point2_smul_one_left[T: CommRing](p: Point2[T]) {
+    p.smul(T.1) = p
+}
+
+theorem point2_scalar_add_sub_left_cancel[T: AddCommGroup](x: T, y: T) {
+    x + (y - x) = y
+}
+
+theorem point2_add_sub_left_cancel[T: AddCommGroup](a: Point2[T], b: Point2[T]) {
+    a.add(b.sub(a)) = b
+}
+
+theorem point2_scalar_param_line_reverse[T: CommRing](x: T, y: T, t: T) {
+    y + (T.1 - t) * (x - y) = x + t * (y - x)
+}
+
+theorem point2_add_right_comm[T: AddCommGroup](a: Point2[T], b: Point2[T], c: Point2[T]) {
+    a.add(b).add(c) = a.add(c).add(b)
+}
+
+theorem point2_translate_zero_right[T: AddCommGroup](p: Point2[T]) {
+    p.translate(point2_zero[T]) = p
+}
+
+theorem point2_translate_translate[T: AddCommGroup](p: Point2[T], u: Point2[T], v: Point2[T]) {
+    p.translate(u).translate(v) = p.translate(u.add(v))
+}
+
+theorem point2_translate_neg_right[T: AddCommGroup](p: Point2[T], v: Point2[T]) {
+    p.translate(v).translate(v.neg) = p
+}
+
+theorem point2_translate_cancel[T: AddCommGroup](p: Point2[T], q: Point2[T], v: Point2[T]) {
+    p.translate(v) = q.translate(v) implies p = q
+}
+
+theorem point2_sub_translate[T: AddCommGroup](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a.translate(v).sub(b.translate(v)) = a.sub(b)
+}
+
+theorem point2_dist_sq_translate[T: CommRing](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a.translate(v).dist_sq(b.translate(v)) = a.dist_sq(b)
+}
+
+theorem point2_orientation_translate[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T], v: Point2[T]) {
+    a.translate(v).orientation(b.translate(v), c.translate(v)) = a.orientation(b, c)
+}
+
+theorem point2_collinear_translate[T: CommRing](a: Point2[T], b: Point2[T], c: Point2[T], v: Point2[T]) {
+    a.translate(v).collinear(b.translate(v), c.translate(v)) = a.collinear(b, c)
+}
+
+theorem point2_left_turn_translate[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T], v: Point2[T]) {
+    a.translate(v).left_turn(b.translate(v), c.translate(v)) = a.left_turn(b, c)
+}
+
+theorem point2_right_turn_translate[T: OrderedField](a: Point2[T], b: Point2[T], c: Point2[T], v: Point2[T]) {
+    a.translate(v).right_turn(b.translate(v), c.translate(v)) = a.right_turn(b, c)
+}
+
+theorem point2_param_line_zero[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.param_line(b, T.0) = a
+}
+
+theorem point2_param_line_one[T: CommRing](a: Point2[T], b: Point2[T]) {
+    a.param_line(b, T.1) = b
+}
+
+theorem point2_sub_param_line_start[T: CommRing](a: Point2[T], b: Point2[T], t: T) {
+    a.param_line(b, t).sub(a) = b.sub(a).smul(t)
+}
+
+theorem point2_param_line_collinear[T: CommRing](a: Point2[T], b: Point2[T], t: T) {
+    a.collinear(b, a.param_line(b, t))
+}
+
+theorem point2_param_line_translate[T: CommRing](a: Point2[T], b: Point2[T], t: T, v: Point2[T]) {
+    a.param_line(b, t).translate(v) = a.translate(v).param_line(b.translate(v), t)
+}
+
+theorem point2_param_line_reverse[T: CommRing](a: Point2[T], b: Point2[T], t: T) {
+    b.param_line(a, T.1 - t) = a.param_line(b, t)
+}
+
+define point2_point_set_translate[T: OrderedField](s: Set[Point2[T]], v: Point2[T]) -> Set[Point2[T]] {
+    set_image(s, function(p: Point2[T]) { p.translate(v) })
+}
+
+define point2_point_set_convex[T: OrderedField](s: Set[Point2[T]]) -> Bool {
+    forall(a: Point2[T], b: Point2[T], t: T) {
+        s.contains(a) and s.contains(b) and T.0 <= t and t <= T.1 implies
+        s.contains(a.param_line(b, t))
+    }
+}
+
+define point2_convex_hull_contains[T: OrderedField](s: Set[Point2[T]], p: Point2[T]) -> Bool {
+    forall(c: Set[Point2[T]]) {
+        point2_point_set_convex(c) and s.subset(c) implies c.contains(p)
+    }
+}
+
+define point2_convex_hull[T: OrderedField](s: Set[Point2[T]]) -> Set[Point2[T]] {
+    Set[Point2[T]].new(point2_convex_hull_contains(s))
+}
+
+theorem point2_convex_hull_contains_eq[T: OrderedField](s: Set[Point2[T]], p: Point2[T]) {
+    point2_convex_hull(s).contains(p) = point2_convex_hull_contains(s, p)
+}
+
+theorem point2_point_set_translate_contains_witness[T: OrderedField](s: Set[Point2[T]], v: Point2[T], p: Point2[T]) {
+    point2_point_set_translate(s, v).contains(p) implies exists(q: Point2[T]) {
+        s.contains(q) and p = q.translate(v)
+    }
+}
+
+theorem point2_point_set_translate_contains_forward[T: OrderedField](s: Set[Point2[T]], v: Point2[T], p: Point2[T]) {
+    s.contains(p) implies point2_point_set_translate(s, v).contains(p.translate(v))
+}
+
+theorem point2_point_set_translate_neg_right[T: OrderedField](s: Set[Point2[T]], v: Point2[T]) {
+    point2_point_set_translate(point2_point_set_translate(s, v), v.neg) = s
+}
+
+theorem point2_point_set_translate_convex_forward[T: OrderedField](s: Set[Point2[T]], v: Point2[T]) {
+    point2_point_set_convex(s) implies point2_point_set_convex(point2_point_set_translate(s, v))
+}
+
+theorem point2_point_set_translate_convex_iff[T: OrderedField](s: Set[Point2[T]], v: Point2[T]) {
+    point2_point_set_convex(point2_point_set_translate(s, v)) = point2_point_set_convex(s)
+}
+
+theorem point2_convex_hull_translate_contains_forward[T: OrderedField](s: Set[Point2[T]], v: Point2[T], p: Point2[T]) {
+    point2_convex_hull(s).contains(p) implies
+    point2_convex_hull(point2_point_set_translate(s, v)).contains(p.translate(v))
+}
+
+theorem point2_convex_hull_translate_contains_backward[T: OrderedField](s: Set[Point2[T]], v: Point2[T], p: Point2[T]) {
+    point2_convex_hull(point2_point_set_translate(s, v)).contains(p.translate(v)) implies
+    point2_convex_hull(s).contains(p)
+}
+
+theorem point2_convex_hull_translate_contains_iff[T: OrderedField](s: Set[Point2[T]], v: Point2[T], p: Point2[T]) {
+    point2_convex_hull(point2_point_set_translate(s, v)).contains(p.translate(v)) =
+    point2_convex_hull(s).contains(p)
+}
+
+theorem point2_convex_hull_contains_of_contains[T: OrderedField](s: Set[Point2[T]], p: Point2[T]) {
+    s.contains(p) implies point2_convex_hull(s).contains(p)
+}
+
+theorem point2_convex_hull_subset_of_convex_superset[T: OrderedField](s: Set[Point2[T]], c: Set[Point2[T]]) {
+    point2_point_set_convex(c) and s.subset(c) implies point2_convex_hull(s).subset(c)
+}
+
+theorem point2_convex_hull_convex[T: OrderedField](s: Set[Point2[T]]) {
+    point2_point_set_convex(point2_convex_hull(s))
+}
+
+theorem point2_convex_hull_monotone[T: OrderedField](s: Set[Point2[T]], t: Set[Point2[T]]) {
+    s.subset(t) implies point2_convex_hull(s).subset(point2_convex_hull(t))
+}
+
+theorem point2_convex_hull_idempotent[T: OrderedField](s: Set[Point2[T]]) {
+    point2_convex_hull(point2_convex_hull(s)) = point2_convex_hull(s)
+}
+
+theorem point2_convex_hull_eq_self_of_convex[T: OrderedField](s: Set[Point2[T]]) {
+    point2_point_set_convex(s) implies point2_convex_hull(s) = s
+}
+
+theorem point2_dist_sq_nonneg[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a.dist_sq(b) >= T.0
+}
+
+theorem point2_dist_sq_zero_self[T: OrderedField](a: Point2[T]) {
+    a.dist_sq(a) = T.0
+}
+
+theorem point2_dist_sq_symmetric[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a.dist_sq(b) = b.dist_sq(a)
+}
+
+theorem point2_dist_sq_as_norm_sq_sub[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a.dist_sq(b) = a.sub(b).norm_sq
+}
+
+theorem point2_dist_sq_eq_norm_sq_sub_reverse[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a.dist_sq(b) = b.sub(a).norm_sq
+}
+
+theorem point2_dist_sq_translate_invariant[T: OrderedField](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a.translate(v).dist_sq(b.translate(v)) = a.dist_sq(b)
+}
+
+theorem point2_dist_sq_translate_nonneg[T: OrderedField](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a.translate(v).dist_sq(b.translate(v)) >= T.0
+}
+
+theorem point2_norm_sq_sub_translate[T: OrderedField](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a.translate(v).sub(b.translate(v)).norm_sq = a.sub(b).norm_sq
+}
+
+theorem point2_dist_sq_translate_center[T: OrderedField](a: Point2[T], center: Point2[T], v: Point2[T]) {
+    a.translate(v).dist_sq(center.translate(v)) = a.dist_sq(center)
+}
+
+theorem point2_dist_sq_center_symm[T: OrderedField](a: Point2[T], center: Point2[T]) {
+    a.dist_sq(center) = center.dist_sq(a)
+}
+
+theorem point2_dist_sq_eq_zero_of_eq[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a = b implies a.dist_sq(b) = T.0
+}
+
+theorem point2_dist_sq_self_nonneg[T: OrderedField](a: Point2[T]) {
+    a.dist_sq(a) >= T.0
+}
+
+theorem point2_dist_sq_comm_nonneg[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    b.dist_sq(a) >= T.0
+}
+
+theorem point2_dist_sq_translate_eq_zero_of_eq[T: OrderedField](a: Point2[T], b: Point2[T], v: Point2[T]) {
+    a = b implies a.translate(v).dist_sq(b.translate(v)) = T.0
+}
+
+theorem point2_dist_sq_translate_center_nonneg[T: OrderedField](a: Point2[T], center: Point2[T], v: Point2[T]) {
+    a.translate(v).dist_sq(center.translate(v)) >= T.0
+}
+
+theorem point2_dist_sq_reverse_nonneg[T: OrderedField](a: Point2[T], b: Point2[T]) {
+    a.dist_sq(b) >= T.0 and b.dist_sq(a) >= T.0
+}
+
+theorem point2_on_circle_eq_dist_sq[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.on_circle(radius_sq, p) = (p.dist_sq(center) = radius_sq)
+}
+
+theorem point2_center_on_zero_circle[T: OrderedField](center: Point2[T]) {
+    center.on_circle(T.0, center)
+}
+
+theorem point2_on_circle_radius_sq_nonneg[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.on_circle(radius_sq, p) implies radius_sq >= T.0
+}
+
+theorem point2_on_circle_center_dist[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.on_circle(radius_sq, p) implies center.dist_sq(p) = radius_sq
+}
+
+theorem point2_center_dist_imp_on_circle[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.dist_sq(p) = radius_sq implies center.on_circle(radius_sq, p)
+}
+
+theorem point2_on_circle_translate[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], v: Point2[T]) {
+    center.translate(v).on_circle(radius_sq, p.translate(v)) = center.on_circle(radius_sq, p)
+}
+
+theorem point2_on_circle_translate_forward[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], v: Point2[T]) {
+    center.on_circle(radius_sq, p) implies center.translate(v).on_circle(radius_sq, p.translate(v))
+}
+
+theorem point2_center_on_zero_circle_translate[T: OrderedField](center: Point2[T], v: Point2[T]) {
+    center.translate(v).on_circle(T.0, center.translate(v))
+}
+
+theorem point2_same_circle_dist_sq_eq[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T]) {
+    center.same_circle(radius_sq, p, q) implies p.dist_sq(center) = q.dist_sq(center)
+}
+
+theorem point2_same_circle_comm[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T]) {
+    center.same_circle(radius_sq, p, q) = center.same_circle(radius_sq, q, p)
+}
+
+theorem point2_same_circle_self[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.on_circle(radius_sq, p) implies center.same_circle(radius_sq, p, p)
+}
+
+theorem point2_same_circle_translate[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T], v: Point2[T]) {
+    center.translate(v).same_circle(radius_sq, p.translate(v), q.translate(v)) =
+    center.same_circle(radius_sq, p, q)
+}
+
+theorem point2_same_circle_translate_forward[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T], v: Point2[T]) {
+    center.same_circle(radius_sq, p, q) implies
+    center.translate(v).same_circle(radius_sq, p.translate(v), q.translate(v))
+}
+
+theorem point2_on_circle_self_zero_radius[T: OrderedField](p: Point2[T]) {
+    p.on_circle(T.0, p)
+}
+
+theorem point2_same_circle_radius_sq_nonneg[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T]) {
+    center.same_circle(radius_sq, p, q) implies radius_sq >= T.0
+}
+
+theorem point2_same_circle_first_center_dist[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T]) {
+    center.same_circle(radius_sq, p, q) implies center.dist_sq(p) = radius_sq
+}
+
+theorem point2_same_circle_second_center_dist[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T]) {
+    center.same_circle(radius_sq, p, q) implies center.dist_sq(q) = radius_sq
+}
+
+theorem point2_on_circle_dist_sq_symmetric[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T]) {
+    center.on_circle(radius_sq, p) implies
+    p.dist_sq(center) = radius_sq and center.dist_sq(p) = radius_sq
+}
+
+theorem point2_on_circle_translate_radius_sq_nonneg[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], v: Point2[T]) {
+    center.translate(v).on_circle(radius_sq, p.translate(v)) implies radius_sq >= T.0
+}
+
+theorem point2_same_circle_translate_radius_sq_nonneg[T: OrderedField](center: Point2[T], radius_sq: T, p: Point2[T], q: Point2[T], v: Point2[T]) {
+    center.translate(v).same_circle(radius_sq, p.translate(v), q.translate(v)) implies radius_sq >= T.0
+}
+
+define four_on_circle[T: OrderedField](
+    center: Point2[T], radius_sq: T, a: Point2[T], b: Point2[T], c: Point2[T], d: Point2[T]
+) -> Bool {
+    center.on_circle(radius_sq, a) and center.on_circle(radius_sq, b)
+        and center.on_circle(radius_sq, c) and center.on_circle(radius_sq, d)
+}
+
+theorem four_on_circle_apply[T: OrderedField](
+    center: Point2[T], radius_sq: T, a: Point2[T], b: Point2[T], c: Point2[T], d: Point2[T]
+) {
+    four_on_circle(center, radius_sq, a, b, c, d)
+        implies center.on_circle(radius_sq, a) and center.on_circle(radius_sq, b)
+            and center.on_circle(radius_sq, c) and center.on_circle(radius_sq, d)
+}

@@ -10,9 +10,9 @@ from polynomial import Polynomial, polynomial_constant, polynomial_monomial,
     polynomial_zero, polynomial_one, polynomial_add, polynomial_neg,
     polynomial_mul, polynomial_eval, coeff_eval, coeff_tail,
     polynomial_support_bounded_by
-from set.set import Set
-from int import Int
-from rat import Rat
+from set import Set
+from integer import Int
+from rational import Rat
 from real import Real
 from nat import from_nat
 from real import two
@@ -24,13 +24,11 @@ from algebra import Ideal, bundled_principal_ideal, is_maximal_ideal,
     ideal_quotient_type_zero, Group, GroupHom, compose_group_hom
 from algebra_core import MonoidHom, AddGroupHom, compose_add_group_hom
 from algebra import RingHom, compose_ring_hom
-from basic.functions import is_injective_fn
+from function import is_injective_fn
 from algebra import is_ideal, ideal_subset, ideal_quotient_rel, PrimeIdeal,
-    ideal_preimage, prime_ideal_preimage
-from prime_ideal_preimage_as_ideal import prime_ideal_preimage_as_ideal_eq
-from algebra import ideal_image, Spec, spec_zariski_closed,
-    spec_zariski_open
-from set.set import set_preimage, indexed_intersection, indexed_union
+    ideal_preimage, prime_ideal_preimage, ideal_image, Spec,
+    spec_zariski_closed, spec_zariski_open
+from set import set_preimage, indexed_intersection, indexed_union
 from algebra import ideal_indexed_sum, spec_vanishing_family, ideal_product
 from zmod import Zmod, zmod_mk, zmod_zero, zmod_one, zmod_add, zmod_neg,
     zmod_mul
@@ -39,3 +37,1388 @@ numerals Nat
 numerals Int
 numerals Rat
 numerals Real
+structure PolyC[R: CommRing] {
+    /// The underlying polynomial.
+    underlying: Polynomial[R]
+}
+
+structure Poly2[R: CommRing] {
+    /// The underlying polynomial in `Y` over `PolyC[R]`.
+    underlying: Polynomial[PolyC[R]]
+}
+
+structure PlanePoint[R] {
+    /// The first coordinate.
+    x: R
+
+    /// The second coordinate.
+    y: R
+}
+
+instance PolyC[R: CommRing]: AddSemigroup
+
+instance PolyC[R: CommRing]: AddCommSemigroup
+
+instance PolyC[R: CommRing]: AddMonoid
+
+instance PolyC[R: CommRing]: AddCommMonoid
+
+instance PolyC[R: CommRing]: AddGroup
+
+instance PolyC[R: CommRing]: AddCommGroup
+
+instance PolyC[R: CommRing]: Semigroup
+
+instance PolyC[R: CommRing]: CommSemigroup
+
+instance PolyC[R: CommRing]: Monoid
+
+instance PolyC[R: CommRing]: CommMonoid
+
+instance PolyC[R: CommRing]: Semiring
+
+instance PolyC[R: CommRing]: Ring
+
+instance PolyC[R: CommRing]: CommRing
+
+instance Zmod[n: Nat]: AddSemigroup
+
+instance Zmod[n: Nat]: AddCommSemigroup
+
+instance Zmod[n: Nat]: AddMonoid
+
+instance Zmod[n: Nat]: AddCommMonoid
+
+instance Zmod[n: Nat]: AddGroup
+
+instance Zmod[n: Nat]: AddCommGroup
+
+instance Zmod[n: Nat]: Semigroup
+
+instance Zmod[n: Nat]: CommSemigroup
+
+instance Zmod[n: Nat]: Monoid
+
+instance Zmod[n: Nat]: CommMonoid
+
+instance Zmod[n: Nat]: Semiring
+
+instance Zmod[n: Nat]: Ring
+
+instance Zmod[n: Nat]: CommRing
+
+define polyc_add[R: CommRing](p: PolyC[R], q: PolyC[R]) -> PolyC[R] {
+    PolyC[R].new(polynomial_add(p.underlying, q.underlying))
+}
+
+define polyc_mul[R: CommRing](p: PolyC[R], q: PolyC[R]) -> PolyC[R] {
+    PolyC[R].new(polynomial_mul(p.underlying, q.underlying))
+}
+
+define polyc_neg[R: CommRing](p: PolyC[R]) -> PolyC[R] {
+    PolyC[R].new(polynomial_neg(p.underlying))
+}
+
+let polyc_zero[R: CommRing]: PolyC[R] = PolyC[R].new(polynomial_zero[R])
+
+let polyc_one[R: CommRing]: PolyC[R] = PolyC[R].new(polynomial_one[R])
+
+attributes PolyC[R: CommRing] {
+    /// Addition of wrapped polynomials.
+    define add(self, other: PolyC[R]) -> PolyC[R] {
+        polyc_add(self, other)
+    }
+
+    /// Multiplication of wrapped polynomials.
+    define mul(self, other: PolyC[R]) -> PolyC[R] {
+        polyc_mul(self, other)
+    }
+
+    /// Negation of a wrapped polynomial.
+    define neg(self) -> PolyC[R] {
+        polyc_neg(self)
+    }
+
+    /// The wrapped zero polynomial.
+    let zero: PolyC[R] = polyc_zero[R]
+
+    /// The wrapped one polynomial.
+    let one: PolyC[R] = polyc_one[R]
+}
+
+instance PolyC[R: CommRing]: Add {
+    let add = PolyC[R].add
+}
+
+instance PolyC[R: CommRing]: Mul {
+    let mul = PolyC[R].mul
+}
+
+instance PolyC[R: CommRing]: Neg {
+    let neg = PolyC[R].neg
+}
+
+instance PolyC[R: CommRing]: Zero {
+    let 0 = PolyC[R].zero
+}
+
+instance PolyC[R: CommRing]: One {
+    let 1 = PolyC[R].one
+}
+
+define polyc_constant[R: CommRing](r: R) -> PolyC[R] {
+    PolyC[R].new(polynomial_constant(r))
+}
+
+let polyc_x[R: CommRing]: PolyC[R] = PolyC[R].new(polynomial_monomial(Nat.1, R.1))
+
+theorem polyc_typeclass_add_eq_polyc_add[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    p + q = polyc_add(p, q)
+}
+
+theorem polyc_typeclass_mul_eq_polyc_mul[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    p * q = polyc_mul(p, q)
+}
+
+theorem polyc_typeclass_neg_eq_polyc_neg[R: CommRing](p: PolyC[R]) {
+    -p = polyc_neg(p)
+}
+
+theorem polyc_typeclass_zero_eq_polyc_zero[R: CommRing] {
+    Zero.0[PolyC[R]] = polyc_zero[R]
+}
+
+theorem polyc_typeclass_one_eq_polyc_one[R: CommRing] {
+    One.1[PolyC[R]] = polyc_one[R]
+}
+
+theorem polynomial_mul_zero_right[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(p, polynomial_zero[R]) = polynomial_zero[R]
+}
+
+theorem polynomial_mul_zero_left[R: CommRing](p: Polynomial[R]) {
+    polynomial_mul(polynomial_zero[R], p) = polynomial_zero[R]
+}
+
+theorem polynomial_mul_add_right[R: CommRing](p: Polynomial[R], q: Polynomial[R], r: Polynomial[R]) {
+    polynomial_mul(polynomial_add(p, q), r) =
+        polynomial_add(polynomial_mul(p, r), polynomial_mul(q, r))
+}
+
+theorem polyc_add_semigroup_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    p + (q + r) = (p + q) + r
+}
+
+theorem polyc_add_comm_semigroup_law[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    p + q = q + p
+}
+
+theorem polyc_add_monoid_right_law[R: CommRing](p: PolyC[R]) {
+    p + Zero.0[PolyC[R]] = p
+}
+
+theorem polyc_add_monoid_left_law[R: CommRing](p: PolyC[R]) {
+    Zero.0[PolyC[R]] + p = p
+}
+
+theorem polyc_add_group_inverse_law[R: CommRing](p: PolyC[R]) {
+    p + -p = Zero.0[PolyC[R]]
+}
+
+theorem polyc_mul_semigroup_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    p * (q * r) = (p * q) * r
+}
+
+theorem polyc_mul_comm_semigroup_law[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    p * q = q * p
+}
+
+theorem polyc_monoid_right_law[R: CommRing](p: PolyC[R]) {
+    p * One.1[PolyC[R]] = p
+}
+
+theorem polyc_monoid_left_law[R: CommRing](p: PolyC[R]) {
+    One.1[PolyC[R]] * p = p
+}
+
+theorem polyc_semiring_distrib_left_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    p * (q + r) = p * q + p * r
+}
+
+theorem polyc_semiring_distrib_right_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    (p + q) * r = p * r + q * r
+}
+
+theorem polyc_semiring_mul_zero_law[R: CommRing](p: PolyC[R]) {
+    p * Zero.0[PolyC[R]] = Zero.0[PolyC[R]]
+}
+
+theorem polyc_semiring_zero_mul_law[R: CommRing](p: PolyC[R]) {
+    Zero.0[PolyC[R]] * p = Zero.0[PolyC[R]]
+}
+
+theorem polyc_add_semigroup_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    Add.add(p, Add.add(q, r)) = Add.add(Add.add(p, q), r)
+}
+
+theorem polyc_add_comm_semigroup_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    Add.add(p, q) = Add.add(q, p)
+}
+
+theorem polyc_add_group_instance_law[R: CommRing](p: PolyC[R]) {
+    Add.add(p, Neg.neg(p)) = Zero.0[PolyC[R]]
+}
+
+theorem polyc_mul_semigroup_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    Mul.mul(p, Mul.mul(q, r)) = Mul.mul(Mul.mul(p, q), r)
+}
+
+theorem polyc_mul_comm_semigroup_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R]) {
+    Mul.mul(p, q) = Mul.mul(q, p)
+}
+
+theorem polyc_semiring_distrib_left_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    Mul.mul(p, Add.add(q, r)) = Add.add(Mul.mul(p, q), Mul.mul(p, r))
+}
+
+theorem polyc_semiring_distrib_right_instance_law[R: CommRing](p: PolyC[R], q: PolyC[R], r: PolyC[R]) {
+    Mul.mul(Add.add(p, q), r) = Add.add(Mul.mul(p, r), Mul.mul(q, r))
+}
+
+define polyc_eval[R: CommRing](c: PolyC[R], x: R) -> R {
+    polynomial_eval(c.underlying, x)
+}
+
+theorem polyc_eval_add[R: CommRing](c: PolyC[R], d: PolyC[R], x: R) {
+    polyc_eval(polyc_add(c, d), x) = polyc_eval(c, x) + polyc_eval(d, x)
+}
+
+theorem polyc_eval_mul[R: CommRing](c: PolyC[R], d: PolyC[R], x: R) {
+    polyc_eval(polyc_mul(c, d), x) = polyc_eval(c, x) * polyc_eval(d, x)
+}
+
+theorem polyc_eval_neg[R: CommRing](c: PolyC[R], x: R) {
+    polyc_eval(polyc_neg(c), x) = -polyc_eval(c, x)
+}
+
+theorem polyc_eval_sub[R: CommRing](c: PolyC[R], d: PolyC[R], x: R) {
+    polyc_eval(c - d, x) = polyc_eval(c, x) - polyc_eval(d, x)
+}
+
+theorem polyc_eval_zero[R: CommRing](x: R) {
+    polyc_eval(polyc_zero[R], x) = R.0
+}
+
+theorem polyc_eval_one[R: CommRing](x: R) {
+    polyc_eval(polyc_one[R], x) = R.1
+}
+
+theorem polyc_eval_constant[R: CommRing](r: R, x: R) {
+    polyc_eval(polyc_constant(r), x) = r
+}
+
+theorem monomial_x_support_bounded[S: Semiring] {
+    polynomial_support_bounded_by(polynomial_monomial(Nat.1, S.1), Nat.2)
+}
+
+theorem monomial_x_eval[S: CommRing](x: S) {
+    polynomial_eval(polynomial_monomial(Nat.1, S.1), x) = x
+}
+
+theorem polyc_eval_x[R: CommRing](x: R) {
+    polyc_eval(polyc_x[R], x) = x
+}
+
+define poly2_add[R: CommRing](p: Poly2[R], q: Poly2[R]) -> Poly2[R] {
+    Poly2[R].new(polynomial_add(p.underlying, q.underlying))
+}
+
+define poly2_mul[R: CommRing](p: Poly2[R], q: Poly2[R]) -> Poly2[R] {
+    Poly2[R].new(polynomial_mul(p.underlying, q.underlying))
+}
+
+define poly2_neg[R: CommRing](p: Poly2[R]) -> Poly2[R] {
+    Poly2[R].new(polynomial_neg(p.underlying))
+}
+
+define poly2_sub[R: CommRing](p: Poly2[R], q: Poly2[R]) -> Poly2[R] {
+    Poly2[R].new(p.underlying.sub(q.underlying))
+}
+
+let biv_zero[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_zero[PolyC[R]])
+
+let biv_one[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_one[PolyC[R]])
+
+let biv_x[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_constant[PolyC[R]](polyc_x[R]))
+
+let biv_y[R: CommRing]: Poly2[R] = Poly2[R].new(polynomial_monomial[PolyC[R]](Nat.1, polyc_one[R]))
+
+theorem poly2_ext[R: CommRing](p: Poly2[R], q: Poly2[R]) {
+    p.underlying = q.underlying implies p = q
+}
+
+theorem poly2_mul_one_left[R: CommRing](p: Poly2[R]) {
+    poly2_mul(biv_one[R], p) = p
+}
+
+let parabola_poly[R: CommRing]: Poly2[R] =
+    poly2_sub(biv_y[R], poly2_mul(biv_x[R], biv_x[R]))
+
+let circle_poly[R: CommRing]: Poly2[R] =
+    poly2_sub(poly2_add(poly2_mul(biv_x[R], biv_x[R]), poly2_mul(biv_y[R], biv_y[R])), biv_one[R])
+
+define poly2_eval[R: CommRing](p: Poly2[R], x: R, y: R) -> R {
+    polyc_eval(polynomial_eval(p.underlying, polyc_constant(y)), x)
+}
+
+theorem poly2_eval_add[R: CommRing](p: Poly2[R], q: Poly2[R], x: R, y: R) {
+    poly2_eval(poly2_add(p, q), x, y) = poly2_eval(p, x, y) + poly2_eval(q, x, y)
+}
+
+theorem poly2_eval_mul[R: CommRing](p: Poly2[R], q: Poly2[R], x: R, y: R) {
+    poly2_eval(poly2_mul(p, q), x, y) = poly2_eval(p, x, y) * poly2_eval(q, x, y)
+}
+
+theorem poly2_eval_neg[R: CommRing](p: Poly2[R], x: R, y: R) {
+    poly2_eval(poly2_neg(p), x, y) = -poly2_eval(p, x, y)
+}
+
+theorem poly2_eval_sub[R: CommRing](p: Poly2[R], q: Poly2[R], x: R, y: R) {
+    poly2_eval(poly2_sub(p, q), x, y) = poly2_eval(p, x, y) - poly2_eval(q, x, y)
+}
+
+theorem poly2_eval_zero[R: CommRing](x: R, y: R) {
+    poly2_eval(biv_zero[R], x, y) = R.0
+}
+
+theorem poly2_eval_one[R: CommRing](x: R, y: R) {
+    poly2_eval(biv_one[R], x, y) = R.1
+}
+
+theorem poly2_eval_x[R: CommRing](x: R, y: R) {
+    poly2_eval(biv_x[R], x, y) = x
+}
+
+theorem poly2_eval_y[R: CommRing](x: R, y: R) {
+    poly2_eval(biv_y[R], x, y) = y
+}
+
+theorem poly2_eval_parabola[R: CommRing](x: R, y: R) {
+    poly2_eval(parabola_poly[R], x, y) = y - x * x
+}
+
+theorem poly2_eval_circle[R: CommRing](x: R, y: R) {
+    poly2_eval(circle_poly[R], x, y) = x * x + y * y - R.1
+}
+
+define point_in_zero_set[R: CommRing](f: Poly2[R], p: PlanePoint[R]) -> Bool {
+    poly2_eval(f, p.x, p.y) = R.0
+}
+
+theorem point_in_zero_set_unfold[R: CommRing](f: Poly2[R], p: PlanePoint[R]) {
+    point_in_zero_set(f, p) = (poly2_eval(f, p.x, p.y) = R.0)
+}
+
+theorem plane_point_new_x[R](a: R, b: R) {
+    PlanePoint[R].new(a, b).x = a
+}
+
+theorem plane_point_new_y[R](a: R, b: R) {
+    PlanePoint[R].new(a, b).y = b
+}
+
+define in_variety[R: CommRing](s: Set[Poly2[R]], p: PlanePoint[R]) -> Bool {
+    forall(f: Poly2[R]) {
+        s.contains(f) implies point_in_zero_set(f, p)
+    }
+}
+
+define zero_set[R: CommRing](f: Poly2[R]) -> Set[PlanePoint[R]] {
+    Set[PlanePoint[R]].new(function(p: PlanePoint[R]) { point_in_zero_set(f, p) })
+}
+
+let field_two[F: Field]: F = F.1 + F.1
+
+let field_four[F: Field]: F = F.1 + F.1 + F.1 + F.1
+
+theorem field_two_squared_is_four[F: Field] {
+    field_two[F] * field_two[F] = field_four[F]
+}
+
+theorem parabola_point_two_four[F: Field] {
+    point_in_zero_set(parabola_poly[F], PlanePoint[F].new(field_two[F], field_four[F]))
+}
+
+theorem circle_point_one_zero[F: Field] {
+    point_in_zero_set(circle_poly[F], PlanePoint[F].new(F.1, F.0))
+}
+
+theorem circle_point_zero_one[F: Field] {
+    point_in_zero_set(circle_poly[F], PlanePoint[F].new(F.0, F.1))
+}
+
+theorem circle_symmetry[F: Field](x: F, y: F) {
+    point_in_zero_set(circle_poly[F], PlanePoint[F].new(x, y)) =
+        point_in_zero_set(circle_poly[F], PlanePoint[F].new(y, x))
+}
+
+theorem field_mul_eq_zero_iff[F: Field](a: F, b: F) {
+    (a * b = F.0) = (a = F.0 or b = F.0)
+}
+
+theorem zero_set_mul_contains_eq[F: Field](f: Poly2[F], g: Poly2[F], p: PlanePoint[F]) {
+    zero_set(poly2_mul(f, g)).contains(p) =
+        (zero_set(f).contains(p) or zero_set(g).contains(p))
+}
+
+theorem zero_set_mul_eq_union[F: Field](f: Poly2[F], g: Poly2[F]) {
+    zero_set(poly2_mul(f, g)) = zero_set(f).union(zero_set(g))
+}
+
+theorem zero_set_x_is_y_axis[R: CommRing](p: PlanePoint[R]) {
+    zero_set(biv_x[R]).contains(p) = (p.x = R.0)
+}
+
+theorem zero_set_y_is_x_axis[R: CommRing](p: PlanePoint[R]) {
+    zero_set(biv_y[R]).contains(p) = (p.y = R.0)
+}
+
+theorem zero_set_xy_is_axes[F: Field](p: PlanePoint[F]) {
+    zero_set(poly2_mul(biv_x[F], biv_y[F])).contains(p) =
+        (zero_set(biv_x[F]).contains(p) or zero_set(biv_y[F]).contains(p))
+}
+
+define ideal_of_point[R: CommRing](p: PlanePoint[R], f: Poly2[R]) -> Bool {
+    point_in_zero_set(f, p)
+}
+
+define ideal_of_point_zero_constraint[R: CommRing](p: PlanePoint[R], contains: Poly2[R] -> Bool) -> Bool {
+    contains(biv_zero[R])
+}
+
+define ideal_of_point_add_constraint[R: CommRing](p: PlanePoint[R], contains: Poly2[R] -> Bool) -> Bool {
+    forall(f: Poly2[R], g: Poly2[R]) {
+        contains(f) and contains(g) implies contains(poly2_add(f, g))
+    }
+}
+
+define ideal_of_point_absorb_constraint[R: CommRing](p: PlanePoint[R], contains: Poly2[R] -> Bool) -> Bool {
+    forall(r: Poly2[R], f: Poly2[R]) {
+        contains(f) implies contains(poly2_mul(r, f))
+    }
+}
+
+define is_ideal_of_point[R: CommRing](p: PlanePoint[R], contains: Poly2[R] -> Bool) -> Bool {
+    ideal_of_point_zero_constraint(p, contains)
+    and ideal_of_point_add_constraint(p, contains)
+    and ideal_of_point_absorb_constraint(p, contains)
+}
+
+theorem ideal_of_point_add[R: CommRing](p: PlanePoint[R], f: Poly2[R], g: Poly2[R]) {
+    ideal_of_point(p, f) and ideal_of_point(p, g) implies ideal_of_point(p, poly2_add(f, g))
+}
+
+theorem ideal_of_point_absorb[R: CommRing](p: PlanePoint[R], r: Poly2[R], f: Poly2[R]) {
+    ideal_of_point(p, f) implies ideal_of_point(p, poly2_mul(r, f))
+}
+
+theorem ideal_of_point_zero[R: CommRing](p: PlanePoint[R]) {
+    ideal_of_point(p, biv_zero[R])
+}
+
+theorem ideal_of_point_is_ideal[R: CommRing](p: PlanePoint[R]) {
+    is_ideal_of_point(p, ideal_of_point(p))
+}
+
+define in_ideal_generated_by[R: CommRing](f: Poly2[R], h: Poly2[R]) -> Bool {
+    exists(g: Poly2[R]) {
+        h = poly2_mul(g, f)
+    }
+}
+
+theorem in_ideal_generated_by_self[R: CommRing](f: Poly2[R]) {
+    in_ideal_generated_by(f, f)
+}
+
+define in_zero_set_of_ideal_generated_by[R: CommRing](f: Poly2[R], p: PlanePoint[R]) -> Bool {
+    forall(h: Poly2[R]) {
+        in_ideal_generated_by(f, h) implies point_in_zero_set(h, p)
+    }
+}
+
+theorem zero_set_of_ideal_generated_by_eq_zero_set[R: CommRing](f: Poly2[R], p: PlanePoint[R]) {
+    in_zero_set_of_ideal_generated_by(f, p) = point_in_zero_set(f, p)
+}
+
+theorem unit_circle_ideal_contains_one_zero[F: Field] {
+    in_zero_set_of_ideal_generated_by(circle_poly[F], PlanePoint[F].new(F.1, F.0))
+}
+
+theorem unit_circle_ideal_contains_zero_one[F: Field] {
+    in_zero_set_of_ideal_generated_by(circle_poly[F], PlanePoint[F].new(F.0, F.1))
+}
+
+theorem nat_semiring_zero_pow_smoke(n: Nat) {
+    n != Nat.0 implies Nat.0.pow(n) = Nat.0
+}
+
+theorem int_ring_neg_one_mul_smoke(a: Int) {
+    -Int.1 * a = -a
+}
+
+theorem rat_field_mul_eq_zero_smoke(a: Rat, b: Rat) {
+    a * b = Rat.0 implies a = Rat.0 or b = Rat.0
+}
+
+theorem rat_field_unit_nonzero_smoke(a: Rat) {
+    a.is_unit = (a != Rat.0)
+}
+
+theorem rat_ordered_field_nonnegative_mul_smoke(a: Rat, b: Rat) {
+    Rat.0 <= a and Rat.0 <= b implies Rat.0 <= a * b
+}
+
+theorem rat_ordered_field_nonnegative_pow_smoke(a: Rat, n: Nat) {
+    Rat.0 <= a implies Rat.0 <= a.pow(n)
+}
+
+theorem rat_ordered_field_positive_pow_smoke(a: Rat, n: Nat) {
+    Rat.0 < a implies Rat.0 < a.pow(n)
+}
+
+theorem rat_ordered_field_inverse_nonnegative_smoke(a: Rat) {
+    Rat.0 <= a implies Rat.0 <= a.inverse
+}
+
+theorem rat_ordered_field_inverse_positive_smoke(a: Rat) {
+    Rat.0 < a implies Rat.0 < a.inverse
+}
+
+theorem real_field_mul_eq_zero_smoke(a: Real, b: Real) {
+    a * b = Real.0 implies a = Real.0 or b = Real.0
+}
+
+theorem real_field_pow_not_zero_smoke(a: Real, n: Nat) {
+    a != Real.0 implies a.pow(n) != Real.0
+}
+
+theorem real_integral_domain_pow_nonzero_smoke(a: Real, n: Nat) {
+    a != Real.0 implies a.pow(n) != Real.0
+}
+
+theorem real_field_nonzero_pow_is_unit_smoke(a: Real, n: Nat) {
+    a != Real.0 implies a.pow(n).is_unit
+}
+
+theorem real_ordered_field_nonnegative_mul_smoke(a: Real, b: Real) {
+    Real.0 <= a and Real.0 <= b implies Real.0 <= a * b
+}
+
+theorem real_ordered_field_nonnegative_pow_smoke(a: Real, n: Nat) {
+    Real.0 <= a implies Real.0 <= a.pow(n)
+}
+
+theorem real_ordered_field_positive_pow_smoke(a: Real, n: Nat) {
+    Real.0 < a implies Real.0 < a.pow(n)
+}
+
+theorem real_ordered_field_inverse_nonnegative_smoke(a: Real) {
+    Real.0 <= a implies Real.0 <= a.inverse
+}
+
+theorem real_ordered_field_inverse_positive_smoke(a: Real) {
+    Real.0 < a implies Real.0 < a.inverse
+}
+
+theorem field_mul_cancel_left[F: Field](a: F, b: F, c: F) {
+    a != F.0 and a * b = a * c implies b = c
+}
+
+theorem field_mul_cancel_right[F: Field](a: F, b: F, c: F) {
+    a != F.0 and b * a = c * a implies b = c
+}
+
+theorem field_mul_eq_mul_iff[F: Field](a: F, b: F, c: F) {
+    a != F.0 implies (a * b = a * c) = (b = c)
+}
+
+theorem field_sq_eq_zero_iff[F: Field](a: F) {
+    (a * a = F.0) = (a = F.0)
+}
+
+theorem field_inverse_eq_inverse_iff[F: Field](a: F, b: F) {
+    (a.inverse = b.inverse) = (a = b)
+}
+
+theorem field_inverse_eq_one_iff[F: Field](a: F) {
+    (a.inverse = F.1) = (a = F.1)
+}
+
+theorem field_inverse_eq_zero_iff[F: Field](a: F) {
+    (a.inverse = F.0) = (a = F.0)
+}
+
+theorem field_neg_inverse[F: Field](a: F) {
+    a != F.0 implies (-a).inverse = -(a.inverse)
+}
+
+theorem field_pow_inverse_nat[F: Field](a: F, n: Nat) {
+    a.inverse.pow(n) = a.pow(n).inverse
+}
+
+theorem field_pow_eq_zero_iff[F: Field](a: F, n: Nat) {
+    n != Nat.0 implies (a.pow(n) = F.0) = (a = F.0)
+}
+
+define fdiv[F: Field](a: F, b: F) -> F {
+    a * b.inverse
+}
+
+theorem field_fdiv_mul_cancel[F: Field](a: F, b: F) {
+    b != F.0 implies fdiv(a, b) * b = a
+}
+
+theorem field_fdiv_cancel_mul[F: Field](a: F, b: F) {
+    b != F.0 implies b * fdiv(a, b) = a
+}
+
+theorem field_fdiv_one[F: Field](a: F) {
+    fdiv(a, F.1) = a
+}
+
+theorem field_fdiv_self[F: Field](a: F) {
+    a != F.0 implies fdiv(a, a) = F.1
+}
+
+theorem field_fdiv_zero[F: Field](a: F) {
+    fdiv(F.0, a) = F.0
+}
+
+theorem field_fdiv_inverse[F: Field](a: F) {
+    fdiv(F.1, a) = a.inverse
+}
+
+theorem field_fdiv_add[F: Field](a: F, b: F, c: F) {
+    fdiv(a, c) + fdiv(b, c) = fdiv(a + b, c)
+}
+
+theorem field_fdiv_sub[F: Field](a: F, b: F, c: F) {
+    fdiv(a, c) - fdiv(b, c) = fdiv(a - b, c)
+}
+
+theorem field_fdiv_mul[F: Field](a: F, b: F, c: F, d: F) {
+    fdiv(a, b) * fdiv(c, d) = fdiv(a * c, b * d)
+}
+
+theorem field_fdiv_neg[F: Field](a: F, b: F) {
+    fdiv(-a, b) = -fdiv(a, b)
+}
+
+theorem field_fdiv_add_mul[F: Field](a: F, b: F, c: F) {
+    b != F.0 implies fdiv(a, b) + c = fdiv(a + c * b, b)
+}
+
+theorem field_fdiv_scale[F: Field](a: F, b: F, c: F) {
+    c != F.0 implies fdiv(a, b) = fdiv(a * c, b * c)
+}
+
+theorem field_fdiv_inv[F: Field](a: F, b: F, c: F) {
+    fdiv(a, fdiv(b, c)) = fdiv(a * c, b)
+}
+
+theorem int_neg_one_neq_zero {
+    -Int.1 != Int.0
+}
+
+theorem int_two_ne_zero {
+    Int.1 + Int.1 != Int.0
+}
+
+theorem int_two_mul(a: Int) {
+    (Int.1 + Int.1) * a = a + a
+}
+
+theorem int_neg_neg_one {
+    --Int.1 = Int.1
+}
+
+theorem int_from_nat_two {
+    from_nat[Int](2) = Int.1 + Int.1
+}
+
+theorem int_pow_two(a: Int) {
+    a.pow(2) = a * a
+}
+
+theorem int_sub_self_pow_two(a: Int) {
+    (a - a).pow(2) = Int.0
+}
+
+theorem int_mul_neg_one(a: Int) {
+    a * -Int.1 = -a
+}
+
+theorem rat_two_inverse_mul_two {
+    Rat.2.inverse * Rat.2 = Rat.1
+}
+
+theorem rat_two_mul_inverse {
+    Rat.2 * Rat.2.inverse = Rat.1
+}
+
+theorem rat_two_inverse_inverse {
+    Rat.2.inverse.inverse = Rat.2
+}
+
+theorem rat_two_inverse_ne_zero {
+    Rat.2.inverse != Rat.0
+}
+
+theorem rat_fdiv_one_two {
+    fdiv(Rat.1, Rat.2) = Rat.2.inverse
+}
+
+theorem rat_fdiv_one_two_cancel {
+    fdiv(Rat.1, Rat.2) * Rat.2 = Rat.1
+}
+
+theorem rat_one_plus_one_pos {
+    (Rat.1 + Rat.1).is_positive
+}
+
+theorem rat_one_plus_one_ne_zero {
+    Rat.1 + Rat.1 != Rat.0
+}
+
+theorem rat_one_plus_one_inverse_pos {
+    (Rat.1 + Rat.1).inverse.is_positive
+}
+
+theorem rat_mul_cancel_left(a: Rat, b: Rat, c: Rat) {
+    a != Rat.0 and a * b = a * c implies b = c
+}
+
+theorem rat_two_inverse_pow_two {
+    Rat.2.inverse.pow(2) = Rat.2.pow(2).inverse
+}
+
+theorem field_fdiv_inverse_rev[F: Field](a: F, b: F) {
+    fdiv(a, b).inverse = fdiv(b, a)
+}
+
+theorem field_fdiv_pow[F: Field](a: F, b: F, n: Nat) {
+    fdiv(a, b).pow(n) = fdiv(a.pow(n), b.pow(n))
+}
+
+theorem field_fdiv_pow_two[F: Field](a: F, b: F) {
+    fdiv(a, b).pow(2) = fdiv(a.pow(2), b.pow(2))
+}
+
+theorem field_fdiv_mul_cancel_left[F: Field](a: F, b: F) {
+    a != F.0 implies fdiv(a * b, a) = b
+}
+
+theorem field_fdiv_mul_cancel_right[F: Field](a: F, b: F) {
+    a != F.0 implies fdiv(b * a, a) = b
+}
+
+theorem field_fdiv_eq_iff[F: Field](a: F, b: F, c: F) {
+    b != F.0 implies ((fdiv(a, b) = c) = (a = c * b))
+}
+
+theorem field_fdiv_eq_zero_iff[F: Field](a: F, b: F) {
+    b != F.0 implies ((fdiv(a, b) = F.0) = (a = F.0))
+}
+
+theorem field_fdiv_add_cross[F: Field](a: F, b: F, c: F, d: F) {
+    b != F.0 and d != F.0 implies fdiv(a, b) + fdiv(c, d) = fdiv(a * d + c * b, b * d)
+}
+
+theorem field_fdiv_neg_divisor[F: Field](a: F, b: F) {
+    b != F.0 implies fdiv(a, -b) = -fdiv(a, b)
+}
+
+theorem field_fdiv_neg_neg[F: Field](a: F, b: F) {
+    b != F.0 implies fdiv(-a, -b) = fdiv(a, b)
+}
+
+theorem coeff_eval_suc_unfold[R: Semiring](c: Nat -> R, x: R, n: Nat) {
+    coeff_eval(c, x, n.suc) = c(Nat.0) + x * coeff_eval(coeff_tail(c), x, n)
+}
+
+theorem coeff_eval_nat_zero[R: Semiring](c: Nat -> R, x: R) {
+    coeff_eval(c, x, Nat.0) = R.0
+}
+
+theorem real_one_pos {
+    Real.1 > Real.0
+}
+
+theorem two_positive_gt {
+    two > Real.0
+}
+
+theorem two_nonneg {
+    two >= Real.0
+}
+
+theorem sqrt_two_exists {
+    exists(r: Real) {
+        two.sqrt = Option.some(r) and r * r = two
+    }
+}
+
+let sqrt_two: Real satisfy {
+    two.sqrt = Option.some(sqrt_two) and sqrt_two * sqrt_two = two
+}
+
+theorem sqrt_two_square {
+    sqrt_two * sqrt_two = two
+}
+
+theorem sqrt_two_nonneg {
+    sqrt_two >= Real.0
+}
+
+theorem neg_sqrt_two_square {
+    -sqrt_two * -sqrt_two = two
+}
+
+let real_x_squared_minus_two: Polynomial[Real] =
+    polynomial_constant(-two) + polynomial_monomial(Nat.2, Real.1)
+
+theorem real_polynomial_eval_monomial_two(r: Real, x: Real) {
+    polynomial_eval(Polynomial[Real].monomial(Nat.2, r), x) = r * x * x
+}
+
+theorem real_x_squared_minus_two_eval(x: Real) {
+    polynomial_eval(real_x_squared_minus_two, x) = x * x - two
+}
+
+theorem sqrt_two_is_root_of_x_squared_minus_two {
+    polynomial_eval(real_x_squared_minus_two, sqrt_two) = Real.0
+}
+
+theorem neg_sqrt_two_is_root_of_x_squared_minus_two {
+    polynomial_eval(real_x_squared_minus_two, -sqrt_two) = Real.0
+}
+
+theorem sqrt_two_ne_neg_sqrt_two {
+    sqrt_two != -sqrt_two
+}
+
+theorem diff_sq(x: Real, y: Real) {
+    (x - y) * (x + y) = x * x - y * y
+}
+
+theorem real_square_two_imp_eq_or_neg(x: Real) {
+    x * x = two implies x = sqrt_two or x = -sqrt_two
+}
+
+theorem real_x_squared_minus_two_root_forward(x: Real) {
+    polynomial_eval(real_x_squared_minus_two, x) = Real.0 implies
+        (x = sqrt_two or x = -sqrt_two)
+}
+
+theorem real_x_squared_minus_two_root_backward(x: Real) {
+    (x = sqrt_two or x = -sqrt_two) implies
+        polynomial_eval(real_x_squared_minus_two, x) = Real.0
+}
+
+let rat_x_squared_minus_two: Polynomial[Rat] =
+    polynomial_constant(-Rat.2) + polynomial_monomial(Nat.2, Rat.1)
+
+theorem rat_polynomial_eval_monomial_two(r: Rat, x: Rat) {
+    polynomial_eval(Polynomial[Rat].monomial(Nat.2, r), x) = r * x * x
+}
+
+theorem rat_x_squared_minus_two_eval(x: Rat) {
+    polynomial_eval(rat_x_squared_minus_two, x) = x * x - Rat.2
+}
+
+theorem nat_sq_double(x: Nat) {
+    (Nat.2 * x) * (Nat.2 * x) = Nat.4 * (x * x)
+}
+
+theorem nat_euclid_coprime_divides(a: Nat, b: Nat, c: Nat) {
+    a.coprime(b) and a.divides(b * c) implies a.divides(c)
+}
+
+theorem nat_two_divides_square_imp_two_divides(x: Nat) {
+    Nat.2.divides(x * x) implies Nat.2.divides(x)
+}
+
+theorem nat_sq_eq_two_sq_descent(x: Nat, y: Nat) {
+    x != Nat.0 and x * x = Nat.2 * (y * y) implies
+        exists(a: Nat, b: Nat) {
+            a < x and Nat.2 * a = x and a * a = Nat.2 * (b * b)
+        }
+}
+
+theorem nat_sq_eq_two_sq_zero(x: Nat) {
+    forall(y: Nat) { x * x = Nat.2 * (y * y) implies x = Nat.0 }
+}
+
+theorem nat_no_nontrivial_sq_eq_two_sq(x: Nat, y: Nat) {
+    x * x = Nat.2 * (y * y) implies x = Nat.0 and y = Nat.0
+}
+
+theorem int_no_nontrivial_sq_eq_two_sq(x: Int, y: Int) {
+    x * x = Int.2 * (y * y) implies x = Int.0 and y = Int.0
+}
+
+theorem div_square_denom_cancel(a: Rat, b: Rat) {
+    b != Rat.0 implies ((a / b) * (a / b)) * (b * b) = a * a
+}
+
+theorem no_rat_squares_to_two(r: Rat) {
+    r * r = Rat.2 implies false
+}
+
+theorem rat_x_squared_minus_two_has_no_root {
+    not exists(r: Rat) {
+        polynomial_eval(rat_x_squared_minus_two, r) = Rat.0
+    }
+}
+
+define qsqrt2(a: Real, b: Real) -> Complex {
+    Complex.from_real(a) + Complex.from_real(b) * Complex.from_real(sqrt_two)
+}
+
+define qsqrt2_aut(a: Real, b: Real) -> Complex {
+    qsqrt2(a, -b)
+}
+
+theorem qsqrt2_conj_fixed(a: Real, b: Real) {
+    complex_conj_field_hom.hom(qsqrt2(a, b)) = qsqrt2(a, b)
+}
+
+theorem qsqrt2_aut_sqrt_two {
+    qsqrt2_aut(Real.0, Real.1) = qsqrt2(Real.0, -Real.1)
+}
+
+theorem qsqrt2_aut_fixes_real_part(a: Real) {
+    qsqrt2_aut(a, Real.0) = qsqrt2(a, Real.0)
+}
+
+theorem qsqrt2_eq_from_real(a: Real, b: Real) {
+    qsqrt2(a, b) = Complex.from_real(a + b * sqrt_two)
+}
+
+theorem from_real_sqrt_two_square_complex {
+    Complex.from_real(sqrt_two) * Complex.from_real(sqrt_two) = Complex.from_real(two)
+}
+
+theorem real_qsqrt2_mul_formula(a: Real, b: Real, c: Real, d: Real) {
+    (a + b * sqrt_two) * (c + d * sqrt_two) =
+        a * c + two * (b * d) + (a * d + b * c) * sqrt_two
+}
+
+theorem qsqrt2_add(a: Real, b: Real, c: Real, d: Real) {
+    qsqrt2(a, b) + qsqrt2(c, d) = qsqrt2(a + c, b + d)
+}
+
+theorem qsqrt2_mul(a: Real, b: Real, c: Real, d: Real) {
+    qsqrt2(a, b) * qsqrt2(c, d) = qsqrt2(a * c + two * (b * d), a * d + b * c)
+}
+
+theorem qsqrt2_aut_add(a: Real, b: Real, c: Real, d: Real) {
+    qsqrt2(a + c, -(b + d)) = qsqrt2(a, -b) + qsqrt2(c, -d)
+}
+
+theorem qsqrt2_aut_mul(a: Real, b: Real, c: Real, d: Real) {
+    qsqrt2(a * c + two * (b * d), -(a * d + b * c)) = qsqrt2(a, -b) * qsqrt2(c, -d)
+}
+
+define gf_ideal[F: Field](f: PolyC[F]) -> Ideal[PolyC[F]] {
+    bundled_principal_ideal[PolyC[F]](f)
+}
+
+define polyc_divides[F: CommRing](f: PolyC[F], g: PolyC[F]) -> Bool {
+    exists(q: PolyC[F]) {
+        polyc_mul(f, q) = g
+    }
+}
+
+define is_unit_poly[F: CommRing](p: PolyC[F]) -> Bool {
+    exists(q: PolyC[F]) {
+        polyc_mul(p, q) = polyc_one[F]
+    }
+}
+
+define is_irreducible_poly[F: Field](f: PolyC[F]) -> Bool {
+    f != polyc_zero[F]
+    and not is_unit_poly(f)
+    and not exists(g: PolyC[F], h: PolyC[F]) {
+        polyc_mul(g, h) = f and not is_unit_poly(g) and not is_unit_poly(h)
+    }
+}
+
+define is_prime_poly[F: Field](f: PolyC[F]) -> Bool {
+    f != polyc_zero[F]
+    and forall(g: PolyC[F]) {
+        not polyc_divides(f, g) implies
+        exists(a: PolyC[F], b: PolyC[F]) {
+            polyc_add(polyc_mul(a, f), polyc_mul(b, g)) = polyc_one[F]
+        }
+    }
+}
+
+theorem is_prime_poly_apply[F: Field](f: PolyC[F], g: PolyC[F]) {
+    is_prime_poly(f) and not polyc_divides(f, g) implies
+    exists(a: PolyC[F], b: PolyC[F]) {
+        polyc_add(polyc_mul(a, f), polyc_mul(b, g)) = polyc_one[F]
+    }
+}
+
+theorem gf_quotient_mk_eq_iff_contains_sub[F: Field](f: PolyC[F], a: PolyC[F], b: PolyC[F]) {
+    (ideal_quotient_mk_type(gf_ideal(f), a) = ideal_quotient_mk_type(gf_ideal(f), b)) =
+        gf_ideal(f).contains(a - b)
+}
+
+theorem gf_quotient_mk_eq_zero_iff_contains[F: Field](f: PolyC[F], a: PolyC[F]) {
+    (ideal_quotient_mk_type(gf_ideal(f), a) = ideal_quotient_type_zero(gf_ideal(f))) =
+        gf_ideal(f).contains(a)
+}
+
+theorem gf_quotient_maximal_inverse[F: Field](f: PolyC[F], a: PolyC[F]) {
+    is_maximal_ideal(gf_ideal(f).contains) and not gf_ideal(f).contains(a)
+    implies exists(m: PolyC[F]) {
+        ideal_quotient_type_mul(gf_ideal(f),
+            ideal_quotient_mk_type(gf_ideal(f), a),
+            ideal_quotient_mk_type(gf_ideal(f), m)) =
+        ideal_quotient_type_one(gf_ideal(f))
+    }
+}
+
+theorem gf_quotient_maximal_zero_ne_one[F: Field](f: PolyC[F]) {
+    is_maximal_ideal(gf_ideal(f).contains) implies
+        ideal_quotient_type_zero(gf_ideal(f)) != ideal_quotient_type_one(gf_ideal(f))
+}
+
+theorem gf_quotient_field_inverse_of_prime[F: Field](f: PolyC[F], g: PolyC[F]) {
+    is_prime_poly(f) and not polyc_divides(f, g)
+    implies exists(b: PolyC[F]) {
+        ideal_quotient_type_mul(gf_ideal(f),
+            ideal_quotient_mk_type(gf_ideal(f), g),
+            ideal_quotient_mk_type(gf_ideal(f), b)) =
+        ideal_quotient_type_one(gf_ideal(f))
+    }
+}
+
+theorem add_group_hom_sub[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], a: A, b: A) {
+    f.hom(a - b) = f.hom(a) - f.hom(b)
+}
+
+theorem monoid_hom_pow[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M, n: Nat) {
+    f.hom(a.pow(n)) = f.hom(a).pow(n)
+}
+
+theorem ring_hom_nat_cast[R: Ring, S: Ring](f: RingHom[R, S], n: Nat) {
+    f.hom(from_nat[R](n)) = from_nat[S](n)
+}
+
+theorem ring_hom_neg_one[R: Ring, S: Ring](f: RingHom[R, S]) {
+    f.hom(-R.1) = -S.1
+}
+
+theorem ring_hom_mul_sub[R: Ring, S: Ring](f: RingHom[R, S], a: R, b: R, c: R) {
+    f.hom((a - b) * c) = (f.hom(a) - f.hom(b)) * f.hom(c)
+}
+
+theorem ring_hom_neg_mul_left[R: Ring, S: Ring](f: RingHom[R, S], a: R, b: R) {
+    f.hom(-a * b) = -f.hom(a) * f.hom(b)
+}
+
+theorem ring_hom_neg_one_mul[R: Ring, S: Ring](f: RingHom[R, S], a: R) {
+    f.hom(-R.1 * a) = -f.hom(a)
+}
+
+theorem group_hom_commute[G: Group, H: Group](f: GroupHom[G, H], a: G, b: G) {
+    a * b = b * a implies f.hom(a) * f.hom(b) = f.hom(b) * f.hom(a)
+}
+
+theorem group_hom_comp_injective[G: Group, H: Group, K: Group](f: GroupHom[H, K], g: GroupHom[G, H]) {
+    is_injective_fn(f.hom) and is_injective_fn(g.hom) implies is_injective_fn(compose_group_hom(f, g).hom)
+}
+
+theorem add_group_hom_comp_injective[A: AddGroup, B: AddGroup, C: AddGroup](
+    f: AddGroupHom[B, C],
+    g: AddGroupHom[A, B]
+) {
+    is_injective_fn(f.hom) and is_injective_fn(g.hom) implies is_injective_fn(compose_add_group_hom(f, g).hom)
+}
+
+theorem ring_hom_comp_injective[R: Ring, S: Ring, T: Ring](f: RingHom[S, T], g: RingHom[R, S]) {
+    is_injective_fn(f.hom) and is_injective_fn(g.hom) implies is_injective_fn(compose_ring_hom(f, g).hom)
+}
+
+theorem field_hom_preserves_inverse[F: Field, E: Field](f: FieldHom[F, E], a: F) {
+    a != F.0 implies f.hom(a.inverse) = f.hom(a).inverse
+}
+
+theorem field_hom_preserves_fdiv[F: Field, E: Field](f: FieldHom[F, E], a: F, b: F) {
+    f.hom(fdiv(a, b)) = fdiv(f.hom(a), f.hom(b))
+}
+
+theorem principal_ideal_add_closed[R: CommRing](a: R, x: R, y: R) {
+    principal_ideal(a, x) and principal_ideal(a, y) implies principal_ideal(a, x + y)
+}
+
+theorem principal_ideal_absorb_closed[R: CommRing](a: R, r: R, x: R) {
+    principal_ideal(a, x) implies principal_ideal(a, r * x)
+}
+
+theorem principal_ideal_is_ideal_closed[R: CommRing](a: R) {
+    is_ideal(principal_ideal[R](a))
+}
+
+define two_generated_ideal[R: CommRing](a: R, b: R, x: R) -> Bool {
+    exists(r: R, s: R) {
+        x = r * a + s * b
+    }
+}
+
+theorem two_generated_ideal_witness[R: CommRing](a: R, b: R, x: R) {
+    two_generated_ideal(a, b, x) implies exists(r: R, s: R) {
+        x = r * a + s * b
+    }
+}
+
+theorem two_generated_ideal_intro[R: CommRing](a: R, b: R, r: R, s: R) {
+    two_generated_ideal(a, b, r * a + s * b)
+}
+
+theorem two_generated_ideal_contains_left[R: CommRing](a: R, b: R) {
+    two_generated_ideal(a, b, a)
+}
+
+theorem two_generated_ideal_contains_right[R: CommRing](a: R, b: R) {
+    two_generated_ideal(a, b, b)
+}
+
+theorem two_generated_ideal_add_closed[R: CommRing](a: R, b: R, x: R, y: R) {
+    two_generated_ideal(a, b, x) and two_generated_ideal(a, b, y)
+        implies two_generated_ideal(a, b, x + y)
+}
+
+theorem two_generated_ideal_absorb_closed[R: CommRing](a: R, b: R, r: R, x: R) {
+    two_generated_ideal(a, b, x) implies two_generated_ideal(a, b, r * x)
+}
+
+theorem two_generated_ideal_is_ideal[R: CommRing](a: R, b: R) {
+    is_ideal(two_generated_ideal[R](a, b))
+}
+
+theorem two_generated_ideal_subset_of_contains_generators[R: CommRing](
+    a: R, b: R, contains: R -> Bool
+) {
+    is_ideal(contains) and contains(a) and contains(b)
+        implies ideal_subset(two_generated_ideal[R](a, b), contains)
+}
+
+theorem two_generated_ideal_eq_sum_principal[R: CommRing](a: R, b: R) {
+    two_generated_ideal[R](a, b) = ideal_sum[R](principal_ideal[R](a), principal_ideal[R](b))
+}
+
+theorem integer_two_generated_ideal_eq_principal_gcd(a: Int, b: Int) {
+    two_generated_ideal[Int](a, b) = principal_ideal[Int](a.gcd(b))
+}
+
+theorem ideal_quotient_add_well_defined[R: CommRing](
+    i: Ideal[R], a1: R, b1: R, a2: R, b2: R
+) {
+    ideal_quotient_rel(i, a1, b1) and ideal_quotient_rel(i, a2, b2)
+        implies ideal_quotient_rel(i, a1 + a2, b1 + b2)
+}
+
+theorem ideal_quotient_mul_well_defined[R: CommRing](
+    i: Ideal[R], a1: R, b1: R, a2: R, b2: R
+) {
+    ideal_quotient_rel(i, a1, b1) and ideal_quotient_rel(i, a2, b2)
+        implies ideal_quotient_rel(i, a1 * a2, b1 * b2)
+}
+
+theorem point_ideal_is_ideal[R: CommRing](p: PlanePoint[R]) {
+    is_ideal_of_point(p, ideal_of_point(p))
+}
+
+theorem prime_ideal_preimage_as_ideal_contains_eq[R: CommRing, S: CommRing](
+    f: RingHom[R, S], p: PrimeIdeal[S], x: R
+) {
+    prime_ideal_preimage(f, p).as_ideal.contains(x) = ideal_preimage(f, p.as_ideal).contains(x)
+}
+
+theorem prime_ideal_preimage_as_ideal_eq[R: CommRing, S: CommRing](
+    f: RingHom[R, S], p: PrimeIdeal[S]
+) {
+    prime_ideal_preimage(f, p).as_ideal = ideal_preimage(f, p.as_ideal)
+}
+
+define spec_comap[R: CommRing, S: CommRing](f: RingHom[R, S], p: Spec[S]) -> Spec[R] {
+    Spec[R].of_prime(prime_ideal_preimage(f, p.point))
+}
+
+theorem spec_comap_point[R: CommRing, S: CommRing](f: RingHom[R, S], p: Spec[S]) {
+    spec_comap(f, p).point = prime_ideal_preimage(f, p.point)
+}
+
+theorem spec_comap_contains_eq[R: CommRing, S: CommRing](f: RingHom[R, S], p: Spec[S], x: R) {
+    spec_comap(f, p).point.contains(x) = p.point.contains(f.hom(x))
+}
+
+theorem spec_comap_preimage_basic_open[R: CommRing, S: CommRing](f: RingHom[R, S], a: R) {
+    set_preimage(spec_comap(f), Spec[R].basic_open(a)) = Spec[S].basic_open(f.hom(a))
+}
+
+theorem spec_comap_preimage_vanishing[R: CommRing, S: CommRing](f: RingHom[R, S], i: Ideal[R]) {
+    set_preimage(spec_comap(f), Spec[R].vanishing(i)) =
+        Spec[S].vanishing(ideal_image(f, i))
+}
+
+theorem spec_comap_preimage_zariski_closed[R: CommRing, S: CommRing](
+    f: RingHom[R, S], c: Set[Spec[R]]
+) {
+    spec_zariski_closed(c) implies spec_zariski_closed(set_preimage(spec_comap(f), c))
+}
+
+theorem spec_comap_preimage_basic_open_zariski_open[R: CommRing, S: CommRing](
+    f: RingHom[R, S], a: R
+) {
+    spec_zariski_open(set_preimage(spec_comap(f), Spec[R].basic_open(a)))
+}
+
+theorem spec_comap_preimage_zariski_open[R: CommRing, S: CommRing](
+    f: RingHom[R, S], u: Set[Spec[R]]
+) {
+    spec_zariski_open(u) implies spec_zariski_open(set_preimage(spec_comap(f), u))
+}
+
+theorem spec_vanishing_indexed_sum[R: CommRing, I](family: I -> Ideal[R]) {
+    Spec[R].vanishing(ideal_indexed_sum(family)) = indexed_intersection(spec_vanishing_family(family))
+}
+
+define spec_vanishing_compl_family[R: CommRing, I](family: I -> Ideal[R], i: I) -> Set[Spec[R]] {
+    Spec[R].vanishing(family(i)).c
+}
+
+theorem spec_vanishing_indexed_sum_compl[R: CommRing, I](family: I -> Ideal[R]) {
+    Spec[R].vanishing(ideal_indexed_sum(family)).c =
+        indexed_union(spec_vanishing_compl_family(family))
+}
+
+theorem spec_zariski_open_indexed_union_vanishing_compl[R: CommRing, I](family: I -> Ideal[R]) {
+    spec_zariski_open(indexed_union(spec_vanishing_compl_family(family)))
+}
+
+theorem spec_vanishing_union_subset_product[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(i).union(Spec[R].vanishing(j)).subset(
+        Spec[R].vanishing(ideal_product(i, j)))
+}
+
+theorem spec_vanishing_product_subset_union[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(ideal_product(i, j)).subset(
+        Spec[R].vanishing(i).union(Spec[R].vanishing(j)))
+}
+
+theorem spec_vanishing_product_eq_union[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(ideal_product(i, j)) =
+        Spec[R].vanishing(i).union(Spec[R].vanishing(j))
+}
+
+theorem spec_vanishing_product_eq_intersection[R: CommRing](i: Ideal[R], j: Ideal[R]) {
+    Spec[R].vanishing(ideal_product(i, j)) = Spec[R].vanishing(i.intersection(j))
+}
+
+theorem zmod_typeclass_add_eq(n: Nat, x: Zmod[n], y: Zmod[n]) {
+    x + y = zmod_add(n, x, y)
+}
+
+theorem zmod_typeclass_zero_eq(n: Nat) {
+    Zero.0[Zmod[n]] = zmod_zero(n)
+}
+
+theorem zmod_typeclass_neg_eq(n: Nat, x: Zmod[n]) {
+    -x = zmod_neg(n, x)
+}
+
+theorem zmod_typeclass_mul_eq(n: Nat, x: Zmod[n], y: Zmod[n]) {
+    x * y = zmod_mul(n, x, y)
+}
+
+theorem zmod_typeclass_one_eq(n: Nat) {
+    One.1[Zmod[n]] = zmod_one(n)
+}
+
+theorem zmod_typeclass_add_mk(n: Nat, a: Int, b: Int) {
+    zmod_mk(n, a) + zmod_mk(n, b) = zmod_mk(n, a + b)
+}
+
+theorem zmod_typeclass_neg_mk(n: Nat, a: Int) {
+    -zmod_mk(n, a) = zmod_mk(n, -a)
+}
+
+theorem zmod_typeclass_mul_mk(n: Nat, a: Int, b: Int) {
+    zmod_mk(n, a) * zmod_mk(n, b) = zmod_mk(n, a * b)
+}
+
+theorem zmod_typeclass_zero_mk(n: Nat) {
+    Zero.0[Zmod[n]] = zmod_mk(n, Int.0)
+}
+
+theorem zmod_typeclass_one_mk(n: Nat) {
+    One.1[Zmod[n]] = zmod_mk(n, Int.1)
+}
+
+theorem zmod_typeclass_add_associative(n: Nat, x: Zmod[n], y: Zmod[n], z: Zmod[n]) {
+    Add.add(x, Add.add(y, z)) = Add.add(Add.add(x, y), z)
+}
+
+theorem zmod_typeclass_add_commutative(n: Nat, x: Zmod[n], y: Zmod[n]) {
+    Add.add(x, y) = Add.add(y, x)
+}
+
+theorem zmod_typeclass_add_zero_left(n: Nat, x: Zmod[n]) {
+    Add.add(Zero.0[Zmod[n]], x) = x
+}
+
+theorem zmod_typeclass_add_zero_right(n: Nat, x: Zmod[n]) {
+    Add.add(x, Zero.0[Zmod[n]]) = x
+}
+
+theorem zmod_typeclass_add_neg_right(n: Nat, x: Zmod[n]) {
+    Add.add(x, Neg.neg(x)) = Zero.0[Zmod[n]]
+}
+
+theorem zmod_typeclass_mul_associative(n: Nat, x: Zmod[n], y: Zmod[n], z: Zmod[n]) {
+    Mul.mul(x, Mul.mul(y, z)) = Mul.mul(Mul.mul(x, y), z)
+}
+
+theorem zmod_typeclass_mul_commutative(n: Nat, x: Zmod[n], y: Zmod[n]) {
+    Mul.mul(x, y) = Mul.mul(y, x)
+}
+
+theorem zmod_typeclass_mul_one_left(n: Nat, x: Zmod[n]) {
+    Mul.mul(One.1[Zmod[n]], x) = x
+}
+
+theorem zmod_typeclass_mul_one_right(n: Nat, x: Zmod[n]) {
+    Mul.mul(x, One.1[Zmod[n]]) = x
+}
+
+theorem zmod_typeclass_mul_add_left(n: Nat, x: Zmod[n], y: Zmod[n], z: Zmod[n]) {
+    Mul.mul(x, Add.add(y, z)) = Add.add(Mul.mul(x, y), Mul.mul(x, z))
+}
+
+theorem zmod_typeclass_mul_add_right(n: Nat, x: Zmod[n], y: Zmod[n], z: Zmod[n]) {
+    Mul.mul(Add.add(x, y), z) = Add.add(Mul.mul(x, z), Mul.mul(y, z))
+}
+
+theorem zmod_typeclass_mul_zero_right(n: Nat, x: Zmod[n]) {
+    Mul.mul(x, Zero.0[Zmod[n]]) = Zero.0[Zmod[n]]
+}
+
+theorem zmod_typeclass_mul_zero_left(n: Nat, x: Zmod[n]) {
+    Mul.mul(Zero.0[Zmod[n]], x) = Zero.0[Zmod[n]]
+}
+

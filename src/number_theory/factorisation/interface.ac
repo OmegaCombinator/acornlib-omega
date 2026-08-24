@@ -1,0 +1,2946 @@
+theorem divisor_pair_product_values_same_contains(a: Nat, b: Nat, x: Nat) {
+    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
+        divisor_pair_product_values(a, b).contains(x) = divisor_list(a * b).contains(x)
+}
+
+theorem divisor_pair_product_values_permutation_divisor_list(a: Nat, b: Nat) {
+    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
+        is_permutation(divisor_pair_product_values(a, b), divisor_list(a * b))
+}
+
+define dirichlet_convolve_pair_product_sum_hyp(f: Nat -> Nat, g: Nat -> Nat,
+    a: Nat, b: Nat) -> Bool {
+    is_multiplicative_nat_fn(f) and is_multiplicative_nat_fn(g) and
+    Nat.0 < a and Nat.0 < b and a.coprime(b)
+}
+
+theorem dirichlet_convolve_pair_product_sum(f: Nat -> Nat, g: Nat -> Nat,
+    a: Nat, b: Nat) {
+    dirichlet_convolve_pair_product_sum_hyp(f, g, a, b) implies
+        sum(map(divisor_pair_product_values(a, b), dirichlet_term(f, g, a * b))) =
+            dirichlet_convolve(f, g)(a) * dirichlet_convolve(f, g)(b)
+}
+
+theorem dirichlet_convolve_mul_coprime_positive(f: Nat -> Nat, g: Nat -> Nat,
+    a: Nat, b: Nat) {
+    dirichlet_convolve_pair_product_sum_hyp(f, g, a, b) implies
+        dirichlet_convolve(f, g)(a * b) =
+            dirichlet_convolve(f, g)(a) * dirichlet_convolve(f, g)(b)
+}
+
+theorem dirichlet_convolve_multiplicative(f: Nat -> Nat, g: Nat -> Nat) {
+    is_multiplicative_nat_fn(f) and is_multiplicative_nat_fn(g)
+        implies is_multiplicative_nat_fn(dirichlet_convolve(f, g))
+}
+
+theorem nat_tau_mul_coprime_positive(a: Nat, b: Nat) {
+    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
+        nat_tau(a * b) = nat_tau(a) * nat_tau(b)
+}
+
+theorem nat_tau_multiplicative {
+    is_multiplicative_nat_fn(nat_tau)
+}
+
+theorem divisor_pair_mul_row_sum(x: Nat, right: List[Nat]) {
+    sum(map(list_pair_with_left(x, right), divisor_pair_mul)) = x * sum(right)
+}
+
+theorem divisor_pair_product_mul_sum(left: List[Nat], right: List[Nat]) {
+    sum(map(list_pair_product(left, right), divisor_pair_mul)) = sum(left) * sum(right)
+}
+
+theorem divisor_pair_product_values_sum(a: Nat, b: Nat) {
+    sum(divisor_pair_product_values(a, b)) = nat_sigma(a) * nat_sigma(b)
+}
+
+theorem nat_sigma_mul_coprime_positive(a: Nat, b: Nat) {
+    Nat.0 < a and Nat.0 < b and a.coprime(b) implies
+        nat_sigma(a * b) = nat_sigma(a) * nat_sigma(b)
+}
+
+theorem nat_sigma_multiplicative {
+    is_multiplicative_nat_fn(nat_sigma)
+}
+
+theorem divisor_quotient_involution(n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n)
+        implies divisor_quotient(n, divisor_quotient(n, d)) = d
+}
+
+theorem dirichlet_term_flip(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n)
+        implies dirichlet_term(f, g, n)(d) =
+            dirichlet_term(g, f, n)(divisor_quotient(n, d))
+}
+
+define dirichlet_cofactor_term(f: Nat -> Nat, g: Nat -> Nat, n: Nat) -> (Nat -> Nat) {
+    function(d: Nat) { dirichlet_term(g, f, n)(divisor_quotient(n, d)) }
+}
+
+theorem dirichlet_cofactor_term_apply(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
+    dirichlet_cofactor_term(f, g, n)(d) =
+        dirichlet_term(g, f, n)(divisor_quotient(n, d))
+}
+
+theorem dirichlet_term_eq_cofactor_term(f: Nat -> Nat, g: Nat -> Nat, n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n) implies
+        dirichlet_term(f, g, n)(d) = dirichlet_cofactor_term(f, g, n)(d)
+}
+
+define dirichlet_swap_below_pred(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) -> Bool {
+    Nat.0 < n implies
+        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
+        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
+}
+
+theorem dirichlet_swap_below_base(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
+    dirichlet_swap_below_pred(f, g, n, Nat.0)
+}
+
+theorem dirichlet_swap_below_step_yes(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
+    Nat.0 < n and k.suc.divides(n) and
+        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
+        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
+        implies sum(map(divisors_up_to(n, k.suc), dirichlet_term(f, g, n))) =
+            sum(map(divisors_up_to(n, k.suc), dirichlet_cofactor_term(f, g, n)))
+}
+
+theorem dirichlet_swap_below_step_no(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
+    not k.suc.divides(n) and
+        sum(map(divisors_up_to(n, k), dirichlet_term(f, g, n))) =
+        sum(map(divisors_up_to(n, k), dirichlet_cofactor_term(f, g, n)))
+        implies sum(map(divisors_up_to(n, k.suc), dirichlet_term(f, g, n))) =
+            sum(map(divisors_up_to(n, k.suc), dirichlet_cofactor_term(f, g, n)))
+}
+
+theorem dirichlet_swap_below_step(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
+    dirichlet_swap_below_pred(f, g, n, k)
+        implies dirichlet_swap_below_pred(f, g, n, k.suc)
+}
+
+theorem dirichlet_swap_below(f: Nat -> Nat, g: Nat -> Nat, n: Nat, k: Nat) {
+    dirichlet_swap_below_pred(f, g, n, k)
+}
+
+define nat_divisor_quotient_fn(n: Nat) -> (Nat -> Nat) {
+    function(d: Nat) { divisor_quotient(n, d) }
+}
+
+theorem nat_divisor_quotient_fn_apply(n: Nat, d: Nat) {
+    nat_divisor_quotient_fn(n)(d) = divisor_quotient(n, d)
+}
+
+define cofactor_image_list(n: Nat) -> List[Nat] {
+    map(divisor_list(n), nat_divisor_quotient_fn(n))
+}
+
+theorem nat_divisor_quotient_fn_involution(n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n) implies
+        nat_divisor_quotient_fn(n)(nat_divisor_quotient_fn(n)(d)) = d
+}
+
+theorem nat_divisor_quotient_fn_divides(n: Nat, d: Nat) {
+    d.divides(n) implies nat_divisor_quotient_fn(n)(d).divides(n)
+}
+
+theorem dirichlet_convolve_swap_form(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies
+        dirichlet_convolve(f, g)(n) =
+        sum(map(divisor_list(n), dirichlet_cofactor_term(f, g, n)))
+}
+
+theorem dirichlet_term_add_left_eq(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat,
+        n: Nat) {
+    dirichlet_term(arithmetic_fn_add(f, g), h, n) =
+        add_fn(dirichlet_term(f, h, n), dirichlet_term(g, h, n))
+}
+
+theorem dirichlet_term_add_right_eq(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat,
+        n: Nat) {
+    dirichlet_term(f, arithmetic_fn_add(g, h), n) =
+        add_fn(dirichlet_term(f, g, n), dirichlet_term(f, h, n))
+}
+
+theorem dirichlet_convolve_add_left(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
+    dirichlet_convolve(arithmetic_fn_add(f, g), h) =
+        arithmetic_fn_add(dirichlet_convolve(f, h), dirichlet_convolve(g, h))
+}
+
+theorem dirichlet_convolve_add_right(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
+    dirichlet_convolve(f, arithmetic_fn_add(g, h)) =
+        arithmetic_fn_add(dirichlet_convolve(f, g), dirichlet_convolve(f, h))
+}
+
+theorem cofactor_image_list_contains_iff(n: Nat, x: Nat) {
+    Nat.0 < n implies
+        (cofactor_image_list(n).contains(x) = divisor_list(n).contains(x))
+}
+
+theorem cons_unique_of_fresh(head: Nat, tail: List[Nat]) {
+    tail.is_unique and not tail.contains(head)
+        implies List.cons(head, tail).is_unique
+}
+
+define cofactor_image_unique_pred(n: Nat) -> (List[Nat] -> Bool) {
+    function(l: List[Nat]) {
+        l.is_unique and (forall(d: Nat) { l.contains(d) implies d.divides(n) })
+            and Nat.0 < n
+            implies map(l, nat_divisor_quotient_fn(n)).is_unique
+    }
+}
+
+theorem cofactor_image_unique_base(n: Nat) {
+    cofactor_image_unique_pred(n)(List.nil[Nat])
+}
+
+theorem cofactor_image_unique_step(n: Nat, head: Nat, tail: List[Nat]) {
+    cofactor_image_unique_pred(n)(tail)
+        implies cofactor_image_unique_pred(n)(List.cons(head, tail))
+}
+
+theorem cofactor_image_unique_thm(n: Nat, l: List[Nat]) {
+    cofactor_image_unique_pred(n)(l)
+}
+
+theorem cofactor_image_list_is_unique(n: Nat) {
+    Nat.0 < n implies cofactor_image_list(n).is_unique
+}
+
+define cofactor_term_compose_pred(f: Nat -> Nat, g: Nat -> Nat, n: Nat) -> (List[Nat] -> Bool) {
+    function(l: List[Nat]) {
+        map(l, dirichlet_cofactor_term(f, g, n)) =
+            map(map(l, nat_divisor_quotient_fn(n)), dirichlet_term(g, f, n))
+    }
+}
+
+theorem cofactor_term_compose_base(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
+    cofactor_term_compose_pred(f, g, n)(List.nil[Nat])
+}
+
+theorem cofactor_term_compose_step(f: Nat -> Nat, g: Nat -> Nat, n: Nat,
+        head: Nat, tail: List[Nat]) {
+    cofactor_term_compose_pred(f, g, n)(tail)
+        implies cofactor_term_compose_pred(f, g, n)(List.cons(head, tail))
+}
+
+theorem cofactor_term_compose(f: Nat -> Nat, g: Nat -> Nat, n: Nat, l: List[Nat]) {
+    map(l, dirichlet_cofactor_term(f, g, n)) =
+        map(map(l, nat_divisor_quotient_fn(n)), dirichlet_term(g, f, n))
+}
+
+theorem dirichlet_convolve_comm_positive(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies dirichlet_convolve(f, g)(n) = dirichlet_convolve(g, f)(n)
+}
+
+theorem dirichlet_convolve_comm(f: Nat -> Nat, g: Nat -> Nat) {
+    dirichlet_convolve(f, g) = dirichlet_convolve(g, f)
+}
+
+theorem sum_cons_nat(head: Nat, tail: List[Nat]) {
+    sum(List.cons(head, tail)) = head + sum(tail)
+}
+
+theorem divisor_pair_product_divides(n: Nat, d: Nat, e: Nat) {
+    d.divides(n) and e.divides(divisor_quotient(n, d)) implies (d * e).divides(n)
+}
+
+theorem divisor_quotient_pair_reassoc(n: Nat, d: Nat, e: Nat) {
+    Nat.0 < n and d.divides(n) and e.divides(divisor_quotient(n, d)) implies
+        divisor_quotient(n, d * e) = divisor_quotient(divisor_quotient(n, d), e)
+}
+
+theorem divisor_pair_product_in_divisor_list(n: Nat, d: Nat, e: Nat) {
+    Nat.0 < n and divisor_list(n).contains(d) and
+        divisor_list(divisor_quotient(n, d)).contains(e)
+        implies divisor_list(n).contains(d * e)
+}
+
+define right_divisor_pair_block(n: Nat, d: Nat) -> List[Pair[Nat, Nat]] {
+    map(divisor_list(divisor_quotient(n, d)), function(e: Nat) {
+        Pair.new(d, e)
+    })
+}
+
+define right_divisor_pair_list_from(n: Nat, outer: List[Nat]) -> List[Pair[Nat, Nat]] {
+    match outer {
+        List.nil {
+            List.nil[Pair[Nat, Nat]]
+        }
+        List.cons(d, tail) {
+            right_divisor_pair_block(n, d) + right_divisor_pair_list_from(n, tail)
+        }
+    }
+}
+
+define right_divisor_pair_list(n: Nat) -> List[Pair[Nat, Nat]] {
+    right_divisor_pair_list_from(n, divisor_list(n))
+}
+
+define divisor_pair_assoc_term(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat, n: Nat) ->
+        (Pair[Nat, Nat] -> Nat) {
+    function(p: Pair[Nat, Nat]) {
+        f(p.first) * g(p.second) * h(divisor_quotient(n, p.first * p.second))
+    }
+}
+
+theorem right_divisor_pair_block_contains(n: Nat, d: Nat, e: Nat) {
+    divisor_list(divisor_quotient(n, d)).contains(e)
+        implies right_divisor_pair_block(n, d).contains(Pair.new(d, e))
+}
+
+theorem right_divisor_pair_block_contains_implies(n: Nat, d: Nat, p: Pair[Nat, Nat]) {
+    right_divisor_pair_block(n, d).contains(p) implies
+        p.first = d and divisor_list(divisor_quotient(n, d)).contains(p.second)
+}
+
+theorem right_divisor_pair_block_contains_iff(n: Nat, d: Nat, p: Pair[Nat, Nat]) {
+    right_divisor_pair_block(n, d).contains(p) =
+        (p.first = d and divisor_list(divisor_quotient(n, d)).contains(p.second))
+}
+
+theorem right_divisor_pair_list_from_contains_head(n: Nat, head: Nat, tail: List[Nat],
+        e: Nat) {
+    divisor_list(divisor_quotient(n, head)).contains(e) implies
+        right_divisor_pair_list_from(n, List.cons(head, tail)).contains(Pair.new(head, e))
+}
+
+theorem right_divisor_pair_list_from_contains_tail(n: Nat, head: Nat, tail: List[Nat],
+        p: Pair[Nat, Nat]) {
+    right_divisor_pair_list_from(n, tail).contains(p) implies
+        right_divisor_pair_list_from(n, List.cons(head, tail)).contains(p)
+}
+
+theorem right_divisor_pair_list_from_head_contains_implies(n: Nat, head: Nat,
+        tail: List[Nat], p: Pair[Nat, Nat]) {
+    right_divisor_pair_block(n, head).contains(p) implies
+        List.cons(head, tail).contains(p.first) and
+            divisor_list(divisor_quotient(n, p.first)).contains(p.second)
+}
+
+theorem right_divisor_pair_list_from_divisors_up_to_contains(n: Nat, k: Nat,
+        d: Nat, e: Nat) {
+    divisors_up_to(n, k).contains(d) and
+        divisor_list(divisor_quotient(n, d)).contains(e) implies
+        right_divisor_pair_list_from(n, divisors_up_to(n, k)).contains(Pair.new(d, e))
+}
+
+theorem right_divisor_pair_list_contains(n: Nat, d: Nat, e: Nat) {
+    divisor_list(n).contains(d) and divisor_list(divisor_quotient(n, d)).contains(e)
+        implies right_divisor_pair_list(n).contains(Pair.new(d, e))
+}
+
+theorem right_divisor_pair_list_from_divisors_up_to_contains_implies(n: Nat, k: Nat,
+        p: Pair[Nat, Nat]) {
+    right_divisor_pair_list_from(n, divisors_up_to(n, k)).contains(p) implies
+        divisors_up_to(n, k).contains(p.first) and
+            divisor_list(divisor_quotient(n, p.first)).contains(p.second)
+}
+
+theorem right_divisor_pair_list_contains_implies(n: Nat, p: Pair[Nat, Nat]) {
+    right_divisor_pair_list(n).contains(p) implies
+        divisor_list(n).contains(p.first) and
+            divisor_list(divisor_quotient(n, p.first)).contains(p.second)
+}
+
+theorem right_divisor_pair_list_contains_iff(n: Nat, d: Nat, e: Nat) {
+    right_divisor_pair_list(n).contains(Pair.new(d, e)) =
+        (divisor_list(n).contains(d) and divisor_list(divisor_quotient(n, d)).contains(e))
+}
+
+define right_divisor_pair_block_from(n: Nat, d: Nat, inner: List[Nat]) -> List[Pair[Nat, Nat]] {
+    map(inner, function(e: Nat) {
+        Pair.new(d, e)
+    })
+}
+
+define right_nested_inner_term(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat, n: Nat,
+        d: Nat) -> (Nat -> Nat) {
+    function(e: Nat) {
+        f(d) * dirichlet_term(g, h, divisor_quotient(n, d))(e)
+    }
+}
+
+theorem right_divisor_pair_block_eq_from(n: Nat, d: Nat) {
+    right_divisor_pair_block(n, d) =
+        right_divisor_pair_block_from(n, d, divisor_list(divisor_quotient(n, d)))
+}
+
+theorem right_nested_inner_term_eq_pair_assoc_term(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, d: Nat, e: Nat) {
+    Nat.0 < n and d.divides(n) and e.divides(divisor_quotient(n, d)) implies
+        right_nested_inner_term(f, g, h, n, d)(e) =
+            divisor_pair_assoc_term(f, g, h, n)(Pair.new(d, e))
+}
+
+theorem right_nested_inner_head_term_eq_pair_assoc_term(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, d: Nat, e: Nat) {
+    Nat.0 < n and d.divides(n) and e.divides(divisor_quotient(n, d)) implies
+        f(d) * dirichlet_term(g, h, divisor_quotient(n, d))(e) =
+            divisor_pair_assoc_term(f, g, h, n)(Pair.new(d, e))
+}
+
+theorem right_nested_inner_sum_divisors_up_to_eq_pair_block_from_sum(f: Nat -> Nat,
+        g: Nat -> Nat, h: Nat -> Nat, n: Nat, d: Nat, k: Nat) {
+    Nat.0 < n and d.divides(n) implies
+        f(d) * sum(map(divisors_up_to(divisor_quotient(n, d), k),
+            dirichlet_term(g, h, divisor_quotient(n, d)))) =
+            sum(map(right_divisor_pair_block_from(n, d,
+                    divisors_up_to(divisor_quotient(n, d), k)),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem right_nested_inner_sum_eq_pair_block_from_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, d: Nat) {
+    Nat.0 < n and d.divides(n) implies
+        f(d) * sum(map(divisor_list(divisor_quotient(n, d)),
+            dirichlet_term(g, h, divisor_quotient(n, d)))) =
+            sum(map(right_divisor_pair_block_from(n, d, divisor_list(divisor_quotient(n, d))),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem right_nested_outer_term_eq_pair_block_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, d: Nat) {
+    Nat.0 < n and divisor_list(n).contains(d) implies
+        dirichlet_term(f, dirichlet_convolve(g, h), n)(d) =
+            sum(map(right_divisor_pair_block(n, d), divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem right_nested_outer_sum_divisors_up_to_eq_pair_list_from_sum(f: Nat -> Nat,
+        g: Nat -> Nat, h: Nat -> Nat, n: Nat, k: Nat) {
+    Nat.0 < n implies
+        sum(map(divisors_up_to(n, k), dirichlet_term(f, dirichlet_convolve(g, h), n))) =
+            sum(map(right_divisor_pair_list_from(n, divisors_up_to(n, k)),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem right_nested_convolve_eq_right_pair_list_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies
+        dirichlet_convolve(f, dirichlet_convolve(g, h))(n) =
+            sum(map(right_divisor_pair_list(n), divisor_pair_assoc_term(f, g, h, n)))
+}
+
+define left_divisor_pair_of(r: Nat) -> (Nat -> Pair[Nat, Nat]) {
+    function(d: Nat) {
+        Pair.new(d, divisor_quotient(r, d))
+    }
+}
+
+define left_divisor_pair_block(n: Nat, r: Nat) -> List[Pair[Nat, Nat]] {
+    map(divisor_list(r), left_divisor_pair_of(r))
+}
+
+define left_divisor_pair_list_from(n: Nat, outer: List[Nat]) -> List[Pair[Nat, Nat]] {
+    match outer {
+        List.nil {
+            List.nil[Pair[Nat, Nat]]
+        }
+        List.cons(r, tail) {
+            left_divisor_pair_block(n, r) + left_divisor_pair_list_from(n, tail)
+        }
+    }
+}
+
+define left_divisor_pair_list(n: Nat) -> List[Pair[Nat, Nat]] {
+    left_divisor_pair_list_from(n, divisor_list(n))
+}
+
+theorem left_divisor_pair_block_contains(n: Nat, r: Nat, d: Nat) {
+    divisor_list(r).contains(d) implies
+        left_divisor_pair_block(n, r).contains(Pair.new(d, divisor_quotient(r, d)))
+}
+
+theorem left_divisor_pair_block_contains_implies(n: Nat, r: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies
+        divisor_list(r).contains(p.first) and p.second = divisor_quotient(r, p.first)
+}
+
+theorem left_divisor_pair_block_contains_implies_first(n: Nat, r: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies divisor_list(r).contains(p.first)
+}
+
+theorem left_divisor_pair_block_contains_implies_second(n: Nat, r: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies p.second = divisor_quotient(r, p.first)
+}
+
+theorem left_divisor_pair_block_contains_iff(n: Nat, r: Nat, d: Nat, e: Nat) {
+    left_divisor_pair_block(n, r).contains(Pair.new(d, e)) =
+        (divisor_list(r).contains(d) and e = divisor_quotient(r, d))
+}
+
+theorem left_divisor_pair_block_contains_implies_product(n: Nat, r: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies p.first * p.second = r
+}
+
+theorem left_divisor_pair_block_contains_implies_inner_product(n: Nat, r: Nat,
+        p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies
+        divisor_list(p.first * p.second).contains(p.first)
+}
+
+theorem left_divisor_pair_block_contains_implies_second_product(n: Nat, r: Nat,
+        p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, r).contains(p) implies
+        p.second = divisor_quotient(p.first * p.second, p.first)
+}
+
+theorem left_divisor_pair_list_from_contains_head(n: Nat, head: Nat, tail: List[Nat],
+        d: Nat) {
+    divisor_list(head).contains(d) implies
+        left_divisor_pair_list_from(n, List.cons(head, tail)).contains(
+            Pair.new(d, divisor_quotient(head, d)))
+}
+
+theorem left_divisor_pair_list_from_contains_tail(n: Nat, head: Nat, tail: List[Nat],
+        p: Pair[Nat, Nat]) {
+    left_divisor_pair_list_from(n, tail).contains(p) implies
+        left_divisor_pair_list_from(n, List.cons(head, tail)).contains(p)
+}
+
+theorem left_divisor_pair_list_from_head_contains_implies_product(n: Nat, head: Nat,
+        tail: List[Nat], p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, head).contains(p) implies
+        List.cons(head, tail).contains(p.first * p.second)
+}
+
+theorem left_divisor_pair_list_from_head_contains_implies_first_product(n: Nat,
+        head: Nat, tail: List[Nat], p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, head).contains(p) implies
+        divisor_list(p.first * p.second).contains(p.first)
+}
+
+theorem left_divisor_pair_list_from_head_contains_implies_second_product(n: Nat,
+        head: Nat, tail: List[Nat], p: Pair[Nat, Nat]) {
+    left_divisor_pair_block(n, head).contains(p) implies
+        p.second = divisor_quotient(p.first * p.second, p.first)
+}
+
+theorem left_divisor_pair_list_from_divisors_up_to_contains(n: Nat, k: Nat,
+        r: Nat, d: Nat) {
+    divisors_up_to(n, k).contains(r) and divisor_list(r).contains(d) implies
+        left_divisor_pair_list_from(n, divisors_up_to(n, k)).contains(
+            Pair.new(d, divisor_quotient(r, d)))
+}
+
+theorem left_divisor_pair_list_contains(n: Nat, r: Nat, d: Nat) {
+    divisor_list(n).contains(r) and divisor_list(r).contains(d) implies
+        left_divisor_pair_list(n).contains(Pair.new(d, divisor_quotient(r, d)))
+}
+
+theorem left_divisor_pair_list_from_divisors_up_to_contains_implies(n: Nat, k: Nat,
+        p: Pair[Nat, Nat]) {
+    left_divisor_pair_list_from(n, divisors_up_to(n, k)).contains(p) implies
+        divisors_up_to(n, k).contains(p.first * p.second) and
+            divisor_list(p.first * p.second).contains(p.first) and
+            p.second = divisor_quotient(p.first * p.second, p.first)
+}
+
+theorem left_divisor_pair_list_contains_implies(n: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_list(n).contains(p) implies
+        divisor_list(n).contains(p.first * p.second) and
+            divisor_list(p.first * p.second).contains(p.first) and
+            p.second = divisor_quotient(p.first * p.second, p.first)
+}
+
+theorem left_pair_membership_implies_right_membership(n: Nat, p: Pair[Nat, Nat]) {
+    left_divisor_pair_list(n).contains(p) implies right_divisor_pair_list(n).contains(p)
+}
+
+theorem right_pair_membership_implies_left_membership(n: Nat, p: Pair[Nat, Nat]) {
+    right_divisor_pair_list(n).contains(p) implies left_divisor_pair_list(n).contains(p)
+}
+
+theorem right_left_pair_lists_same_contains(n: Nat, p: Pair[Nat, Nat]) {
+    right_divisor_pair_list(n).contains(p) = left_divisor_pair_list(n).contains(p)
+}
+
+define left_divisor_pair_block_from(n: Nat, r: Nat, inner: List[Nat]) -> List[Pair[Nat, Nat]] {
+    map(inner, left_divisor_pair_of(r))
+}
+
+theorem left_divisor_pair_block_eq_from(n: Nat, r: Nat) {
+    left_divisor_pair_block(n, r) = left_divisor_pair_block_from(n, r, divisor_list(r))
+}
+
+theorem left_divisor_pair_block_from_cons(n: Nat, r: Nat, head: Nat, tail: List[Nat]) {
+    left_divisor_pair_block_from(n, r, List.cons(head, tail)) =
+        List.cons(Pair.new(head, divisor_quotient(r, head)),
+            left_divisor_pair_block_from(n, r, tail))
+}
+
+theorem left_nested_inner_head_term_eq_pair_assoc_term(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, r: Nat, d: Nat) {
+    Nat.0 < n and r.divides(n) and d.divides(r) implies
+        dirichlet_term(f, g, r)(d) * h(divisor_quotient(n, r)) =
+            divisor_pair_assoc_term(f, g, h, n)(Pair.new(d, divisor_quotient(r, d)))
+}
+
+theorem left_nested_inner_sum_divisors_up_to_eq_pair_block_from_sum(f: Nat -> Nat,
+        g: Nat -> Nat, h: Nat -> Nat, n: Nat, r: Nat, k: Nat) {
+    Nat.0 < n and r.divides(n) implies
+        sum(map(divisors_up_to(r, k), dirichlet_term(f, g, r))) * h(divisor_quotient(n, r)) =
+            sum(map(left_divisor_pair_block_from(n, r, divisors_up_to(r, k)),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem left_nested_inner_sum_eq_pair_block_from_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, r: Nat) {
+    Nat.0 < n and r.divides(n) implies
+        sum(map(divisor_list(r), dirichlet_term(f, g, r))) * h(divisor_quotient(n, r)) =
+            sum(map(left_divisor_pair_block_from(n, r, divisor_list(r)),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem left_nested_outer_term_eq_pair_block_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat, r: Nat) {
+    Nat.0 < n and divisor_list(n).contains(r) implies
+        dirichlet_term(dirichlet_convolve(f, g), h, n)(r) =
+            sum(map(left_divisor_pair_block(n, r), divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem left_nested_outer_sum_divisors_up_to_eq_pair_list_from_sum(f: Nat -> Nat,
+        g: Nat -> Nat, h: Nat -> Nat, n: Nat, k: Nat) {
+    Nat.0 < n implies
+        sum(map(divisors_up_to(n, k), dirichlet_term(dirichlet_convolve(f, g), h, n))) =
+            sum(map(left_divisor_pair_list_from(n, divisors_up_to(n, k)),
+                divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem left_nested_convolve_eq_left_pair_list_sum(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies
+        dirichlet_convolve(dirichlet_convolve(f, g), h)(n) =
+            sum(map(left_divisor_pair_list(n), divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem right_divisor_pair_block_unique(n: Nat, d: Nat) {
+    right_divisor_pair_block(n, d).is_unique
+}
+
+theorem right_divisor_pair_list_from_divisors_up_to_unique(n: Nat, k: Nat) {
+    right_divisor_pair_list_from(n, divisors_up_to(n, k)).is_unique
+}
+
+theorem right_divisor_pair_list_unique(n: Nat) {
+    right_divisor_pair_list(n).is_unique
+}
+
+theorem left_divisor_pair_block_unique(n: Nat, r: Nat) {
+    left_divisor_pair_block(n, r).is_unique
+}
+
+theorem left_divisor_pair_list_from_divisors_up_to_unique(n: Nat, k: Nat) {
+    left_divisor_pair_list_from(n, divisors_up_to(n, k)).is_unique
+}
+
+theorem left_divisor_pair_list_unique(n: Nat) {
+    left_divisor_pair_list(n).is_unique
+}
+
+theorem right_left_pair_lists_unique(n: Nat) {
+    right_divisor_pair_list(n).is_unique and left_divisor_pair_list(n).is_unique
+}
+
+theorem right_left_pair_list_assoc_term_sums_eq(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat) {
+    sum(map(right_divisor_pair_list(n), divisor_pair_assoc_term(f, g, h, n))) =
+        sum(map(left_divisor_pair_list(n), divisor_pair_assoc_term(f, g, h, n)))
+}
+
+theorem dirichlet_convolve_assoc_positive(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies
+        dirichlet_convolve(f, dirichlet_convolve(g, h))(n) =
+            dirichlet_convolve(dirichlet_convolve(f, g), h)(n)
+}
+
+theorem dirichlet_convolve_assoc(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
+    dirichlet_convolve(f, dirichlet_convolve(g, h)) =
+        dirichlet_convolve(dirichlet_convolve(f, g), h)
+}
+
+theorem dirichlet_convolve_comm_law(f: Nat -> Nat, g: Nat -> Nat) {
+    dirichlet_convolve(f, g) = dirichlet_convolve(g, f)
+}
+
+theorem dirichlet_convolve_comm_pointwise(f: Nat -> Nat, g: Nat -> Nat, n: Nat) {
+    dirichlet_convolve(f, g)(n) = dirichlet_convolve(g, f)(n)
+}
+
+theorem dirichlet_convolve_assoc_law(f: Nat -> Nat, g: Nat -> Nat, h: Nat -> Nat) {
+    dirichlet_convolve(f, dirichlet_convolve(g, h)) =
+        dirichlet_convolve(dirichlet_convolve(f, g), h)
+}
+
+theorem dirichlet_convolve_assoc_pointwise(f: Nat -> Nat, g: Nat -> Nat,
+        h: Nat -> Nat, n: Nat) {
+    dirichlet_convolve(f, dirichlet_convolve(g, h))(n) =
+        dirichlet_convolve(dirichlet_convolve(f, g), h)(n)
+}
+
+theorem dirichlet_convolve_unit_right_law(f: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies dirichlet_convolve(f, nat_dirichlet_unit_fn)(n) = f(n)
+}
+
+theorem dirichlet_convolve_unit_left_law(f: Nat -> Nat, n: Nat) {
+    Nat.0 < n implies dirichlet_convolve(nat_dirichlet_unit_fn, f)(n) = f(n)
+}
+
+theorem dirichlet_convolve_unit_right_fn(f: Nat -> Nat) {
+    f(Nat.0) = Nat.0 implies dirichlet_convolve(f, nat_dirichlet_unit_fn) = f
+}
+
+theorem dirichlet_convolve_unit_left_fn(f: Nat -> Nat) {
+    f(Nat.0) = Nat.0 implies dirichlet_convolve(nat_dirichlet_unit_fn, f) = f
+}
+
+theorem dirichlet_convolve_multiplicative_law(f: Nat -> Nat, g: Nat -> Nat) {
+    is_multiplicative_nat_fn(f) and is_multiplicative_nat_fn(g)
+        implies is_multiplicative_nat_fn(dirichlet_convolve(f, g))
+}
+
+theorem dirichlet_convolve_unit_multiplicative(f: Nat -> Nat) {
+    is_multiplicative_nat_fn(f) implies
+        is_multiplicative_nat_fn(dirichlet_convolve(f, nat_dirichlet_unit_fn))
+}
+
+theorem lcm_gcd_product(a: Nat, b: Nat) {
+    a.gcd(b) * a.lcm(b) = a * b
+}
+
+theorem lcm_common_multiple_left(a: Nat, b: Nat) {
+    a.divides(a.lcm(b))
+}
+
+theorem lcm_common_multiple_right(a: Nat, b: Nat) {
+    b.divides(a.lcm(b))
+}
+
+theorem lcm_divides_common_multiple(a: Nat, b: Nat, c: Nat) {
+    a.divides(c) and b.divides(c) implies a.lcm(b).divides(c)
+}
+
+theorem lcm_eq_mul_of_gcd_one(a: Nat, b: Nat) {
+    a.gcd(b) = Nat.1 implies a.lcm(b) = a * b
+}
+
+theorem gcd_one_of_lcm_eq_mul(a: Nat, b: Nat) {
+    a != Nat.0 and b != Nat.0 and a.lcm(b) = a * b implies a.gcd(b) = Nat.1
+}
+
+theorem lcm_eq_mul_iff_gcd_one(a: Nat, b: Nat) {
+    a != Nat.0 and b != Nat.0 implies ((a.gcd(b) = Nat.1) = (a.lcm(b) = a * b))
+}
+
+theorem gcd_lcm_distrib_left(a: Nat, b: Nat, c: Nat) {
+    (a.gcd(b)).lcm(a.gcd(c)).divides(a.gcd(b.lcm(c)))
+}
+
+theorem prod_divides(a1: Nat, a2: Nat, b1: Nat, b2: Nat) {
+    a1.divides(b1) and a2.divides(b2) implies (a1 * a2).divides(b1 * b2)
+}
+
+theorem coprime_mul_divides(p: Nat, q: Nat, m: Nat) {
+    p.coprime(q) and p.divides(m) and q.divides(m) implies (p * q).divides(m)
+}
+
+theorem div_of_divides_mul(d: Nat, x: Nat, y: Nat) {
+    d != Nat.0 and d.divides(x * y) implies (d.div(d.gcd(x))).divides(y)
+}
+
+theorem gcd_coprime_factor(a: Nat, g: Nat, t: Nat) {
+    a.coprime(g) implies a.gcd(g * t) = a.gcd(t)
+}
+
+theorem gcd_mul_coprime(a: Nat, x: Nat, y: Nat) {
+    x.coprime(y) implies a.gcd(x * y) = a.gcd(x) * a.gcd(y)
+}
+
+theorem gcd_assoc(a: Nat, x: Nat, y: Nat) {
+    (a.gcd(x)).gcd(a.gcd(y)) = a.gcd(x.gcd(y))
+}
+
+theorem lcm_cofactor(x: Nat, y: Nat, xp: Nat, yp: Nat) {
+    x.gcd(y) != Nat.0 and x.gcd(y) * xp = x and x.gcd(y) * yp = y implies
+        x.gcd(y) * xp * yp = x.lcm(y)
+}
+
+theorem gcd_lcm_identity(a: Nat, x: Nat, y: Nat) {
+    a.gcd(x) * a.gcd(y) = a.gcd(x.gcd(y)) * a.gcd(x.lcm(y))
+}
+
+theorem gcd_lcm_distrib_right(a: Nat, b: Nat, c: Nat) {
+    a.gcd(b.lcm(c)).divides((a.gcd(b)).lcm(a.gcd(c)))
+}
+
+theorem gcd_lcm_distrib(a: Nat, b: Nat, c: Nat) {
+    a.gcd(b.lcm(c)) = (a.gcd(b)).lcm(a.gcd(c))
+}
+
+define prime_factor_count_upto(p: Nat, n: Nat) -> Nat {
+    match n {
+        Nat.zero {
+            Nat.0
+        }
+        Nat.suc(k) {
+            prime_factor_count_upto(p, k) + count_prime_factor(p, n)
+        }
+    }
+}
+
+theorem prime_factor_count_upto_zero(p: Nat) {
+    prime_factor_count_upto(p, Nat.0) = Nat.0
+}
+
+theorem prime_factor_count_upto_step(p: Nat, n: Nat) {
+    prime_factor_count_upto(p, n.suc) =
+        prime_factor_count_upto(p, n) + count_prime_factor(p, n.suc)
+}
+
+theorem factorial_ne_zero(n: Nat) {
+    n.factorial != Nat.0
+}
+
+theorem legendre_factorial(p: Nat, n: Nat) {
+    count_prime_factor(p, n.factorial) = prime_factor_count_upto(p, n)
+}
+
+theorem mul_ne_zero(a: Nat, b: Nat) {
+    a != Nat.0 and b != Nat.0 implies a * b != Nat.0
+}
+
+theorem binom_add_ne_zero(a: Nat, b: Nat) {
+    (a + b).binom(a) != Nat.0
+}
+
+theorem legendre_binom_factorial(p: Nat, a: Nat, b: Nat) {
+    count_prime_factor(p, (a + b).binom(a)) +
+        count_prime_factor(p, a.factorial) +
+        count_prime_factor(p, b.factorial) =
+        count_prime_factor(p, (a + b).factorial)
+}
+
+theorem legendre_binom(p: Nat, a: Nat, b: Nat) {
+    count_prime_factor(p, (a + b).binom(a)) +
+        prime_factor_count_upto(p, a) +
+        prime_factor_count_upto(p, b) =
+        prime_factor_count_upto(p, a + b)
+}
+
+theorem one_lte_iff_ne_zero(x: Nat) {
+    (Nat.1 <= x) = (x != Nat.0)
+}
+
+theorem prime_divides_iff_count_ne_zero(p: Nat, n: Nat) {
+    p.is_prime and n != Nat.0 implies (
+        p.divides(n) = (count_prime_factor(p, n) != Nat.0)
+    )
+}
+
+theorem prime_divides_binom_iff(p: Nat, a: Nat, b: Nat) {
+    p.is_prime implies (
+        p.divides((a + b).binom(a)) =
+            (count_prime_factor(p, (a + b).binom(a)) != Nat.0)
+    )
+}
+
+theorem add_shuffle(a: Nat, b: Nat, c: Nat) {
+    a.suc + (b + c) = a + b + (c + Nat.1)
+}
+
+theorem legendre_recurrence(p: Nat, n: Nat) {
+    p.is_prime implies
+        prime_factor_count_upto(p, n) =
+            n.div(p) + prime_factor_count_upto(p, n.div(p))
+}
+
+theorem legendre_factorial_recurrence(p: Nat, n: Nat) {
+    p.is_prime implies
+        count_prime_factor(p, n.factorial) =
+            n.div(p) + count_prime_factor(p, n.div(p).factorial)
+}
+
+define legendre_digit_sum_at(p: Nat, n: Nat) -> Bool {
+    p * count_prime_factor(p, n.factorial) + digit_sum(p, n) =
+        n + count_prime_factor(p, n.factorial)
+}
+
+theorem legendre_digit_sum_step_algebra(p: Nat, q: Nat, r: Nat, v: Nat, s: Nat) {
+    p * v + s = q + v implies
+        p * (q + v) + (r + s) = q * p + r + (q + v)
+}
+
+theorem legendre_digit_sum(p: Nat, n: Nat) {
+    p.is_prime implies legendre_digit_sum_at(p, n)
+}
+
+theorem kummer_add_shuffle_left(x: Nat, y: Nat, z: Nat, w: Nat) {
+    (x + y) + (z + w) = x + z + w + y
+}
+
+theorem kummer_add_shuffle_right(vc: Nat, a: Nat, va: Nat, b: Nat, vb: Nat) {
+    vc + (a + va) + (b + vb) = a + b + (vc + va + vb)
+}
+
+theorem kummer_left_carry_algebra(
+    p: Nat, vc: Nat, va: Nat, vb: Nat, vab: Nat, sab: Nat
+) {
+    vc + va + vb = vab implies
+        (p * vc + sab) + (p * va + p * vb) = p * vab + sab
+}
+
+theorem kummer_right_carry_algebra(
+    p: Nat, a: Nat, b: Nat, vc: Nat, va: Nat, vb: Nat, vab: Nat, sa: Nat, sb: Nat
+) {
+    vc + va + vb = vab and
+    p * va + sa = a + va and
+    p * vb + sb = b + vb implies
+        a + b + vab = (vc + sa + sb) + (p * va + p * vb)
+}
+
+theorem kummer_digit_sum_of_legendre_digit_sum(
+    p: Nat, a: Nat, b: Nat
+) {
+    legendre_digit_sum_at(p, a) and
+    legendre_digit_sum_at(p, b) and
+    legendre_digit_sum_at(p, a + b)
+        implies
+    p * count_prime_factor(p, (a + b).binom(a)) + digit_sum(p, a + b) =
+        count_prime_factor(p, (a + b).binom(a)) + digit_sum(p, a) + digit_sum(p, b)
+}
+
+theorem kummer_digit_sum(p: Nat, a: Nat, b: Nat) {
+    p.is_prime implies
+        p * count_prime_factor(p, (a + b).binom(a)) + digit_sum(p, a + b) =
+            count_prime_factor(p, (a + b).binom(a)) + digit_sum(p, a) + digit_sum(p, b)
+}
+
+define central_binom(n: Nat) -> Nat {
+    (n + n).binom(n)
+}
+
+define falling_product_factor(n: Nat, i: Nat) -> Nat {
+    n - i
+}
+
+define falling_product_factor_count(p: Nat, n: Nat, i: Nat) -> Nat {
+    count_prime_factor(p, falling_product_factor(n, i))
+}
+
+define falling_product_factors(n: Nat, k: Nat) -> List[Nat] {
+    map(k.suc.range, falling_product_factor(n))
+}
+
+define falling_product_factor_counts(p: Nat, n: Nat, k: Nat) -> List[Nat] {
+    map(k.suc.range, falling_product_factor_count(p, n))
+}
+
+define falling_product(n: Nat, k: Nat) -> Nat {
+    match k {
+        Nat.zero {
+            n
+        }
+        Nat.suc(j) {
+            falling_product(n, j) * (n - k)
+        }
+    }
+}
+
+define falling_product_prime_count_sum(p: Nat, n: Nat, k: Nat) -> Nat {
+    match k {
+        Nat.zero {
+            count_prime_factor(p, n)
+        }
+        Nat.suc(j) {
+            falling_product_prime_count_sum(p, n, j) +
+                count_prime_factor(p, n - k)
+        }
+    }
+}
+
+theorem central_binom_eq(n: Nat) {
+    central_binom(n) = (n + n).binom(n)
+}
+
+theorem central_binom_zero {
+    central_binom(Nat.0) = Nat.1
+}
+
+theorem central_binom_one {
+    central_binom(Nat.1) = Nat.2
+}
+
+theorem central_binom_ne_zero(n: Nat) {
+    central_binom(n) != Nat.0
+}
+
+theorem falling_product_zero(n: Nat) {
+    falling_product(n, Nat.0) = n
+}
+
+theorem falling_product_suc(n: Nat, k: Nat) {
+    falling_product(n, k.suc) = falling_product(n, k) * (n - k.suc)
+}
+
+theorem falling_product_factors_zero(n: Nat) {
+    falling_product_factors(n, Nat.0) = List.singleton(n)
+}
+
+theorem falling_product_factors_suc(n: Nat, k: Nat) {
+    falling_product_factors(n, k.suc) =
+        falling_product_factors(n, k).append(n - k.suc)
+}
+
+theorem falling_product_factor_counts_zero(p: Nat, n: Nat) {
+    falling_product_factor_counts(p, n, Nat.0) =
+        List.singleton(count_prime_factor(p, n))
+}
+
+theorem falling_product_factor_counts_suc(p: Nat, n: Nat, k: Nat) {
+    falling_product_factor_counts(p, n, k.suc) =
+        falling_product_factor_counts(p, n, k).append(count_prime_factor(p, n - k.suc))
+}
+
+theorem falling_product_prime_count_sum_zero(p: Nat, n: Nat) {
+    falling_product_prime_count_sum(p, n, Nat.0) = count_prime_factor(p, n)
+}
+
+theorem falling_product_prime_count_sum_suc(p: Nat, n: Nat, k: Nat) {
+    falling_product_prime_count_sum(p, n, k.suc) =
+        falling_product_prime_count_sum(p, n, k) + count_prime_factor(p, n - k.suc)
+}
+
+theorem falling_product_eq_product_factors(n: Nat, k: Nat) {
+    falling_product(n, k) = product[Nat](falling_product_factors(n, k))
+}
+
+theorem falling_product_prime_count_sum_eq_sum_factor_counts(p: Nat, n: Nat, k: Nat) {
+    falling_product_prime_count_sum(p, n, k) =
+        sum[Nat](falling_product_factor_counts(p, n, k))
+}
+
+theorem falling_product_nonzero(n: Nat, k: Nat) {
+    k < n implies falling_product(n, k) != Nat.0
+}
+
+theorem count_prime_factor_falling_product(p: Nat, n: Nat, k: Nat) {
+    k < n implies
+        count_prime_factor(p, falling_product(n, k)) =
+        falling_product_prime_count_sum(p, n, k)
+}
+
+theorem falling_product_one(n: Nat) {
+    falling_product(n, Nat.1) = n * (n - Nat.1)
+}
+
+theorem falling_product_two(n: Nat) {
+    falling_product(n, Nat.2) = n * (n - Nat.1) * (n - Nat.2)
+}
+
+theorem falling_product_factors_one(n: Nat) {
+    falling_product_factors(n, Nat.1) =
+        List.cons(n, List.cons(n - Nat.1, List.nil[Nat]))
+}
+
+theorem falling_product_factors_two(n: Nat) {
+    falling_product_factors(n, Nat.2) =
+        List.cons(n, List.cons(n - Nat.1, List.cons(n - Nat.2, List.nil[Nat])))
+}
+
+theorem falling_product_factor_counts_one(p: Nat, n: Nat) {
+    falling_product_factor_counts(p, n, Nat.1) =
+        List.cons(count_prime_factor(p, n),
+            List.cons(count_prime_factor(p, n - Nat.1), List.nil[Nat]))
+}
+
+theorem falling_product_factor_counts_two(p: Nat, n: Nat) {
+    falling_product_factor_counts(p, n, Nat.2) =
+        List.cons(count_prime_factor(p, n),
+            List.cons(count_prime_factor(p, n - Nat.1),
+                List.cons(count_prime_factor(p, n - Nat.2), List.nil[Nat])))
+}
+
+theorem falling_product_prime_count_sum_one(p: Nat, n: Nat) {
+    falling_product_prime_count_sum(p, n, Nat.1) =
+        count_prime_factor(p, n) + count_prime_factor(p, n - Nat.1)
+}
+
+theorem falling_product_prime_count_sum_two(p: Nat, n: Nat) {
+    falling_product_prime_count_sum(p, n, Nat.2) =
+        count_prime_factor(p, n) +
+        count_prime_factor(p, n - Nat.1) +
+        count_prime_factor(p, n - Nat.2)
+}
+
+theorem falling_product_mul_factorial_complement(n: Nat, k: Nat) {
+    k < n implies
+        falling_product(n, k) * (n - k.suc).factorial = n.factorial
+}
+
+theorem falling_product_divides_factorial(n: Nat, k: Nat) {
+    k < n implies falling_product(n, k).divides(n.factorial)
+}
+
+theorem falling_product_divides_self(n: Nat, k: Nat) {
+    falling_product(n, k).divides(falling_product(n, k))
+}
+
+theorem falling_product_divides_suc(n: Nat, k: Nat) {
+    falling_product(n, k).divides(falling_product(n, k.suc))
+}
+
+theorem falling_product_prefix_divides(n: Nat, j: Nat, k: Nat) {
+    j <= k implies falling_product(n, j).divides(falling_product(n, k))
+}
+
+theorem central_binom_legendre(p: Nat, n: Nat) {
+    count_prime_factor(p, central_binom(n)) +
+        prime_factor_count_upto(p, n) +
+        prime_factor_count_upto(p, n) =
+        prime_factor_count_upto(p, n + n)
+}
+
+theorem central_binom_kummer_digit_sum(p: Nat, n: Nat) {
+    p.is_prime implies
+    p * count_prime_factor(p, central_binom(n)) + digit_sum(p, n + n) =
+        count_prime_factor(p, central_binom(n)) + digit_sum(p, n) + digit_sum(p, n)
+}
+
+theorem nat_two_prime {
+    Nat.2.is_prime
+}
+
+theorem central_binom_two_adic_valuation(n: Nat) {
+    count_prime_factor(Nat.2, central_binom(n)) = digit_sum(Nat.2, n)
+}
+
+define is_sum_of_two_primes(n: Nat) -> Bool {
+    exists(p: Nat, q: Nat) { p.is_prime and q.is_prime and p + q = n }
+}
+
+define is_sum_of_three_primes(n: Nat) -> Bool {
+    exists(p: Nat, q: Nat, r: Nat) { p.is_prime and q.is_prime and r.is_prime and p + q + r = n }
+}
+
+define goldbach_even_upto(n: Nat, m: Nat) -> Bool {
+    Nat.4 <= n and n <= m and n.mod(Nat.2) = Nat.0 implies is_sum_of_two_primes(n)
+}
+
+define weak_goldbach_odd_upto(n: Nat, m: Nat) -> Bool {
+    Nat.7 <= n and n <= m and n.mod(Nat.2) = Nat.1 implies is_sum_of_three_primes(n)
+}
+
+theorem lt_ne(a: Nat, b: Nat, c: Nat) {
+    a + c = b and c != Nat.0 implies a != b
+}
+
+theorem suc_sub_self(a: Nat) {
+    a.suc - a = Nat.1
+}
+
+theorem divides_suc_pair_imp_one(d: Nat, m: Nat) {
+    d.divides(m) and d.divides(m.suc) implies d = Nat.1
+}
+
+theorem one_lt_three {
+    Nat.1 < Nat.3
+}
+
+theorem one_lt_four {
+    Nat.1 < Nat.4
+}
+
+theorem one_lt_five {
+    Nat.1 < Nat.5
+}
+
+theorem one_lt_six {
+    Nat.1 < Nat.6
+}
+
+theorem one_lt_seven {
+    Nat.1 < Nat.7
+}
+
+theorem three_lt_five {
+    Nat.3 < Nat.5
+}
+
+theorem five_lt_seven {
+    Nat.5 < Nat.7
+}
+
+theorem four_lt_seven {
+    Nat.4 < Nat.7
+}
+
+theorem five_lt_eight {
+    Nat.5 < Nat.8
+}
+
+theorem seven_lt_ten {
+    Nat.7 < Nat.10
+}
+
+theorem seven_lt_twelve {
+    Nat.7 < Nat.12
+}
+
+theorem two_ne_one {
+    Nat.2 != Nat.1
+}
+
+theorem three_ne_one {
+    Nat.3 != Nat.1
+}
+
+theorem not_divides_below_twice(d: Nat, n: Nat) {
+    Nat.1 < d and d < n and n < d + d implies not d.divides(n)
+}
+
+theorem not_two_divides_three {
+    not Nat.2.divides(Nat.3)
+}
+
+theorem not_two_divides_five {
+    not Nat.2.divides(Nat.5)
+}
+
+theorem not_three_divides_five {
+    not Nat.3.divides(Nat.5)
+}
+
+theorem not_four_divides_five {
+    not Nat.4.divides(Nat.5)
+}
+
+theorem not_two_divides_seven {
+    not Nat.2.divides(Nat.7)
+}
+
+theorem not_three_divides_seven {
+    not Nat.3.divides(Nat.7)
+}
+
+theorem not_four_divides_seven {
+    not Nat.4.divides(Nat.7)
+}
+
+theorem not_five_divides_seven {
+    not Nat.5.divides(Nat.7)
+}
+
+theorem not_six_divides_seven {
+    not Nat.6.divides(Nat.7)
+}
+
+theorem k_range_min(k: Nat) {
+    Nat.1 < k and k < Nat.3 implies k = Nat.2
+}
+
+theorem k_range_two_three(k: Nat) {
+    Nat.1 < k and k < Nat.4 implies (k = Nat.2 or k = Nat.3)
+}
+
+theorem k_range_two_four(k: Nat) {
+    Nat.1 < k and k < Nat.5 implies (k = Nat.2 or k = Nat.3 or k = Nat.4)
+}
+
+theorem k_range_two_five(k: Nat) {
+    Nat.1 < k and k < Nat.6 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5)
+}
+
+theorem k_range_two_six(k: Nat) {
+    Nat.1 < k and k < Nat.7 implies (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6)
+}
+
+theorem three_no_proper_divisor(k: Nat) {
+    Nat.1 < k and k < Nat.3 implies not k.divides(Nat.3)
+}
+
+theorem five_not_divides_by_case(k: Nat) {
+    Nat.1 < k and k < Nat.5 and (k = Nat.2 or k = Nat.3 or k = Nat.4)
+        implies not k.divides(Nat.5)
+}
+
+theorem five_no_proper_divisor(k: Nat) {
+    Nat.1 < k and k < Nat.5 implies not k.divides(Nat.5)
+}
+
+theorem seven_not_divides_by_case(k: Nat) {
+    Nat.1 < k and k < Nat.7 and (k = Nat.2 or k = Nat.3 or k = Nat.4 or k = Nat.5 or k = Nat.6)
+        implies not k.divides(Nat.7)
+}
+
+theorem seven_no_proper_divisor(k: Nat) {
+    Nat.1 < k and k < Nat.7 implies not k.divides(Nat.7)
+}
+
+theorem three_is_prime {
+    Nat.3.is_prime
+}
+
+theorem five_is_prime {
+    Nat.5.is_prime
+}
+
+theorem seven_is_prime {
+    Nat.7.is_prime
+}
+
+theorem three_add_three {
+    Nat.3 + Nat.3 = Nat.6
+}
+
+theorem three_add_four {
+    Nat.3 + Nat.4 = Nat.7
+}
+
+theorem three_add_five {
+    Nat.3 + Nat.5 = Nat.8
+}
+
+theorem three_add_six {
+    Nat.3 + Nat.6 = Nat.9
+}
+
+theorem three_add_seven {
+    Nat.3 + Nat.7 = Nat.10
+}
+
+theorem five_add_five {
+    Nat.5 + Nat.5 = Nat.10
+}
+
+theorem five_add_six {
+    Nat.5 + Nat.6 = Nat.11
+}
+
+theorem five_add_seven {
+    Nat.5 + Nat.7 = Nat.12
+}
+
+theorem three_add_three_add_three {
+    Nat.3 + Nat.3 + Nat.3 = Nat.9
+}
+
+theorem three_add_three_add_five {
+    Nat.3 + Nat.3 + Nat.5 = Nat.11
+}
+
+theorem four_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.4)
+}
+
+theorem six_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.6)
+}
+
+theorem eight_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.8)
+}
+
+theorem ten_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.10)
+}
+
+theorem twelve_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.12)
+}
+
+theorem fourteen_is_sum_of_two_primes {
+    is_sum_of_two_primes(Nat.14)
+}
+
+theorem seven_is_sum_of_three_primes {
+    is_sum_of_three_primes(Nat.7)
+}
+
+theorem nine_is_sum_of_three_primes {
+    is_sum_of_three_primes(Nat.9)
+}
+
+theorem eleven_is_sum_of_three_primes {
+    is_sum_of_three_primes(Nat.11)
+}
+
+theorem binom_valuation_is_addition_carry_count(p: Nat, a: Nat, b: Nat) {
+    p.is_prime implies
+        is_addition_carry_count(p, a, b,
+            count_prime_factor(p, (a + b).binom(a)))
+}
+
+theorem central_binom_valuation_is_addition_carry_count(p: Nat, n: Nat) {
+    p.is_prime implies
+        is_addition_carry_count(p, n, n,
+            count_prime_factor(p, central_binom(n)))
+}
+
+theorem binom_valuation_eq_addition_carry_count(p: Nat, a: Nat, b: Nat) {
+    p.is_prime implies
+        count_prime_factor(p, (a + b).binom(a)) =
+            addition_carry_count(p, a, b)
+}
+
+theorem addition_carry_count_eq_binom_valuation(p: Nat, a: Nat, b: Nat) {
+    p.is_prime implies
+        addition_carry_count(p, a, b) =
+            count_prime_factor(p, (a + b).binom(a))
+}
+
+theorem symmetric_binom_valuation_eq_addition_carry_count(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        count_prime_factor(p, (a + b).binom(b)) =
+            addition_carry_count(p, a, b)
+}
+
+theorem addition_carry_count_eq_symmetric_binom_valuation(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        addition_carry_count(p, a, b) =
+            count_prime_factor(p, (a + b).binom(b))
+}
+
+theorem carry_count_fuel_eq_binom_valuation_of_sum_le_fuel(
+    p: Nat, a: Nat, b: Nat, fuel: Nat
+) {
+    p.is_prime and a + b <= fuel implies
+        carry_count_fuel(p, a, b, Nat.0, fuel) =
+            count_prime_factor(p, (a + b).binom(a))
+}
+
+theorem binom_valuation_eq_carry_count_fuel_of_sum_le_fuel(
+    p: Nat, a: Nat, b: Nat, fuel: Nat
+) {
+    p.is_prime and a + b <= fuel implies
+        count_prime_factor(p, (a + b).binom(a)) =
+            carry_count_fuel(p, a, b, Nat.0, fuel)
+}
+
+theorem carry_count_fuel_at_sum_eq_binom_valuation(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        carry_count_fuel(p, a, b, Nat.0, a + b) =
+            count_prime_factor(p, (a + b).binom(a))
+}
+
+theorem binom_valuation_eq_carry_count_fuel_at_sum(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        count_prime_factor(p, (a + b).binom(a)) =
+            carry_count_fuel(p, a, b, Nat.0, a + b)
+}
+
+theorem carry_count_fuel_at_sum_eq_symmetric_binom_valuation(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        carry_count_fuel(p, a, b, Nat.0, a + b) =
+            count_prime_factor(p, (a + b).binom(b))
+}
+
+theorem symmetric_binom_valuation_eq_carry_count_fuel_at_sum(
+    p: Nat, a: Nat, b: Nat
+) {
+    p.is_prime implies
+        count_prime_factor(p, (a + b).binom(b)) =
+            carry_count_fuel(p, a, b, Nat.0, a + b)
+}
+
+theorem central_binom_valuation_eq_addition_carry_count(p: Nat, n: Nat) {
+    p.is_prime implies
+        count_prime_factor(p, central_binom(n)) =
+            addition_carry_count(p, n, n)
+}
+
+theorem addition_carry_count_eq_central_binom_valuation(p: Nat, n: Nat) {
+    p.is_prime implies
+        addition_carry_count(p, n, n) =
+            count_prime_factor(p, central_binom(n))
+}
+
+theorem central_binom_valuation_eq_double_addition_carry_count(p: Nat, n: Nat) {
+    p.is_prime implies
+        count_prime_factor(p, central_binom(n)) =
+            double_addition_carry_count(p, n)
+}
+
+theorem double_addition_carry_count_eq_central_binom_valuation(p: Nat, n: Nat) {
+    p.is_prime implies
+        double_addition_carry_count(p, n) =
+            count_prime_factor(p, central_binom(n))
+}
+
+theorem carry_count_fuel_eq_central_binom_valuation_of_double_le_fuel(
+    p: Nat, n: Nat, fuel: Nat
+) {
+    p.is_prime and n + n <= fuel implies
+        carry_count_fuel(p, n, n, Nat.0, fuel) =
+            count_prime_factor(p, central_binom(n))
+}
+
+theorem central_binom_valuation_eq_carry_count_fuel_of_double_le_fuel(
+    p: Nat, n: Nat, fuel: Nat
+) {
+    p.is_prime and n + n <= fuel implies
+        count_prime_factor(p, central_binom(n)) =
+            carry_count_fuel(p, n, n, Nat.0, fuel)
+}
+
+theorem carry_count_fuel_at_double_sum_eq_central_binom_valuation(
+    p: Nat, n: Nat
+) {
+    p.is_prime implies
+        carry_count_fuel(p, n, n, Nat.0, n + n) =
+            count_prime_factor(p, central_binom(n))
+}
+
+theorem central_binom_valuation_eq_carry_count_fuel_at_double_sum(
+    p: Nat, n: Nat
+) {
+    p.is_prime implies
+        count_prime_factor(p, central_binom(n)) =
+            carry_count_fuel(p, n, n, Nat.0, n + n)
+}
+
+theorem double_addition_carry_count_two_eq_digit_sum(n: Nat) {
+    double_addition_carry_count(Nat.2, n) = digit_sum(Nat.2, n)
+}
+
+theorem digit_sum_eq_double_addition_carry_count_two(n: Nat) {
+    digit_sum(Nat.2, n) = double_addition_carry_count(Nat.2, n)
+}
+
+theorem addition_carry_count_two_double_eq_digit_sum(n: Nat) {
+    addition_carry_count(Nat.2, n, n) = digit_sum(Nat.2, n)
+}
+
+theorem carry_count_fuel_two_double_eq_digit_sum_of_double_le_fuel(
+    n: Nat, fuel: Nat
+) {
+    n + n <= fuel implies
+        carry_count_fuel(Nat.2, n, n, Nat.0, fuel) = digit_sum(Nat.2, n)
+}
+
+theorem digit_sum_eq_carry_count_fuel_two_double_of_double_le_fuel(
+    n: Nat, fuel: Nat
+) {
+    n + n <= fuel implies
+        digit_sum(Nat.2, n) = carry_count_fuel(Nat.2, n, n, Nat.0, fuel)
+}
+
+theorem carry_count_fuel_two_double_at_double_sum_eq_digit_sum(n: Nat) {
+    carry_count_fuel(Nat.2, n, n, Nat.0, n + n) = digit_sum(Nat.2, n)
+}
+
+theorem digit_sum_eq_carry_count_fuel_two_double_at_double_sum(n: Nat) {
+    digit_sum(Nat.2, n) = carry_count_fuel(Nat.2, n, n, Nat.0, n + n)
+}
+
+define falling_product_target_prime_bound(p: Nat, n: Nat, k: Nat, target: Nat) -> Bool {
+    falling_product_prime_count_sum(p, n, k) <= count_prime_factor(p, target)
+}
+
+define falling_product_target_primewise_bound(n: Nat, k: Nat, target: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_target_prime_bound(p, n, k, target)
+    }
+}
+
+theorem falling_product_target_prime_bound_of_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and falling_product_target_primewise_bound(n, k, target)
+        implies falling_product_target_prime_bound(p, n, k, target)
+}
+
+theorem count_prime_factor_falling_product_le_target_of_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_target_prime_bound(p, n, k, target)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, target)
+}
+
+theorem count_prime_factor_falling_product_le_target_of_target_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and k < n and falling_product_target_primewise_bound(n, k, target)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, target)
+}
+
+theorem falling_product_divides_target_of_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and falling_product_target_primewise_bound(n, k, target)
+        implies falling_product(n, k).divides(target)
+}
+
+theorem falling_product_target_primewise_bound_of_divides(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and falling_product(n, k).divides(target)
+        implies falling_product_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_divides_target_iff_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 implies (
+        falling_product(n, k).divides(target) =
+        falling_product_target_primewise_bound(n, k, target)
+    )
+}
+
+theorem prime_pow_divides_falling_product_iff_prime_count_sum(
+    p: Nat, exponent: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and k < n implies (
+        p.pow(exponent).divides(falling_product(n, k)) =
+        (exponent <= falling_product_prime_count_sum(p, n, k))
+    )
+}
+
+theorem prime_pow_divides_falling_product_of_prime_count_sum_le(
+    p: Nat, exponent: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and k < n and exponent <= falling_product_prime_count_sum(p, n, k)
+        implies p.pow(exponent).divides(falling_product(n, k))
+}
+
+theorem prime_count_sum_le_of_prime_pow_divides_falling_product(
+    p: Nat, exponent: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and k < n and p.pow(exponent).divides(falling_product(n, k))
+        implies exponent <= falling_product_prime_count_sum(p, n, k)
+}
+
+define falling_product_central_binom_prime_bound(p: Nat, n: Nat, k: Nat) -> Bool {
+    falling_product_prime_count_sum(p, n, k) <= count_prime_factor(p, central_binom(n))
+}
+
+define falling_product_central_binom_carry_bound(p: Nat, n: Nat, k: Nat) -> Bool {
+    falling_product_prime_count_sum(p, n, k) <= double_addition_carry_count(p, n)
+}
+
+define falling_product_central_binom_primewise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_central_binom_prime_bound(p, n, k)
+    }
+}
+
+define falling_product_central_binom_carrywise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_central_binom_carry_bound(p, n, k)
+    }
+}
+
+define falling_product_central_binom_binary_digit_bound(n: Nat, k: Nat) -> Bool {
+    falling_product_prime_count_sum(Nat.2, n, k) <= digit_sum(Nat.2, n)
+}
+
+theorem prime_pow_divides_central_binom_iff_double_addition_carry_count(
+    p: Nat, exponent: Nat, n: Nat
+) {
+    p.is_prime implies (
+        p.pow(exponent).divides(central_binom(n)) =
+        (exponent <= double_addition_carry_count(p, n))
+    )
+}
+
+theorem prime_pow_divides_central_binom_of_exponent_le_double_carry(
+    p: Nat, exponent: Nat, n: Nat
+) {
+    p.is_prime and exponent <= double_addition_carry_count(p, n)
+        implies p.pow(exponent).divides(central_binom(n))
+}
+
+theorem exponent_le_double_carry_of_prime_pow_divides_central_binom(
+    p: Nat, exponent: Nat, n: Nat
+) {
+    p.is_prime and p.pow(exponent).divides(central_binom(n))
+        implies exponent <= double_addition_carry_count(p, n)
+}
+
+theorem prime_pow_two_divides_central_binom_iff_digit_sum(
+    exponent: Nat, n: Nat
+) {
+    Nat.2.pow(exponent).divides(central_binom(n)) =
+        (exponent <= digit_sum(Nat.2, n))
+}
+
+theorem prime_pow_two_divides_central_binom_of_exponent_le_digit_sum(
+    exponent: Nat, n: Nat
+) {
+    exponent <= digit_sum(Nat.2, n)
+        implies Nat.2.pow(exponent).divides(central_binom(n))
+}
+
+theorem exponent_le_digit_sum_of_prime_pow_two_divides_central_binom(
+    exponent: Nat, n: Nat
+) {
+    Nat.2.pow(exponent).divides(central_binom(n))
+        implies exponent <= digit_sum(Nat.2, n)
+}
+
+theorem falling_product_central_binom_prime_bound_eq_target_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    falling_product_central_binom_prime_bound(p, n, k) =
+        falling_product_target_prime_bound(p, n, k, central_binom(n))
+}
+
+theorem falling_product_target_prime_bound_eq_central_binom_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    falling_product_target_prime_bound(p, n, k, central_binom(n)) =
+        falling_product_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_target_primewise_bound_of_central_binom_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product_target_primewise_bound(n, k, central_binom(n))
+}
+
+theorem falling_product_central_binom_primewise_bound_of_target_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_target_primewise_bound(n, k, central_binom(n))
+        implies falling_product_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_central_binom_primewise_bound_iff_target_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_primewise_bound(n, k) =
+        falling_product_target_primewise_bound(n, k, central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_target_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_target_primewise_bound(n, k, central_binom(n))
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_target_primewise_bound_of_divides_central_binom(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_target_primewise_bound(n, k, central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_iff_target_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_target_primewise_bound(n, k, central_binom(n))
+    )
+}
+
+theorem falling_product_central_binom_carry_bound_of_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_central_binom_prime_bound(p, n, k)
+        implies falling_product_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_prime_bound_of_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_central_binom_carry_bound(p, n, k)
+        implies falling_product_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_prime_bound_iff_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime implies (
+        falling_product_central_binom_prime_bound(p, n, k) =
+        falling_product_central_binom_carry_bound(p, n, k)
+    )
+}
+
+theorem falling_product_central_binom_prime_bound_of_primewise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_carry_bound_of_carrywise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_central_binom_carrywise_bound(n, k)
+        implies falling_product_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_carrywise_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_central_binom_primewise_bound_of_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_carrywise_bound(n, k)
+        implies falling_product_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_central_binom_primewise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_primewise_bound(n, k) =
+        falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_target_primewise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_target_primewise_bound(n, k, central_binom(n)) =
+        falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem count_prime_factor_falling_product_le_central_binom_of_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_prime_bound(p, n, k)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, central_binom(n))
+}
+
+theorem count_prime_factor_falling_product_le_central_binom_of_primewise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and k < n and falling_product_central_binom_primewise_bound(n, k)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_primewise_bound(n: Nat, k: Nat) {
+    k < n and falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_carrywise_bound(n: Nat, k: Nat) {
+    k < n and falling_product_central_binom_carrywise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_central_binom_primewise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_central_binom_carrywise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_divides_central_binom_iff_primewise_bound(n: Nat, k: Nat) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_central_binom_primewise_bound(n, k)
+    )
+}
+
+theorem falling_product_divides_central_binom_iff_carrywise_bound(n: Nat, k: Nat) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_central_binom_carrywise_bound(n, k)
+    )
+}
+
+theorem falling_product_central_binom_carry_bound_two_of_binary_digit_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_binary_digit_bound(n, k)
+        implies falling_product_central_binom_carry_bound(Nat.2, n, k)
+}
+
+theorem falling_product_central_binom_binary_digit_bound_of_carry_bound_two(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_carry_bound(Nat.2, n, k)
+        implies falling_product_central_binom_binary_digit_bound(n, k)
+}
+
+theorem falling_product_central_binom_binary_digit_bound_iff_carry_bound_two(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_binary_digit_bound(n, k) =
+        falling_product_central_binom_carry_bound(Nat.2, n, k)
+}
+
+theorem falling_product_central_binom_binary_digit_bound_iff_prime_bound_two(
+    n: Nat, k: Nat
+) {
+    falling_product_central_binom_binary_digit_bound(n, k) =
+        falling_product_central_binom_prime_bound(Nat.2, n, k)
+}
+
+theorem falling_product_central_binom_carry_bound_zero(p: Nat, n: Nat) {
+    falling_product_central_binom_carry_bound(p, n, Nat.0) =
+        (count_prime_factor(p, n) <= double_addition_carry_count(p, n))
+}
+
+theorem falling_product_central_binom_prime_bound_zero(p: Nat, n: Nat) {
+    falling_product_central_binom_prime_bound(p, n, Nat.0) =
+        (count_prime_factor(p, n) <= count_prime_factor(p, central_binom(n)))
+}
+
+theorem falling_product_central_binom_binary_digit_bound_zero(n: Nat) {
+    falling_product_central_binom_binary_digit_bound(n, Nat.0) =
+        (count_prime_factor(Nat.2, n) <= digit_sum(Nat.2, n))
+}
+
+theorem falling_product_central_binom_carry_bound_one(p: Nat, n: Nat) {
+    falling_product_central_binom_carry_bound(p, n, Nat.1) =
+        (count_prime_factor(p, n) + count_prime_factor(p, n - Nat.1) <= double_addition_carry_count(p, n))
+}
+
+theorem falling_product_central_binom_prime_bound_one(p: Nat, n: Nat) {
+    falling_product_central_binom_prime_bound(p, n, Nat.1) =
+        (count_prime_factor(p, n) + count_prime_factor(p, n - Nat.1) <= count_prime_factor(p, central_binom(n)))
+}
+
+theorem falling_product_central_binom_binary_digit_bound_one(n: Nat) {
+    falling_product_central_binom_binary_digit_bound(n, Nat.1) =
+        (count_prime_factor(Nat.2, n) + count_prime_factor(Nat.2, n - Nat.1) <= digit_sum(Nat.2, n))
+}
+
+theorem falling_product_central_binom_carry_bound_two(p: Nat, n: Nat) {
+    falling_product_central_binom_carry_bound(p, n, Nat.2) =
+        (count_prime_factor(p, n) + count_prime_factor(p, n - Nat.1) +
+            count_prime_factor(p, n - Nat.2) <= double_addition_carry_count(p, n))
+}
+
+theorem falling_product_central_binom_prime_bound_two(p: Nat, n: Nat) {
+    falling_product_central_binom_prime_bound(p, n, Nat.2) =
+        (count_prime_factor(p, n) + count_prime_factor(p, n - Nat.1) +
+            count_prime_factor(p, n - Nat.2) <= count_prime_factor(p, central_binom(n)))
+}
+
+theorem falling_product_central_binom_binary_digit_bound_two(n: Nat) {
+    falling_product_central_binom_binary_digit_bound(n, Nat.2) =
+        (count_prime_factor(Nat.2, n) + count_prime_factor(Nat.2, n - Nat.1) +
+            count_prime_factor(Nat.2, n - Nat.2) <= digit_sum(Nat.2, n))
+}
+
+theorem falling_product_eq_binom_mul_factorial(n: Nat, k: Nat) {
+    k < n implies falling_product(n, k) = n.binom(k.suc) * k.suc.factorial
+}
+
+theorem binom_mul_factorial_eq_falling_product(n: Nat, k: Nat) {
+    k < n implies n.binom(k.suc) * k.suc.factorial = falling_product(n, k)
+}
+
+theorem falling_product_binom_factor_positive(n: Nat, k: Nat) {
+    k < n implies Nat.0 < n.binom(k.suc)
+}
+
+theorem falling_product_binom_factor_ne_zero(n: Nat, k: Nat) {
+    k < n implies n.binom(k.suc) != Nat.0
+}
+
+theorem falling_product_length_factorial_ne_zero(k: Nat) {
+    k.suc.factorial != Nat.0
+}
+
+theorem count_prime_factor_falling_product_eq_binom_add_factorial(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, falling_product(n, k)) =
+            count_prime_factor(p, n.binom(k.suc)) +
+            count_prime_factor(p, k.suc.factorial)
+}
+
+theorem falling_product_prime_count_sum_eq_binom_add_factorial(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        falling_product_prime_count_sum(p, n, k) =
+            count_prime_factor(p, n.binom(k.suc)) +
+            count_prime_factor(p, k.suc.factorial)
+}
+
+theorem falling_product_prime_count_sum_eq_binom_add_upto(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        falling_product_prime_count_sum(p, n, k) =
+            count_prime_factor(p, n.binom(k.suc)) +
+            prime_factor_count_upto(p, k.suc)
+}
+
+theorem binom_add_factorial_eq_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) +
+        count_prime_factor(p, k.suc.factorial) =
+            falling_product_prime_count_sum(p, n, k)
+}
+
+theorem binom_add_upto_eq_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) +
+        prime_factor_count_upto(p, k.suc) =
+            falling_product_prime_count_sum(p, n, k)
+}
+
+theorem count_prime_factor_falling_product_add_complement_factorial(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, falling_product(n, k)) +
+        count_prime_factor(p, (n - k.suc).factorial) =
+            count_prime_factor(p, n.factorial)
+}
+
+theorem complement_factorial_add_count_prime_factor_falling_product(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, (n - k.suc).factorial) +
+        count_prime_factor(p, falling_product(n, k)) =
+            count_prime_factor(p, n.factorial)
+}
+
+theorem falling_product_prime_count_sum_add_complement_factorial(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        falling_product_prime_count_sum(p, n, k) +
+        count_prime_factor(p, (n - k.suc).factorial) =
+            count_prime_factor(p, n.factorial)
+}
+
+theorem complement_factorial_add_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, (n - k.suc).factorial) +
+        falling_product_prime_count_sum(p, n, k) =
+            count_prime_factor(p, n.factorial)
+}
+
+theorem falling_product_prime_count_sum_add_complement_upto(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        falling_product_prime_count_sum(p, n, k) +
+        prime_factor_count_upto(p, n - k.suc) =
+            prime_factor_count_upto(p, n)
+}
+
+theorem complement_upto_add_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        prime_factor_count_upto(p, n - k.suc) +
+        falling_product_prime_count_sum(p, n, k) =
+            prime_factor_count_upto(p, n)
+}
+
+theorem binom_add_length_upto_add_complement_upto(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) +
+        prime_factor_count_upto(p, k.suc) +
+        prime_factor_count_upto(p, n - k.suc) =
+            prime_factor_count_upto(p, n)
+}
+
+theorem complement_upto_add_binom_add_length_upto(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        prime_factor_count_upto(p, n - k.suc) +
+        (count_prime_factor(p, n.binom(k.suc)) +
+            prime_factor_count_upto(p, k.suc)) =
+                prime_factor_count_upto(p, n)
+}
+
+theorem binom_add_factorial_add_complement_factorial(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) +
+        count_prime_factor(p, k.suc.factorial) +
+        count_prime_factor(p, (n - k.suc).factorial) =
+            count_prime_factor(p, n.factorial)
+}
+
+theorem binom_divides_falling_product(n: Nat, k: Nat) {
+    k < n implies n.binom(k.suc).divides(falling_product(n, k))
+}
+
+theorem length_factorial_divides_falling_product(n: Nat, k: Nat) {
+    k < n implies k.suc.factorial.divides(falling_product(n, k))
+}
+
+theorem count_prime_factor_binom_le_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) <= falling_product_prime_count_sum(p, n, k)
+}
+
+theorem count_prime_factor_length_factorial_le_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, k.suc.factorial) <= falling_product_prime_count_sum(p, n, k)
+}
+
+theorem prime_factor_count_upto_length_le_falling_product_prime_count_sum(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        prime_factor_count_upto(p, k.suc) <= falling_product_prime_count_sum(p, n, k)
+}
+
+theorem count_prime_factor_binom_le_prime_factor_count_upto_top(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        count_prime_factor(p, n.binom(k.suc)) <= prime_factor_count_upto(p, n)
+}
+
+theorem falling_product_prime_count_sum_le_prime_factor_count_upto_top(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies
+        falling_product_prime_count_sum(p, n, k) <= prime_factor_count_upto(p, n)
+}
+
+theorem complement_upto_le_prime_factor_count_upto_top(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies prime_factor_count_upto(p, n - k.suc) <= prime_factor_count_upto(p, n)
+}
+
+define falling_product_binomial_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) -> Bool {
+    count_prime_factor(p, n.binom(k.suc)) +
+        prime_factor_count_upto(p, k.suc) <= count_prime_factor(p, target)
+}
+
+define falling_product_binomial_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_binomial_target_prime_bound(p, n, k, target)
+    }
+}
+
+define falling_product_binomial_central_binom_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) -> Bool {
+    count_prime_factor(p, n.binom(k.suc)) +
+        prime_factor_count_upto(p, k.suc) <= count_prime_factor(p, central_binom(n))
+}
+
+define falling_product_binomial_central_binom_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) -> Bool {
+    count_prime_factor(p, n.binom(k.suc)) +
+        prime_factor_count_upto(p, k.suc) <= double_addition_carry_count(p, n)
+}
+
+define falling_product_binomial_central_binom_primewise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_binomial_central_binom_prime_bound(p, n, k)
+    }
+}
+
+define falling_product_binomial_central_binom_carrywise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_binomial_central_binom_carry_bound(p, n, k)
+    }
+}
+
+theorem falling_product_binomial_target_prime_bound_of_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and falling_product_binomial_target_primewise_bound(n, k, target)
+        implies falling_product_binomial_target_prime_bound(p, n, k, target)
+}
+
+theorem falling_product_binomial_central_binom_prime_bound_of_primewise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_binomial_central_binom_primewise_bound(n, k)
+        implies falling_product_binomial_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_binomial_central_binom_carry_bound_of_carrywise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_binomial_central_binom_carrywise_bound(n, k)
+        implies falling_product_binomial_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_binomial_target_prime_bound_of_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_target_prime_bound(p, n, k, target)
+        implies falling_product_binomial_target_prime_bound(p, n, k, target)
+}
+
+theorem falling_product_target_prime_bound_of_binomial_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_binomial_target_prime_bound(p, n, k, target)
+        implies falling_product_target_prime_bound(p, n, k, target)
+}
+
+theorem falling_product_binomial_target_primewise_bound_of_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_target_primewise_bound(n, k, target)
+        implies falling_product_binomial_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_target_primewise_bound_of_binomial_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_binomial_target_primewise_bound(n, k, target)
+        implies falling_product_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_divides_target_of_binomial_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and
+    falling_product_binomial_target_primewise_bound(n, k, target)
+        implies falling_product(n, k).divides(target)
+}
+
+theorem falling_product_binomial_target_primewise_bound_of_divides(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and falling_product(n, k).divides(target)
+        implies falling_product_binomial_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_divides_target_iff_binomial_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 implies (
+        falling_product(n, k).divides(target) =
+        falling_product_binomial_target_primewise_bound(n, k, target)
+    )
+}
+
+theorem falling_product_binomial_central_binom_prime_bound_of_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_prime_bound(p, n, k)
+        implies falling_product_binomial_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_prime_bound_of_binomial_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_prime_bound(p, n, k)
+        implies falling_product_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_binomial_central_binom_carry_bound_of_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_carry_bound(p, n, k)
+        implies falling_product_binomial_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_central_binom_carry_bound_of_binomial_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_carry_bound(p, n, k)
+        implies falling_product_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_binomial_central_binom_primewise_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product_binomial_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_central_binom_primewise_bound_of_binomial_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_primewise_bound(n, k)
+        implies falling_product_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_binomial_central_binom_carrywise_bound_of_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_carrywise_bound(n, k)
+        implies falling_product_binomial_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_central_binom_carrywise_bound_of_binomial_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_carrywise_bound(n, k)
+        implies falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_divides_central_binom_of_binomial_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_primewise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_binomial_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_binomial_central_binom_carrywise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_binomial_central_binom_primewise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_binomial_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_binomial_central_binom_carrywise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_binomial_central_binom_carrywise_bound(n, k)
+}
+
+define prime_factor_count_interval_witness(
+    p: Nat, lower: Nat, upper: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_upto(p, lower) + value = prime_factor_count_upto(p, upper)
+}
+
+define prime_factor_count_interval_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, bound: Nat
+) -> Bool {
+    prime_factor_count_interval_witness(p, lower, upper, value) and value <= bound
+}
+
+define prime_factor_count_interval_target_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, target: Nat
+) -> Bool {
+    prime_factor_count_interval_bound(p, lower, upper, value,
+        count_prime_factor(p, target))
+}
+
+define prime_factor_count_interval_central_binom_prime_bound(
+    p: Nat, n: Nat, lower: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_target_bound(p, lower, n, value, central_binom(n))
+}
+
+define prime_factor_count_interval_central_binom_carry_bound(
+    p: Nat, n: Nat, lower: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_bound(p, lower, n, value,
+        double_addition_carry_count(p, n))
+}
+
+define prime_factor_count_interval_central_binom_binary_digit_bound(
+    n: Nat, lower: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_bound(Nat.2, lower, n, value, digit_sum(Nat.2, n))
+}
+
+define falling_product_interval_lower(n: Nat, k: Nat) -> Nat {
+    n - k.suc
+}
+
+define falling_product_interval_value(p: Nat, n: Nat, k: Nat) -> Nat {
+    falling_product_prime_count_sum(p, n, k)
+}
+
+define falling_product_interval_witness(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_witness(p, falling_product_interval_lower(n, k),
+        n, value)
+}
+
+define falling_product_interval_target_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat, target: Nat
+) -> Bool {
+    prime_factor_count_interval_target_bound(p, falling_product_interval_lower(n, k),
+        n, value, target)
+}
+
+define falling_product_interval_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_interval_target_bound(
+            p, n, k, falling_product_interval_value(p, n, k), target)
+    }
+}
+
+define falling_product_interval_central_binom_prime_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_central_binom_prime_bound(p, n,
+        falling_product_interval_lower(n, k), value)
+}
+
+define falling_product_interval_central_binom_carry_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_central_binom_carry_bound(p, n,
+        falling_product_interval_lower(n, k), value)
+}
+
+define falling_product_interval_central_binom_binary_digit_bound(
+    n: Nat, k: Nat, value: Nat
+) -> Bool {
+    prime_factor_count_interval_central_binom_binary_digit_bound(n,
+        falling_product_interval_lower(n, k), value)
+}
+
+define falling_product_interval_central_binom_primewise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_interval_central_binom_prime_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+    }
+}
+
+define falling_product_interval_central_binom_carrywise_bound(n: Nat, k: Nat) -> Bool {
+    forall(p: Nat) {
+        p.is_prime implies falling_product_interval_central_binom_carry_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+    }
+}
+
+theorem prime_factor_count_interval_witness_zero(p: Nat, n: Nat) {
+    prime_factor_count_interval_witness(p, n, n, Nat.0)
+}
+
+theorem prime_factor_count_interval_witness_unique(
+    p: Nat, lower: Nat, upper: Nat, a: Nat, b: Nat
+) {
+    prime_factor_count_interval_witness(p, lower, upper, a) and
+    prime_factor_count_interval_witness(p, lower, upper, b) implies a = b
+}
+
+theorem prime_factor_count_interval_witness_value_le_upper(
+    p: Nat, lower: Nat, upper: Nat, value: Nat
+) {
+    prime_factor_count_interval_witness(p, lower, upper, value)
+        implies value <= prime_factor_count_upto(p, upper)
+}
+
+theorem prime_factor_count_interval_witness_lower_le_upper(
+    p: Nat, lower: Nat, upper: Nat, value: Nat
+) {
+    prime_factor_count_interval_witness(p, lower, upper, value)
+        implies prime_factor_count_upto(p, lower) <= prime_factor_count_upto(p, upper)
+}
+
+theorem prime_factor_count_interval_witness_of_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, bound: Nat
+) {
+    prime_factor_count_interval_bound(p, lower, upper, value, bound)
+        implies prime_factor_count_interval_witness(p, lower, upper, value)
+}
+
+theorem prime_factor_count_interval_value_le_of_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, bound: Nat
+) {
+    prime_factor_count_interval_bound(p, lower, upper, value, bound)
+        implies value <= bound
+}
+
+theorem prime_factor_count_interval_witness_of_target_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, target: Nat
+) {
+    prime_factor_count_interval_target_bound(p, lower, upper, value, target)
+        implies prime_factor_count_interval_witness(p, lower, upper, value)
+}
+
+theorem prime_factor_count_interval_value_le_target_of_target_bound(
+    p: Nat, lower: Nat, upper: Nat, value: Nat, target: Nat
+) {
+    prime_factor_count_interval_target_bound(p, lower, upper, value, target)
+        implies value <= count_prime_factor(p, target)
+}
+
+theorem falling_product_interval_value_eq_prime_count_sum(p: Nat, n: Nat, k: Nat) {
+    falling_product_interval_value(p, n, k) = falling_product_prime_count_sum(p, n, k)
+}
+
+theorem falling_product_prime_count_sum_interval_witness(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies falling_product_interval_witness(
+        p, n, k, falling_product_prime_count_sum(p, n, k))
+}
+
+theorem falling_product_interval_value_witness(p: Nat, n: Nat, k: Nat) {
+    k < n implies falling_product_interval_witness(
+        p, n, k, falling_product_interval_value(p, n, k))
+}
+
+theorem count_prime_factor_falling_product_interval_witness(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies falling_product_interval_witness(
+        p, n, k, count_prime_factor(p, falling_product(n, k)))
+}
+
+theorem falling_product_interval_witness_value_eq(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_witness(p, n, k, value)
+        implies value = falling_product_interval_value(p, n, k)
+}
+
+theorem falling_product_interval_witness_value_eq_prime_count_sum(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_witness(p, n, k, value)
+        implies value = falling_product_prime_count_sum(p, n, k)
+}
+
+theorem falling_product_interval_target_bound_of_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_target_prime_bound(p, n, k, target)
+        implies falling_product_interval_target_bound(
+            p, n, k, falling_product_interval_value(p, n, k), target)
+}
+
+theorem falling_product_target_prime_bound_of_interval_target_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat, target: Nat
+) {
+    k < n and falling_product_interval_target_bound(p, n, k, value, target)
+        implies falling_product_target_prime_bound(p, n, k, target)
+}
+
+theorem falling_product_interval_target_primewise_bound_of_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_target_primewise_bound(n, k, target)
+        implies falling_product_interval_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_target_primewise_bound_of_interval_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and falling_product_interval_target_primewise_bound(n, k, target)
+        implies falling_product_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_interval_target_primewise_bound_iff_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n implies (
+        falling_product_interval_target_primewise_bound(n, k, target) =
+        falling_product_target_primewise_bound(n, k, target)
+    )
+}
+
+theorem falling_product_divides_target_of_interval_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and
+    falling_product_interval_target_primewise_bound(n, k, target)
+        implies falling_product(n, k).divides(target)
+}
+
+theorem falling_product_interval_target_primewise_bound_of_divides(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 and falling_product(n, k).divides(target)
+        implies falling_product_interval_target_primewise_bound(n, k, target)
+}
+
+theorem falling_product_divides_target_iff_interval_target_primewise_bound(
+    n: Nat, k: Nat, target: Nat
+) {
+    k < n and target != Nat.0 implies (
+        falling_product(n, k).divides(target) =
+        falling_product_interval_target_primewise_bound(n, k, target)
+    )
+}
+
+theorem falling_product_interval_target_bound_iff_target_prime_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    k < n implies (
+        falling_product_interval_target_bound(
+            p, n, k, falling_product_interval_value(p, n, k), target) =
+        falling_product_target_prime_bound(p, n, k, target)
+    )
+}
+
+theorem falling_product_interval_target_bound_of_target_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and k < n and falling_product_target_primewise_bound(n, k, target)
+        implies falling_product_interval_target_bound(
+            p, n, k, falling_product_interval_value(p, n, k), target)
+}
+
+theorem falling_product_interval_target_bound_of_interval_target_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and falling_product_interval_target_primewise_bound(n, k, target)
+        implies falling_product_interval_target_bound(
+            p, n, k, falling_product_interval_value(p, n, k), target)
+}
+
+theorem falling_product_target_prime_bound_of_interval_target_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and k < n and
+    falling_product_interval_target_primewise_bound(n, k, target)
+        implies falling_product_target_prime_bound(p, n, k, target)
+}
+
+theorem count_prime_factor_falling_product_le_target_of_interval_target_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat, target: Nat
+) {
+    k < n and falling_product_interval_target_bound(p, n, k, value, target)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, target)
+}
+
+theorem count_prime_factor_falling_product_le_target_of_interval_target_primewise_bound(
+    p: Nat, n: Nat, k: Nat, target: Nat
+) {
+    p.is_prime and k < n and
+    falling_product_interval_target_primewise_bound(n, k, target)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(p, target)
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_of_target_central_binom_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_interval_target_primewise_bound(n, k, central_binom(n))
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_target_central_binom_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product_interval_target_primewise_bound(n, k, central_binom(n))
+}
+
+theorem falling_product_interval_target_central_binom_bound_iff_primewise_bound(
+    n: Nat, k: Nat
+) {
+    falling_product_interval_target_primewise_bound(n, k, central_binom(n)) =
+        falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_prime_bound_of_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_prime_bound(p, n, k)
+        implies falling_product_interval_central_binom_prime_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+}
+
+theorem falling_product_central_binom_prime_bound_of_interval_prime_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_prime_bound(p, n, k, value)
+        implies falling_product_central_binom_prime_bound(p, n, k)
+}
+
+theorem falling_product_interval_central_binom_prime_bound_iff_prime_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_prime_bound(
+            p, n, k, falling_product_interval_value(p, n, k)) =
+        falling_product_central_binom_prime_bound(p, n, k)
+    )
+}
+
+theorem falling_product_interval_central_binom_carry_bound_of_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_carry_bound(p, n, k)
+        implies falling_product_interval_central_binom_carry_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+}
+
+theorem falling_product_central_binom_carry_bound_of_interval_carry_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_carry_bound(p, n, k, value)
+        implies falling_product_central_binom_carry_bound(p, n, k)
+}
+
+theorem falling_product_interval_central_binom_carry_bound_iff_carry_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_carry_bound(
+            p, n, k, falling_product_interval_value(p, n, k)) =
+        falling_product_central_binom_carry_bound(p, n, k)
+    )
+}
+
+theorem falling_product_interval_central_binom_carry_bound_of_prime_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    p.is_prime and k < n and
+    falling_product_interval_central_binom_prime_bound(p, n, k, value)
+        implies falling_product_interval_central_binom_carry_bound(p, n, k, value)
+}
+
+theorem falling_product_interval_central_binom_prime_bound_of_carry_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    p.is_prime and k < n and
+    falling_product_interval_central_binom_carry_bound(p, n, k, value)
+        implies falling_product_interval_central_binom_prime_bound(p, n, k, value)
+}
+
+theorem falling_product_interval_central_binom_binary_digit_bound_of_binary_digit_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_binary_digit_bound(n, k)
+        implies falling_product_interval_central_binom_binary_digit_bound(
+            n, k, falling_product_interval_value(Nat.2, n, k))
+}
+
+theorem falling_product_central_binom_binary_digit_bound_of_interval_binary_digit_bound(
+    n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_binary_digit_bound(n, k, value)
+        implies falling_product_central_binom_binary_digit_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_binary_digit_bound_iff_binary_digit_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_binary_digit_bound(
+            n, k, falling_product_interval_value(Nat.2, n, k)) =
+        falling_product_central_binom_binary_digit_bound(n, k)
+    )
+}
+
+theorem falling_product_interval_central_binom_carry_bound_two_of_binary_digit_bound(
+    n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_binary_digit_bound(n, k, value)
+        implies falling_product_interval_central_binom_carry_bound(Nat.2, n, k, value)
+}
+
+theorem falling_product_interval_central_binom_binary_digit_bound_of_carry_bound_two(
+    n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_carry_bound(Nat.2, n, k, value)
+        implies falling_product_interval_central_binom_binary_digit_bound(n, k, value)
+}
+
+theorem falling_product_interval_central_binom_binary_digit_bound_iff_carry_bound_two(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_binary_digit_bound(
+            n, k, falling_product_interval_value(Nat.2, n, k)) =
+        falling_product_interval_central_binom_carry_bound(
+            Nat.2, n, k, falling_product_interval_value(Nat.2, n, k))
+    )
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_primewise_bound(n, k)
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_central_binom_primewise_bound_of_interval_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_iff_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_primewise_bound(n, k) =
+        falling_product_central_binom_primewise_bound(n, k)
+    )
+}
+
+theorem falling_product_interval_central_binom_prime_bound_of_interval_primewise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product_interval_central_binom_prime_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+}
+
+theorem count_prime_factor_falling_product_le_central_binom_of_interval_prime_bound(
+    p: Nat, n: Nat, k: Nat, value: Nat
+) {
+    k < n and falling_product_interval_central_binom_prime_bound(p, n, k, value)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(
+            p, central_binom(n))
+}
+
+theorem count_prime_factor_falling_product_le_central_binom_of_interval_primewise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and k < n and
+    falling_product_interval_central_binom_primewise_bound(n, k)
+        implies count_prime_factor(p, falling_product(n, k)) <= count_prime_factor(
+            p, central_binom(n))
+}
+
+theorem falling_product_interval_central_binom_carrywise_bound_of_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_central_binom_carrywise_bound(n, k)
+        implies falling_product_interval_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_central_binom_carrywise_bound_of_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_carrywise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_carrywise_bound(n, k) =
+        falling_product_central_binom_carrywise_bound(n, k)
+    )
+}
+
+theorem falling_product_interval_central_binom_carry_bound_of_interval_carrywise_bound(
+    p: Nat, n: Nat, k: Nat
+) {
+    p.is_prime and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_interval_central_binom_carry_bound(
+            p, n, k, falling_product_interval_value(p, n, k))
+}
+
+theorem falling_product_interval_central_binom_carrywise_bound_of_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product_interval_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_of_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_iff_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product_interval_central_binom_primewise_bound(n, k) =
+        falling_product_interval_central_binom_carrywise_bound(n, k)
+    )
+}
+
+theorem falling_product_divides_central_binom_of_interval_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_primewise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_divides_central_binom_of_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product_interval_central_binom_carrywise_bound(n, k)
+        implies falling_product(n, k).divides(central_binom(n))
+}
+
+theorem falling_product_interval_central_binom_primewise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_interval_central_binom_primewise_bound(n, k)
+}
+
+theorem falling_product_interval_central_binom_carrywise_bound_of_divides(
+    n: Nat, k: Nat
+) {
+    k < n and falling_product(n, k).divides(central_binom(n))
+        implies falling_product_interval_central_binom_carrywise_bound(n, k)
+}
+
+theorem falling_product_divides_central_binom_iff_interval_primewise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_interval_central_binom_primewise_bound(n, k)
+    )
+}
+
+theorem falling_product_divides_central_binom_iff_interval_carrywise_bound(
+    n: Nat, k: Nat
+) {
+    k < n implies (
+        falling_product(n, k).divides(central_binom(n)) =
+        falling_product_interval_central_binom_carrywise_bound(n, k)
+    )
+}
+
+theorem nat_zero_lte(n: Nat) {
+    Nat.0 <= n
+}
+
+theorem nat_one_lt_add_two(n: Nat) {
+    Nat.1 < n + Nat.2
+}
+
+theorem nat_add_two_sub_one(n: Nat) {
+    n + Nat.2 - Nat.1 = n + Nat.1
+}
+
+theorem frac_nonneg(x: Real) {
+    Real.0 <= frac(x)
+}
+
+theorem frac_lt_one(x: Real) {
+    frac(x) < Real.1
+}

@@ -1,3 +1,1173 @@
 /// Public interface for the package.
 
-from basic.functions import identity_fn, compose
+from function import identity_fn, compose
+
+typeclass A: Add {
+    add: (A, A) -> A
+}
+
+typeclass A: AddSemigroup extends Add {
+    /// The addition operation must be associative: `(a + b) + c = a + (b + c)`.
+    add_associative(a: A, b: A, c: A) {
+        a + (b + c) = (a + b) + c
+    }
+}
+
+typeclass A: AddCommSemigroup extends AddSemigroup {
+    /// The addition operation must be commutative: `a + b = b + a`.
+    add_commutative(a: A, b: A) {
+        a + b = b + a
+    }
+}
+
+typeclass A: Inverse {
+    inverse: A -> A
+}
+
+typeclass A: Mul {
+    mul: (A, A) -> A
+}
+
+typeclass A: Neg {
+    neg: A -> A
+}
+
+typeclass A: One {
+    1: A
+}
+
+typeclass S: Semigroup extends Mul {
+    /// The multiplication operation must be associative: `(a * b) * c = a * (b * c)`.
+    mul_associative(a: S, b: S, c: S) {
+        a * (b * c) = (a * b) * c
+    }
+}
+
+typeclass S: CommSemigroup extends Semigroup {
+    /// The multiplication operation must be commutative: `a * b = b * a`.
+    commutative(a: S, b: S) {
+        a * b = b * a
+    }
+}
+
+typeclass M: Monoid extends Semigroup, One {
+    /// The identity element must satisfy the identity property on the right.
+    mul_identity_right(a: M) {
+        a * M.1 = a
+    }
+
+    /// The identity element must satisfy the identity property on the left.
+    mul_identity_left(a: M) {
+        M.1 * a = a
+    }
+}
+
+typeclass M: CommMonoid extends CommSemigroup, Monoid {
+    // All the properties are provided by the base typeclasses.
+}
+
+typeclass A: Zero {
+    0: A
+}
+
+typeclass A: AddMonoid extends AddSemigroup, Zero {
+    /// The identity element must satisfy the identity property on the right.
+    add_identity_right(a: A) {
+        a + A.0 = a
+    }
+
+    /// The identity element must satisfy the identity property on the left.
+    add_identity_left(a: A) {
+        A.0 + a = a
+    }
+}
+
+typeclass M: AddCommMonoid extends AddCommSemigroup, AddMonoid {
+    // All the properties are provided by the base typeclasses.
+}
+
+typeclass A: AddGroup extends AddMonoid, Neg {
+    /// This is what "additive inverse" means.
+    inverse_right(a: A) {
+        a + -a = A.0
+    }
+}
+
+attributes A: AddGroup {
+    /// Subtracts one element from another using additive inverse.
+    define sub(self, other: A) -> A {
+        self + -other
+    }
+}
+
+typeclass M: AddCommGroup extends AddCommMonoid, AddGroup {
+    // All the properties are provided by the base typeclasses.
+}
+
+typeclass M: MonoidWithZero extends Monoid, Zero {
+    /// Zero is absorbing on the left for multiplication.
+    zero_mul(a: M) {
+        M.0 * a = M.0
+    }
+
+    /// Zero is absorbing on the right for multiplication.
+    mul_zero(a: M) {
+        a * M.0 = M.0
+    }
+}
+
+typeclass M: LeftCancelMonoidWithZero extends MonoidWithZero {
+    /// A nonzero left factor may be cancelled from a multiplication equality.
+    mul_left_cancel_of_ne_zero(a: M, b: M, c: M) {
+        a != M.0 and a * b = a * c implies b = c
+    }
+}
+
+typeclass S: Semiring extends AddCommMonoid, Monoid {
+    /// Multiplication distributes over addition from the left: `a * (b + c) = (a * b) + (a * c)`.
+    distrib_left(a: S, b: S, c: S) {
+        a * (b + c) = (a * b) + (a * c)
+    }
+
+    /// Multiplication distributes over addition from the right: `(a + b) * c = (a * c) + (b * c)`.
+    distrib_right(a: S, b: S, c: S) {
+        (a + b) * c = (a * c) + (b * c)
+    }
+
+    /// Multiplying by the additive identity yields the additive identity.
+    mul_zero_left(a: S) {
+        a * S.0 = S.0
+    }
+
+    /// Multiplying the additive identity by anything yields the additive identity.
+    mul_zero_right(a: S) {
+        S.0 * a = S.0
+    }
+}
+
+typeclass Ring extends Semiring, AddCommGroup
+
+typeclass CommRing extends Ring, CommMonoid
+
+define add_fn[T, A: AddSemigroup](f: T -> A, g: T -> A, t: T) -> A {
+    f(t) + g(t)
+}
+
+define mul_fn[T, S: Semigroup](c: S, f: T -> S, t: T) -> S {
+    c * f(t)
+}
+
+define mul_commute[M: Mul](a: M, b: M) -> Bool {
+    a * b = b * a
+}
+
+define is_mul_central[M: Mul](z: M) -> Bool {
+    forall(a: M) {
+        z * a = a * z
+    } and forall(b: M, c: M) {
+        z * (b * c) = (z * b) * c
+    } and forall(a: M, b: M) {
+        (a * b) * z = a * (b * z)
+    }
+}
+
+theorem mul_commute_eq[M: Mul](a: M, b: M) {
+    mul_commute(a, b) = (a * b = b * a)
+}
+
+theorem is_mul_central_comm[M: Mul](z: M, a: M) {
+    is_mul_central(z) implies z * a = a * z
+}
+
+theorem is_mul_central_left_assoc[M: Mul](z: M, b: M, c: M) {
+    is_mul_central(z) implies z * (b * c) = (z * b) * c
+}
+
+theorem is_mul_central_right_assoc[M: Mul](z: M, a: M, b: M) {
+    is_mul_central(z) implies (a * b) * z = a * (b * z)
+}
+
+theorem is_mul_central_eq[M: Mul](z: M) {
+    is_mul_central(z) = (
+        forall(a: M) {
+            z * a = a * z
+        } and forall(b: M, c: M) {
+            z * (b * c) = (z * b) * c
+        } and forall(a: M, b: M) {
+            (a * b) * z = a * (b * z)
+        }
+    )
+}
+
+theorem is_mul_central_intro[M: Mul](z: M) {
+    (forall(a: M) {
+        z * a = a * z
+    } and forall(b: M, c: M) {
+        z * (b * c) = (z * b) * c
+    } and forall(a: M, b: M) {
+        (a * b) * z = a * (b * z)
+    }) implies is_mul_central(z)
+}
+
+theorem semigroup_mul_central_left_assoc[M: Semigroup](z: M, b: M, c: M) {
+    z * (b * c) = (z * b) * c
+}
+
+theorem semigroup_mul_central_right_assoc[M: Semigroup](z: M, a: M, b: M) {
+    (a * b) * z = a * (b * z)
+}
+
+define commute[M: Mul](a: M, b: M) -> Bool {
+    a * b = b * a
+}
+
+theorem commute_eq[M: Mul](a: M, b: M) {
+    commute[M](a, b) = (a * b = b * a)
+}
+
+theorem commute_intro[M: Mul](a: M, b: M) {
+    a * b = b * a implies commute[M](a, b)
+}
+
+theorem commute_refl[M: Mul](a: M) {
+    commute[M](a, a)
+}
+
+theorem commute_symm[M: Mul](a: M, b: M) {
+    commute[M](a, b) implies commute[M](b, a)
+}
+
+theorem commute_self_mul_right[M: Semigroup](a: M, b: M) {
+    commute[M](a, b) implies commute[M](a, b * a)
+}
+
+theorem commute_self_mul_left[M: Semigroup](a: M, b: M) {
+    commute[M](a, b) implies commute[M](a, a * b)
+}
+
+define is_monoid_hom[M: Monoid, N: Monoid](f: M -> N) -> Bool {
+    f(M.1) = N.1 and forall(a: M, b: M) {
+        f(a * b) = f(a) * f(b)
+    }
+}
+
+structure MonoidHom[M: Monoid, N: Monoid] {
+    /// The mapping for the homomorphism.
+    hom: M -> N
+} constraint {
+    is_monoid_hom(hom)
+}
+
+let trivial_monoid_hom[M: Monoid, N: Monoid]: M -> N = function(a: M) {
+    N.1
+}
+
+theorem trivial_monoid_hom_is_hom[M: Monoid, N: Monoid] {
+    is_monoid_hom(trivial_monoid_hom[M, N])
+}
+
+theorem monoid_hom_ext[M: Monoid, N: Monoid](f: MonoidHom[M, N], g: MonoidHom[M, N]) {
+    (forall(a: M) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes MonoidHom[M: Monoid, N: Monoid] {
+    /// Monoid homomorphism extensionality from pointwise equality of the homomorphism.
+    let ext = monoid_hom_ext[M, N]
+}
+
+theorem monoid_hom_eq_hom[M: Monoid, N: Monoid](f: MonoidHom[M, N], g: MonoidHom[M, N]) {
+    f = g implies f.hom = g.hom
+}
+
+theorem monoid_hom_eq_apply[M: Monoid, N: Monoid](f: MonoidHom[M, N], g: MonoidHom[M, N], a: M) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem monoid_hom_eq_transport_predicate[M: Monoid, N: Monoid](
+    p: MonoidHom[M, N] -> Bool,
+    f: MonoidHom[M, N],
+    g: MonoidHom[M, N]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem monoid_hom_eq_transport_predicate_rev[M: Monoid, N: Monoid](
+    p: MonoidHom[M, N] -> Bool,
+    f: MonoidHom[M, N],
+    g: MonoidHom[M, N]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem monoid_hom_eq_of_hom_eq[M: Monoid, N: Monoid](f: MonoidHom[M, N], g: MonoidHom[M, N]) {
+    f.hom = g.hom implies f = g
+}
+
+theorem monoid_hom_eq_of_apply_eq[M: Monoid, N: Monoid](f: MonoidHom[M, N], g: MonoidHom[M, N]) {
+    (forall(a: M) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem monoid_hom_one[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    f.hom(M.1) = N.1
+}
+
+theorem monoid_hom_mul[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M, b: M) {
+    f.hom(a * b) = f.hom(a) * f.hom(b)
+}
+
+theorem function_eq_transport_monoid_hom[M: Monoid, N: Monoid](f: M -> N, g: M -> N) {
+    f = g and is_monoid_hom(f) implies is_monoid_hom(g)
+}
+
+theorem function_eq_transport_monoid_hom_rev[M: Monoid, N: Monoid](f: M -> N, g: M -> N) {
+    f = g and is_monoid_hom(g) implies is_monoid_hom(f)
+}
+
+theorem identity_fn_is_monoid_hom[M: Monoid] {
+    is_monoid_hom(identity_fn[M])
+}
+
+theorem compose_is_monoid_hom[M: Monoid, N: Monoid, P: Monoid](f: N -> P, g: M -> N) {
+    is_monoid_hom(f) and is_monoid_hom(g) implies is_monoid_hom(compose(f, g))
+}
+
+let identity_monoid_hom[M: Monoid]: MonoidHom[M, M] satisfy {
+    MonoidHom.new(identity_fn[M]) = Option.some(identity_monoid_hom)
+}
+
+theorem identity_monoid_hom_hom[M: Monoid] {
+    identity_monoid_hom[M].hom = identity_fn[M]
+}
+
+let compose_monoid_hom[M: Monoid, N: Monoid, P: Monoid](f: MonoidHom[N, P], g: MonoidHom[M, N]) -> result: MonoidHom[M, P] satisfy {
+    MonoidHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_monoid_hom_hom[M: Monoid, N: Monoid, P: Monoid](
+    f: MonoidHom[N, P],
+    g: MonoidHom[M, N]
+) {
+    compose_monoid_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_monoid_hom_assoc[A: Monoid, B: Monoid, C: Monoid, D: Monoid](
+    f: MonoidHom[C, D],
+    g: MonoidHom[B, C],
+    h: MonoidHom[A, B]
+) {
+    compose_monoid_hom(compose_monoid_hom(f, g), h) = compose_monoid_hom(f, compose_monoid_hom(g, h))
+}
+
+theorem compose_monoid_hom_identity_left[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    compose_monoid_hom(identity_monoid_hom[N], f) = f
+}
+
+theorem compose_monoid_hom_identity_right[M: Monoid, N: Monoid](f: MonoidHom[M, N]) {
+    compose_monoid_hom(f, identity_monoid_hom[M]) = f
+}
+
+theorem mul_swap_inner[M: CommMonoid](a: M, b: M, c: M, d: M) {
+    (a * b) * (c * d) = (a * c) * (b * d)
+}
+
+define is_idempotent_elem_mul[M: Mul](a: M) -> Bool {
+    a * a = a
+}
+
+theorem is_idempotent_elem_iff[M: Mul](a: M) {
+    is_idempotent_elem_mul(a) = (a * a = a)
+}
+
+theorem is_idempotent_elem_eq_mul[M: Mul](a: M) {
+    is_idempotent_elem_mul(a) implies a * a = a
+}
+
+theorem is_idempotent_elem_intro[M: Mul](a: M) {
+    a * a = a implies is_idempotent_elem_mul(a)
+}
+
+theorem is_idempotent_elem_one[M: Monoid] {
+    is_idempotent_elem_mul(M.1)
+}
+
+define is_idempotent_elem[M: Monoid](a: M) -> Bool {
+    a * a = a
+}
+
+theorem is_idempotent_elem_eq[M: Monoid](a: M) {
+    is_idempotent_elem(a) = (a * a = a)
+}
+
+theorem one_is_idempotent_elem[M: Monoid] {
+    is_idempotent_elem(M.1)
+}
+
+theorem idempotent_elem_mul_self[M: Monoid](a: M) {
+    is_idempotent_elem(a) implies a * a = a
+}
+
+theorem is_idempotent_elem_of_mul_self[M: Monoid](a: M) {
+    a * a = a implies is_idempotent_elem(a)
+}
+
+theorem idempotent_elem_mul_of_commute[M: Monoid](a: M, b: M) {
+    is_idempotent_elem(a) and is_idempotent_elem(b) and a * b = b * a implies
+    is_idempotent_elem(a * b)
+}
+
+theorem idempotent_elem_mul_comm_monoid[M: CommMonoid](a: M, b: M) {
+    is_idempotent_elem(a) and is_idempotent_elem(b) implies is_idempotent_elem(a * b)
+}
+
+define is_add_monoid_hom[A: AddMonoid, B: AddMonoid](f: A -> B) -> Bool {
+    f(A.0) = B.0 and forall(a: A, b: A) {
+        f(a + b) = f(a) + f(b)
+    }
+}
+
+structure AddMonoidHom[A: AddMonoid, B: AddMonoid] {
+    /// The mapping for the homomorphism.
+    hom: A -> B
+} constraint {
+    is_add_monoid_hom(hom)
+}
+
+let trivial_add_monoid_hom[A: AddMonoid, B: AddMonoid]: A -> B = function(a: A) {
+    B.0
+}
+
+theorem trivial_add_monoid_hom_is_hom[A: AddMonoid, B: AddMonoid] {
+    is_add_monoid_hom(trivial_add_monoid_hom[A, B])
+}
+
+theorem add_monoid_hom_ext[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], g: AddMonoidHom[A, B]) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes AddMonoidHom[A: AddMonoid, B: AddMonoid] {
+    /// Additive monoid homomorphism extensionality from pointwise equality of the homomorphism.
+    let ext = add_monoid_hom_ext[A, B]
+}
+
+theorem add_monoid_hom_eq_hom[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], g: AddMonoidHom[A, B]) {
+    f = g implies f.hom = g.hom
+}
+
+theorem add_monoid_hom_eq_apply[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], g: AddMonoidHom[A, B], a: A) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem add_monoid_hom_eq_transport_predicate[A: AddMonoid, B: AddMonoid](
+    p: AddMonoidHom[A, B] -> Bool,
+    f: AddMonoidHom[A, B],
+    g: AddMonoidHom[A, B]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem add_monoid_hom_eq_transport_predicate_rev[A: AddMonoid, B: AddMonoid](
+    p: AddMonoidHom[A, B] -> Bool,
+    f: AddMonoidHom[A, B],
+    g: AddMonoidHom[A, B]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem add_monoid_hom_eq_of_hom_eq[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], g: AddMonoidHom[A, B]) {
+    f.hom = g.hom implies f = g
+}
+
+theorem add_monoid_hom_eq_of_apply_eq[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], g: AddMonoidHom[A, B]) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem add_monoid_hom_zero[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B]) {
+    f.hom(A.0) = B.0
+}
+
+theorem add_monoid_hom_add[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B], a: A, b: A) {
+    f.hom(a + b) = f.hom(a) + f.hom(b)
+}
+
+theorem function_eq_transport_add_monoid_hom[A: AddMonoid, B: AddMonoid](f: A -> B, g: A -> B) {
+    f = g and is_add_monoid_hom(f) implies is_add_monoid_hom(g)
+}
+
+theorem function_eq_transport_add_monoid_hom_rev[A: AddMonoid, B: AddMonoid](f: A -> B, g: A -> B) {
+    f = g and is_add_monoid_hom(g) implies is_add_monoid_hom(f)
+}
+
+theorem identity_fn_is_add_monoid_hom[A: AddMonoid] {
+    is_add_monoid_hom(identity_fn[A])
+}
+
+theorem compose_is_add_monoid_hom[A: AddMonoid, B: AddMonoid, C: AddMonoid](f: B -> C, g: A -> B) {
+    is_add_monoid_hom(f) and is_add_monoid_hom(g) implies is_add_monoid_hom(compose(f, g))
+}
+
+let identity_add_monoid_hom[A: AddMonoid]: AddMonoidHom[A, A] satisfy {
+    AddMonoidHom.new(identity_fn[A]) = Option.some(identity_add_monoid_hom)
+}
+
+theorem identity_add_monoid_hom_hom[A: AddMonoid] {
+    identity_add_monoid_hom[A].hom = identity_fn[A]
+}
+
+let compose_add_monoid_hom[A: AddMonoid, B: AddMonoid, C: AddMonoid](f: AddMonoidHom[B, C], g: AddMonoidHom[A, B]) -> result: AddMonoidHom[A, C] satisfy {
+    AddMonoidHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_add_monoid_hom_hom[A: AddMonoid, B: AddMonoid, C: AddMonoid](
+    f: AddMonoidHom[B, C],
+    g: AddMonoidHom[A, B]
+) {
+    compose_add_monoid_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_add_monoid_hom_assoc[A: AddMonoid, B: AddMonoid, C: AddMonoid, D: AddMonoid](
+    f: AddMonoidHom[C, D],
+    g: AddMonoidHom[B, C],
+    h: AddMonoidHom[A, B]
+) {
+    compose_add_monoid_hom(compose_add_monoid_hom(f, g), h) = compose_add_monoid_hom(f, compose_add_monoid_hom(g, h))
+}
+
+theorem compose_add_monoid_hom_identity_left[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B]) {
+    compose_add_monoid_hom(identity_add_monoid_hom[B], f) = f
+}
+
+theorem compose_add_monoid_hom_identity_right[A: AddMonoid, B: AddMonoid](f: AddMonoidHom[A, B]) {
+    compose_add_monoid_hom(f, identity_add_monoid_hom[A]) = f
+}
+
+define is_add_comm_monoid_hom[A: AddCommMonoid, B: AddCommMonoid](f: A -> B) -> Bool {
+    is_add_monoid_hom(f)
+}
+
+structure AddCommMonoidHom[A: AddCommMonoid, B: AddCommMonoid] {
+    /// The mapping of the additive commutative monoid homomorphism.
+    hom: A -> B
+} constraint {
+    is_add_comm_monoid_hom(hom)
+}
+
+theorem add_comm_monoid_hom_ext[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes AddCommMonoidHom[A: AddCommMonoid, B: AddCommMonoid] {
+    /// Additive commutative monoid homomorphism extensionality from pointwise equality of the mapping.
+    let ext = add_comm_monoid_hom_ext[A, B]
+}
+
+theorem add_comm_monoid_hom_eq_hom[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    f = g implies f.hom = g.hom
+}
+
+theorem add_comm_monoid_hom_eq_apply[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B],
+    a: A
+) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem add_comm_monoid_hom_eq_transport_predicate[A: AddCommMonoid, B: AddCommMonoid](
+    p: AddCommMonoidHom[A, B] -> Bool,
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem add_comm_monoid_hom_eq_transport_predicate_rev[A: AddCommMonoid, B: AddCommMonoid](
+    p: AddCommMonoidHom[A, B] -> Bool,
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem add_comm_monoid_hom_eq_of_hom_eq[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    f.hom = g.hom implies f = g
+}
+
+theorem add_comm_monoid_hom_eq_of_apply_eq[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    g: AddCommMonoidHom[A, B]
+) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem add_comm_monoid_hom_zero[A: AddCommMonoid, B: AddCommMonoid](f: AddCommMonoidHom[A, B]) {
+    f.hom(A.0) = B.0
+}
+
+theorem add_comm_monoid_hom_add[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B],
+    a: A,
+    b: A
+) {
+    f.hom(a + b) = f.hom(a) + f.hom(b)
+}
+
+theorem function_eq_transport_add_comm_monoid_hom[A: AddCommMonoid, B: AddCommMonoid](f: A -> B, g: A -> B) {
+    f = g and is_add_comm_monoid_hom(f) implies is_add_comm_monoid_hom(g)
+}
+
+theorem function_eq_transport_add_comm_monoid_hom_rev[A: AddCommMonoid, B: AddCommMonoid](f: A -> B, g: A -> B) {
+    f = g and is_add_comm_monoid_hom(g) implies is_add_comm_monoid_hom(f)
+}
+
+theorem identity_fn_is_add_comm_monoid_hom[A: AddCommMonoid] {
+    is_add_comm_monoid_hom(identity_fn[A])
+}
+
+theorem compose_is_add_comm_monoid_hom[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid](
+    f: B -> C,
+    g: A -> B
+) {
+    is_add_comm_monoid_hom(f) and is_add_comm_monoid_hom(g) implies
+    is_add_comm_monoid_hom(compose(f, g))
+}
+
+let identity_add_comm_monoid_hom[A: AddCommMonoid]: AddCommMonoidHom[A, A] satisfy {
+    AddCommMonoidHom.new(identity_fn[A]) = Option.some(identity_add_comm_monoid_hom)
+}
+
+theorem identity_add_comm_monoid_hom_hom[A: AddCommMonoid] {
+    identity_add_comm_monoid_hom[A].hom = identity_fn[A]
+}
+
+let compose_add_comm_monoid_hom[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid](f: AddCommMonoidHom[B, C], g: AddCommMonoidHom[A, B]) -> result: AddCommMonoidHom[A, C] satisfy {
+    AddCommMonoidHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_add_comm_monoid_hom_hom[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid](
+    f: AddCommMonoidHom[B, C],
+    g: AddCommMonoidHom[A, B]
+) {
+    compose_add_comm_monoid_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_add_comm_monoid_hom_assoc[A: AddCommMonoid, B: AddCommMonoid, C: AddCommMonoid, D: AddCommMonoid](
+    f: AddCommMonoidHom[C, D],
+    g: AddCommMonoidHom[B, C],
+    h: AddCommMonoidHom[A, B]
+) {
+    compose_add_comm_monoid_hom(compose_add_comm_monoid_hom(f, g), h) =
+    compose_add_comm_monoid_hom(f, compose_add_comm_monoid_hom(g, h))
+}
+
+theorem compose_add_comm_monoid_hom_identity_left[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    compose_add_comm_monoid_hom(identity_add_comm_monoid_hom[B], f) = f
+}
+
+theorem compose_add_comm_monoid_hom_identity_right[A: AddCommMonoid, B: AddCommMonoid](
+    f: AddCommMonoidHom[A, B]
+) {
+    compose_add_comm_monoid_hom(f, identity_add_comm_monoid_hom[A]) = f
+}
+
+theorem add_swap_inner[A: AddCommMonoid](a: A, b: A, c: A, d: A) {
+    (a + b) + (c + d) = (a + c) + (b + d)
+}
+
+theorem add_shift_left[A: AddCommMonoid](a: A, b: A, c: A) {
+    (a + b) + c = (a + c) + b
+}
+
+theorem add_assoc_right[A: AddCommMonoid](a: A, b: A, c: A) {
+    (a + b) + c = a + (b + c)
+}
+
+theorem inverse_left[A: AddGroup](a: A) {
+    -a + a = A.0
+}
+
+theorem inverse_inverse[A: AddGroup](a: A) {
+    --a = a
+}
+
+theorem left_cancel[A: AddGroup](a: A, b: A, c: A) {
+    a + b = a + c implies b = c
+}
+
+theorem right_cancel[A: AddGroup](a: A, b: A, c: A) {
+    b + a = c + a implies b = c
+}
+
+theorem inverse_add[A: AddGroup](a: A, b: A) {
+    -(a + b) = -b + -a
+}
+
+define is_add_group_hom[A: AddGroup, B: AddGroup](f: A -> B) -> Bool {
+    forall(a: A, b: A) {
+        f(a + b) = f(a) + f(b)
+    }
+}
+
+structure AddGroupHom[A: AddGroup, B: AddGroup] {
+    /// The mapping for the homomorphism.
+    hom: A -> B
+} constraint {
+    is_add_group_hom(hom)
+}
+
+let trivial_add_group_hom[A: AddGroup, B: AddGroup]: A -> B = function(a: A) {
+    B.0
+}
+
+theorem trivial_add_group_hom_is_hom[A: AddGroup, B: AddGroup] {
+    is_add_group_hom(trivial_add_group_hom[A, B])
+}
+
+theorem add_group_hom_ext[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], g: AddGroupHom[A, B]) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes AddGroupHom[A: AddGroup, B: AddGroup] {
+    /// Additive group homomorphism extensionality from pointwise equality of the homomorphism.
+    let ext = add_group_hom_ext[A, B]
+}
+
+theorem add_group_hom_eq_hom[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], g: AddGroupHom[A, B]) {
+    f = g implies f.hom = g.hom
+}
+
+theorem add_group_hom_eq_apply[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], g: AddGroupHom[A, B], a: A) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem add_group_hom_eq_transport_predicate[A: AddGroup, B: AddGroup](
+    p: AddGroupHom[A, B] -> Bool,
+    f: AddGroupHom[A, B],
+    g: AddGroupHom[A, B]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem add_group_hom_eq_transport_predicate_rev[A: AddGroup, B: AddGroup](
+    p: AddGroupHom[A, B] -> Bool,
+    f: AddGroupHom[A, B],
+    g: AddGroupHom[A, B]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem add_group_hom_eq_of_hom_eq[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], g: AddGroupHom[A, B]) {
+    f.hom = g.hom implies f = g
+}
+
+theorem add_group_hom_eq_of_apply_eq[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], g: AddGroupHom[A, B]) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem add_group_hom_add[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], a: A, b: A) {
+    f.hom(a + b) = f.hom(a) + f.hom(b)
+}
+
+theorem add_group_hom_zero[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    f.hom(A.0) = B.0
+}
+
+theorem add_group_hom_neg[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B], a: A) {
+    f.hom(-a) = -f.hom(a)
+}
+
+theorem add_monoid_hom_imp_add_group_hom[A: AddGroup, B: AddGroup](f: A -> B) {
+    is_add_monoid_hom(f) implies is_add_group_hom(f)
+}
+
+theorem add_group_hom_imp_add_monoid_hom[A: AddGroup, B: AddGroup](f: A -> B) {
+    is_add_group_hom(f) implies is_add_monoid_hom(f)
+}
+
+theorem add_group_hom_is_add_monoid_hom[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    is_add_monoid_hom(f.hom)
+}
+
+theorem add_monoid_hom_is_add_group_hom[A: AddGroup, B: AddGroup](f: AddMonoidHom[A, B]) {
+    is_add_group_hom(f.hom)
+}
+
+let add_group_hom_to_add_monoid_hom[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) -> result: AddMonoidHom[A, B] satisfy {
+    AddMonoidHom.new(f.hom) = Option.some(result)
+}
+
+theorem add_group_hom_to_add_monoid_hom_hom[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    add_group_hom_to_add_monoid_hom(f).hom = f.hom
+}
+
+let add_group_hom_of_add_monoid_hom[A: AddGroup, B: AddGroup](f: AddMonoidHom[A, B]) -> result: AddGroupHom[A, B] satisfy {
+    AddGroupHom.new(f.hom) = Option.some(result)
+}
+
+theorem add_group_hom_of_add_monoid_hom_hom[A: AddGroup, B: AddGroup](f: AddMonoidHom[A, B]) {
+    add_group_hom_of_add_monoid_hom(f).hom = f.hom
+}
+
+theorem function_eq_transport_add_group_hom[A: AddGroup, B: AddGroup](f: A -> B, g: A -> B) {
+    f = g and is_add_group_hom(f) implies is_add_group_hom(g)
+}
+
+theorem function_eq_transport_add_group_hom_rev[A: AddGroup, B: AddGroup](f: A -> B, g: A -> B) {
+    f = g and is_add_group_hom(g) implies is_add_group_hom(f)
+}
+
+theorem identity_fn_is_add_group_hom[A: AddGroup] {
+    is_add_group_hom(identity_fn[A])
+}
+
+theorem compose_is_add_group_hom[A: AddGroup, B: AddGroup, C: AddGroup](f: B -> C, g: A -> B) {
+    is_add_group_hom(f) and is_add_group_hom(g) implies is_add_group_hom(compose(f, g))
+}
+
+let identity_add_group_hom[A: AddGroup]: AddGroupHom[A, A] satisfy {
+    AddGroupHom.new(identity_fn[A]) = Option.some(identity_add_group_hom)
+}
+
+theorem identity_add_group_hom_hom[A: AddGroup] {
+    identity_add_group_hom[A].hom = identity_fn[A]
+}
+
+let compose_add_group_hom[A: AddGroup, B: AddGroup, C: AddGroup](f: AddGroupHom[B, C], g: AddGroupHom[A, B]) -> result: AddGroupHom[A, C] satisfy {
+    AddGroupHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_add_group_hom_hom[A: AddGroup, B: AddGroup, C: AddGroup](f: AddGroupHom[B, C], g: AddGroupHom[A, B]) {
+    compose_add_group_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_add_group_hom_assoc[A: AddGroup, B: AddGroup, C: AddGroup, D: AddGroup](
+    f: AddGroupHom[C, D], g: AddGroupHom[B, C], h: AddGroupHom[A, B]) {
+    compose_add_group_hom(compose_add_group_hom(f, g), h) = compose_add_group_hom(f, compose_add_group_hom(g, h))
+}
+
+theorem compose_add_group_hom_identity_left[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    compose_add_group_hom(identity_add_group_hom[B], f) = f
+}
+
+theorem compose_add_group_hom_identity_right[A: AddGroup, B: AddGroup](f: AddGroupHom[A, B]) {
+    compose_add_group_hom(f, identity_add_group_hom[A]) = f
+}
+
+theorem sub_add_sub[A: AddCommGroup](a: A, b: A, c: A, d: A) {
+    (a - b) + (c - d) = (a + c) - (b + d)
+}
+
+theorem sub_add_cancel[A: AddCommGroup](a: A, b: A) {
+    (a - b) + b = a
+}
+
+theorem sub_eq_zero_imp_eq[A: AddCommGroup](a: A, b: A) {
+    a - b = A.0 implies a = b
+}
+
+define is_add_comm_group_hom[A: AddCommGroup, B: AddCommGroup](f: A -> B) -> Bool {
+    is_add_group_hom(f)
+}
+
+structure AddCommGroupHom[A: AddCommGroup, B: AddCommGroup] {
+    /// The mapping of the additive commutative group homomorphism.
+    hom: A -> B
+} constraint {
+    is_add_comm_group_hom(hom)
+}
+
+theorem add_comm_group_hom_ext[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+attributes AddCommGroupHom[A: AddCommGroup, B: AddCommGroup] {
+    /// Additive commutative group homomorphism extensionality from pointwise equality of the mapping.
+    let ext = add_comm_group_hom_ext[A, B]
+}
+
+theorem add_comm_group_hom_eq_hom[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    f = g implies f.hom = g.hom
+}
+
+theorem add_comm_group_hom_eq_apply[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B],
+    a: A
+) {
+    f = g implies f.hom(a) = g.hom(a)
+}
+
+theorem add_comm_group_hom_eq_transport_predicate[A: AddCommGroup, B: AddCommGroup](
+    p: AddCommGroupHom[A, B] -> Bool,
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    f = g and p(f) implies p(g)
+}
+
+theorem add_comm_group_hom_eq_transport_predicate_rev[A: AddCommGroup, B: AddCommGroup](
+    p: AddCommGroupHom[A, B] -> Bool,
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    f = g and p(g) implies p(f)
+}
+
+theorem add_comm_group_hom_eq_of_hom_eq[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    f.hom = g.hom implies f = g
+}
+
+theorem add_comm_group_hom_eq_of_apply_eq[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    g: AddCommGroupHom[A, B]
+) {
+    (forall(a: A) { f.hom(a) = g.hom(a) }) implies f = g
+}
+
+theorem add_comm_group_hom_is_add_group_hom[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B]) {
+    is_add_group_hom(f.hom)
+}
+
+let add_comm_group_hom_to_add_group_hom[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B]) -> result: AddGroupHom[A, B] satisfy {
+    AddGroupHom.new(f.hom) = Option.some(result)
+}
+
+theorem add_comm_group_hom_to_add_group_hom_hom[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B]) {
+    add_comm_group_hom_to_add_group_hom(f).hom = f.hom
+}
+
+theorem add_comm_group_hom_add[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B],
+    a: A,
+    b: A
+) {
+    f.hom(a + b) = f.hom(a) + f.hom(b)
+}
+
+theorem add_comm_group_hom_zero[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B]) {
+    f.hom(A.0) = B.0
+}
+
+theorem add_comm_group_hom_neg[A: AddCommGroup, B: AddCommGroup](f: AddCommGroupHom[A, B], a: A) {
+    f.hom(-a) = -f.hom(a)
+}
+
+theorem function_eq_transport_add_comm_group_hom[A: AddCommGroup, B: AddCommGroup](f: A -> B, g: A -> B) {
+    f = g and is_add_comm_group_hom(f) implies is_add_comm_group_hom(g)
+}
+
+theorem function_eq_transport_add_comm_group_hom_rev[A: AddCommGroup, B: AddCommGroup](f: A -> B, g: A -> B) {
+    f = g and is_add_comm_group_hom(g) implies is_add_comm_group_hom(f)
+}
+
+theorem identity_fn_is_add_comm_group_hom[A: AddCommGroup] {
+    is_add_comm_group_hom(identity_fn[A])
+}
+
+theorem compose_is_add_comm_group_hom[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup](
+    f: B -> C,
+    g: A -> B
+) {
+    is_add_comm_group_hom(f) and is_add_comm_group_hom(g) implies
+    is_add_comm_group_hom(compose(f, g))
+}
+
+let identity_add_comm_group_hom[A: AddCommGroup]: AddCommGroupHom[A, A] satisfy {
+    AddCommGroupHom.new(identity_fn[A]) = Option.some(identity_add_comm_group_hom)
+}
+
+theorem identity_add_comm_group_hom_hom[A: AddCommGroup] {
+    identity_add_comm_group_hom[A].hom = identity_fn[A]
+}
+
+let compose_add_comm_group_hom[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup](f: AddCommGroupHom[B, C], g: AddCommGroupHom[A, B]) -> result: AddCommGroupHom[A, C] satisfy {
+    AddCommGroupHom.new(compose(f.hom, g.hom)) = Option.some(result)
+}
+
+theorem compose_add_comm_group_hom_hom[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup](
+    f: AddCommGroupHom[B, C],
+    g: AddCommGroupHom[A, B]
+) {
+    compose_add_comm_group_hom(f, g).hom = compose(f.hom, g.hom)
+}
+
+theorem compose_add_comm_group_hom_assoc[A: AddCommGroup, B: AddCommGroup, C: AddCommGroup, D: AddCommGroup](
+    f: AddCommGroupHom[C, D],
+    g: AddCommGroupHom[B, C],
+    h: AddCommGroupHom[A, B]
+) {
+    compose_add_comm_group_hom(compose_add_comm_group_hom(f, g), h) =
+    compose_add_comm_group_hom(f, compose_add_comm_group_hom(g, h))
+}
+
+theorem compose_add_comm_group_hom_identity_left[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    compose_add_comm_group_hom(identity_add_comm_group_hom[B], f) = f
+}
+
+theorem compose_add_comm_group_hom_identity_right[A: AddCommGroup, B: AddCommGroup](
+    f: AddCommGroupHom[A, B]
+) {
+    compose_add_comm_group_hom(f, identity_add_comm_group_hom[A]) = f
+}
+
+theorem add_group_neg_zero[A: AddGroup] {
+    -A.0 = A.0
+}
+
+theorem add_group_sub_self[A: AddGroup](a: A) {
+    a - a = A.0
+}
+
+theorem add_group_sub_zero[A: AddGroup](a: A) {
+    a - A.0 = a
+}
+
+theorem add_group_zero_sub[A: AddGroup](a: A) {
+    A.0 - a = -a
+}
+
+theorem add_group_sub_eq_zero_iff[A: AddGroup](a: A, b: A) {
+    (a - b = A.0) = (a = b)
+}
+
+theorem add_group_neg_sub[A: AddGroup](a: A, b: A) {
+    -(a - b) = b - a
+}
+
+theorem add_group_sub_neg[A: AddGroup](a: A, b: A) {
+    a - -b = a + b
+}
+
+theorem add_group_add_eq_zero_iff_eq_neg[A: AddGroup](a: A, b: A) {
+    (a + b = A.0) = (b = -a)
+}
+
+theorem add_group_neg_eq_zero_iff[A: AddGroup](a: A) {
+    (-a = A.0) = (a = A.0)
+}
+
+theorem add_group_sub_add_cancel[A: AddGroup](a: A, b: A) {
+    (a - b) + b = a
+}
+
+theorem add_group_add_sub_cancel[A: AddGroup](a: A, b: A) {
+    a + b - b = a
+}
+
+theorem add_comm_group_sub_sub[A: AddCommGroup](a: A, b: A, c: A) {
+    a - (b - c) = a - b + c
+}
+
+theorem add_group_neg_eq_self_iff_add_self_zero[A: AddGroup](a: A) {
+    (-a = a) = (a + a = A.0)
+}
+
+theorem zero_is_idempotent_elem[M: MonoidWithZero] {
+    is_idempotent_elem(M.0)
+}
+
+theorem idempotent_elem_iff_eq_zero_or_one[M: LeftCancelMonoidWithZero](p: M) {
+    is_idempotent_elem(p) iff p = M.0 or p = M.1
+}
+
+theorem trivial_semiring[S: Semiring] {
+    S.0 = S.1 implies forall(s: S) { s = S.0 }
+}
+
+theorem mul_zero_left[R: Ring](a: R) {
+    R.0 * a = R.0
+}
+
+theorem mul_zero_right[R: Ring](a: R) {
+    a * R.0 = R.0
+}
+
+theorem mul_neg_left[R: Ring](a: R, b: R) {
+    -a * b = -(a * b)
+}
+
+theorem mul_neg_right[R: Ring](a: R, b: R) {
+    a * -b = -(a * b)
+}
+
+theorem mul_neg_neg[R: Ring](a: R, b: R) {
+    -a * -b = a * b
+}
+
+theorem mul_sub_left[R: Ring](a: R, b: R, c: R) {
+    a * (b - c) = a * b - a * c
+}
+
+theorem mul_sub_right[R: Ring](a: R, b: R, c: R) {
+    (a - b) * c = a * c - b * c
+}
+
+theorem neg_one_mul_neg_one[R: Ring] {
+    -R.1 * -R.1 = R.1
+}
+
+theorem mul_neg_one_left[R: Ring](a: R) {
+    -R.1 * a = -a
+}
+
+theorem mul_neg_one_right[R: Ring](a: R) {
+    a * -R.1 = -a
+}
+
+theorem semiring_zero_eq_one_imp_all_eq_zero[S: Semiring](x: S) {
+    S.0 = S.1 implies x = S.0
+}
+
+theorem semiring_zero_eq_one_imp_all_eq_one[S: Semiring](x: S) {
+    S.0 = S.1 implies x = S.1
+}
+
+theorem semiring_zero_eq_one_imp_eq[S: Semiring](x: S, y: S) {
+    S.0 = S.1 implies x = y
+}
+
+theorem semiring_nontrivial_of_exists_ne[S: Semiring](x: S, y: S) {
+    x != y implies S.0 != S.1
+}
+
+theorem semiring_zero_eq_one_imp_function_ext[A, S: Semiring](f: A -> S, g: A -> S) {
+    S.0 = S.1 implies f = g
+}
+
+theorem semiring_zero_eq_one_iff_all_eq_zero[S: Semiring] {
+    (S.0 = S.1) = (forall(x: S) { x = S.0 })
+}
+
+theorem semiring_zero_eq_one_iff_all_eq_one[S: Semiring] {
+    (S.0 = S.1) = (forall(x: S) { x = S.1 })
+}
+
+theorem semiring_zero_eq_one_iff_all_eq[S: Semiring] {
+    (S.0 = S.1) = (forall(x: S, y: S) { x = y })
+}
+
+theorem semiring_nontrivial_iff_exists_ne[S: Semiring] {
+    (S.0 != S.1) = (exists(x: S, y: S) { x != y })
+}
+

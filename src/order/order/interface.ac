@@ -1,0 +1,2135 @@
+typeclass A: Meet {
+    /// The binary greatest lower bound operation.
+    meet: (A, A) -> A
+}
+
+typeclass A: Join {
+    /// The binary least upper bound operation.
+    join: (A, A) -> A
+}
+
+typeclass A: LTE {
+    lte: (A, A) -> Bool
+}
+
+typeclass P: PartialOrder extends LTE {
+    /// The order relation must be reflexive: every element is `≤` itself.
+    reflexive {
+        is_reflexive(P.lte)
+    }
+
+    /// The order relation must be transitive: if `a ≤ b` and `b ≤ c`, then `a ≤ c`.
+    transitive {
+        is_transitive(P.lte)
+    }
+
+    /// The order relation must be antisymmetric: if `a ≤ b` and `b ≤ a`, then `a = b`.
+    antisymmetric {
+        is_antisymmetric(P.lte)
+    }
+}
+
+attributes P: PartialOrder {
+    /// Strict less-than comparison.
+    define lt(self, other: P) -> Bool {
+        self <= other and self != other
+    }
+
+    /// Greater-than-or-equal-to comparison.
+    define gte(self, other: P) -> Bool {
+        other <= self
+    }
+
+    /// Strict greater-than comparison.
+    define gt(self, other: P) -> Bool {
+        other < self
+    }
+}
+
+typeclass L: LinearOrder extends PartialOrder {
+    /// All elements are comparable: for any two elements `a` and `b`, either `a ≤ b` or `b ≤ a`.
+    totality(a: L, b: L) {
+        a <= b or b <= a
+    }
+}
+
+attributes L: LinearOrder {
+    /// Yields the smaller of two elements.
+    define min(self, other: L) -> L {
+        if self <= other {
+            self
+        } else {
+            other
+        }
+    }
+
+    /// Yields the larger of two elements.
+    define max(self, other: L) -> L {
+        if other <= self {
+            self
+        } else {
+            other
+        }
+    }
+}
+
+typeclass S: MeetSemilattice extends PartialOrder, Meet {
+    /// A meet is below its left argument.
+    meet_lte_left(a: S, b: S) {
+        a.meet(b) <= a
+    }
+
+    /// A meet is below its right argument.
+    meet_lte_right(a: S, b: S) {
+        a.meet(b) <= b
+    }
+
+    /// Any common lower bound is below the meet.
+    lte_meet_of_bounds(c: S, a: S, b: S) {
+        c <= a and c <= b implies c <= a.meet(b)
+    }
+}
+
+typeclass S: JoinSemilattice extends PartialOrder, Join {
+    /// A join is above its left argument.
+    lte_join_left(a: S, b: S) {
+        a <= a.join(b)
+    }
+
+    /// A join is above its right argument.
+    lte_join_right(a: S, b: S) {
+        b <= a.join(b)
+    }
+
+    /// A join is below any common upper bound.
+    join_lte_of_bounds(a: S, b: S, c: S) {
+        a <= c and b <= c implies a.join(b) <= c
+    }
+}
+
+typeclass L: Lattice extends MeetSemilattice, JoinSemilattice {
+}
+
+typeclass L: DistribLattice extends Lattice {
+    /// Meet distributes over join on the left.
+    meet_join_distrib_left(a: L, b: L, c: L) {
+        a.meet(b.join(c)) = a.meet(b).join(a.meet(c))
+    }
+
+    /// Join distributes over meet on the left.
+    join_meet_distrib_left(a: L, b: L, c: L) {
+        a.join(b.meet(c)) = a.join(b).meet(a.join(c))
+    }
+}
+
+theorem lte_refl[P: PartialOrder](a: P) {
+    a <= a
+}
+
+theorem gte_refl[P: PartialOrder](a: P) {
+    a >= a
+}
+
+theorem lte_ref[P: PartialOrder](a: P) {
+    a <= a
+}
+
+theorem lte_self[P: PartialOrder](a: P) {
+    a <= a
+}
+
+theorem gte_self[P: PartialOrder](a: P) {
+    a >= a
+}
+
+theorem le_refl[P: PartialOrder](a: P) {
+    a <= a
+}
+
+theorem ge_refl[P: PartialOrder](a: P) {
+    a >= a
+}
+
+theorem lte_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b <= c implies a <= c
+}
+
+theorem gte_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b >= c implies a >= c
+}
+
+theorem le_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b <= c implies a <= c
+}
+
+theorem ge_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b >= c implies a >= c
+}
+
+theorem lte_antisymm[P: PartialOrder](a: P, b: P) {
+    a <= b and b <= a implies a = b
+}
+
+theorem lte_both_ways_imp_eq[P: PartialOrder](a: P, b: P) {
+    a <= b and b <= a implies a = b
+}
+
+theorem le_antisymm[P: PartialOrder](a: P, b: P) {
+    a <= b and b <= a implies a = b
+}
+
+theorem lte_and_gte_imp_eq[P: PartialOrder](a: P, b: P) {
+    a <= b and a >= b implies a = b
+}
+
+theorem eq_of_le_of_ge[P: PartialOrder](a: P, b: P) {
+    a <= b and a >= b implies a = b
+}
+
+theorem eq_of_ge_of_le[P: PartialOrder](a: P, b: P) {
+    a >= b and a <= b implies a = b
+}
+
+theorem eq_of_forall_lte_iff[P: PartialOrder](a: P, b: P) {
+    (forall(c: P) { a <= c = b <= c }) implies a = b
+}
+
+theorem eq_of_forall_lte_iff_swap[P: PartialOrder](a: P, b: P) {
+    (forall(c: P) { c <= a = c <= b }) implies a = b
+}
+
+theorem eq_imp_lte[P: PartialOrder](a: P, b: P) {
+    a = b implies a <= b
+}
+
+theorem eq_imp_gte[P: PartialOrder](a: P, b: P) {
+    a = b implies a >= b
+}
+
+theorem lte_of_eq[P: PartialOrder](a: P, b: P) {
+    a = b implies a <= b
+}
+
+theorem le_of_eq[P: PartialOrder](a: P, b: P) {
+    a = b implies a <= b
+}
+
+theorem gte_of_eq[P: PartialOrder](a: P, b: P) {
+    a = b implies a >= b
+}
+
+theorem ge_of_eq[P: PartialOrder](a: P, b: P) {
+    a = b implies a >= b
+}
+
+theorem eq_iff_lte_and_gte[P: PartialOrder](a: P, b: P) {
+    a = b = (a <= b and a >= b)
+}
+
+theorem eq_iff_gte_and_lte[P: PartialOrder](a: P, b: P) {
+    a = b = (a >= b and a <= b)
+}
+
+theorem ne_imp_not_lte_or_not_gte[P: PartialOrder](a: P, b: P) {
+    a != b implies not (a <= b) or not (a >= b)
+}
+
+theorem ne_imp_not_gte_or_not_lte[P: PartialOrder](a: P, b: P) {
+    a != b implies not (a >= b) or not (a <= b)
+}
+
+theorem ne_iff_not_lte_or_not_gte[P: PartialOrder](a: P, b: P) {
+    a != b = (not (a <= b) or not (a >= b))
+}
+
+theorem ne_iff_not_gte_or_not_lte[P: PartialOrder](a: P, b: P) {
+    a != b = (not (a >= b) or not (a <= b))
+}
+
+theorem lt_imp_lte[P: PartialOrder](a: P, b: P) {
+    a < b implies a <= b
+}
+
+theorem lte_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies a <= b
+}
+
+theorem le_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies a <= b
+}
+
+theorem gt_imp_gte[P: PartialOrder](a: P, b: P) {
+    a > b implies a >= b
+}
+
+theorem gte_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies a >= b
+}
+
+theorem ge_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies a >= b
+}
+
+theorem lt_imp_ne[P: PartialOrder](a: P, b: P) {
+    a < b implies a != b
+}
+
+theorem ne_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies a != b
+}
+
+theorem not_eq_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies a != b
+}
+
+theorem lt_ne[P: PartialOrder](a: P, b: P) {
+    a < b implies a != b
+}
+
+theorem gt_imp_ne[P: PartialOrder](a: P, b: P) {
+    a > b implies a != b
+}
+
+theorem ne_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies a != b
+}
+
+theorem not_eq_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies a != b
+}
+
+theorem gt_ne[P: PartialOrder](a: P, b: P) {
+    a > b implies a != b
+}
+
+theorem lt_imp_ne_symm[P: PartialOrder](a: P, b: P) {
+    a < b implies b != a
+}
+
+theorem ne_symm_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies b != a
+}
+
+theorem not_eq_symm_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies b != a
+}
+
+theorem gt_imp_ne_symm[P: PartialOrder](a: P, b: P) {
+    a > b implies b != a
+}
+
+theorem ne_symm_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies b != a
+}
+
+theorem not_eq_symm_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies b != a
+}
+
+theorem not_lt_ref[P: PartialOrder](a: P) {
+    not (a < a)
+}
+
+theorem lt_not_ref[P: PartialOrder](a: P) {
+    not (a < a)
+}
+
+theorem lt_irrefl[P: PartialOrder](a: P) {
+    not (a < a)
+}
+
+theorem not_gt_ref[P: PartialOrder](a: P) {
+    not (a > a)
+}
+
+theorem gt_irrefl[P: PartialOrder](a: P) {
+    not (a > a)
+}
+
+theorem not_lt_self[P: PartialOrder](a: P) {
+    not (a < a)
+}
+
+theorem not_gt_self[P: PartialOrder](a: P) {
+    not (a > a)
+}
+
+theorem lte_imp_not_gt[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (a > b)
+}
+
+theorem not_gt_of_lte[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (a > b)
+}
+
+theorem not_gt_of_le[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (a > b)
+}
+
+theorem gte_imp_not_lt[P: PartialOrder](a: P, b: P) {
+    a >= b implies not (a < b)
+}
+
+theorem not_lt_of_gte[P: PartialOrder](a: P, b: P) {
+    a >= b implies not (a < b)
+}
+
+theorem not_lt_of_ge[P: PartialOrder](a: P, b: P) {
+    a >= b implies not (a < b)
+}
+
+theorem not_lt_swap_of_lte[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (b < a)
+}
+
+theorem not_lt_swap_of_le[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (b < a)
+}
+
+theorem lte_imp_not_lt_swap[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (b < a)
+}
+
+theorem lte_imp_not_lt[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (b < a)
+}
+
+theorem le_imp_not_lt_swap[P: PartialOrder](a: P, b: P) {
+    a <= b implies not (b < a)
+}
+
+theorem gt_imp_not_lte[P: PartialOrder](a: P, b: P) {
+    a > b implies not (a <= b)
+}
+
+theorem not_lte_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies not (a <= b)
+}
+
+theorem not_le_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies not (a <= b)
+}
+
+theorem lt_imp_not_gte[P: PartialOrder](a: P, b: P) {
+    a < b implies not (a >= b)
+}
+
+theorem not_gte_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies not (a >= b)
+}
+
+theorem not_ge_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies not (a >= b)
+}
+
+theorem not_lt_both_ways[P: PartialOrder](a: P, b: P) {
+    a < b implies not (b < a)
+}
+
+theorem lt_not_symm[P: PartialOrder](a: P, b: P) {
+    a < b implies not (b < a)
+}
+
+theorem lt_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b < c implies a < c
+}
+
+theorem gt_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b > c implies a > c
+}
+
+theorem lt_of_lt_of_lte[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a < c
+}
+
+theorem lt_of_lte_of_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a < c
+}
+
+theorem gt_of_gt_of_gte[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a > c
+}
+
+theorem gt_of_gte_of_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a > c
+}
+
+theorem lt_and_lte[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a < c
+}
+
+theorem lte_and_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a < c
+}
+
+theorem lt_lte_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a < c
+}
+
+theorem lte_lt_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a < c
+}
+
+theorem gt_and_gte[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a > c
+}
+
+theorem gte_and_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a > c
+}
+
+theorem gt_gte_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a > c
+}
+
+theorem gte_gt_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a > c
+}
+
+theorem lte_of_lt_of_lte[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a <= c
+}
+
+theorem lte_of_lte_of_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a <= c
+}
+
+theorem gte_of_gt_of_gte[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a >= c
+}
+
+theorem gte_of_gte_of_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a >= c
+}
+
+theorem le_of_lt_of_lte[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a <= c
+}
+
+theorem le_of_lte_of_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a <= c
+}
+
+theorem lt_of_lt_of_le[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b <= c implies a < c
+}
+
+theorem lt_of_le_of_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b < c implies a < c
+}
+
+theorem ge_of_gt_of_gte[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a >= c
+}
+
+theorem ge_of_gte_of_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a >= c
+}
+
+theorem gt_of_gt_of_ge[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b >= c implies a > c
+}
+
+theorem gt_of_ge_of_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b > c implies a > c
+}
+
+theorem lt_asymm[P: PartialOrder](a: P, b: P) {
+    a < b implies not (b < a)
+}
+
+theorem gt_asymm[P: PartialOrder](a: P, b: P) {
+    a > b implies not (b > a)
+}
+
+theorem not_gt_of_lt[P: PartialOrder](a: P, b: P) {
+    a < b implies not (a > b)
+}
+
+theorem not_lt_of_gt[P: PartialOrder](a: P, b: P) {
+    a > b implies not (a < b)
+}
+
+theorem lt_imp_not_gt[P: PartialOrder](a: P, b: P) {
+    a < b implies not (a > b)
+}
+
+theorem gt_imp_not_lt[P: PartialOrder](a: P, b: P) {
+    a > b implies not (a < b)
+}
+
+theorem lte_of_lte_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b = c implies a <= c
+}
+
+theorem lte_trans_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b = c implies a <= c
+}
+
+theorem lte_of_eq_of_lte[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b <= c implies a <= c
+}
+
+theorem lte_eq_trans[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b <= c implies a <= c
+}
+
+theorem le_of_le_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a <= b and b = c implies a <= c
+}
+
+theorem le_of_eq_of_le[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b <= c implies a <= c
+}
+
+theorem lt_of_lt_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a < b and b = c implies a < c
+}
+
+theorem lt_of_eq_of_lt[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b < c implies a < c
+}
+
+theorem gte_of_gte_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b = c implies a >= c
+}
+
+theorem gte_of_eq_of_gte[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b >= c implies a >= c
+}
+
+theorem ge_of_ge_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a >= b and b = c implies a >= c
+}
+
+theorem ge_of_eq_of_ge[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b >= c implies a >= c
+}
+
+theorem gt_of_gt_of_eq[P: PartialOrder](a: P, b: P, c: P) {
+    a > b and b = c implies a > c
+}
+
+theorem gt_of_eq_of_gt[P: PartialOrder](a: P, b: P, c: P) {
+    a = b and b > c implies a > c
+}
+
+theorem lt_iff_lte_and_ne[P: PartialOrder](a: P, b: P) {
+    a < b = (a <= b and a != b)
+}
+
+theorem lte_and_ne_iff_lt[P: PartialOrder](a: P, b: P) {
+    (a <= b and a != b) = (a < b)
+}
+
+theorem gt_iff_gte_and_ne[P: PartialOrder](a: P, b: P) {
+    a > b = (a >= b and a != b)
+}
+
+theorem gte_and_ne_iff_gt[P: PartialOrder](a: P, b: P) {
+    (a >= b and a != b) = (a > b)
+}
+
+theorem lt_iff_lte_not_lte_swap[P: PartialOrder](a: P, b: P) {
+    a < b = (not (b <= a) and a <= b)
+}
+
+theorem gt_iff_lte_swap_not_lte[P: PartialOrder](a: P, b: P) {
+    a > b = (not (a <= b) and b <= a)
+}
+
+theorem lte_iff_lt_or_eq[P: PartialOrder](a: P, b: P) {
+    a <= b = (a < b or a = b)
+}
+
+theorem lte_iff_eq_or_lt[P: PartialOrder](a: P, b: P) {
+    a <= b = (a = b or a < b)
+}
+
+theorem gte_iff_gt_or_eq[P: PartialOrder](a: P, b: P) {
+    a >= b = (a > b or a = b)
+}
+
+theorem gte_iff_eq_or_gt[P: PartialOrder](a: P, b: P) {
+    a >= b = (a = b or a > b)
+}
+
+theorem lt_of_lte_of_ne[P: PartialOrder](a: P, b: P) {
+    a <= b and a != b implies a < b
+}
+
+theorem lt_of_ne_of_lte[P: PartialOrder](a: P, b: P) {
+    a != b and a <= b implies a < b
+}
+
+theorem gt_of_gte_of_ne[P: PartialOrder](a: P, b: P) {
+    a >= b and a != b implies a > b
+}
+
+theorem gt_of_ne_of_gte[P: PartialOrder](a: P, b: P) {
+    a != b and a >= b implies a > b
+}
+
+theorem lt_of_lte_of_ne_symm[P: PartialOrder](a: P, b: P) {
+    a <= b and b != a implies a < b
+}
+
+theorem lt_of_ne_symm_of_lte[P: PartialOrder](a: P, b: P) {
+    b != a and a <= b implies a < b
+}
+
+theorem gt_of_gte_of_ne_symm[P: PartialOrder](a: P, b: P) {
+    a >= b and b != a implies a > b
+}
+
+theorem gt_of_ne_symm_of_gte[P: PartialOrder](a: P, b: P) {
+    b != a and a >= b implies a > b
+}
+
+theorem eq_or_lt_of_lte[P: PartialOrder](a: P, b: P) {
+    a <= b implies a = b or a < b
+}
+
+theorem lt_or_eq_of_lte[P: PartialOrder](a: P, b: P) {
+    a <= b implies a < b or a = b
+}
+
+theorem eq_or_gt_of_gte[P: PartialOrder](a: P, b: P) {
+    a >= b implies a = b or a > b
+}
+
+theorem gt_or_eq_of_gte[P: PartialOrder](a: P, b: P) {
+    a >= b implies a > b or a = b
+}
+
+theorem lt_iff_lte_and_ne_symm[P: PartialOrder](a: P, b: P) {
+    a < b = (a <= b and b != a)
+}
+
+theorem gt_iff_gte_and_ne_symm[P: PartialOrder](a: P, b: P) {
+    a > b = (a >= b and b != a)
+}
+
+theorem lt_iff_le_and_ne[P: PartialOrder](a: P, b: P) {
+    a < b = (a <= b and a != b)
+}
+
+theorem le_and_ne_iff_lt[P: PartialOrder](a: P, b: P) {
+    (a <= b and a != b) = (a < b)
+}
+
+theorem gt_iff_ge_and_ne[P: PartialOrder](a: P, b: P) {
+    a > b = (a >= b and a != b)
+}
+
+theorem ge_and_ne_iff_gt[P: PartialOrder](a: P, b: P) {
+    (a >= b and a != b) = (a > b)
+}
+
+theorem lt_iff_le_not_le_swap[P: PartialOrder](a: P, b: P) {
+    a < b = (not (b <= a) and a <= b)
+}
+
+theorem gt_iff_le_swap_not_le[P: PartialOrder](a: P, b: P) {
+    a > b = (not (a <= b) and b <= a)
+}
+
+theorem le_iff_lt_or_eq[P: PartialOrder](a: P, b: P) {
+    a <= b = (a < b or a = b)
+}
+
+theorem le_iff_eq_or_lt[P: PartialOrder](a: P, b: P) {
+    a <= b = (a = b or a < b)
+}
+
+theorem ge_iff_gt_or_eq[P: PartialOrder](a: P, b: P) {
+    a >= b = (a > b or a = b)
+}
+
+theorem ge_iff_eq_or_gt[P: PartialOrder](a: P, b: P) {
+    a >= b = (a = b or a > b)
+}
+
+theorem lt_of_le_of_ne[P: PartialOrder](a: P, b: P) {
+    a <= b and a != b implies a < b
+}
+
+theorem lt_of_ne_of_le[P: PartialOrder](a: P, b: P) {
+    a != b and a <= b implies a < b
+}
+
+theorem gt_of_ge_of_ne[P: PartialOrder](a: P, b: P) {
+    a >= b and a != b implies a > b
+}
+
+theorem gt_of_ne_of_ge[P: PartialOrder](a: P, b: P) {
+    a != b and a >= b implies a > b
+}
+
+theorem lt_of_le_of_ne_symm[P: PartialOrder](a: P, b: P) {
+    a <= b and b != a implies a < b
+}
+
+theorem lt_of_ne_symm_of_le[P: PartialOrder](a: P, b: P) {
+    b != a and a <= b implies a < b
+}
+
+theorem gt_of_ge_of_ne_symm[P: PartialOrder](a: P, b: P) {
+    a >= b and b != a implies a > b
+}
+
+theorem gt_of_ne_symm_of_ge[P: PartialOrder](a: P, b: P) {
+    b != a and a >= b implies a > b
+}
+
+theorem eq_or_lt_of_le[P: PartialOrder](a: P, b: P) {
+    a <= b implies a = b or a < b
+}
+
+theorem lt_or_eq_of_le[P: PartialOrder](a: P, b: P) {
+    a <= b implies a < b or a = b
+}
+
+theorem eq_or_gt_of_ge[P: PartialOrder](a: P, b: P) {
+    a >= b implies a = b or a > b
+}
+
+theorem gt_or_eq_of_ge[P: PartialOrder](a: P, b: P) {
+    a >= b implies a > b or a = b
+}
+
+theorem lt_iff_le_and_ne_symm[P: PartialOrder](a: P, b: P) {
+    a < b = (a <= b and b != a)
+}
+
+theorem gt_iff_ge_and_ne_symm[P: PartialOrder](a: P, b: P) {
+    a > b = (a >= b and b != a)
+}
+
+theorem lte_or_gte[L: LinearOrder](a: L, b: L) {
+    a <= b or a >= b
+}
+
+theorem lte_or_lte_swap[L: LinearOrder](a: L, b: L) {
+    a <= b or b <= a
+}
+
+theorem le_or_le_swap[L: LinearOrder](a: L, b: L) {
+    a <= b or b <= a
+}
+
+theorem le_total[L: LinearOrder](a: L, b: L) {
+    a <= b or b <= a
+}
+
+theorem linear_order_total[L: LinearOrder](a: L, b: L) {
+    a <= b or b <= a
+}
+
+theorem le_or_ge[L: LinearOrder](a: L, b: L) {
+    a <= b or a >= b
+}
+
+theorem ge_or_le[L: LinearOrder](a: L, b: L) {
+    a >= b or a <= b
+}
+
+theorem gte_or_gte_swap[L: LinearOrder](a: L, b: L) {
+    a >= b or b >= a
+}
+
+theorem ge_or_ge_swap[L: LinearOrder](a: L, b: L) {
+    a >= b or b >= a
+}
+
+theorem lt_or_lte[L: LinearOrder](a: L, b: L) {
+    a < b or b <= a
+}
+
+theorem lt_or_le_swap[L: LinearOrder](a: L, b: L) {
+    a < b or b <= a
+}
+
+theorem lte_or_lt[L: LinearOrder](a: L, b: L) {
+    a <= b or b < a
+}
+
+theorem le_or_lt_swap[L: LinearOrder](a: L, b: L) {
+    a <= b or b < a
+}
+
+theorem not_lte_imp_gt[L: LinearOrder](a: L, b: L) {
+    not a <= b implies a > b
+}
+
+theorem gt_of_not_le[L: LinearOrder](a: L, b: L) {
+    not (a <= b) implies a > b
+}
+
+theorem not_gte_imp_lt[L: LinearOrder](a: L, b: L) {
+    not a >= b implies a < b
+}
+
+theorem lt_of_not_ge[L: LinearOrder](a: L, b: L) {
+    not (a >= b) implies a < b
+}
+
+theorem not_lt_imp_gte[L: LinearOrder](a: L, b: L) {
+    not a < b implies a >= b
+}
+
+theorem ge_of_not_lt[L: LinearOrder](a: L, b: L) {
+    not (a < b) implies a >= b
+}
+
+theorem not_gt_imp_lte[L: LinearOrder](a: L, b: L) {
+    not a > b implies a <= b
+}
+
+theorem le_of_not_gt[L: LinearOrder](a: L, b: L) {
+    not (a > b) implies a <= b
+}
+
+theorem not_lte_iff_gt[L: LinearOrder](a: L, b: L) {
+    (not a <= b) = (a > b)
+}
+
+theorem not_le_iff_gt[L: LinearOrder](a: L, b: L) {
+    (not a <= b) = (a > b)
+}
+
+theorem not_gte_iff_lt[L: LinearOrder](a: L, b: L) {
+    (not a >= b) = (a < b)
+}
+
+theorem not_ge_iff_lt[L: LinearOrder](a: L, b: L) {
+    (not a >= b) = (a < b)
+}
+
+theorem not_lt_iff_gte[L: LinearOrder](a: L, b: L) {
+    (not a < b) = (a >= b)
+}
+
+theorem not_lt_iff_ge[L: LinearOrder](a: L, b: L) {
+    (not a < b) = (a >= b)
+}
+
+theorem not_gt_iff_lte[L: LinearOrder](a: L, b: L) {
+    (not a > b) = (a <= b)
+}
+
+theorem not_gt_iff_le[L: LinearOrder](a: L, b: L) {
+    (not a > b) = (a <= b)
+}
+
+theorem lte_or_gt[L: LinearOrder](a: L, b: L) {
+    a <= b or a > b
+}
+
+theorem le_or_gt[L: LinearOrder](a: L, b: L) {
+    a <= b or a > b
+}
+
+theorem gt_or_le[L: LinearOrder](a: L, b: L) {
+    a > b or a <= b
+}
+
+theorem gte_or_lt[L: LinearOrder](a: L, b: L) {
+    a >= b or a < b
+}
+
+theorem ge_or_lt[L: LinearOrder](a: L, b: L) {
+    a >= b or a < b
+}
+
+theorem lt_or_ge[L: LinearOrder](a: L, b: L) {
+    a < b or a >= b
+}
+
+theorem lt_or_gte[L: LinearOrder](a: L, b: L) {
+    a < b or a >= b
+}
+
+theorem gt_or_lte[L: LinearOrder](a: L, b: L) {
+    a > b or a <= b
+}
+
+theorem max_imp_gte[L: LinearOrder](a: L, b: L) {
+    a.max(b) >= a and a.max(b) >= b
+}
+
+theorem min_imp_lte[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= a and a.min(b) <= b
+}
+
+theorem lt_imp_min[L: LinearOrder](a: L, b: L) {
+    a < b implies a.min(b) = a
+}
+
+theorem not_lt_imp_min[L: LinearOrder](a: L, b: L) {
+    not a < b implies a.min(b) = b
+}
+
+theorem gt_imp_min[L: LinearOrder](a: L, b: L) {
+    a > b implies a.min(b) = b
+}
+
+theorem not_gt_imp_min[L: LinearOrder](a: L, b: L) {
+    not a > b implies a.min(b) = a
+}
+
+theorem lte_imp_min[L: LinearOrder](a: L, b: L) {
+    a <= b implies a.min(b) = a
+}
+
+theorem gte_imp_min[L: LinearOrder](a: L, b: L) {
+    a >= b implies a.min(b) = b
+}
+
+theorem not_gte_imp_min[L: LinearOrder](a: L, b: L) {
+    not a >= b implies a.min(b) = a
+}
+
+theorem lt_imp_max[L: LinearOrder](a: L, b: L) {
+    a < b implies a.max(b) = b
+}
+
+theorem not_lt_imp_max[L: LinearOrder](a: L, b: L) {
+    not a < b implies a.max(b) = a
+}
+
+theorem gt_imp_max[L: LinearOrder](a: L, b: L) {
+    a > b implies a.max(b) = a
+}
+
+theorem not_gt_imp_max[L: LinearOrder](a: L, b: L) {
+    not a > b implies a.max(b) = b
+}
+
+theorem gte_imp_max[L: LinearOrder](a: L, b: L) {
+    a >= b implies a.max(b) = a
+}
+
+theorem not_gte_imp_max[L: LinearOrder](a: L, b: L) {
+    not a >= b implies a.max(b) = b
+}
+
+theorem min_is_one[L: LinearOrder](a: L, b: L) {
+    a.min(b) = a or a.min(b) = b
+}
+
+theorem max_is_one[L: LinearOrder](a: L, b: L) {
+    a.max(b) = a or a.max(b) = b
+}
+
+theorem min_symm[L: LinearOrder](a: L, b: L) {
+    a.min(b) = b.min(a)
+}
+
+theorem max_symm[L: LinearOrder](a: L, b: L) {
+    a.max(b) = b.max(a)
+}
+
+theorem min_comm[L: LinearOrder](a: L, b: L) {
+    a.min(b) = b.min(a)
+}
+
+theorem max_comm[L: LinearOrder](a: L, b: L) {
+    a.max(b) = b.max(a)
+}
+
+theorem min_lte_left[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= a
+}
+
+theorem min_le_left[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= a
+}
+
+theorem min_lte_right[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= b
+}
+
+theorem min_le_right[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= b
+}
+
+theorem lte_max_left[L: LinearOrder](a: L, b: L) {
+    a <= a.max(b)
+}
+
+theorem le_max_left[L: LinearOrder](a: L, b: L) {
+    a <= a.max(b)
+}
+
+theorem lte_max_right[L: LinearOrder](a: L, b: L) {
+    b <= a.max(b)
+}
+
+theorem le_max_right[L: LinearOrder](a: L, b: L) {
+    b <= a.max(b)
+}
+
+theorem min_gte_left[L: LinearOrder](a: L, b: L) {
+    a >= a.min(b)
+}
+
+theorem min_gte_right[L: LinearOrder](a: L, b: L) {
+    b >= a.min(b)
+}
+
+theorem max_gte_left[L: LinearOrder](a: L, b: L) {
+    a.max(b) >= a
+}
+
+theorem max_gte_right[L: LinearOrder](a: L, b: L) {
+    a.max(b) >= b
+}
+
+theorem min_le_of_left[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= a
+}
+
+theorem min_le_of_right[L: LinearOrder](a: L, b: L) {
+    a.min(b) <= b
+}
+
+theorem le_max_of_left[L: LinearOrder](a: L, b: L) {
+    a <= a.max(b)
+}
+
+theorem le_max_of_right[L: LinearOrder](a: L, b: L) {
+    b <= a.max(b)
+}
+
+theorem min_idem[L: LinearOrder](a: L) {
+    a.min(a) = a
+}
+
+theorem max_idem[L: LinearOrder](a: L) {
+    a.max(a) = a
+}
+
+theorem min_eq_left_of_lte[L: LinearOrder](a: L, b: L) {
+    a <= b implies a.min(b) = a
+}
+
+theorem min_eq_right_of_gte[L: LinearOrder](a: L, b: L) {
+    a >= b implies a.min(b) = b
+}
+
+theorem max_eq_right_of_lte[L: LinearOrder](a: L, b: L) {
+    a <= b implies a.max(b) = b
+}
+
+theorem max_eq_left_of_gte[L: LinearOrder](a: L, b: L) {
+    a >= b implies a.max(b) = a
+}
+
+theorem min_eq_left_of_lt[L: LinearOrder](a: L, b: L) {
+    a < b implies a.min(b) = a
+}
+
+theorem min_eq_right_of_lt[L: LinearOrder](a: L, b: L) {
+    b < a implies a.min(b) = b
+}
+
+theorem max_eq_left_of_gt[L: LinearOrder](a: L, b: L) {
+    a > b implies a.max(b) = a
+}
+
+theorem max_eq_right_of_gt[L: LinearOrder](a: L, b: L) {
+    b > a implies a.max(b) = b
+}
+
+theorem min_of_lt[L: LinearOrder](a: L, b: L) {
+    a < b implies a.min(b) = a
+}
+
+theorem min_of_gt[L: LinearOrder](a: L, b: L) {
+    a > b implies a.min(b) = b
+}
+
+theorem max_of_lt[L: LinearOrder](a: L, b: L) {
+    a < b implies a.max(b) = b
+}
+
+theorem max_of_gt[L: LinearOrder](a: L, b: L) {
+    a > b implies a.max(b) = a
+}
+
+theorem min_eq_left_of_not_gt[L: LinearOrder](a: L, b: L) {
+    not (a > b) implies a.min(b) = a
+}
+
+theorem min_eq_right_of_not_lt[L: LinearOrder](a: L, b: L) {
+    not (a < b) implies a.min(b) = b
+}
+
+theorem max_eq_left_of_not_lt[L: LinearOrder](a: L, b: L) {
+    not (a < b) implies a.max(b) = a
+}
+
+theorem max_eq_right_of_not_gt[L: LinearOrder](a: L, b: L) {
+    not (a > b) implies a.max(b) = b
+}
+
+theorem min_absorb_max[L: LinearOrder](a: L, b: L) {
+    a.min(a.max(b)) = a
+}
+
+theorem max_absorb_min[L: LinearOrder](a: L, b: L) {
+    a.max(a.min(b)) = a
+}
+
+theorem min_eq_left_iff_lte[L: LinearOrder](a: L, b: L) {
+    a.min(b) = a = (a <= b)
+}
+
+theorem min_eq_left_iff_le[L: LinearOrder](a: L, b: L) {
+    a.min(b) = a = (a <= b)
+}
+
+theorem min_eq_right_iff_gte[L: LinearOrder](a: L, b: L) {
+    a.min(b) = b = (a >= b)
+}
+
+theorem min_eq_right_iff_ge[L: LinearOrder](a: L, b: L) {
+    a.min(b) = b = (a >= b)
+}
+
+theorem max_eq_right_iff_lte[L: LinearOrder](a: L, b: L) {
+    a.max(b) = b = (a <= b)
+}
+
+theorem max_eq_right_iff_le[L: LinearOrder](a: L, b: L) {
+    a.max(b) = b = (a <= b)
+}
+
+theorem max_eq_left_iff_gte[L: LinearOrder](a: L, b: L) {
+    a.max(b) = a = (a >= b)
+}
+
+theorem max_eq_left_iff_ge[L: LinearOrder](a: L, b: L) {
+    a.max(b) = a = (a >= b)
+}
+
+theorem lt_min_imp[L: LinearOrder](c: L, a: L, b: L) {
+    c < a.min(b) implies c < a and c < b
+}
+
+theorem lt_min_of_bounds[L: LinearOrder](c: L, a: L, b: L) {
+    c < a and c < b implies c < a.min(b)
+}
+
+theorem lt_min_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c < a.min(b) = (c < a and c < b)
+}
+
+theorem lt_both_imp_lt_min[L: LinearOrder](a: L, b: L, c: L) {
+    a < b and a < c implies a < b.min(c)
+}
+
+theorem lt_min_imp_lt_left[L: LinearOrder](a: L, b: L, c: L) {
+    a < b.min(c) implies a < b
+}
+
+theorem lt_min_imp_lt_right[L: LinearOrder](a: L, b: L, c: L) {
+    a < b.min(c) implies a < c
+}
+
+theorem max_lt_imp[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) < c implies a < c and b < c
+}
+
+theorem max_lt_of_upper_bounds[L: LinearOrder](a: L, b: L, c: L) {
+    a < c and b < c implies a.max(b) < c
+}
+
+theorem max_lt_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) < c = (a < c and b < c)
+}
+
+theorem gt_both_imp_gt_max[L: LinearOrder](a: L, b: L, c: L) {
+    a > b and a > c implies a > b.max(c)
+}
+
+theorem gt_max_imp_gt_left[L: LinearOrder](a: L, b: L, c: L) {
+    a > b.max(c) implies a > b
+}
+
+theorem gt_max_imp_gt_right[L: LinearOrder](a: L, b: L, c: L) {
+    a > b.max(c) implies a > c
+}
+
+theorem min_lt_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) < c = (a < c or b < c)
+}
+
+theorem min_lt_of_left[L: LinearOrder](a: L, b: L, c: L) {
+    a < c implies a.min(b) < c
+}
+
+theorem min_lt_of_right[L: LinearOrder](a: L, b: L, c: L) {
+    b < c implies a.min(b) < c
+}
+
+theorem min_lt_imp_left_or_right[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) < c implies a < c or b < c
+}
+
+theorem min_lt_of_left_or_right[L: LinearOrder](a: L, b: L, c: L) {
+    a < c or b < c implies a.min(b) < c
+}
+
+theorem lt_max_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c < a.max(b) = (c < a or c < b)
+}
+
+theorem lt_max_of_left[L: LinearOrder](c: L, a: L, b: L) {
+    c < a implies c < a.max(b)
+}
+
+theorem lt_max_of_right[L: LinearOrder](c: L, a: L, b: L) {
+    c < b implies c < a.max(b)
+}
+
+theorem lt_max_imp_left_or_right[L: LinearOrder](c: L, a: L, b: L) {
+    c < a.max(b) implies c < a or c < b
+}
+
+theorem lt_max_of_left_or_right[L: LinearOrder](c: L, a: L, b: L) {
+    c < a or c < b implies c < a.max(b)
+}
+
+theorem lte_min_imp[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.min(b) implies c <= a and c <= b
+}
+
+theorem lte_min_of_bounds[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a and c <= b implies c <= a.min(b)
+}
+
+theorem lte_min_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.min(b) = (c <= a and c <= b)
+}
+
+theorem le_min_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.min(b) = (c <= a and c <= b)
+}
+
+theorem le_min_of_le_left_of_le_right[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a and c <= b implies c <= a.min(b)
+}
+
+theorem le_left_of_le_min[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.min(b) implies c <= a
+}
+
+theorem le_right_of_le_min[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.min(b) implies c <= b
+}
+
+theorem min_lte_of_left[L: LinearOrder](a: L, b: L, c: L) {
+    a <= c implies a.min(b) <= c
+}
+
+theorem min_lte_of_right[L: LinearOrder](a: L, b: L, c: L) {
+    b <= c implies a.min(b) <= c
+}
+
+theorem min_lte_imp_left_or_right[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) <= c implies a <= c or b <= c
+}
+
+theorem min_gte_imp[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) >= c implies a >= c and b >= c
+}
+
+theorem min_gte_of_bounds[L: LinearOrder](a: L, b: L, c: L) {
+    a >= c and b >= c implies a.min(b) >= c
+}
+
+theorem min_gte_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) >= c = (a >= c and b >= c)
+}
+
+theorem min_ge_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) >= c = (a >= c and b >= c)
+}
+
+theorem min_ge_of_ge_left_of_ge_right[L: LinearOrder](a: L, b: L, c: L) {
+    a >= c and b >= c implies a.min(b) >= c
+}
+
+theorem ge_left_of_min_ge[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) >= c implies a >= c
+}
+
+theorem ge_right_of_min_ge[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) >= c implies b >= c
+}
+
+theorem max_lte_imp[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) <= c implies a <= c and b <= c
+}
+
+theorem max_lte_of_upper_bounds[L: LinearOrder](a: L, b: L, c: L) {
+    a <= c and b <= c implies a.max(b) <= c
+}
+
+theorem max_lte_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) <= c = (a <= c and b <= c)
+}
+
+theorem max_le_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) <= c = (a <= c and b <= c)
+}
+
+theorem max_le_of_le_left_of_le_right[L: LinearOrder](a: L, b: L, c: L) {
+    a <= c and b <= c implies a.max(b) <= c
+}
+
+theorem le_left_of_max_le[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) <= c implies a <= c
+}
+
+theorem le_right_of_max_le[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) <= c implies b <= c
+}
+
+theorem lte_max_of_left[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a implies c <= a.max(b)
+}
+
+theorem lte_max_of_right[L: LinearOrder](c: L, a: L, b: L) {
+    c <= b implies c <= a.max(b)
+}
+
+theorem lte_max_imp_left_or_right[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.max(b) implies c <= a or c <= b
+}
+
+theorem min_lte_min[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a <= b and c <= d implies a.min(c) <= b.min(d)
+}
+
+theorem min_le_min[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a <= b and c <= d implies a.min(c) <= b.min(d)
+}
+
+theorem max_lte_max[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a <= b and c <= d implies a.max(c) <= b.max(d)
+}
+
+theorem max_le_max[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a <= b and c <= d implies a.max(c) <= b.max(d)
+}
+
+theorem min_lte_min_left[L: LinearOrder](a: L, b: L, c: L) {
+    a <= b implies a.min(c) <= b.min(c)
+}
+
+theorem min_le_min_left[L: LinearOrder](a: L, b: L, c: L) {
+    a <= b implies a.min(c) <= b.min(c)
+}
+
+theorem min_lte_min_right[L: LinearOrder](a: L, b: L, c: L) {
+    b <= c implies a.min(b) <= a.min(c)
+}
+
+theorem min_le_min_right[L: LinearOrder](a: L, b: L, c: L) {
+    b <= c implies a.min(b) <= a.min(c)
+}
+
+theorem max_lte_max_left[L: LinearOrder](a: L, b: L, c: L) {
+    a <= b implies a.max(c) <= b.max(c)
+}
+
+theorem max_le_max_left[L: LinearOrder](a: L, b: L, c: L) {
+    a <= b implies a.max(c) <= b.max(c)
+}
+
+theorem max_lte_max_right[L: LinearOrder](a: L, b: L, c: L) {
+    b <= c implies a.max(b) <= a.max(c)
+}
+
+theorem max_le_max_right[L: LinearOrder](a: L, b: L, c: L) {
+    b <= c implies a.max(b) <= a.max(c)
+}
+
+theorem min_gte_min[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a >= b and c >= d implies a.min(c) >= b.min(d)
+}
+
+theorem min_ge_min[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a >= b and c >= d implies a.min(c) >= b.min(d)
+}
+
+theorem max_gte_max[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a >= b and c >= d implies a.max(c) >= b.max(d)
+}
+
+theorem max_ge_max[L: LinearOrder](a: L, b: L, c: L, d: L) {
+    a >= b and c >= d implies a.max(c) >= b.max(d)
+}
+
+theorem min_ge_min_left[L: LinearOrder](a: L, b: L, c: L) {
+    a >= b implies a.min(c) >= b.min(c)
+}
+
+theorem min_ge_min_right[L: LinearOrder](a: L, b: L, c: L) {
+    b >= c implies a.min(b) >= a.min(c)
+}
+
+theorem max_ge_max_left[L: LinearOrder](a: L, b: L, c: L) {
+    a >= b implies a.max(c) >= b.max(c)
+}
+
+theorem max_ge_max_right[L: LinearOrder](a: L, b: L, c: L) {
+    b >= c implies a.max(b) >= a.max(c)
+}
+
+theorem min_lte_imp[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) <= c implies a <= c or b <= c
+}
+
+theorem min_lte_of_left_or_right[L: LinearOrder](a: L, b: L, c: L) {
+    a <= c or b <= c implies a.min(b) <= c
+}
+
+theorem min_lte_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b) <= c = (a <= c or b <= c)
+}
+
+theorem lte_max_imp[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.max(b) implies c <= a or c <= b
+}
+
+theorem lte_max_of_left_or_right[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a or c <= b implies c <= a.max(b)
+}
+
+theorem lte_max_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.max(b) = (c <= a or c <= b)
+}
+
+theorem le_max_iff[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a.max(b) = (c <= a or c <= b)
+}
+
+theorem le_max_of_le_left[L: LinearOrder](c: L, a: L, b: L) {
+    c <= a implies c <= a.max(b)
+}
+
+theorem le_max_of_le_right[L: LinearOrder](c: L, a: L, b: L) {
+    c <= b implies c <= a.max(b)
+}
+
+theorem max_gte_imp[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) >= c implies a >= c or b >= c
+}
+
+theorem max_gte_of_left_or_right[L: LinearOrder](a: L, b: L, c: L) {
+    a >= c or b >= c implies a.max(b) >= c
+}
+
+theorem max_gte_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) >= c = (a >= c or b >= c)
+}
+
+theorem max_ge_iff[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b) >= c = (a >= c or b >= c)
+}
+
+theorem max_ge_of_ge_left[L: LinearOrder](a: L, b: L, c: L) {
+    a >= c implies a.max(b) >= c
+}
+
+theorem max_ge_of_ge_right[L: LinearOrder](a: L, b: L, c: L) {
+    b >= c implies a.max(b) >= c
+}
+
+theorem exists_common_upper_bound[L: LinearOrder](a: L, b: L) {
+    exists(n: L) {
+        a <= n and b <= n
+    }
+}
+
+theorem exists_common_lower_bound[L: LinearOrder](a: L, b: L) {
+    exists(n: L) {
+        n <= a and n <= b
+    }
+}
+
+theorem exists_common_ge_bound[L: LinearOrder](a: L, b: L) {
+    exists(n: L) {
+        n >= a and n >= b
+    }
+}
+
+theorem exists_common_le_bound[L: LinearOrder](a: L, b: L) {
+    exists(n: L) {
+        a >= n and b >= n
+    }
+}
+
+theorem exists_common_upper_bound_three[L: LinearOrder](a: L, b: L, c: L) {
+    exists(n: L) {
+        a <= n and b <= n and c <= n
+    }
+}
+
+theorem exists_common_lower_bound_three[L: LinearOrder](a: L, b: L, c: L) {
+    exists(n: L) {
+        n <= a and n <= b and n <= c
+    }
+}
+
+theorem exists_common_ge_bound_three[L: LinearOrder](a: L, b: L, c: L) {
+    exists(n: L) {
+        n >= a and n >= b and n >= c
+    }
+}
+
+theorem exists_common_le_bound_three[L: LinearOrder](a: L, b: L, c: L) {
+    exists(n: L) {
+        a >= n and b >= n and c >= n
+    }
+}
+
+theorem min_assoc[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b.min(c)) = a.min(b).min(c)
+}
+
+theorem max_assoc[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b.max(c)) = a.max(b).max(c)
+}
+
+theorem min_assoc_rev[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b).min(c) = a.min(b.min(c))
+}
+
+theorem max_assoc_rev[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b).max(c) = a.max(b.max(c))
+}
+
+theorem min_left_comm[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b.min(c)) = b.min(a.min(c))
+}
+
+theorem max_left_comm[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b.max(c)) = b.max(a.max(c))
+}
+
+theorem min_right_comm[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b).min(c) = a.min(c).min(b)
+}
+
+theorem max_right_comm[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b).max(c) = a.max(c).max(b)
+}
+
+theorem min_absorb_max_right[L: LinearOrder](a: L, b: L) {
+    a.min(b.max(a)) = a
+}
+
+theorem max_absorb_min_right[L: LinearOrder](a: L, b: L) {
+    a.max(b.min(a)) = a
+}
+
+theorem min_max_distrib_left[L: LinearOrder](a: L, b: L, c: L) {
+    a.min(b.max(c)) = a.min(b).max(a.min(c))
+}
+
+theorem max_min_distrib_left[L: LinearOrder](a: L, b: L, c: L) {
+    a.max(b.min(c)) = a.max(b).min(a.max(c))
+}
+
+define closed_interval[L: LinearOrder](a: L, b: L, x: L) -> Bool {
+    a <= x and x <= b
+}
+
+define open_interval[L: LinearOrder](a: L, b: L, x: L) -> Bool {
+    a < x and x < b
+}
+
+define left_open_interval[L: LinearOrder](a: L, b: L, x: L) -> Bool {
+    a < x and x <= b
+}
+
+define right_open_interval[L: LinearOrder](a: L, b: L, x: L) -> Bool {
+    a <= x and x < b
+}
+
+define clamp[L: LinearOrder](a: L, b: L, x: L) -> L {
+    a.max(x).min(b)
+}
+
+theorem closed_interval_at[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) = (a <= x and x <= b)
+}
+
+theorem open_interval_at[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) = (a < x and x < b)
+}
+
+theorem left_open_interval_at[L: LinearOrder](a: L, b: L, x: L) {
+    left_open_interval(a, b, x) = (a < x and x <= b)
+}
+
+theorem right_open_interval_at[L: LinearOrder](a: L, b: L, x: L) {
+    right_open_interval(a, b, x) = (a <= x and x < b)
+}
+
+theorem clamp_at[L: LinearOrder](a: L, b: L, x: L) {
+    clamp(a, b, x) = a.max(x).min(b)
+}
+
+theorem closed_interval_intro[L: LinearOrder](a: L, b: L, x: L) {
+    a <= x and x <= b implies closed_interval(a, b, x)
+}
+
+theorem closed_interval_of_le_of_le[L: LinearOrder](a: L, b: L, x: L) {
+    a <= x and x <= b implies closed_interval(a, b, x)
+}
+
+theorem closed_interval_left[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies a <= x
+}
+
+theorem le_of_closed_interval_left[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies a <= x
+}
+
+theorem closed_interval_right[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies x <= b
+}
+
+theorem le_of_closed_interval_right[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies x <= b
+}
+
+theorem lte_clamp_of_lte_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b implies a <= clamp(a, b, x)
+}
+
+theorem le_clamp_of_le_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b implies a <= clamp(a, b, x)
+}
+
+theorem clamp_lte_right[L: LinearOrder](a: L, b: L, x: L) {
+    clamp(a, b, x) <= b
+}
+
+theorem clamp_le_right[L: LinearOrder](a: L, b: L, x: L) {
+    clamp(a, b, x) <= b
+}
+
+theorem clamp_in_closed_interval[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b implies closed_interval(a, b, clamp(a, b, x))
+}
+
+theorem clamp_eq_self_of_closed_interval[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies clamp(a, b, x) = x
+}
+
+theorem clamp_eq_left_of_lte_of_lte[L: LinearOrder](a: L, b: L, x: L) {
+    x <= a and a <= b implies clamp(a, b, x) = a
+}
+
+theorem clamp_eq_right_of_lte_of_lte[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b and b <= x implies clamp(a, b, x) = b
+}
+
+theorem clamp_eq_left_of_lte[L: LinearOrder](a: L, b: L, x: L) {
+    x <= a and a <= b implies clamp(a, b, x) = a
+}
+
+theorem clamp_eq_right_of_lte[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b and b <= x implies clamp(a, b, x) = b
+}
+
+theorem clamp_eq_self_of_lte_of_lte[L: LinearOrder](a: L, b: L, x: L) {
+    a <= x and x <= b implies clamp(a, b, x) = x
+}
+
+theorem clamp_idempotent_of_lte_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b implies clamp(a, b, clamp(a, b, x)) = clamp(a, b, x)
+}
+
+theorem clamp_lte_clamp[L: LinearOrder](a: L, b: L, x: L, y: L) {
+    x <= y implies clamp(a, b, x) <= clamp(a, b, y)
+}
+
+theorem clamp_le_clamp[L: LinearOrder](a: L, b: L, x: L, y: L) {
+    x <= y implies clamp(a, b, x) <= clamp(a, b, y)
+}
+
+theorem clamp_lte_clamp_left[L: LinearOrder](a: L, b: L, c: L, x: L) {
+    a <= b implies clamp(a, c, x) <= clamp(b, c, x)
+}
+
+theorem clamp_le_clamp_left[L: LinearOrder](a: L, b: L, c: L, x: L) {
+    a <= b implies clamp(a, c, x) <= clamp(b, c, x)
+}
+
+theorem clamp_lte_clamp_right[L: LinearOrder](a: L, b: L, c: L, x: L) {
+    b <= c implies clamp(a, b, x) <= clamp(a, c, x)
+}
+
+theorem clamp_le_clamp_right[L: LinearOrder](a: L, b: L, c: L, x: L) {
+    b <= c implies clamp(a, b, x) <= clamp(a, c, x)
+}
+
+theorem clamp_lte_clamp_of_lte[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L, y: L) {
+    a1 <= a2 and b1 <= b2 and x <= y implies clamp(a1, b1, x) <= clamp(a2, b2, y)
+}
+
+theorem clamp_le_clamp_of_le[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L, y: L) {
+    a1 <= a2 and b1 <= b2 and x <= y implies clamp(a1, b1, x) <= clamp(a2, b2, y)
+}
+
+theorem closed_interval_iff_clamp_eq_self[L: LinearOrder](a: L, b: L, x: L) {
+    a <= b implies (closed_interval(a, b, x) = (clamp(a, b, x) = x))
+}
+
+theorem open_interval_intro[L: LinearOrder](a: L, b: L, x: L) {
+    a < x and x < b implies open_interval(a, b, x)
+}
+
+theorem open_interval_of_lt_of_lt[L: LinearOrder](a: L, b: L, x: L) {
+    a < x and x < b implies open_interval(a, b, x)
+}
+
+theorem open_interval_left[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies a < x
+}
+
+theorem open_interval_right[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies x < b
+}
+
+theorem left_open_interval_intro[L: LinearOrder](a: L, b: L, x: L) {
+    a < x and x <= b implies left_open_interval(a, b, x)
+}
+
+theorem left_open_interval_of_lt_of_le[L: LinearOrder](a: L, b: L, x: L) {
+    a < x and x <= b implies left_open_interval(a, b, x)
+}
+
+theorem left_open_interval_left[L: LinearOrder](a: L, b: L, x: L) {
+    left_open_interval(a, b, x) implies a < x
+}
+
+theorem left_open_interval_right[L: LinearOrder](a: L, b: L, x: L) {
+    left_open_interval(a, b, x) implies x <= b
+}
+
+theorem right_open_interval_intro[L: LinearOrder](a: L, b: L, x: L) {
+    a <= x and x < b implies right_open_interval(a, b, x)
+}
+
+theorem right_open_interval_of_le_of_lt[L: LinearOrder](a: L, b: L, x: L) {
+    a <= x and x < b implies right_open_interval(a, b, x)
+}
+
+theorem right_open_interval_left[L: LinearOrder](a: L, b: L, x: L) {
+    right_open_interval(a, b, x) implies a <= x
+}
+
+theorem right_open_interval_right[L: LinearOrder](a: L, b: L, x: L) {
+    right_open_interval(a, b, x) implies x < b
+}
+
+theorem open_interval_subset_closed_interval[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies closed_interval(a, b, x)
+}
+
+theorem left_open_interval_subset_closed_interval[L: LinearOrder](a: L, b: L, x: L) {
+    left_open_interval(a, b, x) implies closed_interval(a, b, x)
+}
+
+theorem right_open_interval_subset_closed_interval[L: LinearOrder](a: L, b: L, x: L) {
+    right_open_interval(a, b, x) implies closed_interval(a, b, x)
+}
+
+theorem not_closed_interval_of_gt_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    a > b implies not closed_interval(a, b, x)
+}
+
+theorem not_open_interval_of_not_lt_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    not (a < b) implies not open_interval(a, b, x)
+}
+
+theorem not_left_open_interval_of_not_lt_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    not (a < b) implies not left_open_interval(a, b, x)
+}
+
+theorem not_right_open_interval_of_not_lt_endpoints[L: LinearOrder](a: L, b: L, x: L) {
+    not (a < b) implies not right_open_interval(a, b, x)
+}
+
+theorem closed_interval_eq_endpoint_of_endpoints_eq[L: LinearOrder](a: L, b: L, x: L) {
+    a = b and closed_interval(a, b, x) implies x = a
+}
+
+theorem closed_interval_nonempty_of_lte[L: LinearOrder](a: L, b: L) {
+    a <= b implies exists(x: L) {
+        closed_interval(a, b, x)
+    }
+}
+
+theorem left_open_interval_nonempty_of_lt[L: LinearOrder](a: L, b: L) {
+    a < b implies exists(x: L) {
+        left_open_interval(a, b, x)
+    }
+}
+
+theorem right_open_interval_nonempty_of_lt[L: LinearOrder](a: L, b: L) {
+    a < b implies exists(x: L) {
+        right_open_interval(a, b, x)
+    }
+}
+
+theorem closed_interval_endpoints_lte[L: LinearOrder](a: L, b: L, x: L) {
+    closed_interval(a, b, x) implies a <= b
+}
+
+theorem open_interval_endpoints_lt[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies a < b
+}
+
+theorem left_open_interval_endpoints_lt[L: LinearOrder](a: L, b: L, x: L) {
+    left_open_interval(a, b, x) implies a < b
+}
+
+theorem right_open_interval_endpoints_lt[L: LinearOrder](a: L, b: L, x: L) {
+    right_open_interval(a, b, x) implies a < b
+}
+
+theorem open_interval_subset_left_open_interval[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies left_open_interval(a, b, x)
+}
+
+theorem open_interval_subset_right_open_interval[L: LinearOrder](a: L, b: L, x: L) {
+    open_interval(a, b, x) implies right_open_interval(a, b, x)
+}
+
+theorem closed_interval_self[L: LinearOrder](a: L) {
+    closed_interval(a, a, a)
+}
+
+theorem closed_interval_self_at[L: LinearOrder](a: L, x: L) {
+    closed_interval(a, a, x) implies x = a
+}
+
+theorem closed_interval_left_endpoint[L: LinearOrder](a: L, b: L) {
+    a <= b implies closed_interval(a, b, a)
+}
+
+theorem closed_interval_left_endpoint_iff[L: LinearOrder](a: L, b: L) {
+    closed_interval(a, b, a) = (a <= b)
+}
+
+theorem closed_interval_right_endpoint[L: LinearOrder](a: L, b: L) {
+    a <= b implies closed_interval(a, b, b)
+}
+
+theorem closed_interval_right_endpoint_iff[L: LinearOrder](a: L, b: L) {
+    closed_interval(a, b, b) = (a <= b)
+}
+
+theorem not_open_interval_left_endpoint[L: LinearOrder](a: L, b: L) {
+    not open_interval(a, b, a)
+}
+
+theorem not_open_interval_right_endpoint[L: LinearOrder](a: L, b: L) {
+    not open_interval(a, b, b)
+}
+
+theorem not_left_open_interval_left_endpoint[L: LinearOrder](a: L, b: L) {
+    not left_open_interval(a, b, a)
+}
+
+theorem not_right_open_interval_right_endpoint[L: LinearOrder](a: L, b: L) {
+    not right_open_interval(a, b, b)
+}
+
+theorem right_open_interval_left_endpoint[L: LinearOrder](a: L, b: L) {
+    a < b implies right_open_interval(a, b, a)
+}
+
+theorem right_open_interval_left_endpoint_iff[L: LinearOrder](a: L, b: L) {
+    right_open_interval(a, b, a) = (a < b)
+}
+
+theorem left_open_interval_right_endpoint[L: LinearOrder](a: L, b: L) {
+    a < b implies left_open_interval(a, b, b)
+}
+
+theorem left_open_interval_right_endpoint_iff[L: LinearOrder](a: L, b: L) {
+    left_open_interval(a, b, b) = (a < b)
+}
+
+theorem closed_interval_mono[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L) {
+    a1 <= a2 and b2 <= b1 and closed_interval(a2, b2, x) implies closed_interval(a1, b1, x)
+}
+
+theorem closed_interval_subset_closed_interval[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and closed_interval(a1, b1, x) implies closed_interval(a2, b2, x)
+}
+
+theorem open_interval_mono[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L) {
+    a1 <= a2 and b2 <= b1 and open_interval(a2, b2, x) implies open_interval(a1, b1, x)
+}
+
+theorem open_interval_subset_open_interval[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and open_interval(a1, b1, x) implies open_interval(a2, b2, x)
+}
+
+theorem left_open_interval_mono[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L) {
+    a1 <= a2 and b2 <= b1 and left_open_interval(a2, b2, x) implies left_open_interval(a1, b1, x)
+}
+
+theorem left_open_interval_subset_left_open_interval[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and left_open_interval(a1, b1, x) implies left_open_interval(a2, b2, x)
+}
+
+theorem right_open_interval_mono[L: LinearOrder](a1: L, a2: L, b1: L, b2: L, x: L) {
+    a1 <= a2 and b2 <= b1 and right_open_interval(a2, b2, x) implies right_open_interval(a1, b1, x)
+}
+
+theorem right_open_interval_subset_right_open_interval[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and right_open_interval(a1, b1, x) implies right_open_interval(a2, b2, x)
+}
+
+theorem open_interval_subset_closed_interval_of_bounds[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and open_interval(a1, b1, x) implies closed_interval(a2, b2, x)
+}
+
+theorem open_interval_subset_left_open_interval_of_bounds[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and open_interval(a1, b1, x) implies left_open_interval(a2, b2, x)
+}
+
+theorem open_interval_subset_right_open_interval_of_bounds[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and open_interval(a1, b1, x) implies right_open_interval(a2, b2, x)
+}
+
+theorem left_open_interval_subset_closed_interval_of_bounds[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and left_open_interval(a1, b1, x) implies closed_interval(a2, b2, x)
+}
+
+theorem right_open_interval_subset_closed_interval_of_bounds[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    a2 <= a1 and b1 <= b2 and right_open_interval(a1, b1, x) implies closed_interval(a2, b2, x)
+}
+
+theorem left_open_interval_subset_right_open_interval_of_upper_strict_bound[L: LinearOrder](
+    a1: L, b1: L, a2: L, b2: L, x: L
+) {
+    a2 <= a1 and b1 < b2 and left_open_interval(a1, b1, x) implies right_open_interval(a2, b2, x)
+}
+
+theorem right_open_interval_subset_left_open_interval_of_lower_strict_bound[L: LinearOrder](
+    a1: L, b1: L, a2: L, b2: L, x: L
+) {
+    a2 < a1 and b1 <= b2 and right_open_interval(a1, b1, x) implies left_open_interval(a2, b2, x)
+}
+
+theorem closed_interval_intersection_iff[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    (closed_interval(a1, b1, x) and closed_interval(a2, b2, x)) =
+    closed_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem closed_interval_intersection_intro[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    closed_interval(a1, b1, x) and closed_interval(a2, b2, x) implies
+    closed_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem closed_interval_intersection_left[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    closed_interval(a1.max(a2), b1.min(b2), x) implies
+    closed_interval(a1, b1, x)
+}
+
+theorem closed_interval_intersection_right[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    closed_interval(a1.max(a2), b1.min(b2), x) implies
+    closed_interval(a2, b2, x)
+}
+
+theorem open_interval_intersection_iff[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    (open_interval(a1, b1, x) and open_interval(a2, b2, x)) =
+    open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem open_interval_intersection_intro[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    open_interval(a1, b1, x) and open_interval(a2, b2, x) implies
+    open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem open_interval_intersection_left[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    open_interval(a1.max(a2), b1.min(b2), x) implies
+    open_interval(a1, b1, x)
+}
+
+theorem open_interval_intersection_right[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    open_interval(a1.max(a2), b1.min(b2), x) implies
+    open_interval(a2, b2, x)
+}
+
+theorem left_open_interval_intersection_iff[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    (left_open_interval(a1, b1, x) and left_open_interval(a2, b2, x)) =
+    left_open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem left_open_interval_intersection_intro[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    left_open_interval(a1, b1, x) and left_open_interval(a2, b2, x) implies
+    left_open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem left_open_interval_intersection_left[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    left_open_interval(a1.max(a2), b1.min(b2), x) implies
+    left_open_interval(a1, b1, x)
+}
+
+theorem left_open_interval_intersection_right[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    left_open_interval(a1.max(a2), b1.min(b2), x) implies
+    left_open_interval(a2, b2, x)
+}
+
+theorem right_open_interval_intersection_iff[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    (right_open_interval(a1, b1, x) and right_open_interval(a2, b2, x)) =
+    right_open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem right_open_interval_intersection_intro[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    right_open_interval(a1, b1, x) and right_open_interval(a2, b2, x) implies
+    right_open_interval(a1.max(a2), b1.min(b2), x)
+}
+
+theorem right_open_interval_intersection_left[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    right_open_interval(a1.max(a2), b1.min(b2), x) implies
+    right_open_interval(a1, b1, x)
+}
+
+theorem right_open_interval_intersection_right[L: LinearOrder](a1: L, b1: L, a2: L, b2: L, x: L) {
+    right_open_interval(a1.max(a2), b1.min(b2), x) implies
+    right_open_interval(a2, b2, x)
+}
+
+define is_lower_bound_linear[L: LinearOrder](p: L -> Bool, a: L) -> Bool {
+    forall(x: L) {
+        p(x) implies a <= x
+    }
+}
+
+define is_upper_bound_linear[L: LinearOrder](p: L -> Bool, b: L) -> Bool {
+    forall(x: L) {
+        p(x) implies x <= b
+    }
+}
+
+define is_bounded_by_interval[L: LinearOrder](p: L -> Bool, a: L, b: L) -> Bool {
+    forall(x: L) {
+        p(x) implies closed_interval(a, b, x)
+    }
+}

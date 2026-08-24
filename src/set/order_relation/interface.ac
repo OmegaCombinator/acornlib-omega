@@ -1,0 +1,2685 @@
+structure Set[K] {
+    /// True if the element is in the set.
+    contains: K -> Bool
+}
+
+inductive TwoType {
+    /// The first value.
+    first
+    /// The second value.
+    second
+}
+
+structure QuotientRelation[T] {
+    /// The relation whose equivalence classes form quotient elements.
+    rel: (T, T) -> Bool
+} constraint {
+    is_equivalence(rel)
+}
+
+attributes Set[K] {
+    /// True if every element of `self` is an element of `s`.
+    define subset(self, s: Set[K]) -> Bool {
+        forall(x: K) {
+            self.contains(x) implies s.contains(x)
+        }
+    }
+}
+
+attributes List[K] {
+    /// The set whose elements are the elements of the list.
+    define as_set(self) -> Set[K] {
+        Set[K].new(self.contains)
+    }
+
+    define contains_set(self, s: Set[K]) -> Bool {
+        forall(x: K) {
+            s.contains(x) implies self.contains(x)
+        }
+    }
+}
+
+define is_upper_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies f(point) <= bound
+    }
+}
+
+define is_lower_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    forall(point: Domain) {
+        domain.contains(point) implies bound <= f(point)
+    }
+}
+
+define is_bounded_above_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_upper_bound_on(domain, f, bound)
+    }
+}
+
+define is_bounded_below_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_lower_bound_on(domain, f, bound)
+    }
+}
+
+define is_bounded_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    is_bounded_above_on(domain, f) and is_bounded_below_on(domain, f)
+}
+
+theorem upper_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
+) {
+    is_upper_bound_on(domain, f, bound) and domain.contains(point) implies f(point) <= bound
+}
+
+theorem lower_bound_on_apply[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, bound: Value, point: Domain
+) {
+    is_lower_bound_on(domain, f, bound) and domain.contains(point) implies bound <= f(point)
+}
+
+define attains_maximum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_upper_bound_on(domain, f, f(point))
+}
+
+define attains_minimum_at[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) -> Bool {
+    domain.contains(point) and is_lower_bound_on(domain, f, f(point))
+}
+
+define attains_maximum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_maximum_at(domain, f, point)
+    }
+}
+
+define attains_minimum_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(point: Domain) {
+        attains_minimum_at(domain, f, point)
+    }
+}
+
+theorem maximum_value_is_upper_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_maximum_at(domain, f, point) implies is_upper_bound_on(domain, f, f(point))
+}
+
+theorem minimum_value_is_lower_bound_on[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_minimum_at(domain, f, point) implies is_lower_bound_on(domain, f, f(point))
+}
+
+theorem attains_maximum_imp_bounded_above[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    attains_maximum_on(domain, f) implies is_bounded_above_on(domain, f)
+}
+
+theorem attains_minimum_imp_bounded_below[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    attains_minimum_on(domain, f) implies is_bounded_below_on(domain, f)
+}
+
+theorem upper_bound_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    subset.subset(superset) and is_upper_bound_on(superset, f, bound)
+    implies is_upper_bound_on(subset, f, bound)
+}
+
+theorem lower_bound_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    subset.subset(superset) and is_lower_bound_on(superset, f, bound)
+    implies is_lower_bound_on(subset, f, bound)
+}
+
+define map_image_predicate[A, B](f: A -> B, p: A -> Bool, y: B) -> Bool {
+    exists(x: A) {
+        p(x) and y = f(x)
+    }
+}
+
+define map_preimage_predicate[A, B](f: A -> B, q: B -> Bool, x: A) -> Bool {
+    q(f(x))
+}
+
+theorem map_image_predicate_of[A, B](f: A -> B, p: A -> Bool, x: A) {
+    p(x) implies map_image_predicate(f, p, f(x))
+}
+
+theorem map_image_predicate_witness[A, B](f: A -> B, p: A -> Bool, y: B) {
+    map_image_predicate(f, p, y) implies exists(x: A) {
+        p(x) and y = f(x)
+    }
+}
+
+theorem monotone_image_lower_bound[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    a: A
+) {
+    is_monotone(f) and is_lower_bound(p, a)
+    implies is_lower_bound(map_image_predicate(f, p), f(a))
+}
+
+theorem monotone_image_upper_bound[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    b: A
+) {
+    is_monotone(f) and is_upper_bound(p, b)
+    implies is_upper_bound(map_image_predicate(f, p), f(b))
+}
+
+theorem antitone_image_lower_bound_to_upper_bound[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    a: A
+) {
+    is_antitone(f) and is_lower_bound(p, a)
+    implies is_upper_bound(map_image_predicate(f, p), f(a))
+}
+
+theorem antitone_image_upper_bound_to_lower_bound[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    b: A
+) {
+    is_antitone(f) and is_upper_bound(p, b)
+    implies is_lower_bound(map_image_predicate(f, p), f(b))
+}
+
+theorem monotone_image_least[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    a: A
+) {
+    is_monotone(f) and is_least(p, a)
+    implies is_least(map_image_predicate(f, p), f(a))
+}
+
+theorem monotone_image_greatest[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    b: A
+) {
+    is_monotone(f) and is_greatest(p, b)
+    implies is_greatest(map_image_predicate(f, p), f(b))
+}
+
+theorem antitone_image_least_to_greatest[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    a: A
+) {
+    is_antitone(f) and is_least(p, a)
+    implies is_greatest(map_image_predicate(f, p), f(a))
+}
+
+theorem antitone_image_greatest_to_least[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    b: A
+) {
+    is_antitone(f) and is_greatest(p, b)
+    implies is_least(map_image_predicate(f, p), f(b))
+}
+
+theorem monotone_image_bounded_below[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool
+) {
+    is_monotone(f) and is_bounded_below(p)
+    implies is_bounded_below(map_image_predicate(f, p))
+}
+
+theorem monotone_image_bounded_above[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool
+) {
+    is_monotone(f) and is_bounded_above(p)
+    implies is_bounded_above(map_image_predicate(f, p))
+}
+
+theorem antitone_image_bounded_below_to_bounded_above[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool
+) {
+    is_antitone(f) and is_bounded_below(p)
+    implies is_bounded_above(map_image_predicate(f, p))
+}
+
+theorem antitone_image_bounded_above_to_bounded_below[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool
+) {
+    is_antitone(f) and is_bounded_above(p)
+    implies is_bounded_below(map_image_predicate(f, p))
+}
+
+theorem surjective_order_embedding_image_glb[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    a: A
+) {
+    is_order_embedding(f) and is_surjective_fn(f) and is_glb(p, a)
+    implies is_glb(map_image_predicate(f, p), f(a))
+}
+
+theorem surjective_order_embedding_image_lub[A: PartialOrder, B: PartialOrder](
+    f: A -> B,
+    p: A -> Bool,
+    b: A
+) {
+    is_order_embedding(f) and is_surjective_fn(f) and is_lub(p, b)
+    implies is_lub(map_image_predicate(f, p), f(b))
+}
+
+theorem monotone_compose_upper_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    bound: Value
+) {
+    is_monotone(g) and is_upper_bound_on(domain, f, bound)
+    implies is_upper_bound_on(domain, compose(g, f), g(bound))
+}
+
+theorem monotone_compose_lower_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    bound: Value
+) {
+    is_monotone(g) and is_lower_bound_on(domain, f, bound)
+    implies is_lower_bound_on(domain, compose(g, f), g(bound))
+}
+
+theorem antitone_compose_upper_bound_to_lower_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    bound: Value
+) {
+    is_antitone(g) and is_upper_bound_on(domain, f, bound)
+    implies is_lower_bound_on(domain, compose(g, f), g(bound))
+}
+
+theorem antitone_compose_lower_bound_to_upper_bound_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    bound: Value
+) {
+    is_antitone(g) and is_lower_bound_on(domain, f, bound)
+    implies is_upper_bound_on(domain, compose(g, f), g(bound))
+}
+
+theorem monotone_compose_bounded_above_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_monotone(g) and is_bounded_above_on(domain, f)
+    implies is_bounded_above_on(domain, compose(g, f))
+}
+
+theorem monotone_compose_bounded_below_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_monotone(g) and is_bounded_below_on(domain, f)
+    implies is_bounded_below_on(domain, compose(g, f))
+}
+
+theorem antitone_compose_bounded_above_to_bounded_below_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_antitone(g) and is_bounded_above_on(domain, f)
+    implies is_bounded_below_on(domain, compose(g, f))
+}
+
+theorem antitone_compose_bounded_below_to_bounded_above_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_antitone(g) and is_bounded_below_on(domain, f)
+    implies is_bounded_above_on(domain, compose(g, f))
+}
+
+theorem monotone_compose_attains_maximum_at[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    point: Domain
+) {
+    is_monotone(g) and attains_maximum_at(domain, f, point)
+    implies attains_maximum_at(domain, compose(g, f), point)
+}
+
+theorem monotone_compose_attains_minimum_at[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    point: Domain
+) {
+    is_monotone(g) and attains_minimum_at(domain, f, point)
+    implies attains_minimum_at(domain, compose(g, f), point)
+}
+
+theorem antitone_compose_attains_maximum_to_minimum_at[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    point: Domain
+) {
+    is_antitone(g) and attains_maximum_at(domain, f, point)
+    implies attains_minimum_at(domain, compose(g, f), point)
+}
+
+theorem antitone_compose_attains_minimum_to_maximum_at[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target,
+    point: Domain
+) {
+    is_antitone(g) and attains_minimum_at(domain, f, point)
+    implies attains_maximum_at(domain, compose(g, f), point)
+}
+
+theorem monotone_compose_attains_maximum_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_monotone(g) and attains_maximum_on(domain, f)
+    implies attains_maximum_on(domain, compose(g, f))
+}
+
+theorem monotone_compose_attains_minimum_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_monotone(g) and attains_minimum_on(domain, f)
+    implies attains_minimum_on(domain, compose(g, f))
+}
+
+theorem antitone_compose_attains_maximum_to_minimum_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_antitone(g) and attains_maximum_on(domain, f)
+    implies attains_minimum_on(domain, compose(g, f))
+}
+
+theorem antitone_compose_attains_minimum_to_maximum_on[Domain, Value: PartialOrder, Target: PartialOrder](
+    domain: Set[Domain],
+    f: Domain -> Value,
+    g: Value -> Target
+) {
+    is_antitone(g) and attains_minimum_on(domain, f)
+    implies attains_maximum_on(domain, compose(g, f))
+}
+
+define is_common_upper_bound_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    is_upper_bound_on(left, f, bound) and is_upper_bound_on(right, f, bound)
+}
+
+define is_common_lower_bound_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) -> Bool {
+    is_lower_bound_on(left, f, bound) and is_lower_bound_on(right, f, bound)
+}
+
+define is_common_bounded_above_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_common_upper_bound_on(left, right, f, bound)
+    }
+}
+
+define is_common_bounded_below_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    exists(bound: Value) {
+        is_common_lower_bound_on(left, right, f, bound)
+    }
+}
+
+define is_common_bounded_on[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) -> Bool {
+    is_common_bounded_above_on(left, right, f) and is_common_bounded_below_on(left, right, f)
+}
+
+theorem upper_bound_on_of_pointwise_le[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, bound: Value
+) {
+    (forall(point: Domain) { domain.contains(point) implies f(point) <= g(point) })
+    and is_upper_bound_on(domain, g, bound)
+    implies is_upper_bound_on(domain, f, bound)
+}
+
+theorem lower_bound_on_of_pointwise_ge[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value, bound: Value
+) {
+    (forall(point: Domain) { domain.contains(point) implies g(point) <= f(point) })
+    and is_lower_bound_on(domain, g, bound)
+    implies is_lower_bound_on(domain, f, bound)
+}
+
+theorem bounded_above_on_of_pointwise_le[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value
+) {
+    (forall(point: Domain) { domain.contains(point) implies f(point) <= g(point) })
+    and is_bounded_above_on(domain, g)
+    implies is_bounded_above_on(domain, f)
+}
+
+theorem bounded_below_on_of_pointwise_ge[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, g: Domain -> Value
+) {
+    (forall(point: Domain) { domain.contains(point) implies g(point) <= f(point) })
+    and is_bounded_below_on(domain, g)
+    implies is_bounded_below_on(domain, f)
+}
+
+theorem maximum_point_in_domain[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_maximum_at(domain, f, point) implies domain.contains(point)
+}
+
+theorem minimum_point_in_domain[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_minimum_at(domain, f, point) implies domain.contains(point)
+}
+
+theorem attains_maximum_value_unique[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left_point: Domain, right_point: Domain
+) {
+    attains_maximum_at(domain, f, left_point) and attains_maximum_at(domain, f, right_point)
+    implies f(left_point) = f(right_point)
+}
+
+theorem attains_minimum_value_unique[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value, left_point: Domain, right_point: Domain
+) {
+    attains_minimum_at(domain, f, left_point) and attains_minimum_at(domain, f, right_point)
+    implies f(left_point) = f(right_point)
+}
+
+theorem attains_extrema_imp_bounded[Domain, Value: PartialOrder](
+    domain: Set[Domain], f: Domain -> Value
+) {
+    attains_maximum_on(domain, f) and attains_minimum_on(domain, f)
+    implies is_bounded_on(domain, f)
+}
+
+theorem attains_maximum_at_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    subset.subset(superset) and subset.contains(point) and attains_maximum_at(superset, f, point)
+    implies attains_maximum_at(subset, f, point)
+}
+
+theorem attains_minimum_at_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    subset.subset(superset) and subset.contains(point) and attains_minimum_at(superset, f, point)
+    implies attains_minimum_at(subset, f, point)
+}
+
+theorem attains_maximum_on_subset_from_point[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    subset.subset(superset) and subset.contains(point) and attains_maximum_at(superset, f, point)
+    implies attains_maximum_on(subset, f)
+}
+
+theorem attains_minimum_on_subset_from_point[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    subset.subset(superset) and subset.contains(point) and attains_minimum_at(superset, f, point)
+    implies attains_minimum_on(subset, f)
+}
+
+theorem bounded_above_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_bounded_above_on(superset, f)
+    implies is_bounded_above_on(subset, f)
+}
+
+theorem bounded_below_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_bounded_below_on(superset, f)
+    implies is_bounded_below_on(subset, f)
+}
+
+theorem bounded_on_subset[Domain, Value: PartialOrder](
+    subset: Set[Domain], superset: Set[Domain], f: Domain -> Value
+) {
+    subset.subset(superset) and is_bounded_on(superset, f)
+    implies is_bounded_on(subset, f)
+}
+
+theorem common_upper_bound_on_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_upper_bound_on(left, right, f, bound) implies is_upper_bound_on(left, f, bound)
+}
+
+theorem common_upper_bound_on_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_upper_bound_on(left, right, f, bound) implies is_upper_bound_on(right, f, bound)
+}
+
+theorem common_lower_bound_on_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_lower_bound_on(left, right, f, bound) implies is_lower_bound_on(left, f, bound)
+}
+
+theorem common_lower_bound_on_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_lower_bound_on(left, right, f, bound) implies is_lower_bound_on(right, f, bound)
+}
+
+theorem common_upper_bound_on_intro[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(left, f, bound) and is_upper_bound_on(right, f, bound)
+    implies is_common_upper_bound_on(left, right, f, bound)
+}
+
+theorem common_lower_bound_on_intro[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(left, f, bound) and is_lower_bound_on(right, f, bound)
+    implies is_common_lower_bound_on(left, right, f, bound)
+}
+
+define relation_power[T](r: (T, T) -> Bool, n: Nat, x: T, y: T) -> Bool {
+    match n {
+        Nat.zero {
+            eq_relation[T](x, y)
+        }
+        Nat.suc(pred) {
+            relation_compose(relation_power(r, pred), r, x, y)
+        }
+    }
+}
+
+define relation_refl_trans_closure[T](r: (T, T) -> Bool, x: T, y: T) -> Bool {
+    exists(n: Nat) {
+        relation_power(r, n, x, y)
+    }
+}
+
+define relation_trans_closure[T](r: (T, T) -> Bool, x: T, y: T) -> Bool {
+    exists(n: Nat) {
+        relation_power(r, n.suc, x, y)
+    }
+}
+
+theorem relation_power_zero[T](r: (T, T) -> Bool) {
+    relation_power(r, Nat.zero) = eq_relation[T]
+}
+
+theorem relation_power_suc[T](r: (T, T) -> Bool, n: Nat) {
+    relation_power(r, n.suc) = relation_compose(relation_power(r, n), r)
+}
+
+theorem relation_power_one[T](r: (T, T) -> Bool) {
+    relation_power(r, Nat.zero.suc) = r
+}
+
+theorem relation_power_zero_self[T](r: (T, T) -> Bool, x: T) {
+    relation_power(r, Nat.zero, x, x)
+}
+
+theorem relation_power_one_step[T](r: (T, T) -> Bool, x: T, y: T) {
+    r(x, y) implies relation_power(r, Nat.zero.suc, x, y)
+}
+
+theorem relation_power_in_refl_trans_closure[T](r: (T, T) -> Bool, n: Nat, x: T, y: T) {
+    relation_power(r, n, x, y) implies relation_refl_trans_closure(r, x, y)
+}
+
+theorem relation_power_positive_in_trans_closure[T](r: (T, T) -> Bool, n: Nat, x: T, y: T) {
+    relation_power(r, n.suc, x, y) implies relation_trans_closure(r, x, y)
+}
+
+theorem relation_subset_refl_trans_closure[T](r: (T, T) -> Bool) {
+    relation_subset(r, relation_refl_trans_closure(r))
+}
+
+theorem relation_refl_trans_closure_is_reflexive[T](r: (T, T) -> Bool) {
+    is_reflexive(relation_refl_trans_closure(r))
+}
+
+theorem relation_subset_trans_closure[T](r: (T, T) -> Bool) {
+    relation_subset(r, relation_trans_closure(r))
+}
+
+theorem relation_trans_closure_subset_refl_trans_closure[T](r: (T, T) -> Bool) {
+    relation_subset(relation_trans_closure(r), relation_refl_trans_closure(r))
+}
+
+theorem relation_refl_trans_closure_eq_eq_or_trans_closure[T](r: (T, T) -> Bool, x: T, y: T) {
+    relation_refl_trans_closure(r, x, y) = (eq_relation[T](x, y) or relation_trans_closure(r, x, y))
+}
+
+theorem relation_power_add_step_compose[T](r: (T, T) -> Bool, m: Nat, k: Nat) {
+    relation_compose(relation_power(r, m), relation_power(r, k)) = relation_power(r, m + k)
+    implies
+    relation_compose(relation_power(r, m), relation_power(r, k.suc)) = relation_compose(relation_power(r, m + k), r)
+}
+
+theorem relation_power_add_step_power[T](r: (T, T) -> Bool, m: Nat, k: Nat) {
+    relation_compose(relation_power(r, m + k), r) = relation_power(r, m + k.suc)
+}
+
+theorem relation_power_add[T](r: (T, T) -> Bool, m: Nat, n: Nat) {
+    relation_compose(relation_power(r, m), relation_power(r, n)) = relation_power(r, m + n)
+}
+
+theorem relation_power_monotone_step[T](r: (T, T) -> Bool, s: (T, T) -> Bool, n: Nat) {
+    relation_subset(r, s) and relation_subset(relation_power(r, n), relation_power(s, n))
+    implies
+    relation_subset(relation_power(r, n.suc), relation_power(s, n.suc))
+}
+
+theorem relation_power_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool, n: Nat) {
+    relation_subset(r, s) implies relation_subset(relation_power(r, n), relation_power(s, n))
+}
+
+theorem relation_power_suc_left[T](r: (T, T) -> Bool, n: Nat) {
+    relation_compose(r, relation_power(r, n)) = relation_power(r, n.suc)
+}
+
+theorem relation_power_converse_suc_compose[T](r: (T, T) -> Bool, k: Nat) {
+    relation_converse(relation_power(r, k.suc)) = relation_compose(relation_converse(r), relation_converse(relation_power(r, k)))
+}
+
+theorem relation_power_converse_suc_target[T](r: (T, T) -> Bool, k: Nat) {
+    relation_compose(relation_converse(r), relation_power(relation_converse(r), k)) = relation_power(relation_converse(r), k.suc)
+}
+
+theorem relation_power_converse_step[T](r: (T, T) -> Bool, k: Nat) {
+    relation_converse(relation_power(r, k)) = relation_power(relation_converse(r), k)
+    implies
+    relation_converse(relation_power(r, k.suc)) = relation_power(relation_converse(r), k.suc)
+}
+
+theorem relation_power_converse[T](r: (T, T) -> Bool, n: Nat) {
+    relation_converse(relation_power(r, n)) = relation_power(relation_converse(r), n)
+}
+
+theorem relation_power_pullback_subset_step[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat) {
+    relation_subset(
+        relation_power(relation_pullback(f, r), n),
+        relation_pullback(f, relation_power(r, n))
+    )
+    implies
+    relation_subset(
+        relation_power(relation_pullback(f, r), n.suc),
+        relation_pullback(f, relation_power(r, n.suc))
+    )
+}
+
+theorem relation_power_pullback_subset[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat) {
+    relation_subset(
+        relation_power(relation_pullback(f, r), n),
+        relation_pullback(f, relation_power(r, n))
+    )
+}
+
+theorem relation_power_positive_pullback_reverse_of_surjective_step[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat) {
+    is_surjective_fn(f) and
+    relation_subset(
+        relation_pullback(f, relation_power(r, n.suc)),
+        relation_power(relation_pullback(f, r), n.suc)
+    )
+    implies
+    relation_subset(
+        relation_pullback(f, relation_power(r, n.suc.suc)),
+        relation_power(relation_pullback(f, r), n.suc.suc)
+    )
+}
+
+theorem relation_power_positive_pullback_reverse_of_surjective[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat, x: A, y: A) {
+    is_surjective_fn(f) and relation_pullback(f, relation_power(r, n.suc), x, y)
+    implies
+    relation_power(relation_pullback(f, r), n.suc, x, y)
+}
+
+theorem relation_power_positive_pullback_of_surjective_at[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat, x: A, y: A) {
+    is_surjective_fn(f) implies
+    relation_pullback(f, relation_power(r, n.suc), x, y) = relation_power(relation_pullback(f, r), n.suc, x, y)
+}
+
+theorem relation_power_positive_pullback_of_surjective[A, B](f: A -> B, r: (B, B) -> Bool, n: Nat) {
+    is_surjective_fn(f) implies
+    relation_pullback(f, relation_power(r, n.suc)) = relation_power(relation_pullback(f, r), n.suc)
+}
+
+theorem relation_refl_trans_closure_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    relation_subset(r, s) implies relation_subset(relation_refl_trans_closure(r), relation_refl_trans_closure(s))
+}
+
+theorem relation_trans_closure_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    relation_subset(r, s) implies relation_subset(relation_trans_closure(r), relation_trans_closure(s))
+}
+
+theorem relation_refl_trans_closure_pullback_subset[A, B](f: A -> B, r: (B, B) -> Bool) {
+    relation_subset(
+        relation_refl_trans_closure(relation_pullback(f, r)),
+        relation_pullback(f, relation_refl_trans_closure(r))
+    )
+}
+
+theorem relation_trans_closure_pullback_subset[A, B](f: A -> B, r: (B, B) -> Bool) {
+    relation_subset(
+        relation_trans_closure(relation_pullback(f, r)),
+        relation_pullback(f, relation_trans_closure(r))
+    )
+}
+
+theorem relation_trans_closure_pullback_of_surjective_at[A, B](f: A -> B, r: (B, B) -> Bool, x: A, y: A) {
+    is_surjective_fn(f) implies
+    relation_pullback(f, relation_trans_closure(r), x, y) = relation_trans_closure(relation_pullback(f, r), x, y)
+}
+
+theorem relation_trans_closure_pullback_of_surjective[A, B](f: A -> B, r: (B, B) -> Bool) {
+    is_surjective_fn(f) implies
+    relation_pullback(f, relation_trans_closure(r)) = relation_trans_closure(relation_pullback(f, r))
+}
+
+theorem relation_refl_trans_closure_converse[T](r: (T, T) -> Bool, x: T, y: T) {
+    relation_refl_trans_closure(relation_converse(r), x, y) = relation_refl_trans_closure(r, y, x)
+}
+
+theorem relation_trans_closure_converse[T](r: (T, T) -> Bool, x: T, y: T) {
+    relation_trans_closure(relation_converse(r), x, y) = relation_trans_closure(r, y, x)
+}
+
+theorem relation_refl_trans_closure_pullback_of_bijection_at[A, B](f: A -> B, r: (B, B) -> Bool, x: A, y: A) {
+    is_bijection_fn(f) implies
+    relation_pullback(f, relation_refl_trans_closure(r), x, y) = relation_refl_trans_closure(relation_pullback(f, r), x, y)
+}
+
+theorem relation_refl_trans_closure_pullback_of_bijection[A, B](f: A -> B, r: (B, B) -> Bool) {
+    is_bijection_fn(f) implies
+    relation_pullback(f, relation_refl_trans_closure(r)) = relation_refl_trans_closure(relation_pullback(f, r))
+}
+
+theorem relation_power_subset_of_reflexive_transitive[T](r: (T, T) -> Bool, s: (T, T) -> Bool, n: Nat) {
+    is_reflexive(s) and is_transitive(s) and relation_subset(r, s)
+    implies
+    relation_subset(relation_power(r, n), s)
+}
+
+theorem relation_power_positive_subset_of_transitive[T](r: (T, T) -> Bool, s: (T, T) -> Bool, n: Nat) {
+    is_transitive(s) and relation_subset(r, s)
+    implies
+    relation_subset(relation_power(r, n.suc), s)
+}
+
+theorem relation_refl_trans_closure_subset_of_reflexive_transitive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_reflexive(s) and is_transitive(s) and relation_subset(r, s)
+    implies
+    relation_subset(relation_refl_trans_closure(r), s)
+}
+
+theorem relation_trans_closure_subset_of_transitive[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_transitive(s) and relation_subset(r, s)
+    implies
+    relation_subset(relation_trans_closure(r), s)
+}
+
+theorem relation_refl_trans_closure_is_transitive[T](r: (T, T) -> Bool) {
+    is_transitive(relation_refl_trans_closure(r))
+}
+
+theorem relation_trans_closure_is_transitive[T](r: (T, T) -> Bool) {
+    is_transitive(relation_trans_closure(r))
+}
+
+theorem relation_trans_closure_eq_self_of_transitive[T](r: (T, T) -> Bool) {
+    is_transitive(r) implies relation_trans_closure(r) = r
+}
+
+theorem relation_trans_closure_idempotent[T](r: (T, T) -> Bool) {
+    relation_trans_closure(relation_trans_closure(r)) = relation_trans_closure(r)
+}
+
+theorem relation_refl_trans_closure_eq_self_of_reflexive_transitive[T](r: (T, T) -> Bool) {
+    is_reflexive(r) and is_transitive(r) implies relation_refl_trans_closure(r) = r
+}
+
+theorem relation_refl_trans_closure_idempotent[T](r: (T, T) -> Bool) {
+    relation_refl_trans_closure(relation_refl_trans_closure(r)) = relation_refl_trans_closure(r)
+}
+
+theorem relation_refl_trans_closure_is_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(r) implies is_symmetric(relation_refl_trans_closure(r))
+}
+
+define relation_equivalence_closure[T](r: (T, T) -> Bool, x: T, y: T) -> Bool {
+    relation_refl_trans_closure(relation_symmetric_closure(r), x, y)
+}
+
+theorem relation_subset_equivalence_closure[T](r: (T, T) -> Bool) {
+    relation_subset(r, relation_equivalence_closure(r))
+}
+
+theorem relation_equivalence_closure_is_reflexive[T](r: (T, T) -> Bool) {
+    is_reflexive(relation_equivalence_closure(r))
+}
+
+theorem relation_equivalence_closure_is_symmetric[T](r: (T, T) -> Bool) {
+    is_symmetric(relation_equivalence_closure(r))
+}
+
+theorem relation_equivalence_closure_is_transitive[T](r: (T, T) -> Bool) {
+    is_transitive(relation_equivalence_closure(r))
+}
+
+theorem relation_equivalence_closure_is_equivalence[T](r: (T, T) -> Bool) {
+    is_equivalence(relation_equivalence_closure(r))
+}
+
+theorem relation_equivalence_closure_subset_of_equivalence[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    is_equivalence(s) and relation_subset(r, s) implies relation_subset(relation_equivalence_closure(r), s)
+}
+
+theorem relation_equivalence_closure_monotone[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    relation_subset(r, s) implies
+        relation_subset(relation_equivalence_closure(r), relation_equivalence_closure(s))
+}
+
+theorem relation_equivalence_closure_eq_self_of_equivalence[T](r: (T, T) -> Bool) {
+    is_equivalence(r) implies relation_equivalence_closure(r) = r
+}
+
+theorem relation_equivalence_closure_idempotent[T](r: (T, T) -> Bool) {
+    relation_equivalence_closure(relation_equivalence_closure(r)) = relation_equivalence_closure(r)
+}
+
+theorem relation_trans_closure_step_left[T](r: (T, T) -> Bool, x: T, y: T, z: T) {
+    r(x, y) and relation_trans_closure(r, y, z) implies relation_trans_closure(r, x, z)
+}
+
+theorem relation_trans_closure_step_right[T](r: (T, T) -> Bool, x: T, y: T, z: T) {
+    relation_trans_closure(r, x, y) and r(y, z) implies relation_trans_closure(r, x, z)
+}
+
+theorem relation_refl_trans_closure_step_left[T](r: (T, T) -> Bool, x: T, y: T, z: T) {
+    r(x, y) and relation_refl_trans_closure(r, y, z) implies relation_refl_trans_closure(r, x, z)
+}
+
+theorem relation_refl_trans_closure_step_right[T](r: (T, T) -> Bool, x: T, y: T, z: T) {
+    relation_refl_trans_closure(r, x, y) and r(y, z) implies relation_refl_trans_closure(r, x, z)
+}
+
+theorem relation_trans_closure_compose_subset[T](r: (T, T) -> Bool) {
+    relation_subset(
+        relation_compose(relation_trans_closure(r), relation_trans_closure(r)),
+        relation_trans_closure(r)
+    )
+}
+
+theorem relation_refl_trans_closure_compose_subset[T](r: (T, T) -> Bool) {
+    relation_subset(
+        relation_compose(relation_refl_trans_closure(r), relation_refl_trans_closure(r)),
+        relation_refl_trans_closure(r)
+    )
+}
+
+theorem relation_equivalence_closure_converse[T](r: (T, T) -> Bool) {
+    relation_equivalence_closure(relation_converse(r)) = relation_equivalence_closure(r)
+}
+
+theorem relation_compose_subset_trans_closure_left[T](r: (T, T) -> Bool) {
+    relation_subset(
+        relation_compose(r, relation_refl_trans_closure(r)),
+        relation_trans_closure(r)
+    )
+}
+
+theorem relation_compose_subset_trans_closure_right[T](r: (T, T) -> Bool) {
+    relation_subset(
+        relation_compose(relation_refl_trans_closure(r), r),
+        relation_trans_closure(r)
+    )
+}
+
+theorem relation_refl_trans_closure_compose_eq[T](r: (T, T) -> Bool) {
+    relation_compose(relation_refl_trans_closure(r), relation_refl_trans_closure(r)) =
+        relation_refl_trans_closure(r)
+}
+
+define is_partial_order_relation[T](r: (T, T) -> Bool) -> Bool {
+    is_reflexive(r) and is_transitive(r) and is_antisymmetric(r)
+}
+
+define is_linear_order_relation[T](r: (T, T) -> Bool) -> Bool {
+    is_partial_order_relation(r) and is_total(r)
+}
+
+define relation_strict_part[T](r: (T, T) -> Bool, a: T, b: T) -> Bool {
+    r(a, b) and a != b
+}
+
+theorem partial_order_relation_is_reflexive[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_reflexive(r)
+}
+
+theorem partial_order_relation_is_transitive[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_transitive(r)
+}
+
+theorem partial_order_relation_is_antisymmetric[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_antisymmetric(r)
+}
+
+theorem linear_order_relation_is_partial_order[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_partial_order_relation(r)
+}
+
+theorem linear_order_relation_is_total[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_total(r)
+}
+
+theorem linear_order_relation_is_reflexive[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_reflexive(r)
+}
+
+theorem linear_order_relation_is_transitive[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_transitive(r)
+}
+
+theorem linear_order_relation_is_antisymmetric[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_antisymmetric(r)
+}
+
+theorem relation_strict_part_at[T](r: (T, T) -> Bool, a: T, b: T) {
+    relation_strict_part(r, a, b) = (r(a, b) and a != b)
+}
+
+theorem relation_strict_part_eq_of_relation_eq[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s implies relation_strict_part(r) = relation_strict_part(s)
+}
+
+theorem relation_converse_eq_of_relation_eq[A, B](r: (A, B) -> Bool, s: (A, B) -> Bool) {
+    r = s implies relation_converse(r) = relation_converse(s)
+}
+
+theorem relation_strict_part_is_irreflexive[T](r: (T, T) -> Bool) {
+    is_irreflexive(relation_strict_part(r))
+}
+
+theorem relation_strict_part_is_asymmetric_of_partial_order_relation[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_asymmetric(relation_strict_part(r))
+}
+
+theorem relation_strict_part_is_transitive_of_partial_order_relation[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_transitive(relation_strict_part(r))
+}
+
+theorem relation_converse_is_partial_order_relation[T](r: (T, T) -> Bool) {
+    is_partial_order_relation(r) implies is_partial_order_relation(relation_converse(r))
+}
+
+theorem relation_converse_is_linear_order_relation[T](r: (T, T) -> Bool) {
+    is_linear_order_relation(r) implies is_linear_order_relation(relation_converse(r))
+}
+
+theorem partial_order_relation_eq_transport[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s and is_partial_order_relation(r) implies is_partial_order_relation(s)
+}
+
+theorem partial_order_relation_eq_transport_rev[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s and is_partial_order_relation(s) implies is_partial_order_relation(r)
+}
+
+theorem partial_order_relation_eq_iff[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s implies is_partial_order_relation(r) = is_partial_order_relation(s)
+}
+
+theorem linear_order_relation_eq_transport[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s and is_linear_order_relation(r) implies is_linear_order_relation(s)
+}
+
+theorem linear_order_relation_eq_transport_rev[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s and is_linear_order_relation(s) implies is_linear_order_relation(r)
+}
+
+theorem linear_order_relation_eq_iff[T](r: (T, T) -> Bool, s: (T, T) -> Bool) {
+    r = s implies is_linear_order_relation(r) = is_linear_order_relation(s)
+}
+
+theorem lte_relation_is_reflexive[P: PartialOrder] {
+    is_reflexive(P.lte)
+}
+
+theorem lte_relation_is_transitive[P: PartialOrder] {
+    is_transitive(P.lte)
+}
+
+theorem lt_relation_is_transitive[P: PartialOrder] {
+    is_transitive(P.lt)
+}
+
+theorem gte_relation_is_reflexive[P: PartialOrder] {
+    is_reflexive(P.gte)
+}
+
+theorem gte_relation_is_transitive[P: PartialOrder] {
+    is_transitive(P.gte)
+}
+
+theorem lte_relation_is_antisymmetric[P: PartialOrder] {
+    is_antisymmetric(P.lte)
+}
+
+theorem lte_relation_is_partial_order_relation[P: PartialOrder] {
+    is_partial_order_relation(P.lte)
+}
+
+theorem gte_relation_is_antisymmetric[P: PartialOrder] {
+    is_antisymmetric(P.gte)
+}
+
+theorem gte_relation_is_partial_order_relation[P: PartialOrder] {
+    is_partial_order_relation(P.gte)
+}
+
+theorem lt_relation_is_irreflexive[P: PartialOrder] {
+    is_irreflexive(P.lt)
+}
+
+theorem lt_relation_strict_part_lte[P: PartialOrder] {
+    P.lt = relation_strict_part(P.lte)
+}
+
+theorem gt_relation_strict_part_gte[P: PartialOrder] {
+    P.gt = relation_strict_part(P.gte)
+}
+
+theorem gt_relation_is_transitive[P: PartialOrder] {
+    is_transitive(P.gt)
+}
+
+theorem gt_relation_is_irreflexive[P: PartialOrder] {
+    is_irreflexive(P.gt)
+}
+
+theorem lt_relation_is_asymmetric[P: PartialOrder] {
+    is_asymmetric(P.lt)
+}
+
+theorem gt_relation_is_asymmetric[P: PartialOrder] {
+    is_asymmetric(P.gt)
+}
+
+theorem lt_relation_subset_lte[P: PartialOrder] {
+    relation_subset(P.lt, P.lte)
+}
+
+theorem gt_relation_subset_gte[P: PartialOrder] {
+    relation_subset(P.gt, P.gte)
+}
+
+theorem lte_relation_is_total[L: LinearOrder] {
+    is_total(L.lte)
+}
+
+theorem lte_relation_is_linear_order_relation[L: LinearOrder] {
+    is_linear_order_relation(L.lte)
+}
+
+theorem gte_relation_is_total[L: LinearOrder] {
+    is_total(L.gte)
+}
+
+theorem gte_relation_is_linear_order_relation[L: LinearOrder] {
+    is_linear_order_relation(L.gte)
+}
+
+theorem lte_relation_converse[P: PartialOrder] {
+    relation_converse(P.lte) = P.gte
+}
+
+theorem gte_relation_converse[P: PartialOrder] {
+    relation_converse(P.gte) = P.lte
+}
+
+theorem lt_relation_converse[P: PartialOrder] {
+    relation_converse(P.lt) = P.gt
+}
+
+theorem gt_relation_converse[P: PartialOrder] {
+    relation_converse(P.gt) = P.lt
+}
+
+theorem lte_refl_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_refl_trans_closure(P.lte, a, b) = (a <= b)
+}
+
+theorem lte_refl_trans_closure[P: PartialOrder] {
+    relation_refl_trans_closure(P.lte) = P.lte
+}
+
+theorem gte_refl_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_refl_trans_closure(P.gte, a, b) = (a >= b)
+}
+
+theorem gte_refl_trans_closure[P: PartialOrder] {
+    relation_refl_trans_closure(P.gte) = P.gte
+}
+
+theorem lte_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_trans_closure(P.lte, a, b) = (a <= b)
+}
+
+theorem lte_trans_closure[P: PartialOrder] {
+    relation_trans_closure(P.lte) = P.lte
+}
+
+theorem gte_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_trans_closure(P.gte, a, b) = (a >= b)
+}
+
+theorem gte_trans_closure[P: PartialOrder] {
+    relation_trans_closure(P.gte) = P.gte
+}
+
+theorem lt_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_trans_closure(P.lt, a, b) = (a < b)
+}
+
+theorem lt_trans_closure[P: PartialOrder] {
+    relation_trans_closure(P.lt) = P.lt
+}
+
+theorem gt_trans_closure_at[P: PartialOrder](a: P, b: P) {
+    relation_trans_closure(P.gt, a, b) = (a > b)
+}
+
+theorem gt_trans_closure[P: PartialOrder] {
+    relation_trans_closure(P.gt) = P.gt
+}
+
+theorem lte_pullback_is_reflexive[A, B: PartialOrder](f: A -> B) {
+    is_reflexive(relation_pullback(f, B.lte))
+}
+
+theorem gte_pullback_is_reflexive[A, B: PartialOrder](f: A -> B) {
+    is_reflexive(relation_pullback(f, B.gte))
+}
+
+theorem lte_pullback_is_transitive[A, B: PartialOrder](f: A -> B) {
+    is_transitive(relation_pullback(f, B.lte))
+}
+
+theorem gte_pullback_is_transitive[A, B: PartialOrder](f: A -> B) {
+    is_transitive(relation_pullback(f, B.gte))
+}
+
+theorem lte_pullback_is_antisymmetric_of_injective[A, B: PartialOrder](f: A -> B) {
+    is_injective_fn(f) implies is_antisymmetric(relation_pullback(f, B.lte))
+}
+
+theorem gte_pullback_is_antisymmetric_of_injective[A, B: PartialOrder](f: A -> B) {
+    is_injective_fn(f) implies is_antisymmetric(relation_pullback(f, B.gte))
+}
+
+theorem lte_pullback_is_order_data_of_bijection_map[A, B: PartialOrder](e: Bijection[A, B]) {
+    is_reflexive(relation_pullback(e.map, B.lte)) and
+    is_transitive(relation_pullback(e.map, B.lte)) and
+    is_antisymmetric(relation_pullback(e.map, B.lte))
+}
+
+theorem gte_pullback_is_order_data_of_bijection_map[A, B: PartialOrder](e: Bijection[A, B]) {
+    is_reflexive(relation_pullback(e.map, B.gte)) and
+    is_transitive(relation_pullback(e.map, B.gte)) and
+    is_antisymmetric(relation_pullback(e.map, B.gte))
+}
+
+theorem lt_pullback_is_irreflexive[A, B: PartialOrder](f: A -> B) {
+    is_irreflexive(relation_pullback(f, B.lt))
+}
+
+theorem gt_pullback_is_irreflexive[A, B: PartialOrder](f: A -> B) {
+    is_irreflexive(relation_pullback(f, B.gt))
+}
+
+theorem lt_pullback_is_asymmetric[A, B: PartialOrder](f: A -> B) {
+    is_asymmetric(relation_pullback(f, B.lt))
+}
+
+theorem gt_pullback_is_asymmetric[A, B: PartialOrder](f: A -> B) {
+    is_asymmetric(relation_pullback(f, B.gt))
+}
+
+theorem lt_pullback_is_strict_order_data_of_bijection_map[A, B: PartialOrder](e: Bijection[A, B]) {
+    is_irreflexive(relation_pullback(e.map, B.lt)) and
+    is_asymmetric(relation_pullback(e.map, B.lt)) and
+    is_transitive(relation_pullback(e.map, B.lt))
+}
+
+theorem gt_pullback_is_strict_order_data_of_bijection_map[A, B: PartialOrder](e: Bijection[A, B]) {
+    is_irreflexive(relation_pullback(e.map, B.gt)) and
+    is_asymmetric(relation_pullback(e.map, B.gt)) and
+    is_transitive(relation_pullback(e.map, B.gt))
+}
+
+theorem lte_pullback_is_total[A, B: LinearOrder](f: A -> B) {
+    is_total(relation_pullback(f, B.lte))
+}
+
+theorem gte_pullback_is_total[A, B: LinearOrder](f: A -> B) {
+    is_total(relation_pullback(f, B.gte))
+}
+
+theorem lte_pullback_is_total_of_bijection_map[A, B: LinearOrder](e: Bijection[A, B]) {
+    is_total(relation_pullback(e.map, B.lte))
+}
+
+theorem gte_pullback_is_total_of_bijection_map[A, B: LinearOrder](e: Bijection[A, B]) {
+    is_total(relation_pullback(e.map, B.gte))
+}
+
+theorem lt_refl_trans_closure_at[L: LinearOrder](a: L, b: L) {
+    relation_refl_trans_closure(L.lt, a, b) = (a <= b)
+}
+
+theorem lt_refl_trans_closure[L: LinearOrder] {
+    relation_refl_trans_closure(L.lt) = L.lte
+}
+
+theorem gt_refl_trans_closure_at[L: LinearOrder](a: L, b: L) {
+    relation_refl_trans_closure(L.gt, a, b) = (a >= b)
+}
+
+theorem gt_refl_trans_closure[L: LinearOrder] {
+    relation_refl_trans_closure(L.gt) = L.gte
+}
+
+theorem lte_pullback_refl_trans_closure_of_bijection[A, B: PartialOrder](f: A -> B) {
+    is_bijection_fn(f) implies relation_refl_trans_closure(relation_pullback(f, B.lte)) = relation_pullback(f, B.lte)
+}
+
+theorem gte_pullback_refl_trans_closure_of_bijection[A, B: PartialOrder](f: A -> B) {
+    is_bijection_fn(f) implies relation_refl_trans_closure(relation_pullback(f, B.gte)) = relation_pullback(f, B.gte)
+}
+
+theorem lte_pullback_trans_closure_of_surjective[A, B: PartialOrder](f: A -> B) {
+    is_surjective_fn(f) implies relation_trans_closure(relation_pullback(f, B.lte)) = relation_pullback(f, B.lte)
+}
+
+theorem gte_pullback_trans_closure_of_surjective[A, B: PartialOrder](f: A -> B) {
+    is_surjective_fn(f) implies relation_trans_closure(relation_pullback(f, B.gte)) = relation_pullback(f, B.gte)
+}
+
+theorem lt_pullback_trans_closure_of_surjective[A, B: PartialOrder](f: A -> B) {
+    is_surjective_fn(f) implies relation_trans_closure(relation_pullback(f, B.lt)) = relation_pullback(f, B.lt)
+}
+
+theorem gt_pullback_trans_closure_of_surjective[A, B: PartialOrder](f: A -> B) {
+    is_surjective_fn(f) implies relation_trans_closure(relation_pullback(f, B.gt)) = relation_pullback(f, B.gt)
+}
+
+theorem lt_pullback_refl_trans_closure_of_bijection[A, B: LinearOrder](f: A -> B) {
+    is_bijection_fn(f) implies relation_refl_trans_closure(relation_pullback(f, B.lt)) = relation_pullback(f, B.lte)
+}
+
+theorem gt_pullback_refl_trans_closure_of_bijection[A, B: LinearOrder](f: A -> B) {
+    is_bijection_fn(f) implies relation_refl_trans_closure(relation_pullback(f, B.gt)) = relation_pullback(f, B.gte)
+}
+
+define constant_false[K](x: K) -> Bool {
+    false
+}
+
+define negate_fun[K](f: K -> Bool, x: K) -> Bool {
+    not f(x)
+}
+
+define singleton_fun[K](a: K, x: K) -> Bool {
+    a = x
+}
+
+define functional_insert[K](f: K -> Bool, item: K, x: K) -> Bool {
+    if x = item {
+        true
+    } else {
+        f(x)
+    }
+}
+
+define functional_remove[K](f: K -> Bool, item: K, x: K) -> Bool {
+    if x = item {
+        false
+    } else {
+        f(x)
+    }
+}
+
+attributes Set[K] {
+    let empty_set = Set[K].new(constant_false[K])
+    /// The universal set containing all elements of type K.
+    let universal_set = Set[K].new(negate_fun(constant_false[K]))
+    /// Creates a set containing exactly one element.
+    let singleton: K -> Set[K] = function(a: K) {
+        Set[K].new(singleton_fun(a))
+    }
+
+    /// True if the set has no elements.
+    define is_empty(self) -> Bool {
+        forall(x: K) {
+            not self.contains(x)
+        }
+    }
+
+    /// The complement of this set.
+    define c(self) -> Set[K] {
+        Set[K].new(negate_fun(self.contains))
+    }
+
+    /// True if the set contains exactly one element.
+    define is_singleton(self) -> Bool {
+        exists(a: K) {
+            self = Set[K].singleton(a)
+        }
+    }
+
+    /// Removes an element from the set. If the item isn't present, this is a no-op.
+    define remove(self, item: K) -> Set[K] {
+        Set[K].new(functional_remove(self.contains, item))
+    }
+
+    /// Adds an element to the set. If the item is already present, this is a no-op.
+    define insert(self, item: K) -> Set[K] {
+        Set[K].new(functional_insert(self.contains, item))
+    }
+
+    /// True if the two sets have no elements in common.
+    define is_disjoint(self, other: Set[K]) -> Bool {
+        forall(x: K) {
+            not (self.contains(x) and other.contains(x))
+        }
+    }
+
+}
+
+define finite_constraint[K](contains: K -> Bool) -> Bool {
+    exists(superset: List[K]) {
+        forall(x: K) {
+            contains(x) implies superset.contains(x)
+        }
+    }
+}
+
+attributes Set[K] {
+    /// True if the set contains only finitely many elements.
+    define is_finite(self) -> Bool {
+        finite_constraint(self.contains)
+    }
+
+    /// True if the set contains infinitely many elements.
+    define is_infinite(self) -> Bool {
+        not self.is_finite
+    }
+
+    /// True if the cardinality is at most n.
+    define cardinality_at_most(self, n: Nat) -> Bool {
+        exists (superset: List[K]) {
+            superset.contains_set(self) and superset.length <= n
+        }
+    }
+
+    /// True if the cardinality equals n.
+    define cardinality_is(self, n: Nat) -> Bool {
+        exists (containing_list: List[K]) {
+            containing_list.contains_set(self) and containing_list.filter(self.contains).unique.length = n
+        }
+    }
+}
+
+theorem constant_false_satisfies_finite_constraint[K] {
+    finite_constraint(constant_false[K])
+}
+
+theorem list_contains_satisfies_finite_constraint[K](ts: List[K]) {
+    finite_constraint(ts.contains)
+}
+
+theorem functional_insert_satisfies_finite_constraint[K](f: K -> Bool, item: K) {
+    finite_constraint(f) implies finite_constraint(functional_insert(f, item))
+}
+
+theorem functional_remove_satisfies_finite_constraint[K](f: K -> Bool, item: K) {
+    finite_constraint(f) implies finite_constraint(functional_remove(f, item))
+}
+
+theorem neg_of_neg_is_self[K](f: K -> Bool) {
+    negate_fun(negate_fun(f)) = f
+}
+
+theorem empty_set_contains_eq[K](x: K) {
+    (Set[K].empty_set).contains(x) = false
+}
+
+theorem empty_set_is_empty[K] {
+    (Set[K].empty_set).is_empty
+}
+
+theorem singleton_set_is_singleton[K](a: K) {
+    (Set[K].singleton(a)).is_singleton
+}
+
+theorem set_ext[K](a: Set[K], b: Set[K]) {
+    (forall(x: K) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+attributes Set[K] {
+    /// Set extensionality from pointwise equality of membership.
+    let ext = set_ext[K]
+
+    /// self ⊇ s
+    define superset(self, s: Set[K]) -> Bool {
+        s.subset(self)
+    }
+}
+
+theorem set_eq_contains[K](a: Set[K], b: Set[K]) {
+    a = b implies a.contains = b.contains
+}
+
+theorem set_eq_contains_at[K](a: Set[K], b: Set[K], x: K) {
+    a = b implies a.contains(x) = b.contains(x)
+}
+
+theorem set_eq_transport_predicate[K](p: Set[K] -> Bool, a: Set[K], b: Set[K]) {
+    a = b and p(a) implies p(b)
+}
+
+theorem set_eq_transport_predicate_rev[K](p: Set[K] -> Bool, a: Set[K], b: Set[K]) {
+    a = b and p(b) implies p(a)
+}
+
+theorem set_eq_of_contains_eq[K](a: Set[K], b: Set[K]) {
+    a.contains = b.contains implies a = b
+}
+
+theorem set_eq_of_contains_at_eq[K](a: Set[K], b: Set[K]) {
+    (forall(x: K) { a.contains(x) = b.contains(x) }) implies a = b
+}
+
+theorem set_eq_empty_of_is_empty[K](s: Set[K]) {
+    s.is_empty implies s = Set[K].empty_set
+}
+
+define relation_support_fun[T](r: (T, T) -> Bool, x: T) -> Bool {
+    exists(y: T) {
+        r(x, y)
+    }
+}
+
+define relation_support[T](r: (T, T) -> Bool) -> Set[T] {
+    Set[T].new(relation_support_fun(r))
+}
+
+define equivalence_class_fun[T](r: (T, T) -> Bool, a: T, x: T) -> Bool {
+    r(a, x)
+}
+
+define equivalence_class[T](r: (T, T) -> Bool, a: T) -> Set[T] {
+    Set[T].new(equivalence_class_fun(r, a))
+}
+
+define is_saturated_under[T](s: Set[T], r: (T, T) -> Bool) -> Bool {
+    forall(x: T, y: T) {
+        s.contains(x) and r(x, y) implies s.contains(y)
+    }
+}
+
+theorem relation_support_contains_eq[T](r: (T, T) -> Bool, x: T) {
+    relation_support(r).contains(x) = relation_support_fun(r, x)
+}
+
+theorem relation_support_contains_witness[T](r: (T, T) -> Bool, x: T) {
+    relation_support(r).contains(x) implies exists(y: T) {
+        r(x, y)
+    }
+}
+
+theorem relation_support_contains_of_related_left[T](r: (T, T) -> Bool, x: T, y: T) {
+    r(x, y) implies relation_support(r).contains(x)
+}
+
+theorem relation_support_contains_of_related_right[T](r: (T, T) -> Bool, x: T, y: T) {
+    is_symmetric(r) and r(x, y) implies relation_support(r).contains(y)
+}
+
+theorem equivalence_class_contains_eq[T](r: (T, T) -> Bool, a: T, x: T) {
+    equivalence_class(r, a).contains(x) = r(a, x)
+}
+
+theorem equivalence_class_contains_of_related[T](r: (T, T) -> Bool, a: T, b: T) {
+    r(a, b) implies equivalence_class(r, a).contains(b)
+}
+
+theorem equivalence_class_membership_eq_of_equiv[T](r: (T, T) -> Bool, a: T, b: T, x: T) {
+    is_equivalence(r) and r(a, b) implies
+    equivalence_class(r, a).contains(x) = equivalence_class(r, b).contains(x)
+}
+
+theorem equivalence_class_respects_equivalence[T](r: (T, T) -> Bool) {
+    is_equivalence(r) implies respects_equivalence(equivalence_class(r), r, eq_relation[Set[T]])
+}
+
+theorem equivalence_class_eq_of_equiv[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_equivalence(r) and r(a, b) implies equivalence_class(r, a) = equivalence_class(r, b)
+}
+
+theorem equivalence_of_equivalence_class_eq[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_equivalence(r) and equivalence_class(r, a) = equivalence_class(r, b) implies r(a, b)
+}
+
+theorem equivalence_class_is_saturated[T](r: (T, T) -> Bool, a: T) {
+    is_equivalence(r) implies is_saturated_under(equivalence_class(r, a), r)
+}
+
+theorem saturated_contains_equivalence_class[T](s: Set[T], r: (T, T) -> Bool, a: T, x: T) {
+    is_saturated_under(s, r) and s.contains(a) and equivalence_class(r, a).contains(x) implies s.contains(x)
+}
+
+theorem partial_equivalence_self_of_support[T](r: (T, T) -> Bool, x: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(x) implies r(x, x)
+}
+
+theorem partial_equivalence_support_contains_of_self[T](r: (T, T) -> Bool, x: T) {
+    r(x, x) implies relation_support(r).contains(x)
+}
+
+theorem partial_equivalence_support_iff_self[T](r: (T, T) -> Bool, x: T) {
+    is_partial_equivalence(r) implies relation_support(r).contains(x) = r(x, x)
+}
+
+theorem partial_equivalence_related_imp_support_left[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and r(a, b) implies relation_support(r).contains(a)
+}
+
+theorem partial_equivalence_related_imp_support_right[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and r(a, b) implies relation_support(r).contains(b)
+}
+
+theorem partial_equivalence_support_is_saturated[T](r: (T, T) -> Bool) {
+    is_partial_equivalence(r) implies is_saturated_under(relation_support(r), r)
+}
+
+theorem partial_equivalence_class_contains_self_of_support[T](r: (T, T) -> Bool, a: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) implies equivalence_class(r, a).contains(a)
+}
+
+theorem partial_equivalence_class_membership_eq_of_related[T](r: (T, T) -> Bool, a: T, b: T, x: T) {
+    is_partial_equivalence(r) and r(a, b) implies
+    equivalence_class(r, a).contains(x) = equivalence_class(r, b).contains(x)
+}
+
+theorem partial_equivalence_class_eq_of_related[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and r(a, b) implies equivalence_class(r, a) = equivalence_class(r, b)
+}
+
+theorem partial_equivalence_of_class_eq_and_support[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) and
+    equivalence_class(r, a) = equivalence_class(r, b) implies r(a, b)
+}
+
+theorem partial_equivalence_class_is_saturated[T](r: (T, T) -> Bool, a: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) implies
+    is_saturated_under(equivalence_class(r, a), r)
+}
+
+theorem saturated_contains_partial_equivalence_class[T](s: Set[T], r: (T, T) -> Bool, a: T, x: T) {
+    is_partial_equivalence(r) and is_saturated_under(s, r) and s.contains(a) and
+    equivalence_class(r, a).contains(x) implies s.contains(x)
+}
+
+theorem partial_equivalence_support_contains_class[T](r: (T, T) -> Bool, a: T, x: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) and
+    equivalence_class(r, a).contains(x) implies relation_support(r).contains(x)
+}
+
+theorem partial_equivalence_class_contains_imp_support_left[T](r: (T, T) -> Bool, a: T, x: T) {
+    is_partial_equivalence(r) and equivalence_class(r, a).contains(x) implies relation_support(r).contains(a)
+}
+
+theorem partial_equivalence_class_contains_imp_support_right[T](r: (T, T) -> Bool, a: T, x: T) {
+    is_partial_equivalence(r) and equivalence_class(r, a).contains(x) implies relation_support(r).contains(x)
+}
+
+theorem partial_equivalence_class_nonempty_of_support[T](r: (T, T) -> Bool, a: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) implies exists(x: T) {
+        equivalence_class(r, a).contains(x)
+    }
+}
+
+theorem partial_equivalence_support_of_class_nonempty[T](r: (T, T) -> Bool, a: T) {
+    is_partial_equivalence(r) and exists(x: T) {
+        equivalence_class(r, a).contains(x)
+    } implies relation_support(r).contains(a)
+}
+
+theorem partial_equivalence_class_nonempty_iff_support[T](r: (T, T) -> Bool, a: T) {
+    is_partial_equivalence(r) implies relation_support(r).contains(a) = exists(x: T) {
+        equivalence_class(r, a).contains(x)
+    }
+}
+
+theorem partial_equivalence_class_eq_iff_of_support[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) implies
+    equivalence_class(r, a) = equivalence_class(r, b) = r(a, b)
+}
+
+theorem partial_equivalence_class_eq_imp_support_right[T](r: (T, T) -> Bool, a: T, b: T) {
+    is_partial_equivalence(r) and relation_support(r).contains(a) and
+    equivalence_class(r, a) = equivalence_class(r, b) implies relation_support(r).contains(b)
+}
+
+theorem compl_of_compl_is_self[K](s: Set[K]) {
+    s.c.c = s
+}
+
+theorem empty_set_compl_is_universal[K] {
+    (Set[K].empty_set).c = Set[K].universal_set
+}
+
+theorem universal_set_compl_is_empty[K] {
+    (Set[K].universal_set).c = Set[K].empty_set
+}
+
+theorem singleton_contains_eq[K](a: K, x: K) {
+    (Set[K].singleton(a)).contains(x) = (a = x)
+}
+
+theorem singleton_set_is_not_empty[K](a: K) {
+    not (Set[K].singleton(a)).is_empty
+}
+
+theorem compl_contains_eq[K](s: Set[K], x: K) {
+    s.c.contains(x) = not s.contains(x)
+}
+
+theorem set_is_disjoint_compl[K](s: Set[K]) {
+    s.is_disjoint(s.c)
+}
+
+theorem universal_set_contains_eq[K](x: K) {
+    (Set[K].universal_set).contains(x) = true
+}
+
+theorem set_eq_universal_of_forall_contains[K](s: Set[K]) {
+    (forall(x: K) { s.contains(x) }) implies s = Set[K].universal_set
+}
+
+define nat_lt_fun(bound: Nat, n: Nat) -> Bool {
+    n < bound
+}
+
+define nat_lt_set(bound: Nat) -> Set[Nat] {
+    Set[Nat].new(nat_lt_fun(bound))
+}
+
+theorem nat_lt_set_contains_eq(bound: Nat, n: Nat) {
+    nat_lt_set(bound).contains(n) = (n < bound)
+}
+
+define at_least(bound: Nat, n: Nat) -> Bool {
+    n >= bound
+}
+
+define nat_from(bound: Nat) -> Set[Nat] {
+    Set[Nat].new(at_least(bound))
+}
+
+theorem nat_from_contains_eq(bound: Nat, n: Nat) {
+    nat_from(bound).contains(n) = (n >= bound)
+}
+
+define set_lower_bound(s: Set[Nat], bound: Nat) -> Bool {
+    forall(n: Nat) {
+        s.contains(n) implies n >= bound
+    }
+}
+
+theorem set_lower_bound_iff_subset_nat_from(s: Set[Nat], bound: Nat) {
+    set_lower_bound(s, bound) = s.subset(nat_from(bound))
+}
+
+theorem set_lower_bound_of_subset(s: Set[Nat], t: Set[Nat], bound: Nat) {
+    s.subset(t) and set_lower_bound(t, bound) implies set_lower_bound(s, bound)
+}
+
+theorem nat_from_has_lower_bound(bound: Nat) {
+    set_lower_bound(nat_from(bound), bound)
+}
+
+theorem nat_from_superset_of_bounded(s: Set[Nat], n: Nat) {
+    set_lower_bound(s, n)
+    implies
+    nat_from(n).superset(s)
+}
+
+theorem subset_contains_eq[K](a: Set[K], b: Set[K]) {
+    a.subset(b) = forall(x: K) {
+        a.contains(x) implies b.contains(x)
+    }
+}
+
+theorem superset_contains_eq[K](a: Set[K], b: Set[K]) {
+    a.superset(b) = forall(x: K) {
+        b.contains(x) implies a.contains(x)
+    }
+}
+
+theorem subset_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.subset(b) and a.contains(x) implies b.contains(x)
+}
+
+theorem superset_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.superset(b) and b.contains(x) implies a.contains(x)
+}
+
+theorem not_contains_of_subset_not_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.subset(b) and not b.contains(x) implies not a.contains(x)
+}
+
+theorem not_contains_of_superset_not_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.superset(b) and not a.contains(x) implies not b.contains(x)
+}
+
+theorem empty_set_is_always_subset[K](s: Set[K]) {
+    (Set[K].empty_set).subset(s)
+}
+
+theorem all_sets_subset_universal[K](s: Set[K]) {
+    s.subset(Set[K].universal_set)
+}
+
+theorem subset_refl[K](s: Set[K]) {
+    s.subset(s)
+}
+
+theorem subset_trans[K](a: Set[K], b: Set[K], c: Set[K]) {
+    a.subset(b) and b.subset(c) implies a.subset(c)
+}
+
+theorem nat_lt_set_subset_suc(bound: Nat) {
+    nat_lt_set(bound).subset(nat_lt_set(bound.suc))
+}
+
+theorem double_inclusion[K](a: Set[K], b: Set[K]) {
+    a.subset(b) and b.subset(a) implies a = b
+}
+
+theorem subset_antisymm[K](a: Set[K], b: Set[K]) {
+    a.subset(b) and b.subset(a) implies a = b
+}
+
+theorem superset_antisymm[K](a: Set[K], b: Set[K]) {
+    a.superset(b) and b.superset(a) implies a = b
+}
+
+define elem_in_union[K](a: Set[K], b: Set[K], x: K) -> Bool {
+    a.contains(x) or b.contains(x)
+}
+
+define elem_in_intersection[K](a: Set[K], b: Set[K], x: K) -> Bool {
+    a.contains(x) and b.contains(x)
+}
+
+define elem_in_difference[K](a: Set[K], b: Set[K], x: K) -> Bool {
+    a.contains(x) and not b.contains(x)
+}
+
+attributes Set[K] {
+    /// Subset antisymmetry from mutual inclusion.
+    let antisymm = subset_antisymm[K]
+
+    /// self ∪ s
+    define union(self, s: Set[K]) -> Set[K] {
+        Set.new(elem_in_union(self, s))
+    }
+
+    /// self ∩ s
+    define intersection(self, s: Set[K]) -> Set[K] {
+        Set[K].new(elem_in_intersection(self, s))
+    }
+
+    /// self \ s
+    define difference(self, s: Set[K]) -> Set[K] {
+        Set[K].new(elem_in_difference(self, s))
+    }
+}
+
+theorem upper_bound_on_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(left, f, bound) implies is_upper_bound_on(left.intersection(right), f, bound)
+}
+
+theorem upper_bound_on_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(right, f, bound) implies is_upper_bound_on(left.intersection(right), f, bound)
+}
+
+theorem lower_bound_on_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(left, f, bound) implies is_lower_bound_on(left.intersection(right), f, bound)
+}
+
+theorem lower_bound_on_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(right, f, bound) implies is_lower_bound_on(left.intersection(right), f, bound)
+}
+
+theorem bounded_above_on_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_above_on(left, f) implies is_bounded_above_on(left.intersection(right), f)
+}
+
+theorem bounded_above_on_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_above_on(right, f) implies is_bounded_above_on(left.intersection(right), f)
+}
+
+theorem bounded_below_on_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_below_on(left, f) implies is_bounded_below_on(left.intersection(right), f)
+}
+
+theorem bounded_below_on_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_below_on(right, f) implies is_bounded_below_on(left.intersection(right), f)
+}
+
+theorem bounded_on_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_on(left, f) implies is_bounded_on(left.intersection(right), f)
+}
+
+theorem bounded_on_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_on(right, f) implies is_bounded_on(left.intersection(right), f)
+}
+
+theorem attains_maximum_at_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    left.intersection(right).contains(point) and attains_maximum_at(left, f, point)
+    implies attains_maximum_at(left.intersection(right), f, point)
+}
+
+theorem attains_minimum_at_intersection_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    left.intersection(right).contains(point) and attains_minimum_at(left, f, point)
+    implies attains_minimum_at(left.intersection(right), f, point)
+}
+
+theorem attains_maximum_at_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    left.intersection(right).contains(point) and attains_maximum_at(right, f, point)
+    implies attains_maximum_at(left.intersection(right), f, point)
+}
+
+theorem attains_minimum_at_intersection_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    left.intersection(right).contains(point) and attains_minimum_at(right, f, point)
+    implies attains_minimum_at(left.intersection(right), f, point)
+}
+
+theorem upper_bound_on_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(domain, f, bound) implies is_upper_bound_on(domain.difference(excluded), f, bound)
+}
+
+theorem lower_bound_on_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(domain, f, bound) implies is_lower_bound_on(domain.difference(excluded), f, bound)
+}
+
+theorem bounded_above_on_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_above_on(domain, f) implies is_bounded_above_on(domain.difference(excluded), f)
+}
+
+theorem bounded_below_on_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_below_on(domain, f) implies is_bounded_below_on(domain.difference(excluded), f)
+}
+
+theorem bounded_on_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_on(domain, f) implies is_bounded_on(domain.difference(excluded), f)
+}
+
+theorem attains_maximum_at_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    domain.difference(excluded).contains(point) and attains_maximum_at(domain, f, point)
+    implies attains_maximum_at(domain.difference(excluded), f, point)
+}
+
+theorem attains_minimum_at_difference[Domain, Value: PartialOrder](
+    domain: Set[Domain], excluded: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    domain.difference(excluded).contains(point) and attains_minimum_at(domain, f, point)
+    implies attains_minimum_at(domain.difference(excluded), f, point)
+}
+
+theorem upper_bound_on_union_of_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_upper_bound_on(left, right, f, bound)
+    implies is_upper_bound_on(left.union(right), f, bound)
+}
+
+theorem lower_bound_on_union_of_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_common_lower_bound_on(left, right, f, bound)
+    implies is_lower_bound_on(left.union(right), f, bound)
+}
+
+theorem common_upper_bound_on_of_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(left.union(right), f, bound)
+    implies is_common_upper_bound_on(left, right, f, bound)
+}
+
+theorem common_lower_bound_on_of_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(left.union(right), f, bound)
+    implies is_common_lower_bound_on(left, right, f, bound)
+}
+
+theorem upper_bound_on_union_iff_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_upper_bound_on(left.union(right), f, bound) iff is_common_upper_bound_on(left, right, f, bound)
+}
+
+theorem lower_bound_on_union_iff_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, bound: Value
+) {
+    is_lower_bound_on(left.union(right), f, bound) iff is_common_lower_bound_on(left, right, f, bound)
+}
+
+theorem bounded_above_on_union_of_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_common_bounded_above_on(left, right, f) implies is_bounded_above_on(left.union(right), f)
+}
+
+theorem bounded_below_on_union_of_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_common_bounded_below_on(left, right, f) implies is_bounded_below_on(left.union(right), f)
+}
+
+theorem bounded_on_union_of_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_common_bounded_on(left, right, f) implies is_bounded_on(left.union(right), f)
+}
+
+theorem common_bounded_above_on_of_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_above_on(left.union(right), f) implies is_common_bounded_above_on(left, right, f)
+}
+
+theorem common_bounded_below_on_of_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_below_on(left.union(right), f) implies is_common_bounded_below_on(left, right, f)
+}
+
+theorem bounded_above_on_union_iff_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_above_on(left.union(right), f) iff is_common_bounded_above_on(left, right, f)
+}
+
+theorem bounded_below_on_union_iff_common[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_below_on(left.union(right), f) iff is_common_bounded_below_on(left, right, f)
+}
+
+theorem common_bounded_on_of_union[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value
+) {
+    is_bounded_on(left.union(right), f) implies is_common_bounded_on(left, right, f)
+}
+
+theorem attains_maximum_at_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_maximum_at(left, f, point) and is_upper_bound_on(right, f, f(point))
+    implies attains_maximum_at(left.union(right), f, point)
+}
+
+theorem attains_maximum_at_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_maximum_at(right, f, point) and is_upper_bound_on(left, f, f(point))
+    implies attains_maximum_at(left.union(right), f, point)
+}
+
+theorem attains_minimum_at_union_left[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_minimum_at(left, f, point) and is_lower_bound_on(right, f, f(point))
+    implies attains_minimum_at(left.union(right), f, point)
+}
+
+theorem attains_minimum_at_union_right[Domain, Value: PartialOrder](
+    left: Set[Domain], right: Set[Domain], f: Domain -> Value, point: Domain
+) {
+    attains_minimum_at(right, f, point) and is_lower_bound_on(left, f, f(point))
+    implies attains_minimum_at(left.union(right), f, point)
+}
+
+define image_contains[T, U](f: T -> U, s: Set[T], y: U) -> Bool {
+    exists(x: T) {
+        s.contains(x) and y = f(x)
+    }
+}
+
+define set_image[T, U](s: Set[T], f: T -> U) -> Set[U] {
+    Set[U].new(image_contains(f, s))
+}
+
+theorem set_image_contains_eq[T, U](s: Set[T], f: T -> U, y: U) {
+    set_image(s, f).contains(y) = image_contains(f, s, y)
+}
+
+define preimage_contains[T, U](f: T -> U, s: Set[U], x: T) -> Bool {
+    s.contains(f(x))
+}
+
+define set_preimage[T, U](f: T -> U, s: Set[U]) -> Set[T] {
+    Set[T].new(preimage_contains(f, s))
+}
+
+theorem set_preimage_contains_eq[T, U](f: T -> U, s: Set[U], x: T) {
+    set_preimage(f, s).contains(x) = preimage_contains(f, s, x)
+}
+
+theorem set_preimage_contains_image[T, U](f: T -> U, s: Set[U], x: T) {
+    set_preimage(f, s).contains(x) = s.contains(f(x))
+}
+
+theorem set_preimage_empty[T, U](f: T -> U) {
+    set_preimage(f, Set[U].empty_set) = Set[T].empty_set
+}
+
+theorem set_preimage_universal[T, U](f: T -> U) {
+    set_preimage(f, Set[U].universal_set) = Set[T].universal_set
+}
+
+theorem set_preimage_monotone[T, U](f: T -> U, a: Set[U], b: Set[U]) {
+    a.subset(b) implies set_preimage(f, a).subset(set_preimage(f, b))
+}
+
+theorem set_preimage_compl[T, U](f: T -> U, s: Set[U]) {
+    set_preimage(f, s.c) = set_preimage(f, s).c
+}
+
+theorem set_preimage_compose[A, B, C](f: B -> C, g: A -> B, s: Set[C]) {
+    set_preimage(compose(f, g), s) = set_preimage(g, set_preimage(f, s))
+}
+
+theorem maps_into_set_image[T, U](s: Set[T], f: T -> U, x: T) {
+    s.contains(x) implies set_image(s, f).contains(f(x))
+}
+
+theorem set_image_contains_witness[T, U](s: Set[T], f: T -> U, y: U) {
+    set_image(s, f).contains(y) implies exists(x: T) {
+        s.contains(x) and y = f(x)
+    }
+}
+
+theorem set_image_contains_inverse_of_bijection[T: Inhabited, U](s: Set[T], f: T -> U, y: U) {
+    is_bijection_fn(f) and set_image(s, f).contains(y) implies s.contains(inverse_fn(f, y))
+}
+
+theorem set_inverse_contains_imp_image_contains[T: Inhabited, U](s: Set[T], f: T -> U, y: U) {
+    is_surjective_fn(f) and s.contains(inverse_fn(f, y)) implies set_image(s, f).contains(y)
+}
+
+theorem set_image_contains_iff_inverse_of_bijection[T: Inhabited, U](s: Set[T], f: T -> U, y: U) {
+    is_bijection_fn(f) implies set_image(s, f).contains(y) = s.contains(inverse_fn(f, y))
+}
+
+theorem set_image_empty[T, U](f: T -> U) {
+    set_image(Set[T].empty_set, f) = Set[U].empty_set
+}
+
+theorem set_image_singleton[T, U](a: T, f: T -> U) {
+    set_image(Set[T].singleton(a), f) = Set[U].singleton(f(a))
+}
+
+theorem set_image_monotone[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    a.subset(b) implies set_image(a, f).subset(set_image(b, f))
+}
+
+theorem set_image_compose[A, B, C](s: Set[A], g: A -> B, f: B -> C) {
+    set_image(set_image(s, g), f) = set_image(s, compose(f, g))
+}
+
+theorem subset_set_preimage_image[T, U](s: Set[T], f: T -> U) {
+    s.subset(set_preimage(f, set_image(s, f)))
+}
+
+theorem set_preimage_image_of_injective[T, U](s: Set[T], f: T -> U) {
+    is_injective_fn(f) implies set_preimage(f, set_image(s, f)) = s
+}
+
+theorem set_image_preimage_subset[T, U](s: Set[U], f: T -> U) {
+    set_image(set_preimage(f, s), f).subset(s)
+}
+
+theorem set_image_subset_iff_subset_preimage[T, U](s: Set[T], t: Set[U], f: T -> U) {
+    set_image(s, f).subset(t) = s.subset(set_preimage(f, t))
+}
+
+theorem set_image_subset_of_subset_preimage[T, U](s: Set[T], t: Set[U], f: T -> U) {
+    s.subset(set_preimage(f, t)) implies set_image(s, f).subset(t)
+}
+
+theorem subset_preimage_of_set_image_subset[T, U](s: Set[T], t: Set[U], f: T -> U) {
+    set_image(s, f).subset(t) implies s.subset(set_preimage(f, t))
+}
+
+define is_subset_monotone_map[T, U](phi: Set[T] -> Set[U]) -> Bool {
+    forall(a: Set[T], b: Set[T]) {
+        a.subset(b) implies phi(a).subset(phi(b))
+    }
+}
+
+define is_set_extensive_map[T](phi: Set[T] -> Set[T]) -> Bool {
+    forall(s: Set[T]) {
+        s.subset(phi(s))
+    }
+}
+
+define is_set_reductive_map[T](phi: Set[T] -> Set[T]) -> Bool {
+    forall(s: Set[T]) {
+        phi(s).subset(s)
+    }
+}
+
+define is_set_idempotent_map[T](phi: Set[T] -> Set[T]) -> Bool {
+    forall(s: Set[T]) {
+        phi(phi(s)) = phi(s)
+    }
+}
+
+define is_set_closure_operator[T](close: Set[T] -> Set[T]) -> Bool {
+    is_subset_monotone_map(close) and is_set_extensive_map(close) and
+    is_set_idempotent_map(close)
+}
+
+define is_set_kernel_operator[T](kernel: Set[T] -> Set[T]) -> Bool {
+    is_subset_monotone_map(kernel) and is_set_reductive_map(kernel) and
+    is_set_idempotent_map(kernel)
+}
+
+theorem set_closure_operator_is_monotone[T](close: Set[T] -> Set[T]) {
+    is_set_closure_operator(close) implies is_subset_monotone_map(close)
+}
+
+theorem set_closure_operator_is_extensive[T](close: Set[T] -> Set[T]) {
+    is_set_closure_operator(close) implies is_set_extensive_map(close)
+}
+
+theorem set_closure_operator_is_idempotent[T](close: Set[T] -> Set[T]) {
+    is_set_closure_operator(close) implies is_set_idempotent_map(close)
+}
+
+theorem set_closure_operator_extensive_at[T](close: Set[T] -> Set[T], s: Set[T]) {
+    is_set_closure_operator(close) implies s.subset(close(s))
+}
+
+theorem set_closure_operator_idempotent_at[T](close: Set[T] -> Set[T], s: Set[T]) {
+    is_set_closure_operator(close) implies close(close(s)) = close(s)
+}
+
+theorem set_closure_operator_image_fixed[T](close: Set[T] -> Set[T], s: Set[T]) {
+    is_set_closure_operator(close) implies close(close(s)) = close(s)
+}
+
+theorem set_closure_operator_subset_fixed_of_subset[T](
+    close: Set[T] -> Set[T],
+    s: Set[T],
+    c: Set[T]
+) {
+    is_set_closure_operator(close) and close(c) = c and s.subset(c) implies close(s).subset(c)
+}
+
+theorem set_closure_operator_subset_fixed_iff_subset[T](
+    close: Set[T] -> Set[T],
+    s: Set[T],
+    c: Set[T]
+) {
+    is_set_closure_operator(close) and close(c) = c implies (close(s).subset(c) = s.subset(c))
+}
+
+theorem set_kernel_operator_is_monotone[T](kernel: Set[T] -> Set[T]) {
+    is_set_kernel_operator(kernel) implies is_subset_monotone_map(kernel)
+}
+
+theorem set_kernel_operator_is_reductive[T](kernel: Set[T] -> Set[T]) {
+    is_set_kernel_operator(kernel) implies is_set_reductive_map(kernel)
+}
+
+theorem set_kernel_operator_is_idempotent[T](kernel: Set[T] -> Set[T]) {
+    is_set_kernel_operator(kernel) implies is_set_idempotent_map(kernel)
+}
+
+theorem set_kernel_operator_reductive_at[T](kernel: Set[T] -> Set[T], s: Set[T]) {
+    is_set_kernel_operator(kernel) implies kernel(s).subset(s)
+}
+
+theorem set_kernel_operator_idempotent_at[T](kernel: Set[T] -> Set[T], s: Set[T]) {
+    is_set_kernel_operator(kernel) implies kernel(kernel(s)) = kernel(s)
+}
+
+theorem set_kernel_operator_image_fixed[T](kernel: Set[T] -> Set[T], s: Set[T]) {
+    is_set_kernel_operator(kernel) implies kernel(kernel(s)) = kernel(s)
+}
+
+theorem set_fixed_subset_kernel_operator_of_subset[T](
+    kernel: Set[T] -> Set[T],
+    k: Set[T],
+    s: Set[T]
+) {
+    is_set_kernel_operator(kernel) and kernel(k) = k and k.subset(s) implies k.subset(kernel(s))
+}
+
+theorem set_fixed_subset_kernel_operator_iff_subset[T](
+    kernel: Set[T] -> Set[T],
+    k: Set[T],
+    s: Set[T]
+) {
+    is_set_kernel_operator(kernel) and kernel(k) = k implies (k.subset(kernel(s)) = k.subset(s))
+}
+
+define is_set_galois_connection[T, U](
+    lower: Set[T] -> Set[U],
+    upper: Set[U] -> Set[T]
+) -> Bool {
+    forall(s: Set[T], t: Set[U]) {
+        lower(s).subset(t) = s.subset(upper(t))
+    }
+}
+
+define set_image_map[T, U](f: T -> U, s: Set[T]) -> Set[U] {
+    set_image(s, f)
+}
+
+define set_preimage_map[T, U](f: T -> U, s: Set[U]) -> Set[T] {
+    set_preimage(f, s)
+}
+
+theorem set_image_map_at[T, U](f: T -> U, s: Set[T]) {
+    set_image_map(f, s) = set_image(s, f)
+}
+
+theorem set_preimage_map_at[T, U](f: T -> U, s: Set[U]) {
+    set_preimage_map(f, s) = set_preimage(f, s)
+}
+
+theorem set_galois_connection_at[T, U](
+    lower: Set[T] -> Set[U],
+    upper: Set[U] -> Set[T],
+    s: Set[T],
+    t: Set[U]
+) {
+    is_set_galois_connection(lower, upper) implies
+    (lower(s).subset(t) = s.subset(upper(t)))
+}
+
+theorem set_image_preimage_is_set_galois_connection[T, U](f: T -> U) {
+    is_set_galois_connection(set_image_map(f), set_preimage_map(f))
+}
+
+define set_image_preimage_closure[T, U](f: T -> U, s: Set[T]) -> Set[T] {
+    set_preimage(f, set_image(s, f))
+}
+
+theorem set_image_preimage_closure_contains_eq[T, U](f: T -> U, s: Set[T], x: T) {
+    set_image_preimage_closure(f, s).contains(x) =
+        set_preimage(f, set_image(s, f)).contains(x)
+}
+
+theorem set_image_preimage_closure_extensive[T, U](f: T -> U, s: Set[T]) {
+    s.subset(set_image_preimage_closure(f, s))
+}
+
+theorem set_image_preimage_closure_monotone[T, U](f: T -> U, s: Set[T], t: Set[T]) {
+    s.subset(t) implies
+    set_image_preimage_closure(f, s).subset(set_image_preimage_closure(f, t))
+}
+
+theorem set_image_preimage_closure_idempotent[T, U](f: T -> U, s: Set[T]) {
+    set_image_preimage_closure(f, set_image_preimage_closure(f, s)) =
+        set_image_preimage_closure(f, s)
+}
+
+theorem set_image_preimage_closure_of_injective[T, U](f: T -> U, s: Set[T]) {
+    is_injective_fn(f) implies set_image_preimage_closure(f, s) = s
+}
+
+theorem set_image_preimage_closure_is_set_closure_operator[T, U](f: T -> U) {
+    is_set_closure_operator(set_image_preimage_closure(f))
+}
+
+define set_preimage_image_kernel[T, U](f: T -> U, s: Set[U]) -> Set[U] {
+    set_image(set_preimage(f, s), f)
+}
+
+theorem set_preimage_image_kernel_contains_eq[T, U](f: T -> U, s: Set[U], y: U) {
+    set_preimage_image_kernel(f, s).contains(y) =
+        set_image(set_preimage(f, s), f).contains(y)
+}
+
+theorem set_preimage_image_kernel_reductive[T, U](f: T -> U, s: Set[U]) {
+    set_preimage_image_kernel(f, s).subset(s)
+}
+
+theorem set_preimage_image_kernel_monotone[T, U](f: T -> U, s: Set[U], t: Set[U]) {
+    s.subset(t) implies
+    set_preimage_image_kernel(f, s).subset(set_preimage_image_kernel(f, t))
+}
+
+theorem set_preimage_image_kernel_idempotent[T, U](f: T -> U, s: Set[U]) {
+    set_preimage_image_kernel(f, set_preimage_image_kernel(f, s)) =
+        set_preimage_image_kernel(f, s)
+}
+
+theorem set_image_preimage_of_surjective[T, U](s: Set[U], f: T -> U) {
+    is_surjective_fn(f) implies set_image(set_preimage(f, s), f) = s
+}
+
+theorem set_preimage_image_kernel_of_surjective[T, U](f: T -> U, s: Set[U]) {
+    is_surjective_fn(f) implies set_preimage_image_kernel(f, s) = s
+}
+
+theorem set_preimage_image_kernel_is_set_kernel_operator[T, U](f: T -> U) {
+    is_set_kernel_operator(set_preimage_image_kernel(f))
+}
+
+theorem set_image_subset_imp_subset_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    is_injective_fn(f) and set_image(a, f).subset(set_image(b, f)) implies a.subset(b)
+}
+
+theorem set_image_eq_imp_eq_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    is_injective_fn(f) and set_image(a, f) = set_image(b, f) implies a = b
+}
+
+theorem set_preimage_subset_imp_subset_of_surjective[T, U](a: Set[U], b: Set[U], f: T -> U) {
+    is_surjective_fn(f) and set_preimage(f, a).subset(set_preimage(f, b)) implies a.subset(b)
+}
+
+theorem set_preimage_eq_imp_eq_of_surjective[T, U](a: Set[U], b: Set[U], f: T -> U) {
+    is_surjective_fn(f) and set_preimage(f, a) = set_preimage(f, b) implies a = b
+}
+
+theorem difference_contains_eq[K](a: Set[K], b: Set[K], x: K) {
+    a.difference(b).contains(x) = (a.contains(x) and not b.contains(x))
+}
+
+theorem difference_contains_left[K](a: Set[K], b: Set[K], x: K) {
+    a.difference(b).contains(x) implies a.contains(x)
+}
+
+theorem difference_contains_not_right[K](a: Set[K], b: Set[K], x: K) {
+    a.difference(b).contains(x) implies not b.contains(x)
+}
+
+theorem difference_contains_intro[K](a: Set[K], b: Set[K], x: K) {
+    a.contains(x) and not b.contains(x) implies a.difference(b).contains(x)
+}
+
+theorem difference_subset[K](a: Set[K], b: Set[K]) {
+    a.difference(b).subset(a)
+}
+
+theorem difference_contains_imp_not_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.difference(b).contains(x) implies not b.contains(x)
+}
+
+theorem difference_contains_imp_contains[K](a: Set[K], b: Set[K], x: K) {
+    a.difference(b).contains(x) implies a.contains(x)
+}
+
+theorem difference_contains_of_membership[K](a: Set[K], b: Set[K], x: K) {
+    a.contains(x) and not b.contains(x) implies a.difference(b).contains(x)
+}
+
+theorem difference_of_self_is_empty[K](a: Set[K]) {
+    a.difference(a) = Set[K].empty_set
+}
+
+theorem insert_contains[K](s: Set[K], item: K) {
+    s.insert(item).contains(item)
+}
+
+theorem remove_does_not_contain[K](s: Set[K], item: K) {
+    not s.remove(item).contains(item)
+}
+
+theorem insert_other_still_contains[K](s: Set[K], item: K, other: K) {
+    s.contains(item) implies s.insert(other).contains(item)
+}
+
+theorem remove_other_still_contains[K](s: Set[K], item: K, other: K) {
+    item != other and s.contains(item) implies s.remove(other).contains(item)
+}
+
+theorem insert_other_contains_imp_contains[K](s: Set[K], item: K, other: K) {
+    item != other and s.insert(other).contains(item) implies s.contains(item)
+}
+
+theorem remove_other_contains_imp_contains[K](s: Set[K], item: K, other: K) {
+    item != other and s.remove(other).contains(item) implies s.contains(item)
+}
+
+theorem insert_other_contains_eq[K](s: Set[K], item: K, other: K) {
+    item != other implies s.contains(item) = s.insert(other).contains(item)
+}
+
+theorem remove_other_contains_eq[K](s: Set[K], item: K, other: K) {
+    item != other implies s.contains(item) = s.remove(other).contains(item)
+}
+
+theorem insert_contains_eq[K](s: Set[K], item: K, x: K) {
+    s.insert(item).contains(x) = (x = item or s.contains(x))
+}
+
+theorem remove_contains_eq[K](s: Set[K], item: K, x: K) {
+    s.remove(item).contains(x) = (s.contains(x) and x != item)
+}
+
+theorem remove_then_insert[K](s: Set[K], item: K) {
+    s.contains(item) implies s.remove(item).insert(item) = s
+}
+
+theorem insert_then_remove[K](s: Set[K], item: K) {
+    not s.contains(item) implies s.insert(item).remove(item) = s
+}
+
+theorem union_with_difference_decomp[K](s: Set[K], t: Set[K]) {
+    s.union(t) = t.union(s.difference(t))
+}
+
+theorem union_with_difference_decomp_rev[K](s: Set[K], t: Set[K]) {
+    s.union(t) = s.union(t.difference(s))
+}
+
+theorem union_with_difference_decomp_inter[K](s: Set[K], t: Set[K]) {
+    s.union(t) = s.union(t.difference(s.intersection(t)))
+}
+
+theorem union_contains_eq[K](a: Set[K], b: Set[K], x: K) {
+    a.union(b).contains(x) = (a.contains(x) or b.contains(x))
+}
+
+theorem union_contains_left[K](a: Set[K], b: Set[K], x: K) {
+    a.contains(x) implies a.union(b).contains(x)
+}
+
+theorem union_contains_right[K](a: Set[K], b: Set[K], x: K) {
+    b.contains(x) implies a.union(b).contains(x)
+}
+
+theorem union_contains_cases[K](a: Set[K], b: Set[K], x: K) {
+    a.union(b).contains(x) implies a.contains(x) or b.contains(x)
+}
+
+theorem not_union_contains_eq[K](a: Set[K], b: Set[K], x: K) {
+    not a.union(b).contains(x) = (not a.contains(x) and not b.contains(x))
+}
+
+theorem nat_lt_set_suc_eq_union(bound: Nat) {
+    nat_lt_set(bound.suc) = nat_lt_set(bound).union(Set[Nat].singleton(bound))
+}
+
+theorem intersection_contains_eq[K](a: Set[K], b: Set[K], x: K) {
+    a.intersection(b).contains(x) = (a.contains(x) and b.contains(x))
+}
+
+theorem intersection_contains_left[K](a: Set[K], b: Set[K], x: K) {
+    a.intersection(b).contains(x) implies a.contains(x)
+}
+
+theorem intersection_contains_right[K](a: Set[K], b: Set[K], x: K) {
+    a.intersection(b).contains(x) implies b.contains(x)
+}
+
+theorem intersection_contains_intro[K](a: Set[K], b: Set[K], x: K) {
+    a.contains(x) and b.contains(x) implies a.intersection(b).contains(x)
+}
+
+theorem not_intersection_contains_eq[K](a: Set[K], b: Set[K], x: K) {
+    not a.intersection(b).contains(x) = (not a.contains(x) or not b.contains(x))
+}
+
+theorem set_image_union[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    set_image(a.union(b), f) = set_image(a, f).union(set_image(b, f))
+}
+
+theorem set_image_intersection_subset[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    set_image(a.intersection(b), f).subset(set_image(a, f).intersection(set_image(b, f)))
+}
+
+theorem set_image_intersection_reverse_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    (forall(x1: T, x2: T) { f(x1) = f(x2) implies x1 = x2 })
+    implies
+    set_image(a, f).intersection(set_image(b, f)).subset(set_image(a.intersection(b), f))
+}
+
+theorem set_image_intersection_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    (forall(x1: T, x2: T) { f(x1) = f(x2) implies x1 = x2 })
+    implies
+    set_image(a.intersection(b), f) = set_image(a, f).intersection(set_image(b, f))
+}
+
+theorem set_image_difference_subset_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    (forall(x1: T, x2: T) { f(x1) = f(x2) implies x1 = x2 })
+    implies
+    set_image(a.difference(b), f).subset(set_image(a, f).difference(set_image(b, f)))
+}
+
+theorem set_image_difference_reverse_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    (forall(x1: T, x2: T) { f(x1) = f(x2) implies x1 = x2 })
+    implies
+    set_image(a, f).difference(set_image(b, f)).subset(set_image(a.difference(b), f))
+}
+
+theorem set_image_difference_of_injective[T, U](a: Set[T], b: Set[T], f: T -> U) {
+    (forall(x1: T, x2: T) { f(x1) = f(x2) implies x1 = x2 })
+    implies
+    set_image(a.difference(b), f) = set_image(a, f).difference(set_image(b, f))
+}
+
+theorem set_image_universal_contains_of_surjective[T, U](f: T -> U, y: U) {
+    is_surjective_fn(f) implies set_image(Set[T].universal_set, f).contains(y)
+}
+
+theorem set_image_universal_of_surjective[T, U](f: T -> U) {
+    is_surjective_fn(f) implies set_image(Set[T].universal_set, f) = Set[U].universal_set
+}

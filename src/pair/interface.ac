@@ -1,4 +1,272 @@
 /// Public interface for the package.
 
-from basic.functions import compose, identity_fn, is_injective_fn,
-    is_surjective_fn, is_bijection_fn
+from function import compose, identity_fn, is_injective_fn, is_surjective_fn,
+    is_bijection_fn
+
+structure Pair[T, U] {
+    /// The first element of the pair.
+    first: T
+    /// The second element of the pair.
+    second: U
+}
+
+define pair_first[T, U](p: Pair[T, U]) -> T {
+    p.first
+}
+
+define pair_second[T, U](p: Pair[T, U]) -> U {
+    p.second
+}
+
+define pair_map[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) -> Pair[V, W] {
+    Pair.new(f(p.first), g(p.second))
+}
+
+define fan_out[Z, X, Y](f: Z -> X, g: Z -> Y, z: Z) -> Pair[X, Y] {
+    Pair.new(f(z), g(z))
+}
+
+theorem fan_out_first[Z, X, Y](f: Z -> X, g: Z -> Y, z: Z) {
+    fan_out(f, g, z).first = f(z)
+}
+
+theorem fan_out_second[Z, X, Y](f: Z -> X, g: Z -> Y, z: Z) {
+    fan_out(f, g, z).second = g(z)
+}
+
+define pair_map_first[T, U, V](f: T -> V, p: Pair[T, U]) -> Pair[V, U] {
+    Pair.new(f(p.first), p.second)
+}
+
+define pair_map_second[T, U, V](f: U -> V, p: Pair[T, U]) -> Pair[T, V] {
+    Pair.new(p.first, f(p.second))
+}
+
+attributes Pair[T, U] {
+    /// The first projection.
+    let fst: Pair[T, U] -> T = pair_first
+
+    /// The second projection.
+    let snd: Pair[T, U] -> U = pair_second
+
+    /// Swaps the first and second elements of the pair.
+    define swap(self) -> Pair[U, T] {
+        Pair.new(self.second, self.first)
+    }
+
+    /// Applies functions to both components.
+    define map[V, W](self, f: T -> V, g: U -> W) -> Pair[V, W] {
+        pair_map(f, g, self)
+    }
+
+    /// Applies a function to the first component.
+    define map_first[V](self, f: T -> V) -> Pair[V, U] {
+        pair_map_first(f, self)
+    }
+
+    /// Applies a function to the second component.
+    define map_second[V](self, f: U -> V) -> Pair[T, V] {
+        pair_map_second(f, self)
+    }
+}
+
+define pair_assoc_left[T, U, V](p: Pair[T, Pair[U, V]]) -> Pair[Pair[T, U], V] {
+    Pair.new(Pair.new(p.first, p.second.first), p.second.second)
+}
+
+define pair_assoc_right[T, U, V](p: Pair[Pair[T, U], V]) -> Pair[T, Pair[U, V]] {
+    Pair.new(p.first.first, Pair.new(p.first.second, p.second))
+}
+
+define curry[T, U, V](f: Pair[T, U] -> V, x: T, y: U) -> V {
+    f(Pair.new(x, y))
+}
+
+define uncurry[T, U, V](f: (T, U) -> V, p: Pair[T, U]) -> V {
+    f(p.first, p.second)
+}
+
+theorem pair_ext[T, U](p: Pair[T, U], q: Pair[T, U]) {
+    p.first = q.first and p.second = q.second implies p = q
+}
+
+theorem pair_eta[T, U](p: Pair[T, U]) {
+    Pair.new(p.first, p.second) = p
+}
+
+theorem pair_new_first[T, U](x: T, y: U) {
+    Pair.new(x, y).first = x
+}
+
+theorem pair_new_second[T, U](x: T, y: U) {
+    Pair.new(x, y).second = y
+}
+
+theorem swap_first[T, U](p: Pair[T, U]) {
+    p.swap.first = p.second
+}
+
+theorem swap_second[T, U](p: Pair[T, U]) {
+    p.swap.second = p.first
+}
+
+theorem swap_swap[T, U](p: Pair[T, U]) {
+    p.swap.swap = p
+}
+
+theorem swap_eq_swap[T, U](p: Pair[T, U], q: Pair[T, U]) {
+    p.swap = q.swap implies p = q
+}
+
+theorem pair_map_first_eq[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_map(f, g, p).first = f(p.first)
+}
+
+theorem pair_map_second_eq[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_map(f, g, p).second = g(p.second)
+}
+
+theorem pair_map_eq_map_second_map_first[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_map(f, g, p) = pair_map_second(g, pair_map_first(f, p))
+}
+
+theorem pair_map_identity[T, U](p: Pair[T, U]) {
+    pair_map(identity_fn[T], identity_fn[U], p) = p
+}
+
+theorem pair_map_comp[A, B, C, D, E, F](f: C -> E, g: A -> C, h: D -> F, i: B -> D,
+    p: Pair[A, B]) {
+    pair_map(compose(f, g), compose(h, i), p) = pair_map(f, h, pair_map(g, i, p))
+}
+
+theorem pair_map_first_identity[T, U](p: Pair[T, U]) {
+    pair_map_first(identity_fn[T], p) = p
+}
+
+theorem pair_map_second_identity[T, U](p: Pair[T, U]) {
+    pair_map_second(identity_fn[U], p) = p
+}
+
+theorem pair_map_first_comp[A, B, C, D](f: C -> D, g: A -> C, p: Pair[A, B]) {
+    pair_map_first(compose(f, g), p) = pair_map_first(f, pair_map_first(g, p))
+}
+
+theorem pair_map_second_comp[A, B, C, D](f: C -> D, g: B -> C, p: Pair[A, B]) {
+    pair_map_second(compose(f, g), p) = pair_map_second(f, pair_map_second(g, p))
+}
+
+theorem pair_assoc_left_first[T, U, V](p: Pair[T, Pair[U, V]]) {
+    pair_assoc_left(p).first = Pair.new(p.first, p.second.first)
+}
+
+theorem pair_assoc_left_second[T, U, V](p: Pair[T, Pair[U, V]]) {
+    pair_assoc_left(p).second = p.second.second
+}
+
+theorem pair_assoc_right_first[T, U, V](p: Pair[Pair[T, U], V]) {
+    pair_assoc_right(p).first = p.first.first
+}
+
+theorem pair_assoc_right_second[T, U, V](p: Pair[Pair[T, U], V]) {
+    pair_assoc_right(p).second = Pair.new(p.first.second, p.second)
+}
+
+theorem pair_assoc_right_left[T, U, V](p: Pair[T, Pair[U, V]]) {
+    pair_assoc_right(pair_assoc_left(p)) = p
+}
+
+theorem pair_assoc_left_right[T, U, V](p: Pair[Pair[T, U], V]) {
+    pair_assoc_left(pair_assoc_right(p)) = p
+}
+
+theorem curry_uncurry[T, U, V](f: (T, U) -> V) {
+    curry(uncurry(f)) = f
+}
+
+theorem uncurry_curry[T, U, V](f: Pair[T, U] -> V) {
+    uncurry(curry(f)) = f
+}
+
+theorem pair_assoc_left_map_natural[A, B, C, D, E, F](
+    f: A -> D, g: B -> E, h: C -> F, p: Pair[A, Pair[B, C]]) {
+    pair_assoc_left(pair_map(f, pair_map(g, h), p)) =
+        pair_map(pair_map(f, g), h, pair_assoc_left(p))
+}
+
+theorem pair_assoc_right_map_natural[A, B, C, D, E, F](
+    f: A -> D, g: B -> E, h: C -> F, p: Pair[Pair[A, B], C]) {
+    pair_assoc_right(pair_map(pair_map(f, g), h, p)) =
+        pair_map(f, pair_map(g, h), pair_assoc_right(p))
+}
+
+theorem curry_compose_output[T, U, V, W](f: (T, U) -> V, h: V -> W) {
+    curry(compose(h, uncurry(f))) = function(x: T, y: U) { h(f(x, y)) }
+}
+
+theorem uncurry_curry_compose_input[T, U, V, W](f: Pair[T, U] -> V, h: V -> W) {
+    uncurry(function(x: T, y: U) { h(curry(f, x, y)) }) = compose(h, f)
+}
+
+theorem pair_map_injective_fn[A, B, C, D](f: A -> C, g: B -> D) {
+    is_injective_fn(f) and is_injective_fn(g) implies
+        is_injective_fn(pair_map[A, B, C, D](f, g))
+}
+
+theorem pair_map_surjective_fn[A, B, C, D](f: A -> C, g: B -> D) {
+    is_surjective_fn(f) and is_surjective_fn(g) implies
+        is_surjective_fn(pair_map[A, B, C, D](f, g))
+}
+
+theorem pair_map_bijection_fn[A, B, C, D](f: A -> C, g: B -> D) {
+    is_bijection_fn(f) and is_bijection_fn(g) implies
+        is_bijection_fn(pair_map[A, B, C, D](f, g))
+}
+
+theorem pair_map_first_eq_map[T, U, V](f: T -> V, p: Pair[T, U]) {
+    pair_map_first(f, p) = pair_map(f, identity_fn[U], p)
+}
+
+theorem pair_map_second_eq_map[T, U, V](g: U -> V, p: Pair[T, U]) {
+    pair_map_second(g, p) = pair_map(identity_fn[T], g, p)
+}
+
+theorem pair_swap_map[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_map(f, g, p).swap = pair_map(g, f, p.swap)
+}
+
+theorem pair_map_first_swap[T, U, V](f: T -> V, p: Pair[T, U]) {
+    pair_map_first(f, p).swap = pair_map_second(f, p.swap)
+}
+
+theorem pair_map_second_swap[T, U, V](g: U -> V, p: Pair[T, U]) {
+    pair_map_second(g, p).swap = pair_map_first(g, p.swap)
+}
+
+theorem fan_out_eq_pair_map_diagonal[Z, X, Y](f: Z -> X, g: Z -> Y, z: Z) {
+    fan_out(f, g, z) = pair_map(f, g, Pair.new(z, z))
+}
+
+theorem fan_out_swap[Z, X, Y](f: Z -> X, g: Z -> Y, z: Z) {
+    fan_out(f, g, z).swap = fan_out(g, f, z)
+}
+
+theorem pair_first_compose_pair_map[T, U, V, W](f: T -> V, g: U -> W) {
+    compose(pair_first[V, W], pair_map[T, U, V, W](f, g)) = compose(f, pair_first[T, U])
+}
+
+theorem pair_second_compose_pair_map[T, U, V, W](f: T -> V, g: U -> W) {
+    compose(pair_second[V, W], pair_map[T, U, V, W](f, g)) = compose(g, pair_second[T, U])
+}
+
+theorem pair_first_compose_fan_out[Z, X, Y](f: Z -> X, g: Z -> Y) {
+    compose(pair_first[X, Y], fan_out[Z, X, Y](f, g)) = f
+}
+
+theorem pair_second_compose_fan_out[Z, X, Y](f: Z -> X, g: Z -> Y) {
+    compose(pair_second[X, Y], fan_out[Z, X, Y](f, g)) = g
+}
+
+theorem pair_map_eq_fan_out_projections[T, U, V, W](f: T -> V, g: U -> W, p: Pair[T, U]) {
+    pair_map(f, g, p) = fan_out(compose(f, pair_first[T, U]), compose(g, pair_second[T, U]), p)
+}
+

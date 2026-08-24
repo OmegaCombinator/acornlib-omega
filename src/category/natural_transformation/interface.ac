@@ -1,0 +1,3560 @@
+inductive OneObject {
+    /// The only object.
+    point
+}
+
+inductive UnitType {
+    /// The unique inhabitant.
+    point
+}
+
+define category_id_endpoints_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M
+) -> Bool {
+    forall(x: O) {
+        src(identity(x)) = x and dst(identity(x)) = x
+    }
+}
+
+define category_compose_src_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    comp: (M, M) -> M
+) -> Bool {
+    forall(f: M, g: M) {
+        src(f) = dst(g) implies src(comp(f, g)) = src(g)
+    }
+}
+
+define category_compose_dst_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    comp: (M, M) -> M
+) -> Bool {
+    forall(f: M, g: M) {
+        src(f) = dst(g) implies dst(comp(f, g)) = dst(f)
+    }
+}
+
+define category_assoc_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    comp: (M, M) -> M
+) -> Bool {
+    forall(f: M, g: M, h: M) {
+        src(f) = dst(g) and src(g) = dst(h) implies
+        comp(comp(f, g), h) = comp(f, comp(g, h))
+    }
+}
+
+define category_id_left_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M
+) -> Bool {
+    forall(f: M) {
+        comp(identity(dst(f)), f) = f
+    }
+}
+
+define category_id_right_constraint[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M
+) -> Bool {
+    forall(f: M) {
+        comp(f, identity(src(f))) = f
+    }
+}
+
+define is_category[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M
+) -> Bool {
+    category_id_endpoints_constraint(src, dst, identity)
+    and category_compose_src_constraint(src, dst, comp)
+    and category_compose_dst_constraint(src, dst, comp)
+    and category_assoc_constraint(src, dst, comp)
+    and category_id_left_constraint(src, dst, identity, comp)
+    and category_id_right_constraint(src, dst, identity, comp)
+}
+
+structure Category[O, M] {
+    /// The source object of a morphism.
+    src: M -> O
+
+    /// The target object of a morphism.
+    dst: M -> O
+
+    /// The identity morphism on each object.
+    identity: O -> M
+
+    /// Composition of morphisms; `compose(f, g)` is `f` after `g`, valid when `src(f) = dst(g)`.
+    compose: (M, M) -> M
+} constraint {
+    is_category(src, dst, identity, compose)
+}
+
+theorem category_ext[O, M](c: Category[O, M], d: Category[O, M]) {
+    (forall(m: M) { c.src(m) = d.src(m) })
+    and (forall(m: M) { c.dst(m) = d.dst(m) })
+    and (forall(x: O) { c.identity(x) = d.identity(x) })
+    and (forall(f: M, g: M) { c.compose(f, g) = d.compose(f, g) })
+    implies c = d
+}
+
+theorem category_new_src[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M,
+    c: Category[O, M]
+) {
+    Category[O, M].new(src, dst, identity, comp) = Option.some(c) implies c.src = src
+}
+
+theorem category_new_dst[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M,
+    c: Category[O, M]
+) {
+    Category[O, M].new(src, dst, identity, comp) = Option.some(c) implies c.dst = dst
+}
+
+theorem category_new_identity[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M,
+    c: Category[O, M]
+) {
+    Category[O, M].new(src, dst, identity, comp) = Option.some(c) implies c.identity = identity
+}
+
+theorem category_new_compose[O, M](
+    src: M -> O,
+    dst: M -> O,
+    identity: O -> M,
+    comp: (M, M) -> M,
+    c: Category[O, M]
+) {
+    Category[O, M].new(src, dst, identity, comp) = Option.some(c) implies c.compose = comp
+}
+
+theorem category_identity_src[O, M](c: Category[O, M], x: O) {
+    c.src(c.identity(x)) = x
+}
+
+theorem category_identity_dst[O, M](c: Category[O, M], x: O) {
+    c.dst(c.identity(x)) = x
+}
+
+theorem category_compose_src[O, M](c: Category[O, M], f: M, g: M) {
+    c.src(f) = c.dst(g) implies c.src(c.compose(f, g)) = c.src(g)
+}
+
+theorem category_compose_dst[O, M](c: Category[O, M], f: M, g: M) {
+    c.src(f) = c.dst(g) implies c.dst(c.compose(f, g)) = c.dst(f)
+}
+
+theorem category_compose_assoc[O, M](c: Category[O, M], f: M, g: M, h: M) {
+    c.src(f) = c.dst(g) and c.src(g) = c.dst(h) implies
+    c.compose(c.compose(f, g), h) = c.compose(f, c.compose(g, h))
+}
+
+theorem category_id_left[O, M](c: Category[O, M], f: M) {
+    c.compose(c.identity(c.dst(f)), f) = f
+}
+
+theorem category_id_right[O, M](c: Category[O, M], f: M) {
+    c.compose(f, c.identity(c.src(f))) = f
+}
+
+define composable[O, M](c: Category[O, M], f: M, g: M) -> Bool {
+    c.src(f) = c.dst(g)
+}
+
+theorem composable_identity_left[O, M](c: Category[O, M], f: M) {
+    composable(c, c.identity(c.dst(f)), f)
+}
+
+theorem composable_identity_right[O, M](c: Category[O, M], f: M) {
+    composable(c, f, c.identity(c.src(f)))
+}
+
+theorem composable_compose_left[O, M](c: Category[O, M], f: M, g: M, h: M) {
+    composable(c, f, g) and composable(c, g, h) implies
+    composable(c, c.compose(f, g), h)
+}
+
+theorem composable_compose_right[O, M](c: Category[O, M], f: M, g: M, h: M) {
+    composable(c, f, g) and composable(c, g, h) implies
+    composable(c, f, c.compose(g, h))
+}
+
+define is_iso_pair[O, M](c: Category[O, M], f: M, g: M) -> Bool {
+    c.src(f) = c.dst(g)
+    and c.src(g) = c.dst(f)
+    and c.compose(g, f) = c.identity(c.src(f))
+    and c.compose(f, g) = c.identity(c.dst(f))
+}
+
+structure Iso[O, M] {
+    /// The ambient category.
+    cat: Category[O, M]
+
+    /// The forward morphism.
+    hom: M
+
+    /// The inverse morphism.
+    inv: M
+} constraint {
+    is_iso_pair(cat, hom, inv)
+}
+
+theorem is_iso_pair_swap[O, M](c: Category[O, M], f: M, g: M) {
+    is_iso_pair(c, f, g) implies is_iso_pair(c, g, f)
+}
+
+theorem is_iso_pair_identity[O, M](c: Category[O, M], x: O) {
+    is_iso_pair(c, c.identity(x), c.identity(x))
+}
+
+theorem iso_new_cat[O, M](c: Category[O, M], f: M, g: M, e: Iso[O, M]) {
+    Iso[O, M].new(c, f, g) = Option.some(e) implies e.cat = c
+}
+
+theorem iso_new_hom[O, M](c: Category[O, M], f: M, g: M, e: Iso[O, M]) {
+    Iso[O, M].new(c, f, g) = Option.some(e) implies e.hom = f
+}
+
+theorem iso_new_inv[O, M](c: Category[O, M], f: M, g: M, e: Iso[O, M]) {
+    Iso[O, M].new(c, f, g) = Option.some(e) implies e.inv = g
+}
+
+theorem iso_new_self[O, M](e: Iso[O, M]) {
+    Iso[O, M].new(e.cat, e.hom, e.inv) = Option.some(e)
+}
+
+theorem iso_some_injective[O, M](e: Iso[O, M], h: Iso[O, M]) {
+    Option.some(e) = Option.some(h) implies e = h
+}
+
+theorem iso_ext[O, M](e: Iso[O, M], h: Iso[O, M]) {
+    e.cat = h.cat and e.hom = h.hom and e.inv = h.inv implies e = h
+}
+
+theorem iso_is_iso_pair[O, M](e: Iso[O, M]) {
+    is_iso_pair(e.cat, e.hom, e.inv)
+}
+
+theorem iso_src_hom[O, M](e: Iso[O, M]) {
+    e.cat.src(e.hom) = e.cat.dst(e.inv)
+}
+
+theorem iso_src_inv[O, M](e: Iso[O, M]) {
+    e.cat.src(e.inv) = e.cat.dst(e.hom)
+}
+
+theorem iso_inv_hom[O, M](e: Iso[O, M]) {
+    e.cat.compose(e.inv, e.hom) = e.cat.identity(e.cat.src(e.hom))
+}
+
+theorem iso_hom_inv[O, M](e: Iso[O, M]) {
+    e.cat.compose(e.hom, e.inv) = e.cat.identity(e.cat.dst(e.hom))
+}
+
+let identity_iso[O, M](c: Category[O, M], x: O) -> result: Iso[O, M] satisfy {
+    result.cat = c and result.hom = c.identity(x) and result.inv = c.identity(x)
+}
+
+theorem identity_iso_cat[O, M](c: Category[O, M], x: O) {
+    identity_iso(c, x).cat = c
+}
+
+theorem identity_iso_hom[O, M](c: Category[O, M], x: O) {
+    identity_iso(c, x).hom = c.identity(x)
+}
+
+theorem identity_iso_inv[O, M](c: Category[O, M], x: O) {
+    identity_iso(c, x).inv = c.identity(x)
+}
+
+let inverse_iso[O, M](e: Iso[O, M]) -> result: Iso[O, M] satisfy {
+    result.cat = e.cat and result.hom = e.inv and result.inv = e.hom
+}
+
+theorem inverse_iso_cat[O, M](e: Iso[O, M]) {
+    inverse_iso(e).cat = e.cat
+}
+
+theorem inverse_iso_hom[O, M](e: Iso[O, M]) {
+    inverse_iso(e).hom = e.inv
+}
+
+theorem inverse_iso_inv[O, M](e: Iso[O, M]) {
+    inverse_iso(e).inv = e.hom
+}
+
+theorem inverse_iso_involutive[O, M](e: Iso[O, M]) {
+    inverse_iso(inverse_iso(e)) = e
+}
+
+theorem inverse_identity_iso[O, M](c: Category[O, M], x: O) {
+    inverse_iso(identity_iso(c, x)) = identity_iso(c, x)
+}
+
+theorem is_iso_pair_compose_back_helper[O, M](c: Category[O, M], f1: M, g1: M, f2: M, g2: M) {
+    c.src(g2) = c.dst(f2) and c.compose(g2, f2) = c.identity(c.src(f2))
+        and c.src(f2) = c.dst(f1)
+        implies c.compose(g2, c.compose(f2, f1)) = f1
+}
+
+theorem is_iso_pair_compose_fwd_helper[O, M](c: Category[O, M], f1: M, g1: M, f2: M, g2: M) {
+    c.src(f1) = c.dst(g1) and c.compose(f1, g1) = c.identity(c.dst(f1))
+        and c.dst(f1) = c.dst(g2)
+        and c.src(g1) = c.dst(g2)
+        implies c.compose(f1, c.compose(g1, g2)) = g2
+}
+
+theorem is_iso_pair_compose[O, M](c: Category[O, M], f1: M, g1: M, f2: M, g2: M) {
+    is_iso_pair(c, f1, g1) and is_iso_pair(c, f2, g2)
+        and c.src(f2) = c.dst(f1)
+        implies is_iso_pair(c, c.compose(f2, f1), c.compose(g1, g2))
+}
+
+define iso_composable[O, M](e2: Iso[O, M], e1: Iso[O, M]) -> Bool {
+    e2.cat = e1.cat and e1.cat.src(e2.hom) = e1.cat.dst(e1.hom)
+}
+
+define iso_compose[O, M](e2: Iso[O, M], e1: Iso[O, M]) -> Option[Iso[O, M]] {
+    Iso[O, M].new(
+        e1.cat,
+        e1.cat.compose(e2.hom, e1.hom),
+        e1.cat.compose(e1.inv, e2.inv)
+    )
+}
+
+theorem iso_compose_some[O, M](e2: Iso[O, M], e1: Iso[O, M]) {
+    iso_composable(e2, e1) implies exists(h: Iso[O, M]) {
+        iso_compose(e2, e1) = Option.some(h)
+    }
+}
+
+theorem iso_compose_cat[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_compose(e2, e1) = Option.some(h) implies h.cat = e1.cat
+}
+
+theorem iso_compose_hom[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_compose(e2, e1) = Option.some(h) implies h.hom = e1.cat.compose(e2.hom, e1.hom)
+}
+
+theorem iso_compose_inv[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_compose(e2, e1) = Option.some(h) implies h.inv = e1.cat.compose(e1.inv, e2.inv)
+}
+
+theorem iso_compose_identity_left[O, M](e: Iso[O, M]) {
+    iso_compose(identity_iso(e.cat, e.cat.dst(e.hom)), e) = Option.some(e)
+}
+
+theorem iso_compose_identity_right[O, M](e: Iso[O, M]) {
+    iso_compose(e, identity_iso(e.cat, e.cat.src(e.hom))) = Option.some(e)
+}
+
+theorem inverse_iso_compose[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_compose(e2, e1) = Option.some(h) implies
+        iso_compose(inverse_iso(e1), inverse_iso(e2)) = Option.some(inverse_iso(h))
+}
+
+theorem iso_compose_src_hom[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_compose(e2, e1) = Option.some(h) implies
+        e1.cat.src(h.hom) = e1.cat.src(e1.hom)
+}
+
+theorem iso_compose_dst_hom[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_compose(e2, e1) = Option.some(h) implies
+        e1.cat.dst(h.hom) = e1.cat.dst(e2.hom)
+}
+
+theorem iso_compose_src_inv[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_compose(e2, e1) = Option.some(h) implies
+        e1.cat.src(h.inv) = e1.cat.src(e2.inv)
+}
+
+theorem iso_compose_dst_inv[O, M](e2: Iso[O, M], e1: Iso[O, M], h: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_compose(e2, e1) = Option.some(h) implies
+        e1.cat.dst(h.inv) = e1.cat.dst(e1.inv)
+}
+
+theorem iso_compose_composable_left[O, M](
+    e3: Iso[O, M], e2: Iso[O, M], e1: Iso[O, M], e21: Iso[O, M]
+) {
+    iso_composable(e2, e1) and iso_composable(e3, e2)
+    and iso_compose(e2, e1) = Option.some(e21)
+    implies iso_composable(e3, e21)
+}
+
+theorem iso_compose_composable_right[O, M](
+    e3: Iso[O, M], e2: Iso[O, M], e1: Iso[O, M], e32: Iso[O, M]
+) {
+    iso_composable(e2, e1) and iso_composable(e3, e2)
+    and iso_compose(e3, e2) = Option.some(e32)
+    implies iso_composable(e32, e1)
+}
+
+theorem iso_compose_assoc_eq[O, M](
+    e3: Iso[O, M], e2: Iso[O, M], e1: Iso[O, M],
+    e21: Iso[O, M], e32: Iso[O, M], left: Iso[O, M], right: Iso[O, M]
+) {
+    iso_composable(e2, e1) and iso_composable(e3, e2)
+    and iso_compose(e2, e1) = Option.some(e21)
+    and iso_compose(e3, e2) = Option.some(e32)
+    and iso_compose(e3, e21) = Option.some(left)
+    and iso_compose(e32, e1) = Option.some(right)
+    implies left = right
+}
+
+theorem iso_compose_assoc_some[O, M](e3: Iso[O, M], e2: Iso[O, M], e1: Iso[O, M]) {
+    iso_composable(e2, e1) and iso_composable(e3, e2) implies
+    exists(left: Iso[O, M], right: Iso[O, M]) {
+        exists(e21: Iso[O, M], e32: Iso[O, M]) {
+            iso_compose(e2, e1) = Option.some(e21)
+            and iso_compose(e3, e2) = Option.some(e32)
+            and iso_compose(e3, e21) = Option.some(left)
+            and iso_compose(e32, e1) = Option.some(right)
+            and left = right
+        }
+    }
+}
+
+theorem is_iso_pair_cancel_left[O, M](c: Category[O, M], f: M, inv: M, h: M, k: M) {
+    is_iso_pair(c, f, inv) and c.src(f) = c.dst(h) and c.src(f) = c.dst(k)
+    and c.compose(f, h) = c.compose(f, k) implies h = k
+}
+
+theorem is_iso_pair_cancel_right[O, M](c: Category[O, M], f: M, inv: M, h: M, k: M) {
+    is_iso_pair(c, f, inv) and c.src(h) = c.dst(f) and c.src(k) = c.dst(f)
+    and c.compose(h, f) = c.compose(k, f) implies h = k
+}
+
+theorem is_iso_pair_inverse_unique[O, M](c: Category[O, M], f: M, g: M, h: M) {
+    is_iso_pair(c, f, g) and is_iso_pair(c, f, h) implies g = h
+}
+
+theorem iso_inv_eq_of_cat_hom_eq[O, M](e: Iso[O, M], h: Iso[O, M]) {
+    e.cat = h.cat and e.hom = h.hom implies e.inv = h.inv
+}
+
+theorem iso_eq_of_cat_hom_eq[O, M](e: Iso[O, M], h: Iso[O, M]) {
+    e.cat = h.cat and e.hom = h.hom implies e = h
+}
+
+define discrete_compose[O](f: O, g: O) -> O {
+    f
+}
+
+theorem discrete_is_category[O](anchor: O) {
+    is_category[O, O](identity_fn[O], identity_fn[O], identity_fn[O], discrete_compose[O])
+}
+
+let discrete_category[O](anchor: O) -> result: Category[O, O] satisfy {
+    Category[O, O].new(identity_fn[O], identity_fn[O], identity_fn[O], discrete_compose[O])
+        = Option.some(result)
+}
+
+theorem discrete_category_src[O](anchor: O) {
+    discrete_category(anchor).src = identity_fn[O]
+}
+
+theorem discrete_category_dst[O](anchor: O) {
+    discrete_category(anchor).dst = identity_fn[O]
+}
+
+theorem discrete_category_identity[O](anchor: O) {
+    discrete_category(anchor).identity = identity_fn[O]
+}
+
+theorem discrete_category_compose[O](anchor: O) {
+    discrete_category(anchor).compose = discrete_compose[O]
+}
+
+theorem discrete_category_src_apply[O](anchor: O, x: O) {
+    discrete_category(anchor).src(x) = x
+}
+
+theorem discrete_category_dst_apply[O](anchor: O, x: O) {
+    discrete_category(anchor).dst(x) = x
+}
+
+theorem discrete_category_identity_apply[O](anchor: O, x: O) {
+    discrete_category(anchor).identity(x) = x
+}
+
+theorem discrete_category_compose_apply[O](anchor: O, f: O, g: O) {
+    discrete_category(anchor).compose(f, g) = f
+}
+
+define functor_src_axiom[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2
+) -> Bool {
+    forall(f: M1) {
+        d.src(mor_map(f)) = obj_map(c.src(f))
+    }
+}
+
+define functor_dst_axiom[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2
+) -> Bool {
+    forall(f: M1) {
+        d.dst(mor_map(f)) = obj_map(c.dst(f))
+    }
+}
+
+define functor_identity_axiom[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2
+) -> Bool {
+    forall(x: O1) {
+        mor_map(c.identity(x)) = d.identity(obj_map(x))
+    }
+}
+
+define functor_compose_axiom[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2
+) -> Bool {
+    forall(f: M1, g: M1) {
+        c.src(f) = c.dst(g) implies mor_map(c.compose(f, g)) = d.compose(mor_map(f), mor_map(g))
+    }
+}
+
+define is_functor[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2
+) -> Bool {
+    functor_src_axiom(c, d, obj_map, mor_map)
+    and functor_dst_axiom(c, d, obj_map, mor_map)
+    and functor_identity_axiom(c, d, obj_map, mor_map)
+    and functor_compose_axiom(c, d, obj_map, mor_map)
+}
+
+structure Functor[O1, M1, O2, M2] {
+    /// The source category.
+    src_cat: Category[O1, M1]
+
+    /// The target category.
+    dst_cat: Category[O2, M2]
+
+    /// The action on objects.
+    obj_map: O1 -> O2
+
+    /// The action on morphisms.
+    mor_map: M1 -> M2
+} constraint {
+    is_functor(src_cat, dst_cat, obj_map, mor_map)
+}
+
+theorem functor_ext[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2],
+    g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.src_cat and f.dst_cat = g.dst_cat and
+    f.obj_map = g.obj_map and f.mor_map = g.mor_map implies f = g
+}
+
+theorem functor_new_src_cat[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2,
+    f: Functor[O1, M1, O2, M2]
+) {
+    Functor[O1, M1, O2, M2].new(c, d, obj_map, mor_map) = Option.some(f) implies f.src_cat = c
+}
+
+theorem functor_new_dst_cat[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2,
+    f: Functor[O1, M1, O2, M2]
+) {
+    Functor[O1, M1, O2, M2].new(c, d, obj_map, mor_map) = Option.some(f) implies f.dst_cat = d
+}
+
+theorem functor_new_obj_map[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2,
+    f: Functor[O1, M1, O2, M2]
+) {
+    Functor[O1, M1, O2, M2].new(c, d, obj_map, mor_map) = Option.some(f) implies f.obj_map = obj_map
+}
+
+theorem functor_new_mor_map[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    obj_map: O1 -> O2, mor_map: M1 -> M2,
+    f: Functor[O1, M1, O2, M2]
+) {
+    Functor[O1, M1, O2, M2].new(c, d, obj_map, mor_map) = Option.some(f) implies f.mor_map = mor_map
+}
+
+theorem functor_is_functor[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    is_functor(f.src_cat, f.dst_cat, f.obj_map, f.mor_map)
+}
+
+theorem functor_src[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], m: M1) {
+    f.dst_cat.src(f.mor_map(m)) = f.obj_map(f.src_cat.src(m))
+}
+
+theorem functor_dst[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], m: M1) {
+    f.dst_cat.dst(f.mor_map(m)) = f.obj_map(f.src_cat.dst(m))
+}
+
+theorem functor_identity[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) {
+    f.mor_map(f.src_cat.identity(x)) = f.dst_cat.identity(f.obj_map(x))
+}
+
+theorem functor_compose[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], g: M1, h: M1) {
+    f.src_cat.src(g) = f.src_cat.dst(h) implies
+        f.mor_map(f.src_cat.compose(g, h)) = f.dst_cat.compose(f.mor_map(g), f.mor_map(h))
+}
+
+theorem identity_is_functor[O, M](c: Category[O, M]) {
+    is_functor(c, c, identity_fn[O], identity_fn[M])
+}
+
+let identity_functor[O, M](c: Category[O, M]) -> result: Functor[O, M, O, M] satisfy {
+    Functor[O, M, O, M].new(c, c, identity_fn[O], identity_fn[M]) = Option.some(result)
+}
+
+theorem identity_functor_src_cat[O, M](c: Category[O, M]) {
+    identity_functor(c).src_cat = c
+}
+
+theorem identity_functor_dst_cat[O, M](c: Category[O, M]) {
+    identity_functor(c).dst_cat = c
+}
+
+theorem identity_functor_obj_map[O, M](c: Category[O, M]) {
+    identity_functor(c).obj_map = identity_fn[O]
+}
+
+theorem identity_functor_mor_map[O, M](c: Category[O, M]) {
+    identity_functor(c).mor_map = identity_fn[M]
+}
+
+theorem compose_functor_src_axiom[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies
+        functor_src_axiom(g.src_cat, f.dst_cat, compose(f.obj_map, g.obj_map), compose(f.mor_map, g.mor_map))
+}
+
+theorem compose_functor_dst_axiom[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies
+        functor_dst_axiom(g.src_cat, f.dst_cat, compose(f.obj_map, g.obj_map), compose(f.mor_map, g.mor_map))
+}
+
+theorem compose_functor_identity_axiom[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies
+        functor_identity_axiom(g.src_cat, f.dst_cat, compose(f.obj_map, g.obj_map), compose(f.mor_map, g.mor_map))
+}
+
+theorem compose_functor_compose_axiom[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies
+        functor_compose_axiom(g.src_cat, f.dst_cat, compose(f.obj_map, g.obj_map), compose(f.mor_map, g.mor_map))
+}
+
+theorem compose_is_functor[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies
+        is_functor(g.src_cat, f.dst_cat, compose(f.obj_map, g.obj_map), compose(f.mor_map, g.mor_map))
+}
+
+define compose_functor[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) -> Option[Functor[O1, M1, O3, M3]] {
+    Functor[O1, M1, O3, M3].new(
+        g.src_cat, f.dst_cat,
+        compose(f.obj_map, g.obj_map),
+        compose(f.mor_map, g.mor_map)
+    )
+}
+
+theorem compose_functor_some[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2]
+) {
+    f.src_cat = g.dst_cat implies exists(h: Functor[O1, M1, O3, M3]) {
+        compose_functor(f, g) = Option.some(h)
+    }
+}
+
+theorem compose_functor_src_cat[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2],
+    h: Functor[O1, M1, O3, M3]
+) {
+    compose_functor(f, g) = Option.some(h) implies h.src_cat = g.src_cat
+}
+
+theorem compose_functor_dst_cat[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2],
+    h: Functor[O1, M1, O3, M3]
+) {
+    compose_functor(f, g) = Option.some(h) implies h.dst_cat = f.dst_cat
+}
+
+theorem compose_functor_obj_map[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2],
+    h: Functor[O1, M1, O3, M3]
+) {
+    compose_functor(f, g) = Option.some(h) implies h.obj_map = compose(f.obj_map, g.obj_map)
+}
+
+theorem compose_functor_mor_map[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], g: Functor[O1, M1, O2, M2],
+    h: Functor[O1, M1, O3, M3]
+) {
+    compose_functor(f, g) = Option.some(h) implies h.mor_map = compose(f.mor_map, g.mor_map)
+}
+
+theorem compose_functor_identity_left[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    compose_functor(identity_functor(f.dst_cat), f) = Option.some(f)
+}
+
+theorem compose_functor_identity_right[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    compose_functor(f, identity_functor(f.src_cat)) = Option.some(f)
+}
+
+theorem compose_functor_identity_left_composable[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_functor(f.dst_cat).src_cat = f.dst_cat
+}
+
+theorem compose_functor_identity_right_composable[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    f.src_cat = identity_functor(f.src_cat).dst_cat
+}
+
+theorem compose_functor_identity_left_src_cat[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(identity_functor(f.dst_cat), f) = Option.some(h) implies h.src_cat = f.src_cat
+}
+
+theorem compose_functor_identity_left_dst_cat[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(identity_functor(f.dst_cat), f) = Option.some(h) implies h.dst_cat = f.dst_cat
+}
+
+theorem compose_functor_identity_left_obj_map[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(identity_functor(f.dst_cat), f) = Option.some(h) implies h.obj_map = f.obj_map
+}
+
+theorem compose_functor_identity_left_mor_map[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(identity_functor(f.dst_cat), f) = Option.some(h) implies h.mor_map = f.mor_map
+}
+
+theorem compose_functor_identity_right_src_cat[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(f, identity_functor(f.src_cat)) = Option.some(h) implies h.src_cat = f.src_cat
+}
+
+theorem compose_functor_identity_right_dst_cat[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(f, identity_functor(f.src_cat)) = Option.some(h) implies h.dst_cat = f.dst_cat
+}
+
+theorem compose_functor_identity_right_obj_map[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(f, identity_functor(f.src_cat)) = Option.some(h) implies h.obj_map = f.obj_map
+}
+
+theorem compose_functor_identity_right_mor_map[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], h: Functor[O1, M1, O2, M2]
+) {
+    compose_functor(f, identity_functor(f.src_cat)) = Option.some(h) implies h.mor_map = f.mor_map
+}
+
+define constant_obj_map[O1, O2](x0: O2, x: O1) -> O2 {
+    x0
+}
+
+define constant_mor_map[M1, O2, M2](d: Category[O2, M2], x0: O2, f: M1) -> M2 {
+    d.identity(x0)
+}
+
+theorem constant_is_functor[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2
+) {
+    is_functor(c, d, function(x: O1) { constant_obj_map(x0, x) },
+                     function(f: M1) { constant_mor_map(d, x0, f) })
+}
+
+let constant_functor[O1, M1, O2, M2](c: Category[O1, M1], d: Category[O2, M2], x0: O2) -> result: Functor[O1, M1, O2, M2] satisfy {
+    Functor[O1, M1, O2, M2].new(c, d,
+        function(x: O1) { constant_obj_map(x0, x) },
+        function(f: M1) { constant_mor_map(d, x0, f) }) = Option.some(result)
+}
+
+theorem constant_functor_src_cat[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2
+) {
+    constant_functor(c, d, x0).src_cat = c
+}
+
+theorem constant_functor_dst_cat[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2
+) {
+    constant_functor(c, d, x0).dst_cat = d
+}
+
+theorem constant_functor_obj_map[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2
+) {
+    constant_functor(c, d, x0).obj_map = function(x: O1) { constant_obj_map(x0, x) }
+}
+
+theorem constant_functor_mor_map[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2
+) {
+    constant_functor(c, d, x0).mor_map = function(f: M1) { constant_mor_map(d, x0, f) }
+}
+
+theorem constant_functor_obj_eq[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2, x: O1
+) {
+    constant_functor(c, d, x0).obj_map(x) = x0
+}
+
+theorem constant_functor_mor_eq[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2], x0: O2, f: M1
+) {
+    constant_functor(c, d, x0).mor_map(f) = d.identity(x0)
+}
+
+theorem compose_functor_constant_right[O1, M1, O2, M2, O3, M3](
+    f: Functor[O2, M2, O3, M3], c: Category[O1, M1], x0: O2
+) {
+    compose_functor(f, constant_functor(c, f.src_cat, x0))
+        = Option.some(constant_functor(c, f.dst_cat, f.obj_map(x0)))
+}
+
+theorem compose_functor_constant_left[O1, M1, O2, M2, O3, M3](
+    f: Functor[O1, M1, O2, M2], e: Category[O3, M3], x0: O3
+) {
+    compose_functor(constant_functor(f.dst_cat, e, x0), f)
+        = Option.some(constant_functor(f.src_cat, e, x0))
+}
+
+define discrete_functor_mor_map[O, O2, M2](d: Category[O2, M2], f: O -> O2, x: O) -> M2 {
+    d.identity(f(x))
+}
+
+theorem discrete_functor_src_axiom[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2
+) {
+    functor_src_axiom(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f))
+}
+
+theorem discrete_functor_dst_axiom[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2
+) {
+    functor_dst_axiom(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f))
+}
+
+theorem discrete_functor_identity_axiom[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2
+) {
+    functor_identity_axiom(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f))
+}
+
+theorem discrete_functor_compose_axiom[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2
+) {
+    functor_compose_axiom(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f))
+}
+
+theorem discrete_functor_is_functor[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2
+) {
+    is_functor(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f))
+}
+
+let discrete_functor[O, O2, M2](anchor: O, d: Category[O2, M2], f: O -> O2) -> result: Functor[O, O, O2, M2] satisfy {
+    Functor[O, O, O2, M2].new(discrete_category(anchor), d, f, discrete_functor_mor_map(d, f)) =
+        Option.some(result)
+}
+
+theorem discrete_functor_src_cat[O, O2, M2](anchor: O, d: Category[O2, M2], f: O -> O2) {
+    discrete_functor(anchor, d, f).src_cat = discrete_category(anchor)
+}
+
+theorem discrete_functor_dst_cat[O, O2, M2](anchor: O, d: Category[O2, M2], f: O -> O2) {
+    discrete_functor(anchor, d, f).dst_cat = d
+}
+
+theorem discrete_functor_obj_map[O, O2, M2](anchor: O, d: Category[O2, M2], f: O -> O2) {
+    discrete_functor(anchor, d, f).obj_map = f
+}
+
+theorem discrete_functor_mor_map_eq[O, O2, M2](anchor: O, d: Category[O2, M2], f: O -> O2) {
+    discrete_functor(anchor, d, f).mor_map = discrete_functor_mor_map(d, f)
+}
+
+theorem discrete_functor_mor_map_apply[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2, x: O
+) {
+    discrete_functor(anchor, d, f).mor_map(x) = d.identity(f(x))
+}
+
+theorem discrete_functor_obj_map_apply[O, O2, M2](
+    anchor: O, d: Category[O2, M2], f: O -> O2, x: O
+) {
+    discrete_functor(anchor, d, f).obj_map(x) = f(x)
+}
+
+theorem discrete_functor_identity_obj_map[O](anchor: O) {
+    discrete_functor(anchor, discrete_category(anchor), identity_fn[O]).obj_map = identity_fn[O]
+}
+
+theorem discrete_functor_identity_mor_map_apply[O](anchor: O, x: O) {
+    discrete_functor(anchor, discrete_category(anchor), identity_fn[O]).mor_map(x) = x
+}
+
+theorem functor_preserves_iso_pair_src_hom[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], f: M1, g: M1) {
+    is_iso_pair(ftr.src_cat, f, g) implies
+        ftr.dst_cat.src(ftr.mor_map(f)) = ftr.dst_cat.dst(ftr.mor_map(g))
+}
+
+theorem functor_preserves_iso_pair_src_inv[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], f: M1, g: M1) {
+    is_iso_pair(ftr.src_cat, f, g) implies
+        ftr.dst_cat.src(ftr.mor_map(g)) = ftr.dst_cat.dst(ftr.mor_map(f))
+}
+
+theorem functor_preserves_iso_pair_inv_hom[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], f: M1, g: M1) {
+    is_iso_pair(ftr.src_cat, f, g) implies
+        ftr.dst_cat.compose(ftr.mor_map(g), ftr.mor_map(f)) =
+            ftr.dst_cat.identity(ftr.dst_cat.src(ftr.mor_map(f)))
+}
+
+theorem functor_preserves_iso_pair_hom_inv[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], f: M1, g: M1) {
+    is_iso_pair(ftr.src_cat, f, g) implies
+        ftr.dst_cat.compose(ftr.mor_map(f), ftr.mor_map(g)) =
+            ftr.dst_cat.identity(ftr.dst_cat.dst(ftr.mor_map(f)))
+}
+
+theorem functor_preserves_iso_pair[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], f: M1, g: M1) {
+    is_iso_pair(ftr.src_cat, f, g) implies
+        is_iso_pair(ftr.dst_cat, ftr.mor_map(f), ftr.mor_map(g))
+}
+
+theorem functor_map_iso_exists[O1, M1, O2, M2](
+    ftr: Functor[O1, M1, O2, M2], e: Iso[O1, M1]) {
+    e.cat = ftr.src_cat implies exists(r: Iso[O2, M2]) {
+        r.cat = ftr.dst_cat and r.hom = ftr.mor_map(e.hom) and r.inv = ftr.mor_map(e.inv)
+    }
+}
+
+theorem one_object_unique(x: OneObject) {
+    x = OneObject.point
+}
+
+theorem one_object_eq(x: OneObject, y: OneObject) {
+    x = y
+}
+
+define monoid_category_src[M: Monoid](m: M) -> OneObject {
+    OneObject.point
+}
+
+define monoid_category_dst[M: Monoid](m: M) -> OneObject {
+    OneObject.point
+}
+
+define monoid_category_identity[M: Monoid](x: OneObject) -> M {
+    M.1
+}
+
+define monoid_category_compose[M: Monoid](f: M, g: M) -> M {
+    f * g
+}
+
+theorem monoid_category_is_category[M: Monoid] {
+    is_category[OneObject, M](
+        monoid_category_src[M],
+        monoid_category_dst[M],
+        monoid_category_identity[M],
+        monoid_category_compose[M]
+    )
+}
+
+let monoid_category[M: Monoid]: Category[OneObject, M] satisfy {
+    Category[OneObject, M].new(
+        monoid_category_src[M],
+        monoid_category_dst[M],
+        monoid_category_identity[M],
+        monoid_category_compose[M]
+    ) = Option.some(monoid_category)
+}
+
+theorem monoid_category_src_eq[M: Monoid] {
+    monoid_category[M].src = monoid_category_src[M]
+}
+
+theorem monoid_category_dst_eq[M: Monoid] {
+    monoid_category[M].dst = monoid_category_dst[M]
+}
+
+theorem monoid_category_identity_eq[M: Monoid] {
+    monoid_category[M].identity = monoid_category_identity[M]
+}
+
+theorem monoid_category_compose_eq[M: Monoid] {
+    monoid_category[M].compose = monoid_category_compose[M]
+}
+
+theorem monoid_category_src_apply[M: Monoid](m: M) {
+    monoid_category[M].src(m) = OneObject.point
+}
+
+theorem monoid_category_dst_apply[M: Monoid](m: M) {
+    monoid_category[M].dst(m) = OneObject.point
+}
+
+theorem monoid_category_identity_apply[M: Monoid](x: OneObject) {
+    monoid_category[M].identity(x) = M.1
+}
+
+theorem monoid_category_compose_apply[M: Monoid](f: M, g: M) {
+    monoid_category[M].compose(f, g) = f * g
+}
+
+theorem monoid_category_id_left_apply[M: Monoid](f: M) {
+    monoid_category[M].compose(monoid_category[M].identity(OneObject.point), f) = f
+}
+
+theorem monoid_category_id_right_apply[M: Monoid](f: M) {
+    monoid_category[M].compose(f, monoid_category[M].identity(OneObject.point)) = f
+}
+
+theorem monoid_category_compose_assoc_apply[M: Monoid](f: M, g: M, h: M) {
+    monoid_category[M].compose(monoid_category[M].compose(f, g), h) =
+        monoid_category[M].compose(f, monoid_category[M].compose(g, h))
+}
+
+define functors_parallel[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2]
+) -> Bool {
+    f.src_cat = g.src_cat and f.dst_cat = g.dst_cat
+}
+
+define nat_trans_endpoints_axiom[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2
+) -> Bool {
+    forall(x: O1) {
+        f.dst_cat.src(component(x)) = f.obj_map(x)
+        and f.dst_cat.dst(component(x)) = g.obj_map(x)
+    }
+}
+
+define nat_trans_naturality_axiom[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2
+) -> Bool {
+    forall(m: M1) {
+        f.dst_cat.compose(component(f.src_cat.dst(m)), f.mor_map(m))
+            = f.dst_cat.compose(g.mor_map(m), component(f.src_cat.src(m)))
+    }
+}
+
+define is_natural_transformation[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2
+) -> Bool {
+    functors_parallel(f, g)
+    and nat_trans_endpoints_axiom(f, g, component)
+    and nat_trans_naturality_axiom(f, g, component)
+}
+
+structure NaturalTransformation[O1, M1, O2, M2] {
+    /// The source functor.
+    src_functor: Functor[O1, M1, O2, M2]
+
+    /// The target functor.
+    dst_functor: Functor[O1, M1, O2, M2]
+
+    /// The component morphism at each object of the source category.
+    component: O1 -> M2
+} constraint {
+    is_natural_transformation(src_functor, dst_functor, component)
+}
+
+theorem nat_trans_new_src_functor[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2,
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    NaturalTransformation[O1, M1, O2, M2].new(f, g, component) = Option.some(n)
+        implies n.src_functor = f
+}
+
+theorem nat_trans_new_dst_functor[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2,
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    NaturalTransformation[O1, M1, O2, M2].new(f, g, component) = Option.some(n)
+        implies n.dst_functor = g
+}
+
+theorem nat_trans_new_component[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2], g: Functor[O1, M1, O2, M2], component: O1 -> M2,
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    NaturalTransformation[O1, M1, O2, M2].new(f, g, component) = Option.some(n)
+        implies n.component = component
+}
+
+theorem nat_trans_is_natural_transformation[O1, M1, O2, M2](
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_transformation(n.src_functor, n.dst_functor, n.component)
+}
+
+theorem nat_trans_shared_src_cat[O1, M1, O2, M2](n: NaturalTransformation[O1, M1, O2, M2]) {
+    n.src_functor.src_cat = n.dst_functor.src_cat
+}
+
+theorem nat_trans_shared_dst_cat[O1, M1, O2, M2](n: NaturalTransformation[O1, M1, O2, M2]) {
+    n.src_functor.dst_cat = n.dst_functor.dst_cat
+}
+
+theorem nat_trans_component_src[O1, M1, O2, M2](
+    n: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    n.src_functor.dst_cat.src(n.component(x)) = n.src_functor.obj_map(x)
+}
+
+theorem nat_trans_component_dst[O1, M1, O2, M2](
+    n: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    n.src_functor.dst_cat.dst(n.component(x)) = n.dst_functor.obj_map(x)
+}
+
+theorem nat_trans_naturality[O1, M1, O2, M2](
+    n: NaturalTransformation[O1, M1, O2, M2], m: M1
+) {
+    n.src_functor.dst_cat.compose(n.component(n.src_functor.src_cat.dst(m)), n.src_functor.mor_map(m))
+        = n.src_functor.dst_cat.compose(n.dst_functor.mor_map(m), n.component(n.src_functor.src_cat.src(m)))
+}
+
+define identity_nat_trans_component[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) -> M2 {
+    f.dst_cat.identity(f.obj_map(x))
+}
+
+theorem identity_nat_trans_endpoints[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    nat_trans_endpoints_axiom(f, f, identity_nat_trans_component(f))
+}
+
+theorem identity_nat_trans_naturality_left[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], m: M1) {
+    f.dst_cat.compose(identity_nat_trans_component(f)(f.src_cat.dst(m)), f.mor_map(m)) = f.mor_map(m)
+}
+
+theorem identity_nat_trans_naturality_right[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], m: M1) {
+    f.dst_cat.compose(f.mor_map(m), identity_nat_trans_component(f)(f.src_cat.src(m))) = f.mor_map(m)
+}
+
+theorem identity_nat_trans_naturality[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    nat_trans_naturality_axiom(f, f, identity_nat_trans_component(f))
+}
+
+theorem identity_is_nat_trans[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    is_natural_transformation(f, f, identity_nat_trans_component(f))
+}
+
+let identity_nat_trans[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) -> result: NaturalTransformation[O1, M1, O2, M2] satisfy {
+    NaturalTransformation[O1, M1, O2, M2].new(f, f, identity_nat_trans_component(f)) = Option.some(result)
+}
+
+theorem identity_nat_trans_src_functor[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_nat_trans(f).src_functor = f
+}
+
+theorem identity_nat_trans_dst_functor[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_nat_trans(f).dst_functor = f
+}
+
+theorem identity_nat_trans_component_eq[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_nat_trans(f).component = identity_nat_trans_component(f)
+}
+
+define vertical_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) -> Bool {
+    upper.src_functor = lower.dst_functor
+}
+
+define vertical_compose_component[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) -> M2 {
+    upper.src_functor.dst_cat.compose(upper.component(x), lower.component(x))
+}
+
+theorem vertical_composable_dst_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat = lower.src_functor.dst_cat
+        and upper.dst_functor.dst_cat = lower.src_functor.dst_cat
+}
+
+theorem vertical_composable_src_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.src_cat = lower.src_functor.src_cat
+        and upper.dst_functor.src_cat = lower.src_functor.src_cat
+}
+
+theorem vertical_compose_obj_map_eq[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.obj_map(x) = lower.dst_functor.obj_map(x)
+}
+
+theorem vertical_compose_dst_cat_lower_dst_eq_upper_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        lower.dst_functor.dst_cat = upper.src_functor.dst_cat
+}
+
+theorem vc_lower_component_dst[O1, M1, O2, M2](
+    lower: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    lower.src_functor.dst_cat.dst(lower.component(x)) = lower.dst_functor.obj_map(x)
+}
+
+theorem vc_dst_cat_eq[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        lower.src_functor.dst_cat = upper.src_functor.dst_cat
+}
+
+theorem vc_dst_substitute[O, M](c: Category[O, M], d: Category[O, M], m: M) {
+    c = d implies c.dst(m) = d.dst(m)
+}
+
+theorem vc_src_substitute[O, M](c: Category[O, M], d: Category[O, M], m: M) {
+    c = d implies c.src(m) = d.src(m)
+}
+
+theorem cat_eq_dst_eq[O, M](c: Category[O, M], d: Category[O, M], m: M, y: O) {
+    c = d and c.dst(m) = y implies d.dst(m) = y
+}
+
+theorem vc_lower_dst_upper_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(lower.component(x)) = lower.dst_functor.obj_map(x)
+}
+
+theorem vc_eq_chain[T](a: T, b: T, c: T) {
+    a = b and b = c implies a = c
+}
+
+theorem vc_lower_dst_obj_map_eq_upper_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        lower.dst_functor.obj_map(x) = upper.src_functor.obj_map(x)
+}
+
+theorem vc_lower_component_dst_in_upper_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(lower.component(x)) = upper.src_functor.obj_map(x)
+}
+
+theorem vertical_compose_components_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.component(x)) = upper.src_functor.dst_cat.dst(lower.component(x))
+}
+
+theorem cat_eq_src_eq[O, M](c: Category[O, M], d: Category[O, M], m: M, y: O) {
+    c = d and c.src(m) = y implies d.src(m) = y
+}
+
+theorem vc_lower_component_src_in_upper_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(lower.component(x)) = lower.src_functor.obj_map(x)
+}
+
+theorem vc_compose_src_step1[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.src_functor.dst_cat.compose(upper.component(x), lower.component(x)))
+            = upper.src_functor.dst_cat.src(lower.component(x))
+}
+
+theorem vc_compose_src_eq[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.src_functor.dst_cat.compose(upper.component(x), lower.component(x))) = lower.src_functor.obj_map(x)
+}
+
+theorem vc_endpoint_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(vertical_compose_component(upper, lower, x)) = lower.src_functor.obj_map(x)
+}
+
+theorem vc_compose_dst_step1[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(upper.src_functor.dst_cat.compose(upper.component(x), lower.component(x)))
+            = upper.src_functor.dst_cat.dst(upper.component(x))
+}
+
+theorem vc_upper_component_dst_in_upper_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    upper.src_functor.dst_cat.dst(upper.component(x)) = upper.dst_functor.obj_map(x)
+}
+
+theorem vc_compose_dst_eq[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(upper.src_functor.dst_cat.compose(upper.component(x), lower.component(x))) = upper.dst_functor.obj_map(x)
+}
+
+theorem vc_endpoint_dst[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(vertical_compose_component(upper, lower, x)) = upper.dst_functor.obj_map(x)
+}
+
+theorem vc_endpoint_src_lower_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        lower.src_functor.dst_cat.src(vertical_compose_component(upper, lower, x)) = lower.src_functor.obj_map(x)
+}
+
+theorem vc_endpoint_dst_lower_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(upper, lower) implies
+        lower.src_functor.dst_cat.dst(vertical_compose_component(upper, lower, x)) = upper.dst_functor.obj_map(x)
+}
+
+theorem vc_endpoints_axiom[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        nat_trans_endpoints_axiom(lower.src_functor, upper.dst_functor, vertical_compose_component(upper, lower))
+}
+
+theorem vc_lower_mor_map_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(lower.src_functor.mor_map(m))
+            = lower.src_functor.obj_map(lower.src_functor.src_cat.src(m))
+}
+
+theorem vc_lower_mor_map_dst[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(lower.src_functor.mor_map(m))
+            = lower.src_functor.obj_map(lower.src_functor.src_cat.dst(m))
+}
+
+theorem vc_upper_mor_map_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.src_functor.mor_map(m))
+            = upper.src_functor.obj_map(lower.src_functor.src_cat.src(m))
+}
+
+theorem vc_upper_mor_map_dst[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.dst(upper.src_functor.mor_map(m))
+            = upper.src_functor.obj_map(lower.src_functor.src_cat.dst(m))
+}
+
+theorem vc_upper_dst_mor_map_src[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.dst_functor.mor_map(m))
+            = upper.dst_functor.obj_map(lower.src_functor.src_cat.src(m))
+}
+
+theorem vc_eta_naturality[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(lower.component(lower.src_functor.src_cat.dst(m)), lower.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.compose(upper.src_functor.mor_map(m), lower.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_theta_naturality[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.compose(upper.dst_functor.mor_map(m), upper.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_eta_F_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(lower.component(lower.src_functor.src_cat.dst(m)))
+            = upper.src_functor.dst_cat.dst(lower.src_functor.mor_map(m))
+}
+
+theorem vc_theta_G_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.component(lower.src_functor.src_cat.dst(m)))
+            = upper.src_functor.dst_cat.dst(upper.src_functor.mor_map(m))
+}
+
+theorem vc_G_eta_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.dst(lower.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_H_theta_composable[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.src(upper.dst_functor.mor_map(m))
+            = upper.src_functor.dst_cat.dst(upper.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_assoc_step1[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(
+            upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), lower.component(lower.src_functor.src_cat.dst(m))),
+            lower.src_functor.mor_map(m)
+        ) = upper.src_functor.dst_cat.compose(
+            upper.component(lower.src_functor.src_cat.dst(m)),
+            upper.src_functor.dst_cat.compose(lower.component(lower.src_functor.src_cat.dst(m)), lower.src_functor.mor_map(m))
+        )
+}
+
+theorem vc_assoc_step3[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(
+            upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m)),
+            lower.component(lower.src_functor.src_cat.src(m))
+        ) = upper.src_functor.dst_cat.compose(
+            upper.component(lower.src_functor.src_cat.dst(m)),
+            upper.src_functor.dst_cat.compose(upper.src_functor.mor_map(m), lower.component(lower.src_functor.src_cat.src(m)))
+        )
+}
+
+theorem vc_assoc_step5[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(
+            upper.src_functor.dst_cat.compose(upper.dst_functor.mor_map(m), upper.component(lower.src_functor.src_cat.src(m))),
+            lower.component(lower.src_functor.src_cat.src(m))
+        ) = upper.src_functor.dst_cat.compose(
+            upper.dst_functor.mor_map(m),
+            upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.src(m)), lower.component(lower.src_functor.src_cat.src(m)))
+        )
+}
+
+theorem vc_naturality_blockA[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), lower.component(lower.src_functor.src_cat.dst(m))), lower.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.compose(upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m)), lower.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_naturality_blockB[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m)), lower.component(lower.src_functor.src_cat.src(m)))
+            = upper.src_functor.dst_cat.compose(upper.dst_functor.mor_map(m), upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.src(m)), lower.component(lower.src_functor.src_cat.src(m))))
+}
+
+theorem vc_naturality_lhs_to_blockA_end[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(vertical_compose_component(upper, lower, lower.src_functor.src_cat.dst(m)), lower.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.compose(upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m)), lower.component(lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_naturality_blockB_to_rhs[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(upper.src_functor.dst_cat.compose(upper.component(lower.src_functor.src_cat.dst(m)), upper.src_functor.mor_map(m)), lower.component(lower.src_functor.src_cat.src(m)))
+            = upper.src_functor.dst_cat.compose(upper.dst_functor.mor_map(m), vertical_compose_component(upper, lower, lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_naturality_upper_cat[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    vertical_composable(upper, lower) implies
+        upper.src_functor.dst_cat.compose(vertical_compose_component(upper, lower, lower.src_functor.src_cat.dst(m)), lower.src_functor.mor_map(m))
+            = upper.src_functor.dst_cat.compose(upper.dst_functor.mor_map(m), vertical_compose_component(upper, lower, lower.src_functor.src_cat.src(m)))
+}
+
+theorem vc_naturality_axiom[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        nat_trans_naturality_axiom(lower.src_functor, upper.dst_functor, vertical_compose_component(upper, lower))
+}
+
+theorem vc_is_natural_transformation[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies
+        is_natural_transformation(lower.src_functor, upper.dst_functor, vertical_compose_component(upper, lower))
+}
+
+define vertical_compose_nat_trans[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) -> Option[NaturalTransformation[O1, M1, O2, M2]] {
+    NaturalTransformation[O1, M1, O2, M2].new(
+        lower.src_functor, upper.dst_functor, vertical_compose_component(upper, lower)
+    )
+}
+
+theorem vertical_compose_nat_trans_some[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(upper, lower) implies exists(n: NaturalTransformation[O1, M1, O2, M2]) {
+        vertical_compose_nat_trans(upper, lower) = Option.some(n)
+    }
+}
+
+theorem vertical_compose_nat_trans_src_functor[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_compose_nat_trans(upper, lower) = Option.some(n) implies n.src_functor = lower.src_functor
+}
+
+theorem vertical_compose_nat_trans_dst_functor[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_compose_nat_trans(upper, lower) = Option.some(n) implies n.dst_functor = upper.dst_functor
+}
+
+theorem vertical_compose_nat_trans_component[O1, M1, O2, M2](
+    upper: NaturalTransformation[O1, M1, O2, M2],
+    lower: NaturalTransformation[O1, M1, O2, M2],
+    n: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_compose_nat_trans(upper, lower) = Option.some(n) implies n.component = vertical_compose_component(upper, lower)
+}
+
+theorem vertical_compose_component_assoc_at[O1, M1, O2, M2](
+    top: NaturalTransformation[O1, M1, O2, M2],
+    middle: NaturalTransformation[O1, M1, O2, M2],
+    bottom: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    vertical_composable(top, middle) and vertical_composable(middle, bottom) implies
+        top.src_functor.dst_cat.compose(vertical_compose_component(top, middle, x), bottom.component(x)) =
+        top.src_functor.dst_cat.compose(top.component(x), vertical_compose_component(middle, bottom, x))
+}
+
+theorem vertical_compose_nat_trans_assoc[O1, M1, O2, M2](
+    top: NaturalTransformation[O1, M1, O2, M2],
+    middle: NaturalTransformation[O1, M1, O2, M2],
+    bottom: NaturalTransformation[O1, M1, O2, M2],
+    top_middle: NaturalTransformation[O1, M1, O2, M2],
+    middle_bottom: NaturalTransformation[O1, M1, O2, M2],
+    left: NaturalTransformation[O1, M1, O2, M2],
+    right: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_composable(top, middle) and vertical_composable(middle, bottom) and
+    vertical_compose_nat_trans(top, middle) = Option.some(top_middle) and
+    vertical_compose_nat_trans(middle, bottom) = Option.some(middle_bottom) and
+    vertical_compose_nat_trans(top_middle, bottom) = Option.some(left) and
+    vertical_compose_nat_trans(top, middle_bottom) = Option.some(right)
+    implies left = right
+}
+
+define horizontal_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2]
+) -> Bool {
+    outer.src_functor.src_cat = inner.src_functor.dst_cat
+}
+
+define horizontal_compose_component[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) -> M3 {
+    outer.src_functor.dst_cat.compose(
+        outer.component(inner.dst_functor.obj_map(x)),
+        outer.src_functor.mor_map(inner.component(x))
+    )
+}
+
+theorem horizontal_compose_components_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.component(inner.dst_functor.obj_map(x)))
+            = outer.src_functor.dst_cat.dst(outer.src_functor.mor_map(inner.component(x)))
+}
+
+theorem horizontal_compose_component_src[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    x: O1
+) {
+    horizontal_composable(outer, inner)
+    and compose_functor(outer.src_functor, inner.src_functor) = Option.some(src_comp)
+    implies outer.src_functor.dst_cat.src(horizontal_compose_component(outer, inner, x)) = src_comp.obj_map(x)
+}
+
+theorem horizontal_compose_component_dst[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    dst_comp: Functor[O1, M1, O3, M3],
+    x: O1
+) {
+    horizontal_composable(outer, inner)
+    and compose_functor(outer.dst_functor, inner.dst_functor) = Option.some(dst_comp)
+    implies outer.src_functor.dst_cat.dst(horizontal_compose_component(outer, inner, x)) = dst_comp.obj_map(x)
+}
+
+define horizontal_compose_nat_trans[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) -> Option[NaturalTransformation[O1, M1, O3, M3]] {
+    NaturalTransformation[O1, M1, O3, M3].new(
+        src_comp, dst_comp, horizontal_compose_component(outer, inner)
+    )
+}
+
+theorem horizontal_compose_nat_trans_src_functor[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    horizontal_compose_nat_trans(outer, inner, src_comp, dst_comp) = Option.some(n)
+    implies n.src_functor = src_comp
+}
+
+theorem horizontal_compose_nat_trans_dst_functor[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    horizontal_compose_nat_trans(outer, inner, src_comp, dst_comp) = Option.some(n)
+    implies n.dst_functor = dst_comp
+}
+
+theorem horizontal_compose_nat_trans_component[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    horizontal_compose_nat_trans(outer, inner, src_comp, dst_comp) = Option.some(n)
+    implies n.component = horizontal_compose_component(outer, inner)
+}
+
+theorem horizontal_compose_identity_outer_component_at[O1, M1, O2, M2, O3, M3](
+    h: Functor[O2, M2, O3, M3],
+    a: NaturalTransformation[O1, M1, O2, M2],
+    x: O1
+) {
+    horizontal_composable(identity_nat_trans(h), a) implies
+        horizontal_compose_component(identity_nat_trans(h), a, x) = h.mor_map(a.component(x))
+}
+
+theorem horizontal_compose_identity_outer_nat_trans_component[O1, M1, O2, M2, O3, M3](
+    h: Functor[O2, M2, O3, M3],
+    a: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    horizontal_composable(identity_nat_trans(h), a) and
+    compose_functor(h, a.src_functor) = Option.some(src_comp) and
+    compose_functor(h, a.dst_functor) = Option.some(dst_comp) and
+    horizontal_compose_nat_trans(identity_nat_trans(h), a, src_comp, dst_comp) = Option.some(n)
+    implies n.component = function(x: O1) { h.mor_map(a.component(x)) }
+}
+
+theorem horizontal_compose_identity_inner_component_at_nt[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    x: O1
+) {
+    horizontal_composable(a, identity_nat_trans(h)) implies
+        horizontal_compose_component(a, identity_nat_trans(h), x) = a.component(h.obj_map(x))
+}
+
+theorem horizontal_compose_identity_inner_nat_trans_component[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    horizontal_composable(a, identity_nat_trans(h)) and
+    compose_functor(a.src_functor, h) = Option.some(src_comp) and
+    compose_functor(a.dst_functor, h) = Option.some(dst_comp) and
+    horizontal_compose_nat_trans(a, identity_nat_trans(h), src_comp, dst_comp) = Option.some(n)
+    implies n.component = function(x: O1) { a.component(h.obj_map(x)) }
+}
+
+theorem hc_F_beta_F_H_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.src_functor.mor_map(inner.component(inner.src_functor.src_cat.dst(m))))
+            = outer.src_functor.dst_cat.dst(outer.src_functor.mor_map(inner.src_functor.mor_map(m)))
+}
+
+theorem hc_F_K_F_beta_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.src_functor.mor_map(inner.dst_functor.mor_map(m)))
+            = outer.src_functor.dst_cat.dst(outer.src_functor.mor_map(inner.component(inner.src_functor.src_cat.src(m))))
+}
+
+theorem hc_inner_nat_lifted[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.compose(
+            outer.src_functor.mor_map(inner.component(inner.src_functor.src_cat.dst(m))),
+            outer.src_functor.mor_map(inner.src_functor.mor_map(m))
+        ) = outer.src_functor.dst_cat.compose(
+            outer.src_functor.mor_map(inner.dst_functor.mor_map(m)),
+            outer.src_functor.mor_map(inner.component(inner.src_functor.src_cat.src(m)))
+        )
+}
+
+theorem hc_outer_nat_at_K[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.compose(
+            outer.component(inner.dst_functor.obj_map(inner.src_functor.src_cat.dst(m))),
+            outer.src_functor.mor_map(inner.dst_functor.mor_map(m))
+        ) = outer.src_functor.dst_cat.compose(
+            outer.dst_functor.mor_map(inner.dst_functor.mor_map(m)),
+            outer.component(inner.dst_functor.obj_map(inner.src_functor.src_cat.src(m)))
+        )
+}
+
+theorem hc_assoc1_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.src_functor.mor_map(inner.component(inner.src_functor.src_cat.dst(m))))
+            = outer.src_functor.dst_cat.dst(outer.src_functor.mor_map(inner.src_functor.mor_map(m)))
+}
+
+theorem hc_alpha_F_K_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.component(inner.dst_functor.obj_map(inner.src_functor.src_cat.dst(m))))
+            = outer.src_functor.dst_cat.dst(outer.src_functor.mor_map(inner.dst_functor.mor_map(m)))
+}
+
+theorem hc_G_K_alpha_composable[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.src(outer.dst_functor.mor_map(inner.dst_functor.mor_map(m)))
+            = outer.src_functor.dst_cat.dst(outer.component(inner.dst_functor.obj_map(inner.src_functor.src_cat.src(m))))
+}
+
+theorem hc_naturality_pure[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    m: M1
+) {
+    horizontal_composable(outer, inner) implies
+        outer.src_functor.dst_cat.compose(
+            horizontal_compose_component(outer, inner, inner.src_functor.src_cat.dst(m)),
+            outer.src_functor.mor_map(inner.src_functor.mor_map(m))
+        ) = outer.src_functor.dst_cat.compose(
+            outer.dst_functor.mor_map(inner.dst_functor.mor_map(m)),
+            horizontal_compose_component(outer, inner, inner.src_functor.src_cat.src(m))
+        )
+}
+
+theorem hc_naturality_axiom[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    horizontal_composable(outer, inner)
+    and compose_functor(outer.src_functor, inner.src_functor) = Option.some(src_comp)
+    and compose_functor(outer.dst_functor, inner.dst_functor) = Option.some(dst_comp)
+    implies nat_trans_naturality_axiom(src_comp, dst_comp, horizontal_compose_component(outer, inner))
+}
+
+theorem hc_is_natural_transformation[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    horizontal_composable(outer, inner)
+    and compose_functor(outer.src_functor, inner.src_functor) = Option.some(src_comp)
+    and compose_functor(outer.dst_functor, inner.dst_functor) = Option.some(dst_comp)
+    implies is_natural_transformation(src_comp, dst_comp, horizontal_compose_component(outer, inner))
+}
+
+theorem horizontal_compose_nat_trans_some[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    inner: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    horizontal_composable(outer, inner)
+    and compose_functor(outer.src_functor, inner.src_functor) = Option.some(src_comp)
+    and compose_functor(outer.dst_functor, inner.dst_functor) = Option.some(dst_comp)
+    implies exists(n: NaturalTransformation[O1, M1, O3, M3]) {
+        horizontal_compose_nat_trans(outer, inner, src_comp, dst_comp) = Option.some(n)
+    }
+}
+
+theorem nat_trans_ext[O1, M1, O2, M2](
+    a: NaturalTransformation[O1, M1, O2, M2], b: NaturalTransformation[O1, M1, O2, M2]
+) {
+    a.src_functor = b.src_functor
+    and a.dst_functor = b.dst_functor
+    and a.component = b.component
+    implies a = b
+}
+
+theorem vertical_compose_id_left_component_at[O1, M1, O2, M2](
+    a: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    vertical_compose_component(identity_nat_trans(a.dst_functor), a, x) = a.component(x)
+}
+
+theorem vertical_compose_id_left[O1, M1, O2, M2](
+    a: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_compose_nat_trans(identity_nat_trans(a.dst_functor), a) = Option.some(a)
+}
+
+theorem vertical_compose_id_right_component_at[O1, M1, O2, M2](
+    a: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    vertical_compose_component(a, identity_nat_trans(a.src_functor), x) = a.component(x)
+}
+
+theorem vertical_compose_id_right[O1, M1, O2, M2](
+    a: NaturalTransformation[O1, M1, O2, M2]
+) {
+    vertical_compose_nat_trans(a, identity_nat_trans(a.src_functor)) = Option.some(a)
+}
+
+define adjunction_triangle_left[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2]
+) -> Bool {
+    forall(x: O1) {
+        f.dst_cat.compose(
+            eps.component(f.obj_map(x)),
+            f.mor_map(eta.component(x))
+        ) = f.dst_cat.identity(f.obj_map(x))
+    }
+}
+
+define adjunction_triangle_right[O1, M1, O2, M2](
+    g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2]
+) -> Bool {
+    forall(y: O2) {
+        g.dst_cat.compose(
+            g.mor_map(eps.component(y)),
+            eta.component(g.obj_map(y))
+        ) = g.dst_cat.identity(g.obj_map(y))
+    }
+}
+
+define is_adjunction[O1, M1, O2, M2](
+    c: Category[O1, M1],
+    d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2],
+    g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1],
+    fg: Functor[O2, M2, O2, M2]
+) -> Bool {
+    compose_functor(g, f) = Option.some(gf)
+    and compose_functor(f, g) = Option.some(fg)
+    and eta.src_functor = identity_functor(c)
+    and eta.dst_functor = gf
+    and eps.src_functor = fg
+    and eps.dst_functor = identity_functor(d)
+    and adjunction_triangle_left(f, eta, eps)
+    and adjunction_triangle_right(g, eta, eps)
+}
+
+structure Adjunction[O1, M1, O2, M2] {
+    /// The left adjoint functor from the source category to the target category.
+    left: Functor[O1, M1, O2, M2]
+
+    /// The right adjoint functor from the target category to the source category.
+    right: Functor[O2, M2, O1, M1]
+
+    /// The unit of the adjunction, a natural transformation from the identity on the source category to `right ∘ left`.
+    unit: NaturalTransformation[O1, M1, O1, M1]
+
+    /// The counit of the adjunction, a natural transformation from `left ∘ right` to the identity on the target category.
+    counit: NaturalTransformation[O2, M2, O2, M2]
+
+    /// The composite `right ∘ left` of the two functors.
+    unit_composite: Functor[O1, M1, O1, M1]
+
+    /// The composite `left ∘ right` of the two functors.
+    counit_composite: Functor[O2, M2, O2, M2]
+} constraint {
+    is_adjunction(left.src_cat, left.dst_cat, left, right, unit, counit,
+        unit_composite, counit_composite)
+}
+
+theorem adjunction_iso_left_compose[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        compose_functor(g, f) = Option.some(gf)
+}
+
+theorem adjunction_iso_right_compose[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        compose_functor(f, g) = Option.some(fg)
+}
+
+theorem adjunction_iso_unit_src[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        eta.src_functor = identity_functor(c)
+}
+
+theorem adjunction_iso_unit_dst[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        eta.dst_functor = gf
+}
+
+theorem adjunction_iso_counit_src[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        eps.src_functor = fg
+}
+
+theorem adjunction_iso_counit_dst[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        eps.dst_functor = identity_functor(d)
+}
+
+theorem adjunction_iso_triangle_left[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        adjunction_triangle_left(f, eta, eps)
+}
+
+theorem adjunction_iso_triangle_right[O1, M1, O2, M2](
+    c: Category[O1, M1], d: Category[O2, M2],
+    f: Functor[O1, M1, O2, M2], g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    gf: Functor[O1, M1, O1, M1], fg: Functor[O2, M2, O2, M2]
+) {
+    is_adjunction(c, d, f, g, eta, eps, gf, fg) implies
+        adjunction_triangle_right(g, eta, eps)
+}
+
+theorem adjunction_triangle_left_apply[O1, M1, O2, M2](
+    f: Functor[O1, M1, O2, M2],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    x: O1
+) {
+    adjunction_triangle_left(f, eta, eps) implies
+        f.dst_cat.compose(
+            eps.component(f.obj_map(x)),
+            f.mor_map(eta.component(x))
+        ) = f.dst_cat.identity(f.obj_map(x))
+}
+
+theorem adjunction_triangle_right_apply[O1, M1, O2, M2](
+    g: Functor[O2, M2, O1, M1],
+    eta: NaturalTransformation[O1, M1, O1, M1],
+    eps: NaturalTransformation[O2, M2, O2, M2],
+    y: O2
+) {
+    adjunction_triangle_right(g, eta, eps) implies
+        g.dst_cat.compose(
+            g.mor_map(eps.component(y)),
+            eta.component(g.obj_map(y))
+        ) = g.dst_cat.identity(g.obj_map(y))
+}
+
+theorem adjunction_left_compose[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    compose_functor(a.right, a.left) = Option.some(a.unit_composite)
+}
+
+theorem adjunction_right_compose[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    compose_functor(a.left, a.right) = Option.some(a.counit_composite)
+}
+
+theorem adjunction_unit_src_functor[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.unit.src_functor = identity_functor(a.left.src_cat)
+}
+
+theorem adjunction_unit_dst_functor[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.unit.dst_functor = a.unit_composite
+}
+
+theorem adjunction_counit_src_functor[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.counit.src_functor = a.counit_composite
+}
+
+theorem adjunction_counit_dst_functor[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.counit.dst_functor = identity_functor(a.left.dst_cat)
+}
+
+theorem adjunction_triangle_left_at[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], x: O1) {
+    a.left.dst_cat.compose(
+        a.counit.component(a.left.obj_map(x)),
+        a.left.mor_map(a.unit.component(x))
+    ) = a.left.dst_cat.identity(a.left.obj_map(x))
+}
+
+theorem adjunction_triangle_right_at[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], y: O2) {
+    a.right.dst_cat.compose(
+        a.right.mor_map(a.counit.component(y)),
+        a.unit.component(a.right.obj_map(y))
+    ) = a.right.dst_cat.identity(a.right.obj_map(y))
+}
+
+theorem adjunction_unit_component_src[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], x: O1) {
+    a.left.src_cat.src(a.unit.component(x)) = x
+}
+
+theorem adjunction_unit_component_dst[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], x: O1) {
+    a.left.src_cat.dst(a.unit.component(x)) = a.right.obj_map(a.left.obj_map(x))
+}
+
+theorem adjunction_counit_component_src[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], y: O2) {
+    a.left.dst_cat.src(a.counit.component(y)) = a.left.obj_map(a.right.obj_map(y))
+}
+
+theorem adjunction_counit_component_dst[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], y: O2) {
+    a.left.dst_cat.dst(a.counit.component(y)) = y
+}
+
+theorem adjunction_unit_naturality[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], m: M1) {
+    a.left.src_cat.compose(
+        a.unit_composite.mor_map(m),
+        a.unit.component(a.left.src_cat.src(m))
+    ) = a.left.src_cat.compose(
+        a.unit.component(a.left.src_cat.dst(m)),
+        m
+    )
+}
+
+theorem adjunction_counit_naturality[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2], n: M2) {
+    a.left.dst_cat.compose(
+        a.counit.component(a.left.dst_cat.dst(n)),
+        a.counit_composite.mor_map(n)
+    ) = a.left.dst_cat.compose(
+        n,
+        a.counit.component(a.left.dst_cat.src(n))
+    )
+}
+
+theorem adjunction_right_dst_cat[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.right.dst_cat = a.left.src_cat
+}
+
+theorem adjunction_right_src_cat[O1, M1, O2, M2](a: Adjunction[O1, M1, O2, M2]) {
+    a.right.src_cat = a.left.dst_cat
+}
+
+define adjunction_transpose_right[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, f: M2
+) -> M1 {
+    a.right.dst_cat.compose(a.right.mor_map(f), a.unit.component(x))
+}
+
+define adjunction_transpose_left[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, g: M1
+) -> M2 {
+    a.left.dst_cat.compose(a.counit.component(y), a.left.mor_map(g))
+}
+
+theorem adjunction_transpose_right_src[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, f: M2
+) {
+    a.left.dst_cat.src(f) = a.left.obj_map(x) implies
+        a.left.src_cat.src(adjunction_transpose_right(a, x, y, f)) = x
+}
+
+theorem adjunction_transpose_right_dst[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, f: M2
+) {
+    a.left.dst_cat.src(f) = a.left.obj_map(x) and a.left.dst_cat.dst(f) = y implies
+        a.left.src_cat.dst(adjunction_transpose_right(a, x, y, f)) = a.right.obj_map(y)
+}
+
+theorem adjunction_transpose_left_src[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, g: M1
+) {
+    a.left.src_cat.src(g) = x and a.left.src_cat.dst(g) = a.right.obj_map(y) implies
+        a.left.dst_cat.src(adjunction_transpose_left(a, x, y, g)) = a.left.obj_map(x)
+}
+
+theorem adjunction_transpose_roundtrip_to_left[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, f: M2
+) {
+    a.left.dst_cat.src(f) = a.left.obj_map(x) and a.left.dst_cat.dst(f) = y implies
+        adjunction_transpose_left(a, x, y, adjunction_transpose_right(a, x, y, f)) = f
+}
+
+theorem adjunction_transpose_roundtrip_to_right[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, g: M1
+) {
+    a.left.src_cat.src(g) = x and a.left.src_cat.dst(g) = a.right.obj_map(y) implies
+        adjunction_transpose_right(a, x, y, adjunction_transpose_left(a, x, y, g)) = g
+}
+
+theorem adjunction_transpose_left_dst[O1, M1, O2, M2](
+    a: Adjunction[O1, M1, O2, M2], x: O1, y: O2, g: M1
+) {
+    a.left.src_cat.dst(g) = a.right.obj_map(y) implies
+        a.left.dst_cat.dst(adjunction_transpose_left(a, x, y, g)) = y
+}
+
+define monad_associativity_at[O, M](
+    t: Functor[O, M, O, M],
+    mu: NaturalTransformation[O, M, O, M],
+    x: O
+) -> Bool {
+    t.dst_cat.compose(mu.component(x), t.mor_map(mu.component(x)))
+        = t.dst_cat.compose(mu.component(x), mu.component(t.obj_map(x)))
+}
+
+define monad_unit_left_at[O, M](
+    t: Functor[O, M, O, M],
+    eta: NaturalTransformation[O, M, O, M],
+    mu: NaturalTransformation[O, M, O, M],
+    x: O
+) -> Bool {
+    t.dst_cat.compose(mu.component(x), t.mor_map(eta.component(x)))
+        = t.dst_cat.identity(t.obj_map(x))
+}
+
+define monad_unit_right_at[O, M](
+    t: Functor[O, M, O, M],
+    eta: NaturalTransformation[O, M, O, M],
+    mu: NaturalTransformation[O, M, O, M],
+    x: O
+) -> Bool {
+    t.dst_cat.compose(mu.component(x), eta.component(t.obj_map(x)))
+        = t.dst_cat.identity(t.obj_map(x))
+}
+
+define is_monad[O, M](
+    c: Category[O, M],
+    t: Functor[O, M, O, M],
+    eta: NaturalTransformation[O, M, O, M],
+    mu: NaturalTransformation[O, M, O, M],
+    t2: Functor[O, M, O, M]
+) -> Bool {
+    t.src_cat = c and t.dst_cat = c
+    and compose_functor(t, t) = Option.some(t2)
+    and eta.src_functor = identity_functor(c)
+    and eta.dst_functor = t
+    and mu.src_functor = t2
+    and mu.dst_functor = t
+    and forall(x: O) { monad_associativity_at(t, mu, x) }
+    and forall(x: O) { monad_unit_left_at(t, eta, mu, x) }
+    and forall(x: O) { monad_unit_right_at(t, eta, mu, x) }
+}
+
+structure Monad[O, M] {
+    /// The underlying category of the monad.
+    category: Category[O, M]
+
+    /// The endofunctor part of the monad.
+    functor: Functor[O, M, O, M]
+
+    /// The unit of the monad, a natural transformation from the identity
+    /// functor to the endofunctor.
+    unit: NaturalTransformation[O, M, O, M]
+
+    /// The multiplication of the monad, a natural transformation from the
+    /// composite endofunctor to the endofunctor.
+    multiplication: NaturalTransformation[O, M, O, M]
+
+    /// The composite `functor ∘ functor` of the endofunctor with itself.
+    composite: Functor[O, M, O, M]
+} constraint {
+    is_monad(category, functor, unit, multiplication, composite)
+}
+
+theorem monad_functor_src_cat[O, M](m: Monad[O, M]) {
+    m.functor.src_cat = m.category
+}
+
+theorem monad_functor_dst_cat[O, M](m: Monad[O, M]) {
+    m.functor.dst_cat = m.category
+}
+
+theorem monad_compose[O, M](m: Monad[O, M]) {
+    compose_functor(m.functor, m.functor) = Option.some(m.composite)
+}
+
+theorem monad_unit_src_functor[O, M](m: Monad[O, M]) {
+    m.unit.src_functor = identity_functor(m.category)
+}
+
+theorem monad_unit_dst_functor[O, M](m: Monad[O, M]) {
+    m.unit.dst_functor = m.functor
+}
+
+theorem monad_multiplication_src_functor[O, M](m: Monad[O, M]) {
+    m.multiplication.src_functor = m.composite
+}
+
+theorem monad_multiplication_dst_functor[O, M](m: Monad[O, M]) {
+    m.multiplication.dst_functor = m.functor
+}
+
+theorem monad_associativity_all[O, M](m: Monad[O, M]) {
+    forall(x: O) { monad_associativity_at(m.functor, m.multiplication, x) }
+}
+
+theorem monad_unit_left_all[O, M](m: Monad[O, M]) {
+    forall(x: O) { monad_unit_left_at(m.functor, m.unit, m.multiplication, x) }
+}
+
+theorem monad_unit_right_all[O, M](m: Monad[O, M]) {
+    forall(x: O) { monad_unit_right_at(m.functor, m.unit, m.multiplication, x) }
+}
+
+theorem monad_associativity_pointwise[O, M](m: Monad[O, M], x: O) {
+    m.functor.dst_cat.compose(m.multiplication.component(x), m.functor.mor_map(m.multiplication.component(x)))
+        = m.functor.dst_cat.compose(m.multiplication.component(x), m.multiplication.component(m.functor.obj_map(x)))
+}
+
+theorem monad_unit_left_pointwise[O, M](m: Monad[O, M], x: O) {
+    m.functor.dst_cat.compose(m.multiplication.component(x), m.functor.mor_map(m.unit.component(x)))
+        = m.functor.dst_cat.identity(m.functor.obj_map(x))
+}
+
+theorem monad_unit_right_pointwise[O, M](m: Monad[O, M], x: O) {
+    m.functor.dst_cat.compose(m.multiplication.component(x), m.unit.component(m.functor.obj_map(x)))
+        = m.functor.dst_cat.identity(m.functor.obj_map(x))
+}
+
+theorem monad_associativity_cat[O, M](m: Monad[O, M], x: O) {
+    m.category.compose(m.multiplication.component(x), m.functor.mor_map(m.multiplication.component(x)))
+        = m.category.compose(m.multiplication.component(x), m.multiplication.component(m.functor.obj_map(x)))
+}
+
+theorem monad_unit_left_cat[O, M](m: Monad[O, M], x: O) {
+    m.category.compose(m.multiplication.component(x), m.functor.mor_map(m.unit.component(x)))
+        = m.category.identity(m.functor.obj_map(x))
+}
+
+theorem monad_unit_right_cat[O, M](m: Monad[O, M], x: O) {
+    m.category.compose(m.multiplication.component(x), m.unit.component(m.functor.obj_map(x)))
+        = m.category.identity(m.functor.obj_map(x))
+}
+
+theorem monad_unit_component_src[O, M](m: Monad[O, M], x: O) {
+    m.category.src(m.unit.component(x)) = x
+}
+
+theorem monad_unit_component_dst[O, M](m: Monad[O, M], x: O) {
+    m.category.dst(m.unit.component(x)) = m.functor.obj_map(x)
+}
+
+theorem monad_multiplication_component_src[O, M](m: Monad[O, M], x: O) {
+    m.category.src(m.multiplication.component(x)) = m.functor.obj_map(m.functor.obj_map(x))
+}
+
+theorem monad_multiplication_component_dst[O, M](m: Monad[O, M], x: O) {
+    m.category.dst(m.multiplication.component(x)) = m.functor.obj_map(x)
+}
+
+theorem monad_unit_naturality[O, M](m: Monad[O, M], p: M) {
+    m.category.compose(
+        m.functor.mor_map(p),
+        m.unit.component(m.category.src(p))
+    ) = m.category.compose(
+        m.unit.component(m.category.dst(p)),
+        p
+    )
+}
+
+theorem monad_multiplication_naturality[O, M](m: Monad[O, M], p: M) {
+    m.category.compose(
+        m.multiplication.component(m.category.dst(p)),
+        m.functor.mor_map(m.functor.mor_map(p))
+    ) = m.category.compose(
+        m.functor.mor_map(p),
+        m.multiplication.component(m.category.src(p))
+    )
+}
+
+define kleisli_compose[O, M](m: Monad[O, M], z: O, f: M, g: M) -> M {
+    m.category.compose(
+        m.multiplication.component(z),
+        m.category.compose(m.functor.mor_map(g), f))
+}
+
+theorem kleisli_compose_t_mor[O, M](
+    m: Monad[O, M], y: O, z: O, w: O, g: M, h: M
+) {
+    m.category.src(g) = y and m.category.dst(g) = m.functor.obj_map(z)
+    and m.category.src(h) = z and m.category.dst(h) = m.functor.obj_map(w)
+    implies
+    m.functor.mor_map(kleisli_compose(m, w, g, h))
+        = m.category.compose(
+            m.category.compose(
+                m.functor.mor_map(m.multiplication.component(w)),
+                m.functor.mor_map(m.functor.mor_map(h))),
+            m.functor.mor_map(g))
+}
+
+theorem monad_multiplication_naturality_at[O, M](
+    m: Monad[O, M], z: O, w: O, p: M
+) {
+    m.category.src(p) = z and m.category.dst(p) = m.functor.obj_map(w) implies
+    m.category.compose(
+        m.multiplication.component(m.functor.obj_map(w)),
+        m.functor.mor_map(m.functor.mor_map(p)))
+        = m.category.compose(
+            m.functor.mor_map(p),
+            m.multiplication.component(z))
+}
+
+theorem kleisli_compose_assoc[O, M](
+    m: Monad[O, M], x: O, y: O, z: O, w: O, f: M, g: M, h: M
+) {
+    m.category.src(f) = x and m.category.dst(f) = m.functor.obj_map(y)
+    and m.category.src(g) = y and m.category.dst(g) = m.functor.obj_map(z)
+    and m.category.src(h) = z and m.category.dst(h) = m.functor.obj_map(w)
+    implies
+    kleisli_compose(m, w, f, kleisli_compose(m, w, g, h))
+        = kleisli_compose(m, w, kleisli_compose(m, z, f, g), h)
+}
+
+theorem kleisli_compose_id_left[O, M](
+    m: Monad[O, M], x: O, y: O, f: M
+) {
+    m.category.src(f) = x and m.category.dst(f) = m.functor.obj_map(y) implies
+    kleisli_compose(m, y, f, m.unit.component(y)) = f
+}
+
+theorem kleisli_compose_id_right[O, M](
+    m: Monad[O, M], x: O, y: O, f: M
+) {
+    m.category.src(f) = x and m.category.dst(f) = m.functor.obj_map(y) implies
+    kleisli_compose(m, y, m.unit.component(x), f) = f
+}
+
+define nat_iso_components_inverse[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) -> Bool {
+    forall(x: O1) {
+        is_iso_pair(forward.src_functor.dst_cat, forward.component(x), backward.component(x))
+    }
+}
+
+define is_natural_isomorphism_pair[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) -> Bool {
+    forward.src_functor = backward.dst_functor
+    and forward.dst_functor = backward.src_functor
+    and nat_iso_components_inverse(forward, backward)
+}
+
+structure NaturalIsomorphism[O1, M1, O2, M2] {
+    /// The forward natural transformation.
+    forward: NaturalTransformation[O1, M1, O2, M2]
+
+    /// The backward natural transformation.
+    backward: NaturalTransformation[O1, M1, O2, M2]
+} constraint {
+    is_natural_isomorphism_pair(forward, backward)
+}
+
+theorem is_natural_isomorphism_pair_src_eq[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_isomorphism_pair(forward, backward) implies
+        forward.src_functor = backward.dst_functor
+}
+
+theorem is_natural_isomorphism_pair_dst_eq[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_isomorphism_pair(forward, backward) implies
+        forward.dst_functor = backward.src_functor
+}
+
+theorem is_natural_isomorphism_pair_components[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_isomorphism_pair(forward, backward) implies
+        nat_iso_components_inverse(forward, backward)
+}
+
+theorem nat_iso_components_inverse_at[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    nat_iso_components_inverse(forward, backward) implies
+        is_iso_pair(forward.src_functor.dst_cat, forward.component(x), backward.component(x))
+}
+
+theorem identity_nat_trans_component_at[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) {
+    identity_nat_trans(f).component(x) = f.dst_cat.identity(f.obj_map(x))
+}
+
+theorem identity_nat_trans_iso_pair_at[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) {
+    is_iso_pair(f.dst_cat,
+        identity_nat_trans(f).component(x),
+        identity_nat_trans(f).component(x))
+}
+
+theorem identity_nat_trans_src_eq_dst[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_nat_trans(f).src_functor = identity_nat_trans(f).dst_functor
+}
+
+theorem identity_nat_trans_components_inverse_at[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) {
+    is_iso_pair(identity_nat_trans(f).src_functor.dst_cat,
+        identity_nat_trans(f).component(x),
+        identity_nat_trans(f).component(x))
+}
+
+theorem identity_nat_trans_components_inverse[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    nat_iso_components_inverse(identity_nat_trans(f), identity_nat_trans(f))
+}
+
+theorem identity_nat_trans_is_natural_isomorphism[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    is_natural_isomorphism_pair(identity_nat_trans(f), identity_nat_trans(f))
+}
+
+theorem nat_iso_components_inverse_swap_at[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    nat_iso_components_inverse(forward, backward)
+        and forward.dst_functor = backward.src_functor
+        implies is_iso_pair(backward.src_functor.dst_cat,
+            backward.component(x), forward.component(x))
+}
+
+theorem nat_iso_components_inverse_swap[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    nat_iso_components_inverse(forward, backward)
+        and forward.dst_functor = backward.src_functor
+        implies nat_iso_components_inverse(backward, forward)
+}
+
+theorem is_natural_isomorphism_pair_pack[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    forward.src_functor = backward.dst_functor
+    and forward.dst_functor = backward.src_functor
+    and nat_iso_components_inverse(forward, backward)
+    implies is_natural_isomorphism_pair(forward, backward)
+}
+
+theorem is_natural_isomorphism_pair_swap[O1, M1, O2, M2](
+    forward: NaturalTransformation[O1, M1, O2, M2],
+    backward: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_isomorphism_pair(forward, backward) implies
+        is_natural_isomorphism_pair(backward, forward)
+}
+
+theorem nat_iso_components_inverse_compose_at[O1, M1, O2, M2](
+    f1: NaturalTransformation[O1, M1, O2, M2],
+    b1: NaturalTransformation[O1, M1, O2, M2],
+    f2: NaturalTransformation[O1, M1, O2, M2],
+    b2: NaturalTransformation[O1, M1, O2, M2], x: O1
+) {
+    nat_iso_components_inverse(f1, b1)
+        and nat_iso_components_inverse(f2, b2)
+        and f1.dst_functor = f2.src_functor
+        and f1.src_functor.dst_cat = f2.src_functor.dst_cat
+        implies is_iso_pair(f1.src_functor.dst_cat,
+            f1.src_functor.dst_cat.compose(f2.component(x), f1.component(x)),
+            f1.src_functor.dst_cat.compose(b1.component(x), b2.component(x)))
+}
+
+theorem is_natural_isomorphism_pair_compose[O1, M1, O2, M2](
+    f1: NaturalTransformation[O1, M1, O2, M2],
+    b1: NaturalTransformation[O1, M1, O2, M2],
+    f2: NaturalTransformation[O1, M1, O2, M2],
+    b2: NaturalTransformation[O1, M1, O2, M2]
+) {
+    is_natural_isomorphism_pair(f1, b1)
+        and is_natural_isomorphism_pair(f2, b2)
+        and f1.dst_functor = f2.src_functor
+        implies exists(forward: NaturalTransformation[O1, M1, O2, M2],
+                       backward: NaturalTransformation[O1, M1, O2, M2]) {
+            vertical_compose_nat_trans(f2, f1) = Option.some(forward)
+            and vertical_compose_nat_trans(b1, b2) = Option.some(backward)
+            and is_natural_isomorphism_pair(forward, backward)
+        }
+}
+
+theorem nat_iso_new_forward[O1, M1, O2, M2](
+    f: NaturalTransformation[O1, M1, O2, M2], b: NaturalTransformation[O1, M1, O2, M2],
+    n: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    NaturalIsomorphism[O1, M1, O2, M2].new(f, b) = Option.some(n) implies n.forward = f
+}
+
+theorem nat_iso_new_backward[O1, M1, O2, M2](
+    f: NaturalTransformation[O1, M1, O2, M2], b: NaturalTransformation[O1, M1, O2, M2],
+    n: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    NaturalIsomorphism[O1, M1, O2, M2].new(f, b) = Option.some(n) implies n.backward = b
+}
+
+theorem nat_iso_new_self[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    NaturalIsomorphism[O1, M1, O2, M2].new(n.forward, n.backward) = Option.some(n)
+}
+
+theorem nat_iso_some_injective[O1, M1, O2, M2](
+    n: NaturalIsomorphism[O1, M1, O2, M2], m: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    Option.some(n) = Option.some(m) implies n = m
+}
+
+theorem nat_iso_ext[O1, M1, O2, M2](
+    n: NaturalIsomorphism[O1, M1, O2, M2], m: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    n.forward = m.forward and n.backward = m.backward implies n = m
+}
+
+theorem nat_iso_is_pair[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    is_natural_isomorphism_pair(n.forward, n.backward)
+}
+
+theorem nat_iso_src_eq[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    n.forward.src_functor = n.backward.dst_functor
+}
+
+theorem nat_iso_dst_eq[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    n.forward.dst_functor = n.backward.src_functor
+}
+
+theorem nat_iso_components[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    nat_iso_components_inverse(n.forward, n.backward)
+}
+
+let identity_natural_isomorphism[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) -> result: NaturalIsomorphism[O1, M1, O2, M2] satisfy {
+    result.forward = identity_nat_trans(f) and result.backward = identity_nat_trans(f)
+}
+
+theorem identity_natural_isomorphism_forward[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_natural_isomorphism(f).forward = identity_nat_trans(f)
+}
+
+theorem identity_natural_isomorphism_backward[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    identity_natural_isomorphism(f).backward = identity_nat_trans(f)
+}
+
+let inverse_natural_isomorphism[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) -> result: NaturalIsomorphism[O1, M1, O2, M2] satisfy {
+    result.forward = n.backward and result.backward = n.forward
+}
+
+theorem inverse_natural_isomorphism_forward[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).forward = n.backward
+}
+
+theorem inverse_natural_isomorphism_backward[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).backward = n.forward
+}
+
+theorem inverse_natural_isomorphism_forward_src_functor[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).forward.src_functor = n.forward.dst_functor
+}
+
+theorem inverse_natural_isomorphism_forward_dst_functor[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).forward.dst_functor = n.forward.src_functor
+}
+
+theorem inverse_natural_isomorphism_backward_src_functor[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).backward.src_functor = n.forward.src_functor
+}
+
+theorem inverse_natural_isomorphism_backward_dst_functor[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(n).backward.dst_functor = n.forward.dst_functor
+}
+
+theorem inverse_natural_isomorphism_involutive[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(inverse_natural_isomorphism(n)) = n
+}
+
+theorem inverse_identity_natural_isomorphism[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2]) {
+    inverse_natural_isomorphism(identity_natural_isomorphism(f)) = identity_natural_isomorphism(f)
+}
+
+theorem nat_iso_at_iso_pair[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    is_iso_pair(n.forward.src_functor.dst_cat, n.forward.component(x), n.backward.component(x))
+}
+
+let nat_iso_to_iso[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) -> result: Iso[O2, M2] satisfy {
+    Iso[O2, M2].new(n.forward.src_functor.dst_cat, n.forward.component(x), n.backward.component(x)) = Option.some(result)
+}
+
+theorem nat_iso_to_iso_cat[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).cat = n.forward.src_functor.dst_cat
+}
+
+theorem nat_iso_to_iso_hom[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).hom = n.forward.component(x)
+}
+
+theorem nat_iso_to_iso_inv[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).inv = n.backward.component(x)
+}
+
+theorem nat_iso_to_iso_src_hom[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).cat.src(nat_iso_to_iso(n, x).hom) = n.forward.src_functor.obj_map(x)
+}
+
+theorem nat_iso_to_iso_dst_hom[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).cat.dst(nat_iso_to_iso(n, x).hom) = n.forward.dst_functor.obj_map(x)
+}
+
+theorem nat_iso_to_iso_src_inv[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).cat.src(nat_iso_to_iso(n, x).inv) = n.forward.dst_functor.obj_map(x)
+}
+
+theorem nat_iso_to_iso_dst_inv[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(n, x).cat.dst(nat_iso_to_iso(n, x).inv) = n.forward.src_functor.obj_map(x)
+}
+
+theorem inverse_natural_isomorphism_to_iso[O1, M1, O2, M2](n: NaturalIsomorphism[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(inverse_natural_isomorphism(n), x) = inverse_iso(nat_iso_to_iso(n, x))
+}
+
+theorem identity_natural_isomorphism_to_iso[O1, M1, O2, M2](f: Functor[O1, M1, O2, M2], x: O1) {
+    nat_iso_to_iso(identity_natural_isomorphism(f), x) = identity_iso(f.dst_cat, f.obj_map(x))
+}
+
+define nat_iso_composable[O1, M1, O2, M2](
+    n2: NaturalIsomorphism[O1, M1, O2, M2],
+    n1: NaturalIsomorphism[O1, M1, O2, M2]
+) -> Bool {
+    n1.forward.dst_functor = n2.forward.src_functor
+}
+
+theorem nat_iso_compose_pair_exists[O1, M1, O2, M2](
+    n2: NaturalIsomorphism[O1, M1, O2, M2],
+    n1: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    nat_iso_composable(n2, n1) implies exists(
+        fwd: NaturalTransformation[O1, M1, O2, M2],
+        bwd: NaturalTransformation[O1, M1, O2, M2]
+    ) {
+        vertical_compose_nat_trans(n2.forward, n1.forward) = Option.some(fwd)
+        and vertical_compose_nat_trans(n1.backward, n2.backward) = Option.some(bwd)
+        and is_natural_isomorphism_pair(fwd, bwd)
+    }
+}
+
+theorem nat_iso_compose_exists[O1, M1, O2, M2](
+    n2: NaturalIsomorphism[O1, M1, O2, M2],
+    n1: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    nat_iso_composable(n2, n1) implies exists(
+        r: NaturalIsomorphism[O1, M1, O2, M2]
+    ) {
+        vertical_compose_nat_trans(n2.forward, n1.forward) = Option.some(r.forward)
+        and vertical_compose_nat_trans(n1.backward, n2.backward) = Option.some(r.backward)
+    }
+}
+
+let nat_iso_compose[O1, M1, O2, M2](n2: NaturalIsomorphism[O1, M1, O2, M2], n1: NaturalIsomorphism[O1, M1, O2, M2]) -> result: NaturalIsomorphism[O1, M1, O2, M2] satisfy {
+    nat_iso_composable(n2, n1) implies (
+        vertical_compose_nat_trans(n2.forward, n1.forward) = Option.some(result.forward)
+        and vertical_compose_nat_trans(n1.backward, n2.backward) = Option.some(result.backward)
+    )
+}
+
+theorem nat_iso_compose_forward[O1, M1, O2, M2](
+    n2: NaturalIsomorphism[O1, M1, O2, M2],
+    n1: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    nat_iso_composable(n2, n1) implies
+        vertical_compose_nat_trans(n2.forward, n1.forward) = Option.some(nat_iso_compose(n2, n1).forward)
+}
+
+theorem nat_iso_compose_backward[O1, M1, O2, M2](
+    n2: NaturalIsomorphism[O1, M1, O2, M2],
+    n1: NaturalIsomorphism[O1, M1, O2, M2]
+) {
+    nat_iso_composable(n2, n1) implies
+        vertical_compose_nat_trans(n1.backward, n2.backward) = Option.some(nat_iso_compose(n2, n1).backward)
+}
+
+theorem nat_iso_compose_forward_src_functor[O1, M1, O2, M2](n2: NaturalIsomorphism[O1, M1, O2, M2], n1: NaturalIsomorphism[O1, M1, O2, M2]) {
+    nat_iso_composable(n2, n1) implies
+        nat_iso_compose(n2, n1).forward.src_functor = n1.forward.src_functor
+}
+
+theorem nat_iso_compose_forward_dst_functor[O1, M1, O2, M2](n2: NaturalIsomorphism[O1, M1, O2, M2], n1: NaturalIsomorphism[O1, M1, O2, M2]) {
+    nat_iso_composable(n2, n1) implies
+        nat_iso_compose(n2, n1).forward.dst_functor = n2.forward.dst_functor
+}
+
+theorem nat_iso_compose_backward_src_functor[O1, M1, O2, M2](n2: NaturalIsomorphism[O1, M1, O2, M2], n1: NaturalIsomorphism[O1, M1, O2, M2]) {
+    nat_iso_composable(n2, n1) implies
+        nat_iso_compose(n2, n1).backward.src_functor = n2.backward.src_functor
+}
+
+theorem nat_iso_compose_backward_dst_functor[O1, M1, O2, M2](n2: NaturalIsomorphism[O1, M1, O2, M2], n1: NaturalIsomorphism[O1, M1, O2, M2]) {
+    nat_iso_composable(n2, n1) implies
+        nat_iso_compose(n2, n1).backward.dst_functor = n1.backward.dst_functor
+}
+
+define category_equivalence_cats_axiom[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1]
+) -> Bool {
+    forward.src_cat = backward.dst_cat
+    and forward.dst_cat = backward.src_cat
+}
+
+define category_equivalence_unit_axiom[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1]
+) -> Bool {
+    unit_fwd.src_functor = identity_functor(forward.src_cat)
+    and compose_functor(backward, forward) = Option.some(unit_fwd.dst_functor)
+}
+
+define category_equivalence_counit_axiom[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2]
+) -> Bool {
+    compose_functor(forward, backward) = Option.some(counit_fwd.src_functor)
+    and counit_fwd.dst_functor = identity_functor(forward.dst_cat)
+}
+
+define is_category_equivalence[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2]
+) -> Bool {
+    category_equivalence_cats_axiom(forward, backward)
+    and category_equivalence_unit_axiom(forward, backward, unit_fwd)
+    and is_natural_isomorphism_pair(unit_fwd, unit_bwd)
+    and category_equivalence_counit_axiom(forward, backward, counit_fwd)
+    and is_natural_isomorphism_pair(counit_fwd, counit_bwd)
+}
+
+structure CategoryEquivalence[O1, M1, O2, M2] {
+    /// The forward functor.
+    forward: Functor[O1, M1, O2, M2]
+
+    /// The backward functor.
+    backward: Functor[O2, M2, O1, M1]
+
+    /// The forward direction of the unit natural isomorphism `1_C ≅ G ∘ F`.
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1]
+
+    /// The backward direction of the unit natural isomorphism `G ∘ F ≅ 1_C`.
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1]
+
+    /// The forward direction of the counit natural isomorphism `F ∘ G ≅ 1_D`.
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2]
+
+    /// The backward direction of the counit natural isomorphism `1_D ≅ F ∘ G`.
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2]
+} constraint {
+    is_category_equivalence(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+}
+
+theorem category_equivalence_new_forward[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.forward = forward
+}
+
+theorem category_equivalence_new_backward[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.backward = backward
+}
+
+theorem category_equivalence_new_unit_fwd[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.unit_fwd = unit_fwd
+}
+
+theorem category_equivalence_new_unit_bwd[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.unit_bwd = unit_bwd
+}
+
+theorem category_equivalence_new_counit_fwd[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.counit_fwd = counit_fwd
+}
+
+theorem category_equivalence_new_counit_bwd[O1, M1, O2, M2](
+    forward: Functor[O1, M1, O2, M2], backward: Functor[O2, M2, O1, M1],
+    unit_fwd: NaturalTransformation[O1, M1, O1, M1],
+    unit_bwd: NaturalTransformation[O1, M1, O1, M1],
+    counit_fwd: NaturalTransformation[O2, M2, O2, M2],
+    counit_bwd: NaturalTransformation[O2, M2, O2, M2],
+    e: CategoryEquivalence[O1, M1, O2, M2]
+) {
+    CategoryEquivalence[O1, M1, O2, M2].new(forward, backward, unit_fwd, unit_bwd, counit_fwd, counit_bwd)
+        = Option.some(e) implies e.counit_bwd = counit_bwd
+}
+
+theorem category_equivalence_is_equivalence[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    is_category_equivalence(e.forward, e.backward, e.unit_fwd, e.unit_bwd, e.counit_fwd, e.counit_bwd)
+}
+
+theorem category_equivalence_cats[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    e.forward.src_cat = e.backward.dst_cat
+    and e.forward.dst_cat = e.backward.src_cat
+}
+
+theorem category_equivalence_unit_src_functor[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    e.unit_fwd.src_functor = identity_functor(e.forward.src_cat)
+}
+
+theorem category_equivalence_unit_dst_functor[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    compose_functor(e.backward, e.forward) = Option.some(e.unit_fwd.dst_functor)
+}
+
+theorem category_equivalence_unit_iso[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    is_natural_isomorphism_pair(e.unit_fwd, e.unit_bwd)
+}
+
+theorem category_equivalence_counit_src_functor[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    compose_functor(e.forward, e.backward) = Option.some(e.counit_fwd.src_functor)
+}
+
+theorem category_equivalence_counit_dst_functor[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    e.counit_fwd.dst_functor = identity_functor(e.forward.dst_cat)
+}
+
+theorem category_equivalence_counit_iso[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    is_natural_isomorphism_pair(e.counit_fwd, e.counit_bwd)
+}
+
+theorem identity_functor_self_compose_src_cat[O, M](c: Category[O, M], h: Functor[O, M, O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(h) implies h.src_cat = c
+}
+
+theorem identity_functor_self_compose_dst_cat[O, M](c: Category[O, M], h: Functor[O, M, O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(h) implies h.dst_cat = c
+}
+
+theorem identity_functor_self_compose_obj_map[O, M](c: Category[O, M], h: Functor[O, M, O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(h) implies h.obj_map = identity_fn[O]
+}
+
+theorem identity_functor_self_compose_mor_map[O, M](c: Category[O, M], h: Functor[O, M, O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(h) implies h.mor_map = identity_fn[M]
+}
+
+theorem identity_functor_self_compose_eq_identity[O, M](c: Category[O, M], h: Functor[O, M, O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(h)
+    implies h = identity_functor(c)
+}
+
+theorem identity_functor_self_compose_some[O, M](c: Category[O, M]) {
+    compose_functor(identity_functor(c), identity_functor(c)) = Option.some(identity_functor(c))
+}
+
+theorem identity_category_equivalence_unit_axiom[O, M](c: Category[O, M]) {
+    category_equivalence_unit_axiom(identity_functor(c), identity_functor(c),
+        identity_nat_trans(identity_functor(c)))
+}
+
+theorem identity_category_equivalence_counit_axiom[O, M](c: Category[O, M]) {
+    category_equivalence_counit_axiom(identity_functor(c), identity_functor(c),
+        identity_nat_trans(identity_functor(c)))
+}
+
+theorem identity_category_equivalence_axiom[O, M](c: Category[O, M]) {
+    is_category_equivalence(identity_functor(c), identity_functor(c),
+        identity_nat_trans(identity_functor(c)), identity_nat_trans(identity_functor(c)),
+        identity_nat_trans(identity_functor(c)), identity_nat_trans(identity_functor(c)))
+}
+
+let identity_category_equivalence[O, M](c: Category[O, M]) -> result: CategoryEquivalence[O, M, O, M] satisfy {
+    CategoryEquivalence[O, M, O, M].new(identity_functor(c), identity_functor(c),
+        identity_nat_trans(identity_functor(c)), identity_nat_trans(identity_functor(c)),
+        identity_nat_trans(identity_functor(c)), identity_nat_trans(identity_functor(c))) = Option.some(result)
+}
+
+theorem identity_category_equivalence_forward[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).forward = identity_functor(c)
+}
+
+theorem identity_category_equivalence_backward[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).backward = identity_functor(c)
+}
+
+theorem identity_category_equivalence_unit_fwd[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).unit_fwd = identity_nat_trans(identity_functor(c))
+}
+
+theorem identity_category_equivalence_unit_bwd[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).unit_bwd = identity_nat_trans(identity_functor(c))
+}
+
+theorem identity_category_equivalence_counit_fwd[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).counit_fwd = identity_nat_trans(identity_functor(c))
+}
+
+theorem identity_category_equivalence_counit_bwd[O, M](c: Category[O, M]) {
+    identity_category_equivalence(c).counit_bwd = identity_nat_trans(identity_functor(c))
+}
+
+theorem swap_category_equivalence_cats_axiom[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    category_equivalence_cats_axiom(e.backward, e.forward)
+}
+
+theorem swap_category_equivalence_unit_axiom[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    category_equivalence_unit_axiom(e.backward, e.forward, e.counit_bwd)
+}
+
+theorem swap_category_equivalence_counit_axiom[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    category_equivalence_counit_axiom(e.backward, e.forward, e.unit_bwd)
+}
+
+theorem swap_category_equivalence_axiom[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    is_category_equivalence(e.backward, e.forward, e.counit_bwd, e.counit_fwd, e.unit_bwd, e.unit_fwd)
+}
+
+let swap_category_equivalence[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) -> result: CategoryEquivalence[O2, M2, O1, M1] satisfy {
+    CategoryEquivalence[O2, M2, O1, M1].new(
+        e.backward, e.forward, e.counit_bwd, e.counit_fwd, e.unit_bwd, e.unit_fwd
+    ) = Option.some(result)
+}
+
+theorem swap_category_equivalence_forward[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).forward = e.backward
+}
+
+theorem swap_category_equivalence_backward[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).backward = e.forward
+}
+
+theorem swap_category_equivalence_unit_fwd[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).unit_fwd = e.counit_bwd
+}
+
+theorem swap_category_equivalence_unit_bwd[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).unit_bwd = e.counit_fwd
+}
+
+theorem swap_category_equivalence_counit_fwd[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).counit_fwd = e.unit_bwd
+}
+
+theorem swap_category_equivalence_counit_bwd[O1, M1, O2, M2](e: CategoryEquivalence[O1, M1, O2, M2]) {
+    swap_category_equivalence(e).counit_bwd = e.unit_fwd
+}
+
+theorem horizontal_compose_identity_inner_component_at[O1, M1, O2, M2, O3, M3](
+    outer: NaturalTransformation[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    x: O1
+) {
+    horizontal_composable(outer, identity_nat_trans(h)) implies
+        horizontal_compose_component(outer, identity_nat_trans(h), x) = outer.component(h.obj_map(x))
+}
+
+theorem equivalence_compose_left_whisker_natural_isomorphism_pair[O1, M1, O2, M2, O3, M3](
+    h: Functor[O2, M2, O3, M3],
+    fwd: NaturalTransformation[O1, M1, O2, M2],
+    bwd: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    whiskered_fwd: NaturalTransformation[O1, M1, O3, M3],
+    whiskered_bwd: NaturalTransformation[O1, M1, O3, M3]
+) {
+    is_natural_isomorphism_pair(fwd, bwd)
+    and h.src_cat = fwd.src_functor.dst_cat
+    and compose_functor(h, fwd.src_functor) = Option.some(src_comp)
+    and compose_functor(h, fwd.dst_functor) = Option.some(dst_comp)
+    and horizontal_compose_nat_trans(identity_nat_trans(h), fwd, src_comp, dst_comp) = Option.some(whiskered_fwd)
+    and horizontal_compose_nat_trans(identity_nat_trans(h), bwd, dst_comp, src_comp) = Option.some(whiskered_bwd)
+    implies is_natural_isomorphism_pair(whiskered_fwd, whiskered_bwd)
+}
+
+theorem equivalence_compose_left_whisker_natural_isomorphism_pair_exists[O1, M1, O2, M2, O3, M3](
+    h: Functor[O2, M2, O3, M3],
+    fwd: NaturalTransformation[O1, M1, O2, M2],
+    bwd: NaturalTransformation[O1, M1, O2, M2],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    is_natural_isomorphism_pair(fwd, bwd)
+    and h.src_cat = fwd.src_functor.dst_cat
+    and compose_functor(h, fwd.src_functor) = Option.some(src_comp)
+    and compose_functor(h, fwd.dst_functor) = Option.some(dst_comp)
+    implies exists(
+        whiskered_fwd: NaturalTransformation[O1, M1, O3, M3],
+        whiskered_bwd: NaturalTransformation[O1, M1, O3, M3]
+    ) {
+        horizontal_compose_nat_trans(identity_nat_trans(h), fwd, src_comp, dst_comp) =
+            Option.some(whiskered_fwd)
+        and horizontal_compose_nat_trans(identity_nat_trans(h), bwd, dst_comp, src_comp) =
+            Option.some(whiskered_bwd)
+        and is_natural_isomorphism_pair(whiskered_fwd, whiskered_bwd)
+    }
+}
+
+theorem equivalence_compose_right_whisker_natural_isomorphism_pair[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    fwd: NaturalTransformation[O2, M2, O3, M3],
+    bwd: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    whiskered_fwd: NaturalTransformation[O1, M1, O3, M3],
+    whiskered_bwd: NaturalTransformation[O1, M1, O3, M3]
+) {
+    is_natural_isomorphism_pair(fwd, bwd)
+    and h.dst_cat = fwd.src_functor.src_cat
+    and compose_functor(fwd.src_functor, h) = Option.some(src_comp)
+    and compose_functor(fwd.dst_functor, h) = Option.some(dst_comp)
+    and horizontal_compose_nat_trans(fwd, identity_nat_trans(h), src_comp, dst_comp) = Option.some(whiskered_fwd)
+    and horizontal_compose_nat_trans(bwd, identity_nat_trans(h), dst_comp, src_comp) = Option.some(whiskered_bwd)
+    implies is_natural_isomorphism_pair(whiskered_fwd, whiskered_bwd)
+}
+
+theorem equivalence_compose_right_whisker_natural_isomorphism_pair_exists[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    fwd: NaturalTransformation[O2, M2, O3, M3],
+    bwd: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    is_natural_isomorphism_pair(fwd, bwd)
+    and h.dst_cat = fwd.src_functor.src_cat
+    and compose_functor(fwd.src_functor, h) = Option.some(src_comp)
+    and compose_functor(fwd.dst_functor, h) = Option.some(dst_comp)
+    implies exists(
+        whiskered_fwd: NaturalTransformation[O1, M1, O3, M3],
+        whiskered_bwd: NaturalTransformation[O1, M1, O3, M3]
+    ) {
+        horizontal_compose_nat_trans(fwd, identity_nat_trans(h), src_comp, dst_comp) =
+            Option.some(whiskered_fwd)
+        and horizontal_compose_nat_trans(bwd, identity_nat_trans(h), dst_comp, src_comp) =
+            Option.some(whiskered_bwd)
+        and is_natural_isomorphism_pair(whiskered_fwd, whiskered_bwd)
+    }
+}
+
+theorem compose_functor_assoc_eq[O1, M1, O2, M2, O3, M3, O4, M4](
+    f: Functor[O3, M3, O4, M4],
+    g: Functor[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    gh: Functor[O1, M1, O3, M3],
+    fg: Functor[O2, M2, O4, M4],
+    left: Functor[O1, M1, O4, M4],
+    right: Functor[O1, M1, O4, M4]
+) {
+    compose_functor(g, h) = Option.some(gh)
+    and compose_functor(f, g) = Option.some(fg)
+    and compose_functor(f, gh) = Option.some(left)
+    and compose_functor(fg, h) = Option.some(right)
+    implies left = right
+}
+
+theorem compose_functor_composable_left[O1, M1, O2, M2, O3, M3, O4, M4](
+    f: Functor[O3, M3, O4, M4],
+    g: Functor[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    gh: Functor[O1, M1, O3, M3]
+) {
+    g.src_cat = h.dst_cat and f.src_cat = g.dst_cat
+    and compose_functor(g, h) = Option.some(gh)
+    implies f.src_cat = gh.dst_cat
+}
+
+theorem compose_functor_composable_right[O1, M1, O2, M2, O3, M3, O4, M4](
+    f: Functor[O3, M3, O4, M4],
+    g: Functor[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2],
+    fg: Functor[O2, M2, O4, M4]
+) {
+    g.src_cat = h.dst_cat and f.src_cat = g.dst_cat
+    and compose_functor(f, g) = Option.some(fg)
+    implies fg.src_cat = h.dst_cat
+}
+
+theorem compose_functor_assoc_some[O1, M1, O2, M2, O3, M3, O4, M4](
+    f: Functor[O3, M3, O4, M4],
+    g: Functor[O2, M2, O3, M3],
+    h: Functor[O1, M1, O2, M2]
+) {
+    g.src_cat = h.dst_cat and f.src_cat = g.dst_cat implies
+    exists(left: Functor[O1, M1, O4, M4], right: Functor[O1, M1, O4, M4]) {
+        exists(gh: Functor[O1, M1, O3, M3], fg: Functor[O2, M2, O4, M4]) {
+            compose_functor(g, h) = Option.some(gh)
+            and compose_functor(f, g) = Option.some(fg)
+            and compose_functor(f, gh) = Option.some(left)
+            and compose_functor(fg, h) = Option.some(right)
+            and left = right
+        }
+    }
+}
+
+define left_whisker_composable[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3]
+) -> Bool {
+    a.src_functor.src_cat = h.dst_cat
+}
+
+define left_whisker_nat_trans_component[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    x: O1
+) -> M3 {
+    a.component(h.obj_map(x))
+}
+
+theorem left_whisker_nat_trans_component_eq[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    x: O1
+) {
+    left_whisker_nat_trans_component(h, a, x) = a.component(h.obj_map(x))
+}
+
+define left_whisker_nat_trans[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) -> Option[NaturalTransformation[O1, M1, O3, M3]] {
+    horizontal_compose_nat_trans(a, identity_nat_trans(h), src_comp, dst_comp)
+}
+
+theorem left_whisker_nat_trans_some[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    left_whisker_composable(h, a) and
+    compose_functor(a.src_functor, h) = Option.some(src_comp) and
+    compose_functor(a.dst_functor, h) = Option.some(dst_comp) implies
+    exists(n: NaturalTransformation[O1, M1, O3, M3]) {
+        left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n)
+    }
+}
+
+theorem left_whisker_nat_trans_src_functor[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n) implies n.src_functor = src_comp
+}
+
+theorem left_whisker_nat_trans_dst_functor[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n) implies n.dst_functor = dst_comp
+}
+
+theorem left_whisker_nat_trans_component_map[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n) implies
+    n.component = horizontal_compose_component(a, identity_nat_trans(h))
+}
+
+theorem left_whisker_nat_trans_component_src[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    x: O1
+) {
+    left_whisker_composable(h, a) implies
+    a.src_functor.dst_cat.src(left_whisker_nat_trans_component(h, a, x)) =
+        a.src_functor.obj_map(h.obj_map(x))
+}
+
+theorem left_whisker_nat_trans_component_dst[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    x: O1
+) {
+    left_whisker_composable(h, a) implies
+    a.src_functor.dst_cat.dst(left_whisker_nat_trans_component(h, a, x)) =
+        a.dst_functor.obj_map(h.obj_map(x))
+}
+
+theorem left_whisker_nat_trans_component_at[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3],
+    x: O1
+) {
+    left_whisker_composable(h, a) and
+    left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n) implies
+    n.component(x) = left_whisker_nat_trans_component(h, a, x)
+}
+
+theorem left_whisker_nat_trans_naturality_at[O1, M1, O2, M2, O3, M3](
+    h: Functor[O1, M1, O2, M2],
+    a: NaturalTransformation[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3],
+    m: M1
+) {
+    left_whisker_nat_trans(h, a, src_comp, dst_comp) = Option.some(n) implies
+    n.src_functor.dst_cat.compose(n.component(n.src_functor.src_cat.dst(m)), n.src_functor.mor_map(m)) =
+        n.src_functor.dst_cat.compose(n.dst_functor.mor_map(m), n.component(n.src_functor.src_cat.src(m)))
+}
+
+define right_whisker_composable[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3]
+) -> Bool {
+    k.src_cat = a.src_functor.dst_cat
+}
+
+define right_whisker_nat_trans_component[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    x: O1
+) -> M3 {
+    k.mor_map(a.component(x))
+}
+
+theorem right_whisker_nat_trans_component_eq[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    x: O1
+) {
+    right_whisker_nat_trans_component(a, k, x) = k.mor_map(a.component(x))
+}
+
+define right_whisker_nat_trans[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) -> Option[NaturalTransformation[O1, M1, O3, M3]] {
+    horizontal_compose_nat_trans(identity_nat_trans(k), a, src_comp, dst_comp)
+}
+
+theorem right_whisker_nat_trans_some[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3]
+) {
+    right_whisker_composable(a, k) and
+    compose_functor(k, a.src_functor) = Option.some(src_comp) and
+    compose_functor(k, a.dst_functor) = Option.some(dst_comp) implies
+    exists(n: NaturalTransformation[O1, M1, O3, M3]) {
+        right_whisker_nat_trans(a, k, src_comp, dst_comp) = Option.some(n)
+    }
+}
+
+theorem right_whisker_nat_trans_src_functor[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    right_whisker_nat_trans(a, k, src_comp, dst_comp) = Option.some(n) implies n.src_functor = src_comp
+}
+
+theorem right_whisker_nat_trans_dst_functor[O1, M1, O2, M2, O3, M3](
+    a: NaturalTransformation[O1, M1, O2, M2],
+    k: Functor[O2, M2, O3, M3],
+    src_comp: Functor[O1, M1, O3, M3],
+    dst_comp: Functor[O1, M1, O3, M3],
+    n: NaturalTransformation[O1, M1, O3, M3]
+) {
+    right_whisker_nat_trans(a, k, src_comp, dst_comp) = Option.some(n) implies n.dst_functor = dst_comp
+}
