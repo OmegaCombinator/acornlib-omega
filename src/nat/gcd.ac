@@ -1,4 +1,4 @@
-from nat.nat_base import Nat, strong_induction, true_below, mul_cancel_left
+from nat.nat_base import Nat, strong_induction, true_below, mul_cancel_left, lt_imp_lte_suc, lte_trans, add_zero_right, lte_add_left, lte_imp_not_lt, divides_lte, mul_zero_left
 from pair import Pair
 numerals Nat
 
@@ -119,9 +119,11 @@ theorem no_infinite_decreasing(f: Nat -> Nat) {
             if h(x) {
                 f(x.suc) < f(x)
                 x + f(x.suc) < x + f(x)
-                x.suc + f(x.suc) = (x + f(x.suc)).suc
+                lt_imp_lte_suc(x + f(x.suc), x + f(x))
                 (x + f(x.suc)).suc <= x + f(x)
+                x.suc + f(x.suc) = (x + f(x.suc)).suc
                 x.suc + f(x.suc) <= x + f(x)
+                lte_trans(x.suc + f(x.suc), x + f(x), f(0))
                 h(x.suc)
             }
         }
@@ -129,7 +131,13 @@ theorem no_infinite_decreasing(f: Nat -> Nat) {
             h(x)
         }
         h(f(0).suc)
-        f(0).suc + f(f(0).suc) <= f(0)
+        0 <= f(f(0).suc)
+        lte_add_left(f(0).suc, Nat.0, f(f(0).suc))
+        f(0).suc + Nat.0 <= f(0).suc + f(f(0).suc)
+        add_zero_right(f(0).suc)
+        f(0).suc + Nat.0 = f(0).suc
+        f(0).suc <= f(0).suc + f(f(0).suc)
+        lte_trans(f(0).suc, f(0).suc + f(f(0).suc), f(0))
         f(0).suc <= f(0)
         false
     }
@@ -137,6 +145,36 @@ theorem no_infinite_decreasing(f: Nat -> Nat) {
 
 theorem dtz_terminates(f: Nat -> Nat) {
     decreasing_to_zero(f) implies exists(n: Nat) { f(n) = 0 }
+} by {
+    if decreasing_to_zero(f) {
+        decreasing_to_zero(f) = forall(x: Nat) {
+            f(x) = Nat.0 or f(x.suc) < f(x)
+        }
+        if not exists(n: Nat) { f(n) = 0 } {
+            forall(x: Nat) {
+                if f(x) != Nat.0 {
+                    f(x) = Nat.0 or f(x.suc) < f(x)
+                    f(x.suc) < f(x)
+                }
+            }
+            no_infinite_decreasing(f)
+            exists(x: Nat) { f(x) <= f(x.suc) }
+            let (z: Nat) satisfy {
+                f(z) <= f(z.suc)
+            }
+            if f(z) != Nat.0 {
+                f(z) = Nat.0 or f(z.suc) < f(z)
+                f(z.suc) < f(z)
+                lte_imp_not_lt(f(z), f(z.suc))
+                not (f(z.suc) < f(z))
+                false
+            }
+            f(z) = Nat.0
+            exists(n: Nat) { f(n) = 0 }
+            false
+        }
+        exists(n: Nat) { f(n) = 0 }
+    }
 }
 
 theorem gcd_terminates(p: Pair[Nat, Nat]) {
@@ -287,13 +325,24 @@ theorem gcd_divides_right(a: Nat, b: Nat) {
     a.gcd(b).divides(b)
 }
 
-theorem gcd_is_gcd(a: Nat, b: Nat, d: Nat) {
-    a != 0 and b != 0 and d.divides(a) and d.divides(b) implies d <= a.gcd(b)
-}
-
 theorem gcd_nonzero_left(a: Nat, b: Nat) {
     a != 0 implies a.gcd(b) != 0
 }
+
+theorem gcd_is_gcd(a: Nat, b: Nat, d: Nat) {
+    a != 0 and b != 0 and d.divides(a) and d.divides(b) implies d <= a.gcd(b)
+} by {
+    if a != Nat.0 and b != Nat.0 and d.divides(a) and d.divides(b) {
+        divides_gcd(d, a, b)
+        d.divides(a.gcd(b))
+        gcd_nonzero_left(a, b)
+        a.gcd(b) != Nat.0
+        divides_lte(d, a.gcd(b))
+        a.gcd(b) = Nat.0 or d <= a.gcd(b)
+        d <= a.gcd(b)
+    }
+}
+
 
 theorem gcd_zero_right(a: Nat) { a.gcd(0) = a }
 
@@ -321,8 +370,13 @@ theorem mod_maintains_imp_gcd(f: Nat -> Bool, a: Nat, b: Nat) {
     let g = function(n: Nat) {
         f(gcd_step_n(p, n).first) and f(gcd_step_n(p, n).second)
     }
-    f(gcd_step_n(p, 0).first)
-    g(0)
+    gcd_step_n(p, Nat.0) = p
+    gcd_step_n(p, Nat.0).first = a
+    gcd_step_n(p, Nat.0).second = b
+    f(a)
+    f(b)
+    f(gcd_step_n(p, Nat.0).first) and f(gcd_step_n(p, Nat.0).second)
+    g(Nat.0)
     forall(x: Nat) {
         if g(x) {
 
@@ -385,8 +439,20 @@ theorem gcd_mult_left_nonzero(a: Nat, b: Nat, m: Nat) {
 theorem gcd_mult_left(a: Nat, b: Nat, m: Nat) {
     m * a.gcd(b) = (m * a).gcd(m * b)
 } by {
-    if m = 0 {
+    if m = Nat.0 {
+        mul_zero_left(a.gcd(b))
+        m * a.gcd(b) = Nat.0
+        mul_zero_left(a)
+        m * a = Nat.0
+        mul_zero_left(b)
+        m * b = Nat.0
+        gcd_zero_left(Nat.0)
+        (m * a).gcd(m * b) = Nat.0
+        m * a.gcd(b) = (m * a).gcd(m * b)
     } else {
+        m != Nat.0
+        gcd_mult_left_nonzero(a, b, m)
+        m * a.gcd(b) = (m * a).gcd(m * b)
     }
 }
 

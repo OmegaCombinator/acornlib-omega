@@ -58,24 +58,6 @@ instance Nat: PartialOrder
 
 instance Nat: LinearOrder
 
-instance Nat: Semigroup
-
-instance Nat: Monoid
-
-attributes M: Monoid {
-    /// Raises a monoid element to a natural number power using repeated multiplication.
-    define pow(self, exp: Nat) -> M {
-        match exp {
-            Nat.zero {
-                M.1
-            }
-            Nat.suc(n) {
-                self * self.pow(n)
-            }
-        }
-    }
-}
-
 instance Nat: AddSemigroup
 
 instance Nat: AddCommSemigroup
@@ -83,12 +65,6 @@ instance Nat: AddCommSemigroup
 instance Nat: AddMonoid
 
 instance Nat: AddCommMonoid
-
-instance Nat: Semiring
-
-instance Nat: CommSemigroup
-
-instance Nat: CommMonoid
 
 instance Nat: Meet {
     define meet(self, other: Nat) -> Nat {
@@ -109,6 +85,30 @@ instance Nat: JoinSemilattice
 instance Nat: Lattice
 
 instance Nat: DistribLattice
+
+instance Nat: Semigroup
+
+instance Nat: CommSemigroup
+
+instance Nat: Monoid
+
+attributes M: Monoid {
+    /// Raises a monoid element to a natural number power using repeated multiplication.
+    define pow(self, exp: Nat) -> M {
+        match exp {
+            Nat.zero {
+                M.1
+            }
+            Nat.suc(n) {
+                self * self.pow(n)
+            }
+        }
+    }
+}
+
+instance Nat: Semiring
+
+instance Nat: CommMonoid
 
 attributes Nat {
     let 2: Nat = Nat.1.suc
@@ -398,6 +398,8 @@ theorem lt_mul_both(a: Nat, b: Nat, c: Nat) { a != 0 and b < c implies a * b < a
 
 theorem lt_cancel_mul(a: Nat, b: Nat, c: Nat) { a != 0 and a * b < a * c implies b < c }
 
+theorem lte_mul(a: Nat, b: Nat) { b != 0 implies a <= a * b }
+
 theorem mul_to_one(a: Nat, b: Nat) { a * b = 1 implies a = 1 }
 
 theorem divides_suc(a: Nat, b: Nat) { a.divides(b) and a.divides(b.suc) implies a = 1 }
@@ -419,8 +421,6 @@ theorem divides_zero(a: Nat) {
 theorem zero_divides(a: Nat) { 0.divides(a) implies a = 0 }
 
 theorem divides_mul(a: Nat, b: Nat, d: Nat) { d.divides(a) implies d.divides(a * b) }
-
-theorem lte_mul(a: Nat, b: Nat) { b != 0 implies a <= a * b }
 
 theorem divides_lte(a: Nat, b: Nat) { a.divides(b) implies b = 0 or a <= b }
 
@@ -964,12 +964,12 @@ theorem gcd_divides_right(a: Nat, b: Nat) {
     a.gcd(b).divides(b)
 }
 
-theorem gcd_is_gcd(a: Nat, b: Nat, d: Nat) {
-    a != 0 and b != 0 and d.divides(a) and d.divides(b) implies d <= a.gcd(b)
-}
-
 theorem gcd_nonzero_left(a: Nat, b: Nat) {
     a != 0 implies a.gcd(b) != 0
+}
+
+theorem gcd_is_gcd(a: Nat, b: Nat, d: Nat) {
+    a != 0 and b != 0 and d.divides(a) and d.divides(b) implies d <= a.gcd(b)
 }
 
 theorem gcd_zero_right(a: Nat) { a.gcd(0) = a }
@@ -1020,1106 +1020,1010 @@ theorem gcd_of_prime(p: Nat, n: Nat) {
     p.is_prime implies p.gcd(n) = 1 or p.divides(n)
 }
 
-let nat_lcm(a: Nat, b: Nat) -> l: Nat satisfy {
-    if a.gcd(b) = Nat.0 {
-        l = Nat.0
-    } else {
-        a.gcd(b) * l = a * b
-    }
+theorem nat_meet_lte_left(a: Nat, b: Nat) {
+    a.meet(b) <= a
 }
 
-attributes Nat {
-    /// The least common multiple of this number and b.
-    let lcm = nat_lcm
+theorem nat_meet_lte_right(a: Nat, b: Nat) {
+    a.meet(b) <= b
 }
 
-theorem gcd_mul_lcm(a: Nat, b: Nat) {
-    a.gcd(b) * a.lcm(b) = a * b
+theorem nat_lte_meet_of_bounds(c: Nat, a: Nat, b: Nat) {
+    c <= a and c <= b implies c <= a.meet(b)
 }
 
-theorem nat_lcm_one_right(a: Nat) {
-    a.lcm(Nat.1) = a
+theorem nat_lte_join_left(a: Nat, b: Nat) {
+    a <= a.join(b)
 }
 
-theorem nat_lcm_one_left(a: Nat) {
-    Nat.1.lcm(a) = a
+theorem nat_lte_join_right(a: Nat, b: Nat) {
+    b <= a.join(b)
 }
 
-theorem nat_lcm_one_pair(a: Nat) {
-    Nat.1.lcm(a) = a and a.lcm(Nat.1) = a
+theorem nat_join_lte_of_bounds(a: Nat, b: Nat, c: Nat) {
+    a <= c and b <= c implies a.join(b) <= c
 }
 
-define is_upper_bound_of(f: Nat -> Bool, b: Nat) -> Bool {
-    forall(n: Nat) {
-        f(n) implies n <= b
-    }
+theorem nat_meet_join_distrib_left(a: Nat, b: Nat, c: Nat) {
+    a.meet(b.join(c)) = a.meet(b).join(a.meet(c))
 }
 
-theorem is_upper_bound_of_apply(f: Nat -> Bool, b: Nat, n: Nat) {
-    is_upper_bound_of(f, b) and f(n) implies n <= b
+theorem nat_join_meet_distrib_left(a: Nat, b: Nat, c: Nat) {
+    a.join(b.meet(c)) = a.join(b).meet(a.join(c))
 }
 
-theorem is_upper_bound_of_intro(f: Nat -> Bool, b: Nat) {
-    (forall(n: Nat) { f(n) implies n <= b }) implies is_upper_bound_of(f, b)
+theorem nat_add_0_1 {
+    0 + 1 = 1
 }
 
-define is_max(f: Nat -> Bool, m: Nat) -> Bool {
-    f(m) and is_upper_bound_of(f, m)
+theorem nat_add_0_2 {
+    0 + 2 = 2
 }
 
-theorem is_max_apply(f: Nat -> Bool, m: Nat) {
-    is_max(f, m) implies f(m)
+theorem nat_add_0_3 {
+    0 + 3 = 3
 }
 
-theorem is_max_is_upper_bound(f: Nat -> Bool, m: Nat, n: Nat) {
-    is_max(f, m) and f(n) implies n <= m
+theorem nat_add_0_4 {
+    0 + 4 = 4
 }
 
-theorem is_max_intro(f: Nat -> Bool, m: Nat) {
-    f(m) and is_upper_bound_of(f, m) implies is_max(f, m)
+theorem nat_add_0_5 {
+    0 + 5 = 5
 }
 
-theorem has_max(f: Nat -> Bool, witness: Nat, bound: Nat) {
-    f(witness) and is_upper_bound_of(f, bound) implies exists(m: Nat) { is_max(f, m) }
+theorem nat_add_0_6 {
+    0 + 6 = 6
 }
 
-theorem max_unique(f: Nat -> Bool, m: Nat, m2: Nat) {
-    is_max(f, m) and is_max(f, m2) implies m = m2
+theorem nat_add_0_7 {
+    0 + 7 = 7
 }
 
-define count_upto(p: Nat -> Bool, n: Nat) -> Nat {
-    match n {
-        Nat.zero {
-            Nat.0
-        }
-        Nat.suc(k) {
-            if p(k) {
-                count_upto(p, k) + Nat.1
-            } else {
-                count_upto(p, k)
-            }
-        }
-    }
+theorem nat_add_0_8 {
+    0 + 8 = 8
 }
 
-theorem count_upto_zero(p: Nat -> Bool) {
-    count_upto(p, Nat.0) = Nat.0
+theorem nat_add_0_9 {
+    0 + 9 = 9
 }
 
-theorem count_upto_suc_true(p: Nat -> Bool, k: Nat) {
-    p(k) implies count_upto(p, k.suc) = count_upto(p, k) + Nat.1
+theorem nat_add_1_1 {
+    1 + 1 = 2
 }
 
-theorem count_upto_suc_false(p: Nat -> Bool, k: Nat) {
-    not p(k) implies count_upto(p, k.suc) = count_upto(p, k)
-}
-
-theorem count_upto_suc_bounds(p: Nat -> Bool, k: Nat) {
-    count_upto(p, k) <= count_upto(p, k.suc)
-        and count_upto(p, k.suc) <= count_upto(p, k) + Nat.1
-}
-
-theorem count_upto_le(p: Nat -> Bool, n: Nat) {
-    count_upto(p, n) <= n
-}
-
-theorem count_upto_mono(p: Nat -> Bool, m: Nat, n: Nat) {
-    m <= n implies count_upto(p, m) <= count_upto(p, n)
-}
-
-theorem count_upto_mono_pred(p: Nat -> Bool, r: Nat -> Bool, n: Nat) {
-    (forall(i: Nat) { i < n implies (p(i) implies r(i)) })
-        implies count_upto(p, n) <= count_upto(r, n)
-}
-
-define complement_pred(p: Nat -> Bool, i: Nat) -> Bool {
-    not p(i)
-}
-
-theorem count_upto_complement(p: Nat -> Bool, n: Nat) {
-    count_upto(p, n) + count_upto(complement_pred(p), n) = n
-}
-
-define all_pred(i: Nat) -> Bool {
-    true
-}
-
-theorem count_upto_all(n: Nat) {
-    count_upto(all_pred, n) = n
-}
-
-define none_pred(i: Nat) -> Bool {
-    false
-}
-
-theorem count_upto_none(n: Nat) {
-    count_upto(none_pred, n) = Nat.0
-}
-
-define eventually_after_nat(p: Nat -> Bool, n0: Nat) -> Bool {
-    forall(n: Nat) {
-        n0 <= n implies p(n)
-    }
-}
-
-define eventually_predicate_nat(p: Nat -> Bool) -> Bool {
-    exists(n0: Nat) {
-        eventually_after_nat(p, n0)
-    }
-}
-
-define predicate_and_nat(p: Nat -> Bool, q: Nat -> Bool, n: Nat) -> Bool {
-    p(n) and q(n)
-}
-
-define predicate_true_nat(n: Nat) -> Bool {
-    true
-}
-
-theorem eventually_after_nat_at(p: Nat -> Bool, n0: Nat, n: Nat) {
-    eventually_after_nat(p, n0) and n0 <= n implies p(n)
-}
-
-theorem eventually_predicate_nat_intro(p: Nat -> Bool, n0: Nat) {
-    eventually_after_nat(p, n0) implies eventually_predicate_nat(p)
-}
-
-theorem eventually_predicate_nat_has_witness(p: Nat -> Bool) {
-    eventually_predicate_nat(p) implies exists(n0: Nat) {
-        eventually_after_nat(p, n0)
-    }
-}
-
-theorem eventually_predicate_nat_of_forall(p: Nat -> Bool) {
-    (forall(n: Nat) { p(n) }) implies eventually_predicate_nat(p)
-}
-
-theorem eventually_predicate_nat_true {
-    eventually_predicate_nat(predicate_true_nat)
-}
-
-theorem eventually_after_nat_strengthen(p: Nat -> Bool, n0: Nat, n1: Nat) {
-    eventually_after_nat(p, n0) and n0 <= n1 implies eventually_after_nat(p, n1)
-}
-
-theorem eventually_predicate_nat_monotone(p: Nat -> Bool, q: Nat -> Bool) {
-    predicate_subset(p, q) and eventually_predicate_nat(p) implies eventually_predicate_nat(q)
-}
-
-theorem eventually_predicate_nat_transport_eq(p: Nat -> Bool, q: Nat -> Bool) {
-    p = q and eventually_predicate_nat(p) implies eventually_predicate_nat(q)
-}
-
-theorem eventually_predicate_nat_conjunction(p: Nat -> Bool, q: Nat -> Bool) {
-    eventually_predicate_nat(p) and eventually_predicate_nat(q)
-    implies eventually_predicate_nat(predicate_and_nat(p, q))
-}
-
-theorem eventually_predicate_nat_conjunction_left(p: Nat -> Bool, q: Nat -> Bool) {
-    eventually_predicate_nat(predicate_and_nat(p, q)) implies eventually_predicate_nat(p)
-}
-
-theorem eventually_predicate_nat_conjunction_right(p: Nat -> Bool, q: Nat -> Bool) {
-    eventually_predicate_nat(predicate_and_nat(p, q)) implies eventually_predicate_nat(q)
-}
-
-define negate_pred(p: Nat -> Bool, n: Nat) -> Bool {
-    not p(n)
-}
-
-theorem negate_pred_eq(p: Nat -> Bool, n: Nat) {
-    negate_pred(p)(n) = not p(n)
-}
-
-define is_least_failure(p: Nat -> Bool, m: Nat) -> Bool {
-    is_min(negate_pred(p), m)
-}
-
-theorem is_least_failure_fails(p: Nat -> Bool, m: Nat) {
-    is_least_failure(p, m) implies not p(m)
-}
-
-theorem is_least_failure_holds_below(p: Nat -> Bool, m: Nat, x: Nat) {
-    is_least_failure(p, m) and x < m implies p(x)
-}
-
-theorem is_least_failure_intro(p: Nat -> Bool, m: Nat) {
-    not p(m) and (forall(x: Nat) { x < m implies p(x) }) implies is_least_failure(p, m)
-}
-
-theorem least_failure_exists(p: Nat -> Bool, n: Nat) {
-    not p(n) implies exists(m: Nat) { is_least_failure(p, m) }
-}
-
-theorem least_failure_unique(p: Nat -> Bool, m: Nat, m2: Nat) {
-    is_least_failure(p, m) and is_least_failure(p, m2) implies m = m2
-}
-
-theorem least_failure_is_least(p: Nat -> Bool, m: Nat, x: Nat) {
-    is_least_failure(p, m) and not p(x) implies m <= x
-}
-
-theorem least_failure_positive_holds_at_zero(p: Nat -> Bool, m: Nat) {
-    is_least_failure(p, m) and Nat.0 < m implies p(Nat.0)
-}
-
-theorem least_failure_positive(p: Nat -> Bool, m: Nat) {
-    is_least_failure(p, m) and p(Nat.0) implies Nat.0 < m
-}
-
-theorem least_failure_lower_bound(p: Nat -> Bool, m: Nat, b: Nat) {
-    is_least_failure(p, m) and (forall(x: Nat) { x < b implies p(x) }) implies b <= m
-}
-
-theorem add_mod_self(x: Nat, n: Nat) {
-    n != Nat.0 implies (x + n).mod(n) = x.mod(n)
-}
-
-theorem small_add_mod_self(x: Nat, n: Nat) {
-    x < n implies (x + n).mod(n) = x
-}
-
-theorem suc_mod_cases(v: Nat, n: Nat, w: Nat) {
-    v < n and v.suc.mod(n) = w implies
-        (w = v.suc or (v.suc = n and w = Nat.0))
-}
-
-theorem pow_one[M: Monoid](a: M) {
-    a.pow(Nat.1) = a
-}
-
-theorem pow_zero[M: Monoid](a: M) {
-    a.pow(Nat.0) = M.1
-}
-
-theorem alt_pow_zero[M: Monoid](a: M, exp: Nat) {
-    exp != Nat.0 or a.pow(exp) = M.1
-}
-
-theorem pow_add[M: Monoid](a: M, n: Nat, m: Nat) {
-    a.pow(n) * a.pow(m) = a.pow(n + m)
-}
-
-theorem pow_pow[M: Monoid](a: M, n: Nat, m: Nat) {
-    a.pow(n).pow(m) = a.pow(n * m)
-}
-
-theorem one_pow[M: Monoid](n: Nat) {
-    M.1.pow(n) = M.1
-}
-
-theorem monoid_hom_pow[M: Monoid, N: Monoid](f: MonoidHom[M, N], a: M, n: Nat) {
-    f.hom(a.pow(n)) = f.hom(a).pow(n)
-}
-
-theorem pow_distrib_mul[M: CommMonoid](a: M, b: M, c: Nat) {
-    (a * b).pow(c) = a.pow(c) * b.pow(c)
-}
-
-theorem exp_one(a: Nat) {
-    a.pow(1) = a
-}
-
-theorem exp_zero(a: Nat) {
-    a.pow(0) = 1
-}
-
-theorem exp_add(a: Nat, b: Nat, c: Nat) {
-    a.pow(b + c) = a.pow(b) * a.pow(c)
-}
-
-theorem exp_mul(a: Nat, b: Nat, c: Nat) {
-    a.pow(b * c) = a.pow(b).pow(c)
-}
-
-theorem zero_exp(n: Nat) {
-    n != 0 implies 0.pow(n) = 0
-}
-
-theorem one_exp(n: Nat) {
-    1.pow(n) = 1
-}
-
-theorem exp_gte_one(a: Nat, b: Nat) {
-    a != 0 implies 1 <= a.pow(b)
-}
-
-theorem exp_gt_one(a: Nat, b: Nat) {
-    1 < a and b != 0 implies 1 < a.pow(b)
-}
-
-theorem exp_ne_zero(a: Nat, b: Nat) {
-    a != 0 implies a.pow(b) != 0
-}
-
-theorem lte_imp_exp_lte(a: Nat, b: Nat, c: Nat) {
-    a != 0 and b <= c implies a.pow(b) <= a.pow(c)
-}
-
-theorem lte_exp(a: Nat, b: Nat) {
-    a != 0 and b != 0 implies a <= a.pow(b)
-}
-
-theorem lt_imp_exp_lt(a: Nat, b: Nat, c: Nat) {
-    1 < a and b < c implies a.pow(b) < a.pow(c)
-}
-
-theorem exp_lte_imp_lte(a: Nat, b: Nat, c: Nat) {
-    1 < a and a.pow(b) <= a.pow(c)
-    implies
-    b <= c
-}
-
-theorem exp_lt_imp_lt(a: Nat, b: Nat, c: Nat) {
-    1 < a and a.pow(b) < a.pow(c)
-    implies
-    b < c
-}
-
-theorem exp_eq_one_imp(a: Nat, b: Nat) {
-    a != 1 and a.pow(b) = 1 implies b = 0
-}
-
-theorem sq_eq_mul(a: Nat) {
-    a.pow(2) = a * a
-}
-
-theorem div_mod_decomp_eq(a: Nat, m: Nat) {
-    a = a.div(m) * m + a.mod(m)
-}
-
-theorem div_of_decomp_eq(a: Nat, q: Nat, r: Nat, m: Nat) {
-    r < m and a = q * m + r implies a.div(m) = q
-}
-
-theorem mod_of_decomp_eq(a: Nat, q: Nat, r: Nat, m: Nat) {
-    r < m and a = q * m + r implies a.mod(m) = r
-}
-
-theorem div_one(n: Nat) {
-    n.div(Nat.1) = n
-}
-
-theorem mod_one(n: Nat) {
-    n.mod(Nat.1) = Nat.0
-}
-
-theorem div_mul_of_divides(a: Nat, m: Nat) {
-    m != Nat.0 and m.divides(a) implies a.div(m) * m = a
-}
-
-theorem count_multiples_zero_right(d: Nat) {
-    count_multiples(d, Nat.0) = Nat.0
-}
-
-theorem count_multiples_suc_of_divides(d: Nat, n: Nat) {
-    d.divides(n.suc) implies
-        count_multiples(d, n.suc) = count_multiples(d, n) + Nat.1
-}
-
-theorem count_multiples_suc_of_not_divides(d: Nat, n: Nat) {
-    not d.divides(n.suc) implies count_multiples(d, n.suc) = count_multiples(d, n)
-}
-
-theorem count_multiples_eq_div_nonzero(d: Nat, n: Nat) {
-    d != Nat.0 implies count_multiples(d, n) = n.div(d)
-}
-
-theorem count_multiples_one(n: Nat) {
-    count_multiples(Nat.1, n) = n
-}
-
-theorem count_multiples_zero_left(n: Nat) {
-    count_multiples(Nat.0, n) = Nat.0
-}
-
-theorem zero_div_by_nonzero(d: Nat) {
-    d != Nat.0 implies Nat.0.div(d) = Nat.0
-}
-
-theorem digit_sum_fuel_zero(p: Nat, fuel: Nat) {
-    digit_sum_fuel(p, Nat.0, fuel) = Nat.0
-}
-
-theorem digit_sum_fuel_suc_nonzero(p: Nat, n: Nat, fuel: Nat) {
-    n != Nat.0 implies
-        digit_sum_fuel(p, n, fuel.suc) = n.mod(p) + digit_sum_fuel(p, n.div(p), fuel)
-}
-
-theorem digit_sum_small(p: Nat, n: Nat) {
-    Nat.1 < p and n < p implies digit_sum(p, n) = n
-}
-
-theorem nat_pow_nonzero_of_base_nonzero(a: Nat, n: Nat) {
-    a != Nat.0 implies a.pow(n) != Nat.0
-}
-
-theorem nat_pow_suc(a: Nat, n: Nat) {
-    a.pow(n.suc) = a * a.pow(n)
-}
-
-theorem nat_pow_two(a: Nat) {
-    a.pow(Nat.2) = a * a
-}
-
-theorem nat_pow_add_product(a: Nat, m: Nat, n: Nat) {
-    a.pow(m) * a.pow(n) = a.pow(m + n)
-}
-
-theorem nat_pow_mul_power(a: Nat, m: Nat, n: Nat) {
-    a.pow(m * n) = a.pow(m).pow(n)
-}
-
-theorem nat_gcd_self(a: Nat) {
-    a.gcd(a) = a
-}
-
-theorem nat_gcd_divides_both(a: Nat, b: Nat) {
-    a.gcd(b).divides(a) and a.gcd(b).divides(b)
-}
-
-theorem nat_common_divisor_divides_gcd(a: Nat, b: Nat, d: Nat) {
-    d.divides(a) and d.divides(b) implies d.divides(a.gcd(b))
-}
-
-theorem nat_gcd_eq_zero_imp_inputs_zero(a: Nat, b: Nat) {
-    a.gcd(b) = Nat.0 implies a = Nat.0 and b = Nat.0
-}
-
-theorem nat_lcm_zero_left(a: Nat) {
-    Nat.0.lcm(a) = Nat.0
-}
-
-theorem nat_lcm_zero_right(a: Nat) {
-    a.lcm(Nat.0) = Nat.0
-}
-
-theorem nat_lcm_comm(a: Nat, b: Nat) {
-    a.lcm(b) = b.lcm(a)
-}
-
-theorem nat_lcm_self(a: Nat) {
-    a.lcm(a) = a
-}
-
-theorem one_plus_six {
-    1 + 6 = 7
-}
-
-theorem one_plus_seven {
-    1 + 7 = 8
-}
-
-theorem one_plus_eight {
-    1 + 8 = 9
-}
-
-theorem one_plus_nine {
-    1 + 9 = 10
-}
-
-theorem one_plus_ten {
-    1 + 10 = 11
-}
-
-theorem two_plus_one {
+theorem nat_add_2_1 {
     2 + 1 = 3
 }
 
-theorem two_plus_two {
+theorem nat_add_2_2 {
     2 + 2 = 4
 }
 
-theorem two_plus_three {
-    2 + 3 = 5
-}
-
-theorem two_plus_four {
-    2 + 4 = 6
-}
-
-theorem two_plus_five {
-    2 + 5 = 7
-}
-
-theorem two_plus_six {
-    2 + 6 = 8
-}
-
-theorem two_plus_seven {
-    2 + 7 = 9
-}
-
-theorem two_plus_eight {
-    2 + 8 = 10
-}
-
-theorem two_plus_nine {
-    2 + 9 = 11
-}
-
-theorem two_plus_ten {
-    2 + 10 = 12
-}
-
-theorem three_plus_one {
+theorem nat_add_3_1 {
     3 + 1 = 4
 }
 
-theorem three_plus_two {
+theorem nat_add_3_2 {
     3 + 2 = 5
 }
 
-theorem three_plus_three {
+theorem nat_add_3_3 {
     3 + 3 = 6
 }
 
-theorem three_plus_four {
-    3 + 4 = 7
-}
-
-theorem three_plus_five {
-    3 + 5 = 8
-}
-
-theorem three_plus_six {
-    3 + 6 = 9
-}
-
-theorem three_plus_seven {
-    3 + 7 = 10
-}
-
-theorem three_plus_eight {
-    3 + 8 = 11
-}
-
-theorem three_plus_nine {
-    3 + 9 = 12
-}
-
-theorem three_plus_ten {
-    3 + 10 = 13
-}
-
-theorem four_plus_one {
+theorem nat_add_4_1 {
     4 + 1 = 5
 }
 
-theorem four_plus_two {
+theorem nat_add_4_2 {
     4 + 2 = 6
 }
 
-theorem four_plus_three {
+theorem nat_add_4_3 {
     4 + 3 = 7
 }
 
-theorem four_plus_four {
+theorem nat_add_4_4 {
     4 + 4 = 8
 }
 
-theorem four_plus_five {
-    4 + 5 = 9
-}
-
-theorem four_plus_six {
-    4 + 6 = 10
-}
-
-theorem four_plus_seven {
-    4 + 7 = 11
-}
-
-theorem four_plus_eight {
-    4 + 8 = 12
-}
-
-theorem four_plus_nine {
-    4 + 9 = 13
-}
-
-theorem four_plus_ten {
-    4 + 10 = 14
-}
-
-theorem five_plus_one {
+theorem nat_add_5_1 {
     5 + 1 = 6
 }
 
-theorem five_plus_two {
+theorem nat_add_5_2 {
     5 + 2 = 7
 }
 
-theorem five_plus_three {
+theorem nat_add_5_3 {
     5 + 3 = 8
 }
 
-theorem five_plus_four {
+theorem nat_add_5_4 {
     5 + 4 = 9
 }
 
-theorem five_plus_five {
+theorem nat_add_5_5 {
     5 + 5 = 10
 }
 
-theorem five_plus_six {
-    5 + 6 = 11
-}
-
-theorem five_plus_seven {
-    5 + 7 = 12
-}
-
-theorem five_plus_eight {
-    5 + 8 = 13
-}
-
-theorem five_plus_nine {
-    5 + 9 = 14
-}
-
-theorem five_plus_ten {
-    5 + 10 = 15
-}
-
-theorem six_plus_one {
+theorem nat_add_6_1 {
     6 + 1 = 7
 }
 
-theorem six_plus_two {
+theorem nat_add_6_2 {
     6 + 2 = 8
 }
 
-theorem six_plus_three {
+theorem nat_add_6_3 {
     6 + 3 = 9
 }
 
-theorem six_plus_four {
+theorem nat_add_6_4 {
     6 + 4 = 10
 }
 
-theorem six_plus_five {
+theorem nat_add_6_5 {
     6 + 5 = 11
 }
 
-theorem six_plus_six {
+theorem nat_add_6_6 {
     6 + 6 = 12
 }
 
-theorem six_plus_seven {
-    6 + 7 = 13
-}
-
-theorem six_plus_eight {
-    6 + 8 = 14
-}
-
-theorem six_plus_nine {
-    6 + 9 = 15
-}
-
-theorem six_plus_ten {
-    6 + 10 = 16
-}
-
-theorem seven_plus_one {
+theorem nat_add_7_1 {
     7 + 1 = 8
 }
 
-theorem seven_plus_two {
+theorem nat_add_7_2 {
     7 + 2 = 9
 }
 
-theorem seven_plus_three {
+theorem nat_add_7_3 {
     7 + 3 = 10
 }
 
-theorem seven_plus_four {
+theorem nat_add_7_4 {
     7 + 4 = 11
 }
 
-theorem seven_plus_five {
+theorem nat_add_7_5 {
     7 + 5 = 12
 }
 
-theorem seven_plus_six {
+theorem nat_add_7_6 {
     7 + 6 = 13
 }
 
-theorem seven_plus_seven {
+theorem nat_add_7_7 {
     7 + 7 = 14
 }
 
-theorem seven_plus_eight {
-    7 + 8 = 15
-}
-
-theorem seven_plus_nine {
-    7 + 9 = 16
-}
-
-theorem seven_plus_ten {
-    7 + 10 = 17
-}
-
-theorem eight_plus_one {
+theorem nat_add_8_1 {
     8 + 1 = 9
 }
 
-theorem eight_plus_two {
+theorem nat_add_8_2 {
     8 + 2 = 10
 }
 
-theorem eight_plus_three {
+theorem nat_add_8_3 {
     8 + 3 = 11
 }
 
-theorem eight_plus_four {
+theorem nat_add_8_4 {
     8 + 4 = 12
 }
 
-theorem eight_plus_five {
+theorem nat_add_8_5 {
     8 + 5 = 13
 }
 
-theorem eight_plus_six {
+theorem nat_add_8_6 {
     8 + 6 = 14
 }
 
-theorem eight_plus_seven {
+theorem nat_add_8_7 {
     8 + 7 = 15
 }
 
-theorem eight_plus_eight {
+theorem nat_add_8_8 {
     8 + 8 = 16
 }
 
-theorem eight_plus_nine {
-    8 + 9 = 17
-}
-
-theorem eight_plus_ten {
-    8 + 10 = 18
-}
-
-theorem nine_plus_one {
+theorem nat_add_9_1 {
     9 + 1 = 10
 }
 
-theorem nine_plus_two {
+theorem nat_add_9_2 {
     9 + 2 = 11
 }
 
-theorem nine_plus_three {
+theorem nat_add_9_3 {
     9 + 3 = 12
 }
 
-theorem nine_plus_four {
+theorem nat_add_9_4 {
     9 + 4 = 13
 }
 
-theorem nine_plus_five {
+theorem nat_add_9_5 {
     9 + 5 = 14
 }
 
-theorem nine_plus_six {
+theorem nat_add_9_6 {
     9 + 6 = 15
 }
 
-theorem nine_plus_seven {
+theorem nat_add_9_7 {
     9 + 7 = 16
 }
 
-theorem nine_plus_eight {
+theorem nat_add_9_8 {
     9 + 8 = 17
 }
 
-theorem nine_plus_nine {
+theorem nat_add_9_9 {
     9 + 9 = 18
 }
 
-theorem nine_plus_ten {
-    9 + 10 = 19
-}
-
-theorem ten_plus_one {
+theorem nat_add_10_1 {
     10 + 1 = 11
 }
 
-theorem ten_plus_two {
+theorem nat_add_10_2 {
     10 + 2 = 12
 }
 
-theorem ten_plus_three {
+theorem nat_add_10_3 {
     10 + 3 = 13
 }
 
-theorem ten_plus_four {
+theorem nat_add_10_4 {
     10 + 4 = 14
 }
 
-theorem ten_plus_five {
+theorem nat_add_10_5 {
     10 + 5 = 15
 }
 
-theorem ten_plus_six {
-    10 + 6 = 16
+theorem nat_add_12_1 {
+    12 + 1 = 13
 }
 
-theorem ten_plus_seven {
-    10 + 7 = 17
+theorem nat_add_12_2 {
+    12 + 2 = 14
 }
 
-theorem ten_plus_eight {
-    10 + 8 = 18
+theorem nat_add_12_3 {
+    12 + 3 = 15
 }
 
-theorem ten_plus_nine {
-    10 + 9 = 19
+theorem nat_add_12_4 {
+    12 + 4 = 16
 }
 
-theorem ten_plus_ten {
-    10 + 10 = 20
+theorem nat_add_12_5 {
+    12 + 5 = 17
 }
 
-define carry_total(p: Nat, a: Nat, b: Nat, c: Nat) -> Nat {
-    a.mod(p) + b.mod(p) + c
+theorem nat_add_12_6 {
+    12 + 6 = 18
 }
 
-define carry_digit(p: Nat, a: Nat, b: Nat, c: Nat) -> Nat {
-    carry_total(p, a, b, c).mod(p)
+theorem nat_add_14_1 {
+    14 + 1 = 15
 }
 
-define carry_out(p: Nat, a: Nat, b: Nat, c: Nat) -> Nat {
-    carry_total(p, a, b, c).div(p)
+theorem nat_add_14_2 {
+    14 + 2 = 16
 }
 
-define carry_high(p: Nat, a: Nat, b: Nat, c: Nat) -> Nat {
-    a.div(p) + b.div(p) + carry_out(p, a, b, c)
+theorem nat_add_14_3 {
+    14 + 3 = 17
 }
 
-define carry_count_fuel(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) -> Nat {
-    match fuel {
-        Nat.zero {
-            Nat.0
-        }
-        Nat.suc(k) {
-            carry_out(p, a, b, c) +
-                carry_count_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), k)
-        }
-    }
+theorem nat_add_14_4 {
+    14 + 4 = 18
 }
 
-define carry_high_fuel(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) -> Nat {
-    match fuel {
-        Nat.zero {
-            a + b + c
-        }
-        Nat.suc(k) {
-            carry_high_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), k)
-        }
-    }
+theorem nat_add_14_5 {
+    14 + 5 = 19
 }
 
-define carry_digit_sum_fuel(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) -> Nat {
-    match fuel {
-        Nat.zero {
-            Nat.0
-        }
-        Nat.suc(k) {
-            carry_digit(p, a, b, c) +
-                carry_digit_sum_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), k)
-        }
-    }
+theorem nat_add_14_6 {
+    14 + 6 = 20
 }
 
-define iterated_div(p: Nat, n: Nat, fuel: Nat) -> Nat {
-    match fuel {
-        Nat.zero {
-            n
-        }
-        Nat.suc(k) {
-            iterated_div(p, n.div(p), k)
-        }
-    }
+theorem nat_add_14_7 {
+    14 + 7 = 21
 }
 
-define is_addition_carry_count(p: Nat, a: Nat, b: Nat, count: Nat) -> Bool {
-    p * count + digit_sum(p, a + b) =
-        count + digit_sum(p, a) + digit_sum(p, b)
+theorem nat_add_15_1 {
+    15 + 1 = 16
 }
 
-theorem carry_total_comm(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_total(p, a, b, c) = carry_total(p, b, a, c)
+theorem nat_add_15_2 {
+    15 + 2 = 17
 }
 
-theorem carry_digit_comm(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_digit(p, a, b, c) = carry_digit(p, b, a, c)
+theorem nat_add_15_3 {
+    15 + 3 = 18
 }
 
-theorem carry_out_comm(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_out(p, a, b, c) = carry_out(p, b, a, c)
+theorem nat_add_15_4 {
+    15 + 4 = 19
 }
 
-theorem carry_high_comm(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_high(p, a, b, c) = carry_high(p, b, a, c)
+theorem nat_add_15_5 {
+    15 + 5 = 20
 }
 
-theorem carry_total_decomp(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_out(p, a, b, c) * p + carry_digit(p, a, b, c) =
-        carry_total(p, a, b, c)
+theorem nat_add_16_1 {
+    16 + 1 = 17
 }
 
-theorem carry_total_eq(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_total(p, a, b, c) = a.mod(p) + b.mod(p) + c
+theorem nat_add_16_2 {
+    16 + 2 = 18
 }
 
-theorem carry_digit_eq(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_digit(p, a, b, c) = carry_total(p, a, b, c).mod(p)
+theorem nat_add_16_3 {
+    16 + 3 = 19
 }
 
-theorem carry_out_eq(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_out(p, a, b, c) = carry_total(p, a, b, c).div(p)
+theorem nat_add_16_4 {
+    16 + 4 = 20
 }
 
-theorem carry_high_eq(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_high(p, a, b, c) = a.div(p) + b.div(p) + carry_out(p, a, b, c)
+theorem nat_add_16_5 {
+    16 + 5 = 21
 }
 
-theorem carry_digit_lt_base(p: Nat, a: Nat, b: Nat, c: Nat) {
-    p != Nat.0 implies carry_digit(p, a, b, c) < p
+theorem nat_add_16_6 {
+    16 + 6 = 22
 }
 
-theorem carry_out_of_total_lt_base(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_total(p, a, b, c) < p implies carry_out(p, a, b, c) = Nat.0
+theorem nat_add_16_7 {
+    16 + 7 = 23
 }
 
-theorem carry_digit_of_total_lt_base(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_total(p, a, b, c) < p implies
-        carry_digit(p, a, b, c) = carry_total(p, a, b, c)
+theorem nat_add_16_8 {
+    16 + 8 = 24
 }
 
-theorem carry_add_decomp(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_high(p, a, b, c) * p + carry_digit(p, a, b, c) =
-        a + b + c
+theorem nat_add_18_1 {
+    18 + 1 = 19
 }
 
-theorem carry_add_div(p: Nat, a: Nat, b: Nat, c: Nat) {
-    p != Nat.0 implies (a + b + c).div(p) = carry_high(p, a, b, c)
+theorem nat_add_18_2 {
+    18 + 2 = 20
 }
 
-theorem carry_add_mod(p: Nat, a: Nat, b: Nat, c: Nat) {
-    p != Nat.0 implies (a + b + c).mod(p) = carry_digit(p, a, b, c)
+theorem nat_add_18_3 {
+    18 + 3 = 21
 }
 
-theorem carry_count_fuel_zero(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_count_fuel(p, a, b, c, Nat.0) = Nat.0
+theorem nat_add_18_4 {
+    18 + 4 = 22
 }
 
-theorem carry_count_fuel_suc(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_count_fuel(p, a, b, c, fuel.suc) =
-        carry_out(p, a, b, c) +
-        carry_count_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), fuel)
+theorem nat_add_18_5 {
+    18 + 5 = 23
 }
 
-theorem carry_high_fuel_zero(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_high_fuel(p, a, b, c, Nat.0) = a + b + c
+theorem nat_add_18_6 {
+    18 + 6 = 24
 }
 
-theorem carry_high_fuel_suc(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_high_fuel(p, a, b, c, fuel.suc) =
-        carry_high_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), fuel)
+theorem nat_add_18_7 {
+    18 + 7 = 25
 }
 
-theorem carry_digit_sum_fuel_zero(p: Nat, a: Nat, b: Nat, c: Nat) {
-    carry_digit_sum_fuel(p, a, b, c, Nat.0) = Nat.0
+theorem nat_add_18_8 {
+    18 + 8 = 26
 }
 
-theorem carry_digit_sum_fuel_suc(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_digit_sum_fuel(p, a, b, c, fuel.suc) =
-        carry_digit(p, a, b, c) +
-        carry_digit_sum_fuel(p, a.div(p), b.div(p), carry_out(p, a, b, c), fuel)
+theorem nat_add_18_9 {
+    18 + 9 = 27
 }
 
-theorem iterated_div_zero(p: Nat, n: Nat) {
-    iterated_div(p, n, Nat.0) = n
+theorem nat_add_20_1 {
+    20 + 1 = 21
 }
 
-theorem iterated_div_suc(p: Nat, n: Nat, fuel: Nat) {
-    iterated_div(p, n, fuel.suc) = iterated_div(p, n.div(p), fuel)
+theorem nat_add_20_2 {
+    20 + 2 = 22
 }
 
-theorem iterated_div_zero_value(p: Nat, fuel: Nat) {
-    p != Nat.0 implies iterated_div(p, Nat.0, fuel) = Nat.0
+theorem nat_add_20_3 {
+    20 + 3 = 23
 }
 
-theorem carry_count_fuel_comm(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_count_fuel(p, a, b, c, fuel) =
-        carry_count_fuel(p, b, a, c, fuel)
+theorem nat_add_20_4 {
+    20 + 4 = 24
 }
 
-theorem carry_high_fuel_comm(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_high_fuel(p, a, b, c, fuel) =
-        carry_high_fuel(p, b, a, c, fuel)
+theorem nat_add_20_5 {
+    20 + 5 = 25
 }
 
-theorem carry_digit_sum_fuel_comm(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    carry_digit_sum_fuel(p, a, b, c, fuel) =
-        carry_digit_sum_fuel(p, b, a, c, fuel)
+theorem nat_add_21_1 {
+    21 + 1 = 22
 }
 
-theorem digit_sum_mod_div(p: Nat, n: Nat) {
-    Nat.1 < p implies digit_sum(p, n) = n.mod(p) + digit_sum(p, n.div(p))
+theorem nat_add_21_2 {
+    21 + 2 = 23
 }
 
-theorem digit_sum_carry_step(p: Nat, a: Nat, b: Nat, c: Nat) {
-    Nat.1 < p implies
-        digit_sum(p, a + b + c) =
-            carry_digit(p, a, b, c) + digit_sum(p, carry_high(p, a, b, c))
+theorem nat_add_21_3 {
+    21 + 3 = 24
 }
 
-theorem digit_sum_carry_fuel_decomp(p: Nat, a: Nat, b: Nat, c: Nat, fuel: Nat) {
-    Nat.1 < p implies
-        digit_sum(p, a + b + c) =
-            carry_digit_sum_fuel(p, a, b, c, fuel) +
-            digit_sum(p, carry_high_fuel(p, a, b, c, fuel))
+theorem nat_add_21_4 {
+    21 + 4 = 25
 }
 
-theorem carry_high_fuel_zero_right(p: Nat, a: Nat, fuel: Nat) {
-    p != Nat.0 implies
-        carry_high_fuel(p, a, Nat.0, Nat.0, fuel) = iterated_div(p, a, fuel)
+theorem nat_add_21_5 {
+    21 + 5 = 26
 }
 
-theorem carry_high_fuel_zero_left(p: Nat, b: Nat, fuel: Nat) {
-    p != Nat.0 implies
-        carry_high_fuel(p, Nat.0, b, Nat.0, fuel) = iterated_div(p, b, fuel)
+theorem nat_add_21_6 {
+    21 + 6 = 27
 }
 
-theorem carry_digit_sum_fuel_zero_right_step(p: Nat, a: Nat, k: Nat) {
-    p != Nat.0 and forall(x: Nat) {
-        carry_digit_sum_fuel(p, x, Nat.0, Nat.0, k) =
-            digit_sum_fuel(p, x, k)
-    } implies
-        carry_digit_sum_fuel(p, a, Nat.0, Nat.0, k.suc) =
-            digit_sum_fuel(p, a, k.suc)
+theorem nat_add_21_7 {
+    21 + 7 = 28
 }
 
-theorem carry_digit_sum_fuel_zero_right(p: Nat, a: Nat, fuel: Nat) {
-    p != Nat.0 implies
-        carry_digit_sum_fuel(p, a, Nat.0, Nat.0, fuel) =
-        digit_sum_fuel(p, a, fuel)
+theorem nat_add_24_1 {
+    24 + 1 = 25
 }
 
-theorem carry_digit_sum_fuel_zero_left(p: Nat, b: Nat, fuel: Nat) {
-    p != Nat.0 implies
-        carry_digit_sum_fuel(p, Nat.0, b, Nat.0, fuel) =
-        digit_sum_fuel(p, b, fuel)
+theorem nat_add_24_2 {
+    24 + 2 = 26
 }
 
-theorem carry_total_zero_right(p: Nat, a: Nat) {
-    carry_total(p, a, Nat.0, Nat.0) = a.mod(p)
+theorem nat_add_24_3 {
+    24 + 3 = 27
 }
 
-theorem carry_total_zero_left(p: Nat, b: Nat) {
-    carry_total(p, Nat.0, b, Nat.0) = b.mod(p)
+theorem nat_add_24_4 {
+    24 + 4 = 28
+}
+
+theorem nat_add_24_5 {
+    24 + 5 = 29
+}
+
+theorem nat_add_24_6 {
+    24 + 6 = 30
+}
+
+theorem nat_add_24_7 {
+    24 + 7 = 31
+}
+
+theorem nat_add_24_8 {
+    24 + 8 = 32
+}
+
+theorem nat_add_25_1 {
+    25 + 1 = 26
+}
+
+theorem nat_add_25_2 {
+    25 + 2 = 27
+}
+
+theorem nat_add_25_3 {
+    25 + 3 = 28
+}
+
+theorem nat_add_25_4 {
+    25 + 4 = 29
+}
+
+theorem nat_add_25_5 {
+    25 + 5 = 30
+}
+
+theorem nat_add_27_1 {
+    27 + 1 = 28
+}
+
+theorem nat_add_27_2 {
+    27 + 2 = 29
+}
+
+theorem nat_add_27_3 {
+    27 + 3 = 30
+}
+
+theorem nat_add_27_4 {
+    27 + 4 = 31
+}
+
+theorem nat_add_27_5 {
+    27 + 5 = 32
+}
+
+theorem nat_add_27_6 {
+    27 + 6 = 33
+}
+
+theorem nat_add_27_7 {
+    27 + 7 = 34
+}
+
+theorem nat_add_27_8 {
+    27 + 8 = 35
+}
+
+theorem nat_add_27_9 {
+    27 + 9 = 36
+}
+
+theorem nat_add_28_1 {
+    28 + 1 = 29
+}
+
+theorem nat_add_28_2 {
+    28 + 2 = 30
+}
+
+theorem nat_add_28_3 {
+    28 + 3 = 31
+}
+
+theorem nat_add_28_4 {
+    28 + 4 = 32
+}
+
+theorem nat_add_28_5 {
+    28 + 5 = 33
+}
+
+theorem nat_add_28_6 {
+    28 + 6 = 34
+}
+
+theorem nat_add_28_7 {
+    28 + 7 = 35
+}
+
+theorem nat_add_30_1 {
+    30 + 1 = 31
+}
+
+theorem nat_add_30_2 {
+    30 + 2 = 32
+}
+
+theorem nat_add_30_3 {
+    30 + 3 = 33
+}
+
+theorem nat_add_30_4 {
+    30 + 4 = 34
+}
+
+theorem nat_add_30_5 {
+    30 + 5 = 35
+}
+
+theorem nat_add_30_6 {
+    30 + 6 = 36
+}
+
+theorem nat_add_32_1 {
+    32 + 1 = 33
+}
+
+theorem nat_add_32_2 {
+    32 + 2 = 34
+}
+
+theorem nat_add_32_3 {
+    32 + 3 = 35
+}
+
+theorem nat_add_32_4 {
+    32 + 4 = 36
+}
+
+theorem nat_add_32_5 {
+    32 + 5 = 37
+}
+
+theorem nat_add_32_6 {
+    32 + 6 = 38
+}
+
+theorem nat_add_32_7 {
+    32 + 7 = 39
+}
+
+theorem nat_add_32_8 {
+    32 + 8 = 40
+}
+
+theorem nat_add_35_1 {
+    35 + 1 = 36
+}
+
+theorem nat_add_35_2 {
+    35 + 2 = 37
+}
+
+theorem nat_add_35_3 {
+    35 + 3 = 38
+}
+
+theorem nat_add_35_4 {
+    35 + 4 = 39
+}
+
+theorem nat_add_35_5 {
+    35 + 5 = 40
+}
+
+theorem nat_add_35_6 {
+    35 + 6 = 41
+}
+
+theorem nat_add_35_7 {
+    35 + 7 = 42
+}
+
+theorem nat_add_36_1 {
+    36 + 1 = 37
+}
+
+theorem nat_add_36_2 {
+    36 + 2 = 38
+}
+
+theorem nat_add_36_3 {
+    36 + 3 = 39
+}
+
+theorem nat_add_36_4 {
+    36 + 4 = 40
+}
+
+theorem nat_add_36_5 {
+    36 + 5 = 41
+}
+
+theorem nat_add_36_6 {
+    36 + 6 = 42
+}
+
+theorem nat_add_36_7 {
+    36 + 7 = 43
+}
+
+theorem nat_add_36_8 {
+    36 + 8 = 44
+}
+
+theorem nat_add_36_9 {
+    36 + 9 = 45
+}
+
+theorem nat_add_40_1 {
+    40 + 1 = 41
+}
+
+theorem nat_add_40_2 {
+    40 + 2 = 42
+}
+
+theorem nat_add_40_3 {
+    40 + 3 = 43
+}
+
+theorem nat_add_40_4 {
+    40 + 4 = 44
+}
+
+theorem nat_add_40_5 {
+    40 + 5 = 45
+}
+
+theorem nat_add_40_6 {
+    40 + 6 = 46
+}
+
+theorem nat_add_40_7 {
+    40 + 7 = 47
+}
+
+theorem nat_add_40_8 {
+    40 + 8 = 48
+}
+
+theorem nat_add_42_1 {
+    42 + 1 = 43
+}
+
+theorem nat_add_42_2 {
+    42 + 2 = 44
+}
+
+theorem nat_add_42_3 {
+    42 + 3 = 45
+}
+
+theorem nat_add_42_4 {
+    42 + 4 = 46
+}
+
+theorem nat_add_42_5 {
+    42 + 5 = 47
+}
+
+theorem nat_add_42_6 {
+    42 + 6 = 48
+}
+
+theorem nat_add_42_7 {
+    42 + 7 = 49
+}
+
+theorem nat_add_45_1 {
+    45 + 1 = 46
+}
+
+theorem nat_add_45_2 {
+    45 + 2 = 47
+}
+
+theorem nat_add_45_3 {
+    45 + 3 = 48
+}
+
+theorem nat_add_45_4 {
+    45 + 4 = 49
+}
+
+theorem nat_add_45_5 {
+    45 + 5 = 50
+}
+
+theorem nat_add_45_6 {
+    45 + 6 = 51
+}
+
+theorem nat_add_45_7 {
+    45 + 7 = 52
+}
+
+theorem nat_add_45_8 {
+    45 + 8 = 53
+}
+
+theorem nat_add_45_9 {
+    45 + 9 = 54
+}
+
+theorem nat_add_48_1 {
+    48 + 1 = 49
+}
+
+theorem nat_add_48_2 {
+    48 + 2 = 50
+}
+
+theorem nat_add_48_3 {
+    48 + 3 = 51
+}
+
+theorem nat_add_48_4 {
+    48 + 4 = 52
+}
+
+theorem nat_add_48_5 {
+    48 + 5 = 53
+}
+
+theorem nat_add_48_6 {
+    48 + 6 = 54
+}
+
+theorem nat_add_48_7 {
+    48 + 7 = 55
+}
+
+theorem nat_add_48_8 {
+    48 + 8 = 56
+}
+
+theorem nat_add_49_1 {
+    49 + 1 = 50
+}
+
+theorem nat_add_49_2 {
+    49 + 2 = 51
+}
+
+theorem nat_add_49_3 {
+    49 + 3 = 52
+}
+
+theorem nat_add_49_4 {
+    49 + 4 = 53
+}
+
+theorem nat_add_49_5 {
+    49 + 5 = 54
+}
+
+theorem nat_add_49_6 {
+    49 + 6 = 55
+}
+
+theorem nat_add_49_7 {
+    49 + 7 = 56
+}
+
+theorem nat_add_54_1 {
+    54 + 1 = 55
+}
+
+theorem nat_add_54_2 {
+    54 + 2 = 56
+}
+
+theorem nat_add_54_3 {
+    54 + 3 = 57
+}
+
+theorem nat_add_54_4 {
+    54 + 4 = 58
+}
+
+theorem nat_add_54_5 {
+    54 + 5 = 59
+}
+
+theorem nat_add_54_6 {
+    54 + 6 = 60
+}
+
+theorem nat_add_54_7 {
+    54 + 7 = 61
+}
+
+theorem nat_add_54_8 {
+    54 + 8 = 62
+}
+
+theorem nat_add_54_9 {
+    54 + 9 = 63
+}
+
+theorem nat_add_56_1 {
+    56 + 1 = 57
+}
+
+theorem nat_add_56_2 {
+    56 + 2 = 58
+}
+
+theorem nat_add_56_3 {
+    56 + 3 = 59
+}
+
+theorem nat_add_56_4 {
+    56 + 4 = 60
+}
+
+theorem nat_add_56_5 {
+    56 + 5 = 61
+}
+
+theorem nat_add_56_6 {
+    56 + 6 = 62
+}
+
+theorem nat_add_56_7 {
+    56 + 7 = 63
+}
+
+theorem nat_add_56_8 {
+    56 + 8 = 64
+}
+
+theorem nat_add_63_1 {
+    63 + 1 = 64
+}
+
+theorem nat_add_63_2 {
+    63 + 2 = 65
+}
+
+theorem nat_add_63_3 {
+    63 + 3 = 66
+}
+
+theorem nat_add_63_4 {
+    63 + 4 = 67
+}
+
+theorem nat_add_63_5 {
+    63 + 5 = 68
+}
+
+theorem nat_add_63_6 {
+    63 + 6 = 69
+}
+
+theorem nat_add_63_7 {
+    63 + 7 = 70
+}
+
+theorem nat_add_63_8 {
+    63 + 8 = 71
+}
+
+theorem nat_add_63_9 {
+    63 + 9 = 72
+}
+
+theorem nat_add_64_1 {
+    64 + 1 = 65
+}
+
+theorem nat_add_64_2 {
+    64 + 2 = 66
+}
+
+theorem nat_add_64_3 {
+    64 + 3 = 67
+}
+
+theorem nat_add_64_4 {
+    64 + 4 = 68
+}
+
+theorem nat_add_64_5 {
+    64 + 5 = 69
+}
+
+theorem nat_add_64_6 {
+    64 + 6 = 70
+}
+
+theorem nat_add_64_7 {
+    64 + 7 = 71
+}
+
+theorem nat_add_64_8 {
+    64 + 8 = 72
+}
+
+theorem nat_add_72_1 {
+    72 + 1 = 73
+}
+
+theorem nat_add_72_2 {
+    72 + 2 = 74
+}
+
+theorem nat_add_72_3 {
+    72 + 3 = 75
+}
+
+theorem nat_add_72_4 {
+    72 + 4 = 76
+}
+
+theorem nat_add_72_5 {
+    72 + 5 = 77
+}
+
+theorem nat_add_72_6 {
+    72 + 6 = 78
 }
