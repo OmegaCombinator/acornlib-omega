@@ -1,3 +1,7 @@
+theorem tail_set_contains_eq(a: Nat -> Real, n: Nat, x: Real) {
+    tail_set(a, n).contains(x) = tail_value(a, n, x)
+}
+
 theorem tail_set_contains(a: Nat -> Real, n: Nat, k: Nat) {
     n <= k implies tail_set(a, n).contains(a(k))
 }
@@ -82,7 +86,7 @@ define neg_tail_sup(a: Nat -> Real) -> (Nat -> Real) {
 }
 
 theorem neg_tail_sup_increasing(a: Nat -> Real) {
-    is_bounded_above(a) implies is_increasing(neg_tail_sup(a))
+    is_bounded_above(a) implies real_is_increasing(neg_tail_sup(a))
 }
 
 theorem neg_tail_sup_bounded(a: Nat -> Real, b: Real) {
@@ -386,8 +390,52 @@ theorem upper_density_residue_class(m: Nat, a: Nat) {
     a < m implies upper_density(in_residue_class(m, a)) = Real.1 / from_nat[Real](m)
 }
 
+define covers_nat(system: List[Pair[Nat, Nat]]) -> (Nat -> Bool) {
+    match system {
+        List.nil {
+            none_pred
+        }
+        List.cons(head, tail) {
+            or_pred(in_residue_class(head.first, head.second), covers_nat(tail))
+        }
+    }
+}
+
+define system_density_real(system: List[Pair[Nat, Nat]]) -> Real {
+    match system {
+        List.nil {
+            Real.0
+        }
+        List.cons(head, tail) {
+            Real.1 / from_nat[Real](head.first) + system_density_real(tail)
+        }
+    }
+}
+
+define system_reduced(system: List[Pair[Nat, Nat]]) -> Bool {
+    forall(cl: Pair[Nat, Nat]) {
+        system.contains(cl) implies cl.second < cl.first
+    }
+}
+
 theorem lower_density_residue_class(m: Nat, a: Nat) {
     a < m implies lower_density(in_residue_class(m, a)) = Real.1 / from_nat[Real](m)
+}
+
+define head_disjoint_nat(head: Pair[Nat, Nat], rest: List[Pair[Nat, Nat]]) -> Bool {
+    disjoint_pred(in_residue_class(head.first, head.second), covers_nat(rest))
+}
+
+define is_suffix_of(part: List[Pair[Nat, Nat]], whole: List[Pair[Nat, Nat]]) -> Bool {
+    exists(front: List[Pair[Nat, Nat]]) {
+        front + part = whole
+    }
+}
+
+define system_disjoint_nat(system: List[Pair[Nat, Nat]]) -> Bool {
+    forall(head: Pair[Nat, Nat], tail: List[Pair[Nat, Nat]]) {
+        is_suffix_of(List.cons(head, tail), system) implies head_disjoint_nat(head, tail)
+    }
 }
 
 theorem limit_le_liminf(a: Nat -> Real, l: Real) {
@@ -636,6 +684,45 @@ theorem seq_eventually_equal_real_subsequence(
 theorem seq_eventually_equal_real_tail_subsequence(a: Nat -> Real, b: Nat -> Real, k: Nat) {
     seq_eventually_equal_real(a, b) implies
     seq_eventually_equal_real(subsequence(a, k.add), subsequence(b, k.add))
+}
+
+theorem cauchy_seq_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat) {
+    is_cauchy_seq(a) and tends_to_infinity(f) implies is_cauchy_seq(compose(a, f))
+}
+
+theorem cauchy_seq_shift_add(a: Nat -> Real, k: Nat) {
+    is_cauchy_seq(a) implies is_cauchy_seq(compose(a, k.add))
+}
+
+theorem cauchy_seq_subsequence(a: Nat -> Real, f: Nat -> Nat) {
+    is_cauchy_seq(a) and is_subsequence_index(f) implies is_cauchy_seq(subsequence(a, f))
+}
+
+theorem cauchy_seq_tail_subsequence(a: Nat -> Real, k: Nat) {
+    is_cauchy_seq(a) implies is_cauchy_seq(subsequence(a, k.add))
+}
+
+theorem closed_set_contains_eventual_compose_cauchy_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a) and tends_to_infinity(f)
+    implies s.contains(limit(compose(a, f)))
+}
+
+theorem closed_set_contains_eventual_shift_add_cauchy_limit(s: Set[Real], a: Nat -> Real, k: Nat) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a)
+    implies s.contains(limit(compose(a, k.add)))
+}
+
+theorem closed_set_contains_eventual_subsequence_cauchy_limit(
+    s: Set[Real],
+    a: Nat -> Real,
+    f: Nat -> Nat
+) {
+    is_closed_set(s) and seq_eventually_in_real_set(s, a) and is_cauchy_seq(a) and is_subsequence_index(f)
+    implies s.contains(limit(subsequence(a, f)))
 }
 
 theorem seq_eventually_equal_real_is_bounded_seq(a: Nat -> Real, b: Nat -> Real) {
@@ -2408,69 +2495,4 @@ theorem caratheodory_measurable_difference[K](m: OuterMeasure[K], a: Set[K], b: 
 
 define interval_length(a: Real, b: Real) -> Real {
     b - a
-}
-
-define is_proper_interval(a: Real, b: Real) -> Bool {
-    a <= b
-}
-
-define interval_family(a: Nat -> Real, b: Nat -> Real) -> Nat -> Set[Real] {
-    function(n: Nat) { closed_interval_set(a(n), b(n)) }
-}
-
-define interval_family_union(a: Nat -> Real, b: Nat -> Real) -> Set[Real] {
-    indexed_union(interval_family(a, b))
-}
-
-define interval_cost_seq(a: Nat -> Real, b: Nat -> Real) -> Nat -> Real {
-    function(n: Nat) {
-        partial(function(k: Nat) { interval_length(a(k), b(k)) }, n)
-    }
-}
-
-define is_interval_cover_cost(s: Set[Real], c: Real) -> Bool {
-    exists(a: Nat -> Real, b: Nat -> Real) {
-        (forall(n: Nat) { is_proper_interval(a(n), b(n)) })
-            and s.subset(interval_family_union(a, b))
-            and converges_to(interval_cost_seq(a, b), c)
-    }
-}
-
-define lebesgue_cost_set(s: Set[Real]) -> Set[Real] {
-    Set[Real].new(function(c: Real) { is_interval_cover_cost(s, c) })
-}
-
-theorem lebesgue_cost_set_contains_eq(s: Set[Real], c: Real) {
-    lebesgue_cost_set(s).contains(c) = is_interval_cover_cost(s, c)
-}
-
-define lebesgue_cost_has_infimum(s: Set[Real]) -> Bool {
-    exists(v: Real) {
-        is_set_infimum(lebesgue_cost_set(s), v)
-    }
-}
-
-define lebesgue_outer_measure(s: Set[Real]) -> Real {
-    choose_or_default(function(v: Real) { is_set_infimum(lebesgue_cost_set(s), v) }, Real.0)
-}
-
-define delta_seq(x: Real, k: Nat) -> Real {
-    if k = Nat.0 { x } else { Real.0 }
-}
-
-theorem partial_delta_seq(x: Real, n: Nat) {
-    partial(delta_seq(x), n.suc) = x
-}
-
-theorem partial_delta_seq_later(x: Real, i: Nat) {
-    Nat.1 <= i implies partial(delta_seq(x), i) = x
-}
-
-theorem partial_const_zero(n: Nat) {
-    partial(function(k: Nat) { Real.0 }, n) = Real.0
-}
-
-theorem converges_to_of_pointwise_eq(a: Nat -> Real, b: Nat -> Real, c: Real) {
-    (forall(n: Nat) { a(n) = b(n) }) and converges_to(a, c)
-        implies converges_to(b, c)
 }

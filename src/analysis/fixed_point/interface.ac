@@ -2035,12 +2035,125 @@ define in_open_ball[M: MetricSpace](x: M, r: Real, y: M) -> Bool {
     y.distance(x) < r
 }
 
-define open_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
-    Set[M].new(in_open_ball(x, r))
-}
-
 define in_closed_ball[M: MetricSpace](x: M, r: Real, y: M) -> Bool {
     y.distance(x) <= r
+}
+
+define discrete[T](x: T, y: T) -> Real {
+    if x = y {
+        0
+    } else {
+        1
+    }
+}
+
+instance Color: MetricSpace {
+    let distance: (Color, Color) -> Real = discrete
+}
+
+theorem zero_lte_discrete[T](x: T, y: T) {
+    0 <= discrete(x, y)
+}
+
+theorem discrete_self_distance_is_zero[T](x: T) {
+    discrete(x, x) = 0
+}
+
+theorem discrete_dist_zero_imp_eq[T](x: T, y: T) {
+    discrete(x, y) = 0 implies x = y
+}
+
+theorem discrete_eq_one_of_ne[T](x: T, y: T) {
+    x != y implies discrete(x, y) = 1
+}
+
+theorem discrete_symmetric[T](x: T, y: T) {
+    discrete(x, y) = discrete(y, x)
+}
+
+theorem discrete_triangle[T](x: T, y: T, z: T) {
+    discrete(x, z) <= discrete(x, y) + discrete(y, z)
+}
+
+define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat) {
+        n <= i implies q(i).distance(a) < eps
+    }
+}
+
+define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).distance(q(j)) < eps
+    }
+}
+
+define distance_set_contains[M: MetricSpace](s: Set[M], r: Real) -> Bool {
+    exists(x: M, y: M) {
+        s.contains(x) and s.contains(y) and r = x.distance(y)
+    }
+}
+
+define lipschitz_bound[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) -> Bool {
+    forall(x: M, y: M) {
+        f(x).distance(f(y)) <= k * x.distance(y)
+    }
+}
+
+define is_isometry[M: MetricSpace, N: MetricSpace](f: M -> N) -> Bool {
+    forall(x: M, y: M) {
+        f(x).distance(f(y)) = x.distance(y)
+    }
+}
+
+theorem isometry_distance[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, y: M) {
+    is_isometry(f) implies f(x).distance(f(y)) = x.distance(y)
+}
+
+theorem isometry_is_injective_fn[M: MetricSpace, N: MetricSpace](f: M -> N) {
+    is_isometry(f) implies is_injective_fn(f)
+}
+
+theorem identity_is_isometry[M: MetricSpace] {
+    is_isometry(identity_fn[M])
+}
+
+theorem isometry_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
+    is_isometry(f) and is_isometry(g) implies is_isometry(compose(f, g))
+}
+
+theorem isometry_compose_is_injective_fn[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
+    is_isometry(f) and is_isometry(g) implies is_injective_fn(compose(f, g))
+}
+
+theorem closed_ball_complement_inner[M: MetricSpace](xc: M, rad: Real, y: M, z: M) {
+    rad < y.distance(xc) and z.distance(y) < y.distance(xc) - rad
+        implies rad < z.distance(xc)
+}
+
+theorem set_supremum_of_max(t: Set[Real], m: Real) {
+    t.contains(m) and is_set_upper_bound(t, m) implies is_set_supremum(t, m)
+}
+
+theorem union_complement_eq_intersection_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.union(t).c = s.c.intersection(t.c)
+}
+
+theorem intersection_complement_eq_union_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
+    s.intersection(t).c = s.c.union(t.c)
+}
+
+define real_distance(x: Real, y: Real) -> Real {
+    (x - y).abs
+}
+
+instance Real: MetricSpace {
+    let distance: (Real, Real) -> Real = real_distance
+}
+
+instance Real: CompleteMetricSpace
+
+define open_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
+    Set[M].new(in_open_ball(x, r))
 }
 
 define closed_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
@@ -2129,59 +2242,11 @@ theorem open_ball_is_bounded[M: MetricSpace](x: M, r: Real) {
     is_bounded(open_ball(x, r))
 }
 
-define discrete[T](x: T, y: T) -> Real {
-    if x = y {
-        0
-    } else {
-        1
-    }
-}
-
-instance Color: MetricSpace {
-    let distance: (Color, Color) -> Real = discrete
-}
-
-theorem zero_lte_discrete[T](x: T, y: T) {
-    0 <= discrete(x, y)
-}
-
-theorem discrete_self_distance_is_zero[T](x: T) {
-    discrete(x, x) = 0
-}
-
-theorem discrete_dist_zero_imp_eq[T](x: T, y: T) {
-    discrete(x, y) = 0 implies x = y
-}
-
-theorem discrete_eq_one_of_ne[T](x: T, y: T) {
-    x != y implies discrete(x, y) = 1
-}
-
-theorem discrete_symmetric[T](x: T, y: T) {
-    discrete(x, y) = discrete(y, x)
-}
-
-theorem discrete_triangle[T](x: T, y: T, z: T) {
-    discrete(x, z) <= discrete(x, y) + discrete(y, z)
-}
-
-define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat) {
-        n <= i implies q(i).distance(a) < eps
-    }
-}
-
 define tendsto_metric[M: MetricSpace](q: Nat -> M, a: M) -> Bool {
     forall(eps: Real) {
         eps.is_positive implies exists(n: Nat) {
             metric_tail_bound(q, a, n, eps)
         }
-    }
-}
-
-define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).distance(q(j)) < eps
     }
 }
 
@@ -2245,12 +2310,6 @@ theorem tendsto_metric_imp_cauchy[M: MetricSpace](q: Nat -> M, a: M) {
     tendsto_metric(q, a) implies is_cauchy_metric(q)
 }
 
-define distance_set_contains[M: MetricSpace](s: Set[M], r: Real) -> Bool {
-    exists(x: M, y: M) {
-        s.contains(x) and s.contains(y) and r = x.distance(y)
-    }
-}
-
 define distance_set[M: MetricSpace](s: Set[M]) -> Set[Real] {
     Set[Real].new(distance_set_contains(s))
 }
@@ -2298,12 +2357,6 @@ theorem tendsto_metric_unique[M: MetricSpace](q: Nat -> M, a: M, b: M) {
     tendsto_metric(q, a) and tendsto_metric(q, b) implies a = b
 }
 
-define lipschitz_bound[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) -> Bool {
-    forall(x: M, y: M) {
-        f(x).distance(f(y)) <= k * x.distance(y)
-    }
-}
-
 define is_lipschitz_with[M: MetricSpace, N: MetricSpace](k: Real, f: M -> N) -> Bool {
     not k.is_negative and lipschitz_bound(k, f)
 }
@@ -2347,32 +2400,6 @@ theorem lipschitz_with_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](k
 
 theorem lipschitz_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
     is_lipschitz(f) and is_lipschitz(g) implies is_lipschitz(compose(f, g))
-}
-
-define is_isometry[M: MetricSpace, N: MetricSpace](f: M -> N) -> Bool {
-    forall(x: M, y: M) {
-        f(x).distance(f(y)) = x.distance(y)
-    }
-}
-
-theorem isometry_distance[M: MetricSpace, N: MetricSpace](f: M -> N, x: M, y: M) {
-    is_isometry(f) implies f(x).distance(f(y)) = x.distance(y)
-}
-
-theorem isometry_is_injective_fn[M: MetricSpace, N: MetricSpace](f: M -> N) {
-    is_isometry(f) implies is_injective_fn(f)
-}
-
-theorem identity_is_isometry[M: MetricSpace] {
-    is_isometry(identity_fn[M])
-}
-
-theorem isometry_compose[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
-    is_isometry(f) and is_isometry(g) implies is_isometry(compose(f, g))
-}
-
-theorem isometry_compose_is_injective_fn[M: MetricSpace, N: MetricSpace, P: MetricSpace](f: N -> P, g: M -> N) {
-    is_isometry(f) and is_isometry(g) implies is_injective_fn(compose(f, g))
 }
 
 theorem isometry_is_lipschitz_with_one[M: MetricSpace, N: MetricSpace](f: M -> N) {
@@ -2501,11 +2528,6 @@ theorem universal_set_is_closed_metric[M: MetricSpace] {
     is_closed_metric(Set[M].universal_set)
 }
 
-theorem closed_ball_complement_inner[M: MetricSpace](xc: M, rad: Real, y: M, z: M) {
-    rad < y.distance(xc) and z.distance(y) < y.distance(xc) - rad
-        implies rad < z.distance(xc)
-}
-
 theorem closed_ball_complement_open_ball_subset[M: MetricSpace](xc: M, rad: Real, y: M) {
     rad < y.distance(xc) implies
         open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
@@ -2529,50 +2551,4 @@ theorem isometry_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
     f: M -> N, q: Nat -> M, a: M
 ) {
     is_isometry(f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem isometry_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M
-) {
-    is_isometry(f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
-}
-
-theorem lipschitz_with_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(1, f) and metric_tail_bound(q, a, n, eps)
-        implies metric_tail_bound(compose(f, q), f(a), n, eps)
-}
-
-theorem lipschitz_with_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(compose(f, q), f(a), n, eps)
-        }
-    }
-}
-
-theorem lipschitz_with_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, a: M
-) {
-    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
-}
-
-theorem lipschitz_with_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M, n: Nat, eps: Real
-) {
-    is_lipschitz_with(1, f) and cauchy_metric_bound(q, n, eps)
-        implies cauchy_metric_bound(compose(f, q), n, eps)
-}
-
-theorem lipschitz_with_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
-    f: M -> N, q: Nat -> M
-) {
-    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
 }

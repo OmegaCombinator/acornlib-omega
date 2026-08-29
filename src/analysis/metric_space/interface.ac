@@ -1,3 +1,49 @@
+theorem isometry_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M
+) {
+    is_isometry(f) and is_cauchy_metric(q) implies is_cauchy_metric(compose(f, q))
+}
+
+theorem lipschitz_with_one_preserves_metric_tail_bound[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(1, f) and metric_tail_bound(q, a, n, eps)
+        implies metric_tail_bound(compose(f, q), f(a), n, eps)
+}
+
+theorem lipschitz_with_one_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(compose(f, q), f(a), n, eps)
+        }
+    }
+}
+
+theorem lipschitz_with_one_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, a: M
+) {
+    is_lipschitz_with(1, f) and tendsto_metric(q, a) implies tendsto_metric(compose(f, q), f(a))
+}
+
+theorem lipschitz_with_one_preserves_cauchy_metric_bound[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M, n: Nat, eps: Real
+) {
+    is_lipschitz_with(1, f) and cauchy_metric_bound(q, n, eps)
+        implies cauchy_metric_bound(compose(f, q), n, eps)
+}
+
+theorem lipschitz_with_one_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](
+    f: M -> N, q: Nat -> M
+) {
+    is_lipschitz_with(1, f) and is_cauchy_metric(q) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(compose(f, q), n, eps)
+        }
+    }
+}
+
 theorem lipschitz_with_one_preserves_cauchy_metric[M: MetricSpace, N: MetricSpace](
     f: M -> N, q: Nat -> M
 ) {
@@ -124,10 +170,6 @@ theorem diameter_empty[M: MetricSpace] {
     diameter(Set[M].empty_set) = 0
 }
 
-theorem set_supremum_of_max(t: Set[Real], m: Real) {
-    t.contains(m) and is_set_upper_bound(t, m) implies is_set_supremum(t, m)
-}
-
 theorem is_diameter_singleton[M: MetricSpace](x: M) {
     is_diameter(Set[M].singleton(x), 0)
 }
@@ -145,14 +187,6 @@ theorem diameter_le_of_subset[M: MetricSpace](s: Set[M], t: Set[M]) {
     implies diameter(s) <= diameter(t)
 }
 
-theorem union_complement_eq_intersection_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.union(t).c = s.c.intersection(t.c)
-}
-
-theorem intersection_complement_eq_union_of_complements[M: MetricSpace](s: Set[M], t: Set[M]) {
-    s.intersection(t).c = s.c.union(t.c)
-}
-
 theorem intersection_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
     is_closed_metric(s) and is_closed_metric(t) implies is_closed_metric(s.intersection(t))
 }
@@ -164,16 +198,6 @@ theorem union_of_closed_metric_is_closed[M: MetricSpace](s: Set[M], t: Set[M]) {
 theorem closed_ball_is_closed_metric[M: MetricSpace](x: M, r: Real) {
     is_closed_metric(closed_ball(x, r))
 }
-
-define real_distance(x: Real, y: Real) -> Real {
-    (x - y).abs
-}
-
-instance Real: MetricSpace {
-    let distance: (Real, Real) -> Real = real_distance
-}
-
-instance Real: CompleteMetricSpace
 
 theorem real_abs_zero {
     Real.0.abs = Real.0
@@ -445,98 +469,8 @@ theorem norm_distance_zero_imp_eq[G: NormedAddCommGroup](x: G, y: G) {
     norm_distance(x, y) = 0 implies x = y
 }
 
-define in_norm_open_ball[G: NormedAddCommGroup](x: G, r: Real, y: G) -> Bool {
-    norm_distance(y, x) < r
-}
-
-define norm_open_ball[G: NormedAddCommGroup](x: G, r: Real) -> Set[G] {
-    Set[G].new(in_norm_open_ball(x, r))
-}
-
-define in_norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real, y: G) -> Bool {
-    norm_distance(y, x) <= r
-}
-
-define norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real) -> Set[G] {
-    Set[G].new(in_norm_closed_ball(x, r))
-}
-
-theorem norm_open_ball_contains_iff[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    norm_open_ball(x, r).contains(y) = (norm_distance(y, x) < r)
-}
-
-theorem norm_closed_ball_contains_iff[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    norm_closed_ball(x, r).contains(y) = (norm_distance(y, x) <= r)
-}
-
-theorem in_norm_open_ball_iff_distance[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    in_norm_open_ball(x, r, y) = (norm_distance(y, x) < r)
-}
-
-theorem in_norm_closed_ball_iff_distance[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    in_norm_closed_ball(x, r, y) = (norm_distance(y, x) <= r)
-}
-
-theorem center_in_norm_open_ball[G: NormedAddCommGroup](x: G, r: Real) {
-    r.is_positive implies norm_open_ball(x, r).contains(x)
-}
-
-theorem center_in_norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real) {
-    not r.is_negative implies norm_closed_ball(x, r).contains(x)
-}
-
-theorem norm_open_ball_subset_closed_ball[G: NormedAddCommGroup](x: G, r: Real) {
-    norm_open_ball(x, r).subset(norm_closed_ball(x, r))
-}
-
-theorem norm_open_ball_nonpositive_radius_empty[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    not r.is_positive implies not norm_open_ball(x, r).contains(y)
-}
-
-theorem norm_closed_ball_negative_radius_empty[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    r.is_negative implies not norm_closed_ball(x, r).contains(y)
-}
-
-theorem norm_open_ball_contains_symmetric[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    norm_open_ball(x, r).contains(y) = norm_open_ball(y, r).contains(x)
-}
-
-theorem norm_closed_ball_contains_symmetric[G: NormedAddCommGroup](x: G, r: Real, y: G) {
-    norm_closed_ball(x, r).contains(y) = norm_closed_ball(y, r).contains(x)
-}
-
-define norm_is_bounded[G: NormedAddCommGroup](s: Set[G]) -> Bool {
-    exists(x: G, r: Real) {
-        s.subset(norm_closed_ball(x, r))
-    }
-}
-
-theorem norm_closed_ball_is_bounded[G: NormedAddCommGroup](x: G, r: Real) {
-    norm_is_bounded(norm_closed_ball(x, r))
-}
-
-theorem subset_of_norm_bounded_is_norm_bounded[G: NormedAddCommGroup](s: Set[G], t: Set[G]) {
-    s.subset(t) and norm_is_bounded(t) implies norm_is_bounded(s)
-}
-
-theorem norm_singleton_is_bounded[G: NormedAddCommGroup](x: G) {
-    norm_is_bounded(Set[G].singleton(x))
-}
-
-theorem norm_open_ball_is_bounded[G: NormedAddCommGroup](x: G, r: Real) {
-    norm_is_bounded(norm_open_ball(x, r))
-}
-
 theorem norm_distance_add_right[G: NormedAddCommGroup](x: G, y: G, z: G) {
     norm_distance(x + z, y + z) = norm_distance(x, y)
-}
-
-theorem norm_open_ball_contains_add_right_iff[G: NormedAddCommGroup](x: G, r: Real, y: G, z: G) {
-    norm_open_ball(x + z, r).contains(y + z) = norm_open_ball(x, r).contains(y)
-}
-
-theorem norm_closed_ball_contains_add_right_iff[G: NormedAddCommGroup](x: G, r: Real, y: G, z: G) {
-    norm_closed_ball(x + z, r).contains(y + z) = norm_closed_ball(x, r).contains(y)
 }
 
 define norm_translate[G: NormedAddCommGroup](z: G, x: G) -> G {
@@ -549,14 +483,6 @@ define norm_translate_set[G: NormedAddCommGroup](s: Set[G], z: G) -> Set[G] {
 
 theorem norm_translate_set_contains_translate[G: NormedAddCommGroup](s: Set[G], z: G, x: G) {
     s.contains(x) implies norm_translate_set(s, z).contains(x + z)
-}
-
-theorem norm_translate_open_ball_subset[G: NormedAddCommGroup](x: G, r: Real, z: G) {
-    norm_translate_set(norm_open_ball(x, r), z).subset(norm_open_ball(x + z, r))
-}
-
-theorem norm_translate_closed_ball_subset[G: NormedAddCommGroup](x: G, r: Real, z: G) {
-    norm_translate_set(norm_closed_ball(x, r), z).subset(norm_closed_ball(x + z, r))
 }
 
 theorem norm_one[K: NormedField] {
@@ -684,17 +610,8 @@ theorem normed_space_smul_set_contains_iff_of_ne_zero[K: NormedField, V: NormedA
         normed_space_smul_set(ns, r, s).contains(y) = s.contains(ns.module.smul(r.inverse, y))
 }
 
-theorem normed_space_smul_open_ball_subset[K: NormedField, V: NormedAddCommGroup](
-    ns: NormedSpace[K, V], r: K, x: V, eps: Real) {
-    r.norm.is_positive implies
-        normed_space_smul_set(ns, r, norm_open_ball(x, eps)).subset(
-            norm_open_ball(ns.module.smul(r, x), r.norm * eps))
-}
-
-theorem normed_space_smul_closed_ball_subset[K: NormedField, V: NormedAddCommGroup](
-    ns: NormedSpace[K, V], r: K, x: V, eps: Real) {
-    normed_space_smul_set(ns, r, norm_closed_ball(x, eps)).subset(
-        norm_closed_ball(ns.module.smul(r, x), r.norm * eps))
+define pair_distance[M: MetricSpace, N: MetricSpace](p: Pair[M, N], q: Pair[M, N]) -> Real {
+    (p.first.distance(q.first)).max(p.second.distance(q.second))
 }
 
 define pair_map_components_nonexpansive[M: MetricSpace, N: MetricSpace, P: MetricSpace, Q: MetricSpace](
@@ -2263,6 +2180,117 @@ instance Real: NormedAddCommGroup {
 
 instance Real: NormedField
 
+define in_norm_open_ball[G: NormedAddCommGroup](x: G, r: Real, y: G) -> Bool {
+    norm_distance(y, x) < r
+}
+
+define norm_open_ball[G: NormedAddCommGroup](x: G, r: Real) -> Set[G] {
+    Set[G].new(in_norm_open_ball(x, r))
+}
+
+define in_norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real, y: G) -> Bool {
+    norm_distance(y, x) <= r
+}
+
+define norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real) -> Set[G] {
+    Set[G].new(in_norm_closed_ball(x, r))
+}
+
+theorem norm_open_ball_contains_iff[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    norm_open_ball(x, r).contains(y) = (norm_distance(y, x) < r)
+}
+
+theorem norm_closed_ball_contains_iff[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    norm_closed_ball(x, r).contains(y) = (norm_distance(y, x) <= r)
+}
+
+theorem in_norm_open_ball_iff_distance[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    in_norm_open_ball(x, r, y) = (norm_distance(y, x) < r)
+}
+
+theorem in_norm_closed_ball_iff_distance[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    in_norm_closed_ball(x, r, y) = (norm_distance(y, x) <= r)
+}
+
+theorem center_in_norm_open_ball[G: NormedAddCommGroup](x: G, r: Real) {
+    r.is_positive implies norm_open_ball(x, r).contains(x)
+}
+
+theorem center_in_norm_closed_ball[G: NormedAddCommGroup](x: G, r: Real) {
+    not r.is_negative implies norm_closed_ball(x, r).contains(x)
+}
+
+theorem norm_open_ball_subset_closed_ball[G: NormedAddCommGroup](x: G, r: Real) {
+    norm_open_ball(x, r).subset(norm_closed_ball(x, r))
+}
+
+theorem norm_open_ball_nonpositive_radius_empty[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    not r.is_positive implies not norm_open_ball(x, r).contains(y)
+}
+
+theorem norm_closed_ball_negative_radius_empty[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    r.is_negative implies not norm_closed_ball(x, r).contains(y)
+}
+
+theorem norm_open_ball_contains_symmetric[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    norm_open_ball(x, r).contains(y) = norm_open_ball(y, r).contains(x)
+}
+
+theorem norm_closed_ball_contains_symmetric[G: NormedAddCommGroup](x: G, r: Real, y: G) {
+    norm_closed_ball(x, r).contains(y) = norm_closed_ball(y, r).contains(x)
+}
+
+define norm_is_bounded[G: NormedAddCommGroup](s: Set[G]) -> Bool {
+    exists(x: G, r: Real) {
+        s.subset(norm_closed_ball(x, r))
+    }
+}
+
+theorem norm_closed_ball_is_bounded[G: NormedAddCommGroup](x: G, r: Real) {
+    norm_is_bounded(norm_closed_ball(x, r))
+}
+
+theorem subset_of_norm_bounded_is_norm_bounded[G: NormedAddCommGroup](s: Set[G], t: Set[G]) {
+    s.subset(t) and norm_is_bounded(t) implies norm_is_bounded(s)
+}
+
+theorem norm_singleton_is_bounded[G: NormedAddCommGroup](x: G) {
+    norm_is_bounded(Set[G].singleton(x))
+}
+
+theorem norm_open_ball_is_bounded[G: NormedAddCommGroup](x: G, r: Real) {
+    norm_is_bounded(norm_open_ball(x, r))
+}
+
+theorem norm_open_ball_contains_add_right_iff[G: NormedAddCommGroup](x: G, r: Real, y: G, z: G) {
+    norm_open_ball(x + z, r).contains(y + z) = norm_open_ball(x, r).contains(y)
+}
+
+theorem norm_closed_ball_contains_add_right_iff[G: NormedAddCommGroup](x: G, r: Real, y: G, z: G) {
+    norm_closed_ball(x + z, r).contains(y + z) = norm_closed_ball(x, r).contains(y)
+}
+
+theorem norm_translate_open_ball_subset[G: NormedAddCommGroup](x: G, r: Real, z: G) {
+    norm_translate_set(norm_open_ball(x, r), z).subset(norm_open_ball(x + z, r))
+}
+
+theorem norm_translate_closed_ball_subset[G: NormedAddCommGroup](x: G, r: Real, z: G) {
+    norm_translate_set(norm_closed_ball(x, r), z).subset(norm_closed_ball(x + z, r))
+}
+
+theorem normed_space_smul_open_ball_subset[K: NormedField, V: NormedAddCommGroup](
+    ns: NormedSpace[K, V], r: K, x: V, eps: Real) {
+    r.norm.is_positive implies
+        normed_space_smul_set(ns, r, norm_open_ball(x, eps)).subset(
+            norm_open_ball(ns.module.smul(r, x), r.norm * eps))
+}
+
+theorem normed_space_smul_closed_ball_subset[K: NormedField, V: NormedAddCommGroup](
+    ns: NormedSpace[K, V], r: K, x: V, eps: Real) {
+    normed_space_smul_set(ns, r, norm_closed_ball(x, eps)).subset(
+        norm_closed_ball(ns.module.smul(r, x), r.norm * eps))
+}
+
 theorem real_norm_eq_abs(x: Real) {
     real_norm(x) = x.abs
 }
@@ -2283,8 +2311,4 @@ define tail_value(a: Nat -> Real, n: Nat, x: Real) -> Bool {
 
 define tail_set(a: Nat -> Real, n: Nat) -> Set[Real] {
     Set[Real].new(tail_value(a, n))
-}
-
-theorem tail_set_contains_eq(a: Nat -> Real, n: Nat, x: Real) {
-    tail_set(a, n).contains(x) = tail_value(a, n, x)
 }

@@ -9,18 +9,6 @@ structure Matrix[A, m: Nat, n: Nat] {
     entry: (Fin[m], Fin[n]) -> A
 }
 
-instance Matrix[A: AddSemigroup, m: Nat, n: Nat]: AddSemigroup
-
-instance Matrix[A: AddCommSemigroup, m: Nat, n: Nat]: AddCommSemigroup
-
-instance Matrix[A: AddMonoid, m: Nat, n: Nat]: AddMonoid
-
-instance Matrix[A: AddCommMonoid, m: Nat, n: Nat]: AddCommMonoid
-
-instance Matrix[A: AddGroup, m: Nat, n: Nat]: AddGroup
-
-instance Matrix[A: AddCommGroup, m: Nat, n: Nat]: AddCommGroup
-
 let fin_self(n: Nat, x: Fin[n]) -> result: Fin[n] satisfy {
     result = x
 }
@@ -295,6 +283,10 @@ theorem fin_value_or_zero_value[A: Zero](n: Nat, f: Fin[n] -> A, i: Fin[n]) {
     fin_value_or_zero[A](n, f, i.value) = f(i)
 }
 
+define fin_pointwise_add[A: Add](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A, i: Fin[n]) -> A {
+    f(i) + g(i)
+}
+
 define fin_zero_function[A: Zero](n: Nat, i: Fin[n]) -> A {
     A.0
 }
@@ -309,6 +301,15 @@ define fin_sum[A: AddCommMonoid](n: Nat, f: Fin[n] -> A) -> A {
 
 theorem fin_sum_apply[A: AddCommMonoid](n: Nat, f: Fin[n] -> A) {
     fin_sum[A](n, f) = partial(fin_value_or_zero[A](n, f), n)
+}
+
+theorem fin_value_or_zero_add[A: AddCommMonoid](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A, k: Nat) {
+    fin_value_or_zero[A](n, fin_pointwise_add[A](n, f, g), k) =
+        fin_value_or_zero[A](n, f, k) + fin_value_or_zero[A](n, g, k)
+}
+
+theorem fin_sum_add[A: AddCommMonoid](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A) {
+    fin_sum[A](n, fin_pointwise_add[A](n, f, g)) = fin_sum[A](n, f) + fin_sum[A](n, g)
 }
 
 theorem fin_sum_pointwise_eq[A: AddCommMonoid](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A) {
@@ -333,6 +334,10 @@ theorem fin_sum_zero_function[A: AddCommMonoid](n: Nat) {
 
 theorem fin_value_or_zero_of_not_lt[A: Zero](n: Nat, f: Fin[n] -> A, k: Nat) {
     not k < n implies fin_value_or_zero[A](n, f, k) = A.0
+}
+
+theorem abs_add_le(a: Real, b: Real) {
+    (a + b).abs <= a.abs + b.abs
 }
 
 theorem abs_zero {
@@ -427,6 +432,10 @@ theorem fin_value_or_zero_succ_index[A: Zero](n: Nat, f: Fin[n.suc] -> A, k: Nat
         fin_value_or_zero[A](n, fin_succ_apply[A](n, f), k)
 }
 
+theorem fin_sum_suc_split_zero[A: AddCommMonoid](n: Nat, f: Fin[n.suc] -> A) {
+    fin_sum[A](n.suc, f) = f(fin_zero(n)) + fin_sum[A](n, fin_succ_apply[A](n, f))
+}
+
 theorem partial_nonneg[S: OrderedField](f: Nat -> S, n: Nat) {
     (forall(i: Nat) { S.0 <= f(i) }) implies S.0 <= partial(f, n)
 }
@@ -470,8 +479,45 @@ theorem fin_sum_mono[S: OrderedField](n: Nat, f: Fin[n] -> S, g: Fin[n] -> S) {
     (forall(i: Fin[n]) { f(i) <= g(i) }) implies fin_sum[S](n, f) <= fin_sum[S](n, g)
 }
 
+define scale_seq[S: Semiring](c: S, f: Nat -> S) -> (Nat -> S) {
+    function(k: Nat) {
+        c * f(k)
+    }
+}
+
+theorem partial_scalar_mul[S: Semiring](c: S, f: Nat -> S, n: Nat) {
+    partial(scale_seq[S](c, f), n) = c * partial(f, n)
+}
+
+define fin_scale[S: Semiring](n: Nat, c: S, f: Fin[n] -> S) -> (Fin[n] -> S) {
+    function(i: Fin[n]) {
+        c * f(i)
+    }
+}
+
+theorem fin_value_or_zero_scale[S: Semiring](n: Nat, c: S, f: Fin[n] -> S, k: Nat) {
+    k < n implies fin_value_or_zero[S](n, fin_scale[S](n, c, f), k)
+        = c * fin_value_or_zero[S](n, f, k)
+}
+
+theorem fin_sum_scalar_mul[S: Semiring](n: Nat, c: S, f: Fin[n] -> S) {
+    fin_sum[S](n, fin_scale[S](n, c, f)) = c * fin_sum[S](n, f)
+}
+
 define fin_vector_zero[A: Zero](n: Nat, i: Fin[n]) -> A {
     A.0
+}
+
+define fin_vector_add[A: Add](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) -> A {
+    v(i) + w(i)
+}
+
+define fin_vector_neg[A: Neg](n: Nat, v: Fin[n] -> A, i: Fin[n]) -> A {
+    -v(i)
+}
+
+define fin_vector_sub[A: AddGroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) -> A {
+    v(i) - w(i)
 }
 
 define fin_vector_smul[R: Ring, M: AddCommGroup](
@@ -492,10 +538,53 @@ theorem fin_vector_eq_apply[A](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]
     v = w implies v(i) = w(i)
 }
 
+theorem fin_vector_add_apply[A: Add](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, v, w, i) = v(i) + w(i)
+}
+
+theorem fin_vector_neg_apply[A: Neg](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_neg[A](n, v, i) = -v(i)
+}
+
+theorem fin_vector_sub_apply[A: AddGroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_sub[A](n, v, w, i) = v(i) - w(i)
+}
+
 theorem fin_vector_smul_apply[R: Ring, M: AddCommGroup](
     carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, i: Fin[n]
 ) {
     fin_vector_smul[R, M](carrier, n, r, v, i) = carrier.smul(r, v(i))
+}
+
+theorem fin_vector_add_assoc_at[A: AddSemigroup](
+    n: Nat, u: Fin[n] -> A, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]
+) {
+    fin_vector_add[A](n, u, fin_vector_add[A](n, v, w), i) =
+        fin_vector_add[A](n, fin_vector_add[A](n, u, v), w, i)
+}
+
+theorem fin_vector_add_comm_at[A: AddCommSemigroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, v, w, i) = fin_vector_add[A](n, w, v, i)
+}
+
+theorem fin_vector_add_zero_right_at[A: AddMonoid](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, v, fin_vector_zero[A](n), i) = v(i)
+}
+
+theorem fin_vector_add_zero_left_at[A: AddMonoid](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, fin_vector_zero[A](n), v, i) = v(i)
+}
+
+theorem fin_vector_add_neg_right_at[A: AddGroup](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, v, fin_vector_neg[A](n, v), i) = fin_vector_zero[A](n, i)
+}
+
+theorem fin_vector_add_neg_left_at[A: AddGroup](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_add[A](n, fin_vector_neg[A](n, v), v, i) = fin_vector_zero[A](n, i)
+}
+
+theorem fin_vector_sub_eq_add_neg_at[A: AddGroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
+    fin_vector_sub[A](n, v, w, i) = fin_vector_add[A](n, v, fin_vector_neg[A](n, w), i)
 }
 
 theorem fin_vector_smul_one_at[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, v: Fin[n] -> M, i: Fin[n]) {
@@ -510,8 +599,72 @@ theorem fin_vector_smul_zero_right_coord[R: Ring, M: AddCommGroup](carrier: Modu
     carrier.smul(r, M.0) = M.0
 }
 
+theorem fin_vector_smul_neg_coord[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, i: Fin[n]) {
+    carrier.smul(r, -v(i)) = -fin_vector_smul[R, M](carrier, n, r, v, i)
+}
+
+theorem fin_vector_smul_neg_left_at[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, i: Fin[n]) {
+    fin_vector_smul[R, M](carrier, n, -r, v, i) =
+        fin_vector_neg[M](n, fin_vector_smul[R, M](carrier, n, r, v), i)
+}
+
+theorem fin_vector_smul_add_left_at[R: Ring, M: AddCommGroup](
+    carrier: Module[R, M], n: Nat, r: R, s: R, v: Fin[n] -> M, i: Fin[n]
+) {
+    fin_vector_smul[R, M](carrier, n, r + s, v, i) =
+        fin_vector_add[M](n, fin_vector_smul[R, M](carrier, n, r, v), fin_vector_smul[R, M](carrier, n, s, v), i)
+}
+
+theorem fin_vector_smul_add_right_at[R: Ring, M: AddCommGroup](
+    carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, w: Fin[n] -> M, i: Fin[n]
+) {
+    fin_vector_smul[R, M](carrier, n, r, fin_vector_add[M](n, v, w), i) =
+        fin_vector_add[M](n, fin_vector_smul[R, M](carrier, n, r, v), fin_vector_smul[R, M](carrier, n, r, w), i)
+}
+
+theorem fin_vector_smul_assoc_at[R: Ring, M: AddCommGroup](
+    carrier: Module[R, M], n: Nat, r: R, s: R, v: Fin[n] -> M, i: Fin[n]
+) {
+    fin_vector_smul[R, M](carrier, n, r * s, v, i) =
+        fin_vector_smul[R, M](carrier, n, r, fin_vector_smul[R, M](carrier, n, s, v), i)
+}
+
 theorem fin_vector_smul_zero_right_at[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, i: Fin[n]) {
     fin_vector_smul[R, M](carrier, n, r, fin_vector_zero[M](n), i) = fin_vector_zero[M](n, i)
+}
+
+theorem fin_vector_smul_neg_right_at[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, i: Fin[n]) {
+    fin_vector_smul[R, M](carrier, n, r, fin_vector_neg[M](n, v), i) =
+        fin_vector_neg[M](n, fin_vector_smul[R, M](carrier, n, r, v), i)
+}
+
+theorem fin_vector_add_assoc[A: AddSemigroup](n: Nat, u: Fin[n] -> A, v: Fin[n] -> A, w: Fin[n] -> A) {
+    fin_vector_add[A](n, u, fin_vector_add[A](n, v, w)) =
+        fin_vector_add[A](n, fin_vector_add[A](n, u, v), w)
+}
+
+theorem fin_vector_add_comm[A: AddCommSemigroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A) {
+    fin_vector_add[A](n, v, w) = fin_vector_add[A](n, w, v)
+}
+
+theorem fin_vector_add_zero_right[A: AddMonoid](n: Nat, v: Fin[n] -> A) {
+    fin_vector_add[A](n, v, fin_vector_zero[A](n)) = v
+}
+
+theorem fin_vector_add_zero_left[A: AddMonoid](n: Nat, v: Fin[n] -> A) {
+    fin_vector_add[A](n, fin_vector_zero[A](n), v) = v
+}
+
+theorem fin_vector_add_neg_right[A: AddGroup](n: Nat, v: Fin[n] -> A) {
+    fin_vector_add[A](n, v, fin_vector_neg[A](n, v)) = fin_vector_zero[A](n)
+}
+
+theorem fin_vector_add_neg_left[A: AddGroup](n: Nat, v: Fin[n] -> A) {
+    fin_vector_add[A](n, fin_vector_neg[A](n, v), v) = fin_vector_zero[A](n)
+}
+
+theorem fin_vector_sub_eq_add_neg[A: AddGroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A) {
+    fin_vector_sub[A](n, v, w) = fin_vector_add[A](n, v, fin_vector_neg[A](n, w))
 }
 
 theorem fin_vector_smul_one[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, v: Fin[n] -> M) {
@@ -524,6 +677,11 @@ theorem fin_vector_smul_zero_left[R: Ring, M: AddCommGroup](carrier: Module[R, M
 
 theorem fin_vector_smul_zero_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R) {
     fin_vector_smul[R, M](carrier, n, r, fin_vector_zero[M](n)) = fin_vector_zero[M](n)
+}
+
+theorem fin_vector_smul_neg[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M) {
+    fin_vector_smul[R, M](carrier, n, r, fin_vector_neg[M](n, v)) =
+        fin_vector_neg[M](n, fin_vector_smul[R, M](carrier, n, r, v))
 }
 
 define matrix_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) -> A {
@@ -545,6 +703,75 @@ attributes Matrix[A: Zero, m: Nat, n: Nat] {
 
 instance Matrix[A: Zero, m: Nat, n: Nat]: Zero {
     let 0 = Matrix[A, m, n].zero
+}
+
+define matrix_add_entry[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) -> A {
+    a.entry(i, j) + b.entry(i, j)
+}
+
+define matrix_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) -> Matrix[A, m, n] {
+    Matrix[A, m, n].new(matrix_add_entry[A](m, n, a, b))
+}
+
+attributes Matrix[A: Add, m: Nat, n: Nat] {
+    /// The pointwise sum of two matrices.
+    define add(self, other: Matrix[A, m, n]) -> Matrix[A, m, n] {
+        matrix_add[A](m, n, self, other)
+    }
+}
+
+instance Matrix[A: Add, m: Nat, n: Nat]: Add {
+    let add = Matrix[A, m, n].add
+}
+
+instance Matrix[A: AddSemigroup, m: Nat, n: Nat]: AddSemigroup
+
+instance Matrix[A: AddCommSemigroup, m: Nat, n: Nat]: AddCommSemigroup
+
+instance Matrix[A: AddMonoid, m: Nat, n: Nat]: AddMonoid
+
+instance Matrix[A: AddCommMonoid, m: Nat, n: Nat]: AddCommMonoid
+
+theorem sum_map_fin_append[A: AddCommMonoid](n: Nat, left: List[Fin[n]], right: List[Fin[n]], f: Fin[n] -> A) {
+    sum(map(left + right, f)) = sum(map(left, f)) + sum(map(right, f))
+}
+
+define matrix_neg_entry[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) -> A {
+    -a.entry(i, j)
+}
+
+define matrix_neg[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n]) -> Matrix[A, m, n] {
+    Matrix[A, m, n].new(matrix_neg_entry[A](m, n, a))
+}
+
+attributes Matrix[A: Neg, m: Nat, n: Nat] {
+    /// The pointwise additive inverse of a matrix.
+    define neg(self) -> Matrix[A, m, n] {
+        matrix_neg[A](m, n, self)
+    }
+}
+
+instance Matrix[A: Neg, m: Nat, n: Nat]: Neg {
+    let neg = Matrix[A, m, n].neg
+}
+
+instance Matrix[A: AddGroup, m: Nat, n: Nat]: AddGroup
+
+instance Matrix[A: AddCommGroup, m: Nat, n: Nat]: AddCommGroup
+
+define matrix_sub_entry[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) -> A {
+    a.entry(i, j) - b.entry(i, j)
+}
+
+define matrix_sub[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) -> Matrix[A, m, n] {
+    Matrix[A, m, n].new(matrix_sub_entry[A](m, n, a, b))
+}
+
+attributes Matrix[A: AddGroup, m: Nat, n: Nat] {
+    /// The pointwise difference of two matrices.
+    define sub(self, other: Matrix[A, m, n]) -> Matrix[A, m, n] {
+        matrix_sub[A](m, n, self, other)
+    }
 }
 
 define matrix_smul_entry[R: Ring, M: AddCommGroup](
@@ -597,971 +824,6 @@ attributes Matrix[A, m: Nat, n: Nat] {
     }
 }
 
-define matrix_one_entry[S: Semiring](n: Nat, i: Fin[n], j: Fin[n]) -> S {
-    if i = j {
-        S.1
-    } else {
-        S.0
-    }
-}
-
-define matrix_one[S: Semiring](n: Nat) -> Matrix[S, n, n] {
-    Matrix[S, n, n].new(matrix_one_entry[S](n))
-}
-
-define matrix_minor_entry[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc], i: Fin[n], j: Fin[n]) -> A {
-    matrix_entry[A](n.suc, n.suc, a, fin_skip(n, row, i), fin_skip(n, col, j))
-}
-
-define matrix_minor[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) -> Matrix[A, n, n] {
-    Matrix[A, n, n].new(matrix_minor_entry[A](n, a, row, col))
-}
-
-define matrix_zero_det_function[R: Ring](n: Nat, a: Matrix[R, n, n]) -> R {
-    R.0
-}
-
-define list_index_or_zero[I](items: List[I], item: I) -> Nat {
-    match items {
-        List.nil {
-            Nat.0
-        }
-        List.cons(head, tail) {
-            if head = item {
-                Nat.0
-            } else {
-                list_index_or_zero[I](tail, item).suc
-            }
-        }
-    }
-}
-
-define square_matrix_entry_function[A](n: Nat, a: Matrix[A, n, n], row: Fin[n], col: Fin[n]) -> A {
-    matrix_entry[A](n, n, a, row, col)
-}
-
-theorem matrix_entry_self[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_entry[A](m, n, a, i, j) = a.entry(i, j)
-}
-
-theorem matrix_ext[A](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
-    (forall(i: Fin[m], j: Fin[n]) { matrix_entry[A](m, n, a, i, j) = matrix_entry[A](m, n, b, i, j) }) implies a = b
-}
-
-theorem matrix_entry_zero[A: Zero](m: Nat, n: Nat, i: Fin[m], j: Fin[n]) {
-    matrix_entry[A](m, n, matrix_zero[A](m, n), i, j) = A.0
-}
-
-theorem matrix_entry_smul[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]
-) {
-    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), i, j) = carrier.smul(r, matrix_entry[M](m, n, a, i, j))
-}
-
-theorem matrix_entry_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_entry[A](n, m, matrix_transpose[A](m, n, a), j, i) = matrix_entry[A](m, n, a, i, j)
-}
-
-theorem matrix_row_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_row[A](m, n, a, i, j) = matrix_entry[A](m, n, a, i, j)
-}
-
-theorem matrix_col_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n], i: Fin[m]) {
-    matrix_col[A](m, n, a, j, i) = matrix_entry[A](m, n, a, i, j)
-}
-
-theorem matrix_entry_one_diag[S: Semiring](n: Nat, i: Fin[n]) {
-    matrix_entry[S](n, n, matrix_one[S](n), i, i) = S.1
-}
-
-theorem matrix_entry_one_off_diag[S: Semiring](n: Nat, i: Fin[n], j: Fin[n]) {
-    i != j implies matrix_entry[S](n, n, matrix_one[S](n), i, j) = S.0
-}
-
-theorem matrix_transpose_one[S: Semiring](n: Nat) {
-    matrix_transpose[S](n, n, matrix_one[S](n)) = matrix_one[S](n)
-}
-
-theorem matrix_entry_minor[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc], i: Fin[n], j: Fin[n]) {
-    matrix_entry[A](n, n, matrix_minor[A](n, a, row, col), i, j) =
-        matrix_entry[A](n.suc, n.suc, a, fin_skip(n, row, i), fin_skip(n, col, j))
-}
-
-theorem matrix_minor_zero[A: Zero](n: Nat, row: Fin[n.suc], col: Fin[n.suc]) {
-    matrix_minor[A](n, matrix_zero[A](n.suc, n.suc), row, col) = matrix_zero[A](n, n)
-}
-
-theorem matrix_minor_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, a: Matrix[M, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
-    matrix_minor[M](n, matrix_smul[R, M](carrier, n.suc, n.suc, r, a), row, col) =
-        matrix_smul[R, M](carrier, n, n, r, matrix_minor[M](n, a, row, col))
-}
-
-theorem matrix_minor_transpose[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
-    matrix_minor[A](n, matrix_transpose[A](n.suc, n.suc, a), row, col) = matrix_transpose[A](n, n, matrix_minor[A](n, a, col, row))
-}
-
-theorem list_index_or_zero_nil[I](item: I) {
-    list_index_or_zero[I](List.nil[I], item) = Nat.0
-}
-
-theorem list_index_or_zero_cons_self[I](head: I, tail: List[I]) {
-    list_index_or_zero[I](List.cons(head, tail), head) = Nat.0
-}
-
-theorem list_index_or_zero_cons_other[I](head: I, tail: List[I], item: I) {
-    head != item implies list_index_or_zero[I](List.cons(head, tail), item) = list_index_or_zero[I](tail, item).suc
-}
-
-theorem matrix_transpose_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n]) {
-    matrix_transpose[A](n, m, matrix_transpose[A](m, n, a)) = a
-}
-
-theorem matrix_row_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n], i: Fin[m]) {
-    matrix_row[A](n, m, matrix_transpose[A](m, n, a), j, i) = matrix_col[A](m, n, a, j, i)
-}
-
-theorem matrix_col_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_col[A](n, m, matrix_transpose[A](m, n, a), i, j) = matrix_row[A](m, n, a, i, j)
-}
-
-theorem matrix_row_transpose_vector[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n]) {
-    matrix_row[A](n, m, matrix_transpose[A](m, n, a), j) = matrix_col[A](m, n, a, j)
-}
-
-theorem matrix_col_transpose_vector[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m]) {
-    matrix_col[A](n, m, matrix_transpose[A](m, n, a), i) = matrix_row[A](m, n, a, i)
-}
-
-theorem matrix_row_zero[A: Zero](m: Nat, n: Nat, i: Fin[m]) {
-    matrix_row[A](m, n, matrix_zero[A](m, n), i) = fin_vector_zero[A](n)
-}
-
-theorem matrix_col_zero[A: Zero](m: Nat, n: Nat, j: Fin[n]) {
-    matrix_col[A](m, n, matrix_zero[A](m, n), j) = fin_vector_zero[A](m)
-}
-
-theorem matrix_row_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], i: Fin[m]) {
-    matrix_row[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), i) =
-        fin_vector_smul[R, M](carrier, n, r, matrix_row[M](m, n, a, i))
-}
-
-theorem matrix_col_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], j: Fin[n]) {
-    matrix_col[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), j) =
-        fin_vector_smul[R, M](carrier, m, r, matrix_col[M](m, n, a, j))
-}
-
-theorem matrix_transpose_zero[A: Zero](m: Nat, n: Nat) {
-    matrix_transpose[A](m, n, matrix_zero[A](m, n)) = matrix_zero[A](n, m)
-}
-
-theorem matrix_smul_one_entry[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, R.1, a), i, j) = matrix_entry[M](m, n, a, i, j)
-}
-
-theorem matrix_smul_zero_left_entry[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, R.0, a), i, j) = M.0
-}
-
-theorem matrix_smul_zero_left[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n]) {
-    matrix_smul[R, M](carrier, m, n, R.0, a) = matrix_zero[M](m, n)
-}
-
-theorem matrix_smul_zero_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R) {
-    matrix_smul[R, M](carrier, m, n, r, matrix_zero[M](m, n)) = matrix_zero[M](m, n)
-}
-
-define matrix_swap_rows_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m], r: Fin[m], c: Fin[n]) -> A {
-    if r = i {
-        matrix_entry[A](m, n, a, j, c)
-    } else {
-        if r = j {
-            matrix_entry[A](m, n, a, i, c)
-        } else {
-            matrix_entry[A](m, n, a, r, c)
-        }
-    }
-}
-
-define matrix_swap_rows[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m]) -> Matrix[A, m, n] {
-    Matrix[A, m, n].new(matrix_swap_rows_entry[A](m, n, a, i, j))
-}
-
-theorem matrix_entry_swap_rows[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m], r: Fin[m], c: Fin[n]) {
-    matrix_entry[A](m, n, matrix_swap_rows[A](m, n, a, i, j), r, c) =
-        matrix_swap_rows_entry[A](m, n, a, i, j, r, c)
-}
-
-define matrix2_00[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_zero(n.suc))
-}
-
-define matrix2_01[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_succ(n.suc, fin_zero(n)))
-}
-
-define matrix2_10[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_zero(n.suc))
-}
-
-define matrix2_11[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_succ(n.suc, fin_zero(n)))
-}
-
-define matrix2_vec[R](n: Nat, x0: R, x1: R, i: Fin[n]) -> R {
-    if i.value = Nat.0 {
-        x0
-    } else {
-        x1
-    }
-}
-
-theorem matrix_det_suc_enum_length(n: Nat) {
-    fin_enum_suc(n).length = n.suc
-}
-
-theorem matrix_det_suc_enum_contains(n: Nat, i: Fin[n.suc]) {
-    fin_enum_suc(n).contains(i)
-}
-
-theorem matrix_det_suc_enum_is_unique(n: Nat) {
-    fin_enum_suc(n).is_unique
-}
-
-theorem fin_enum_suc_zero_eq_singleton_zero {
-    fin_enum_suc(Nat.0) = List.singleton(fin_zero(Nat.0))
-}
-
-theorem sum_singleton_ring[R: Ring](x: R) {
-    sum[R](List.singleton(x)) = x
-}
-
-theorem sum_map_zero_ring[T, R: Ring](items: List[T], f: T -> R) {
-    (forall(item: T) { f(item) = R.0 }) implies sum[R](map[T, R](items, f)) = R.0
-}
-
-theorem fin_enum_suc_one_eq_two {
-    fin_enum_suc(Nat.1) = List.cons(fin_zero(Nat.1), List.cons(fin_last(Nat.1), List.nil[Fin[Nat.1.suc]]))
-}
-
-define two_row_list[I](r: I, r2: I) -> List[I] {
-    List.cons(r, List.cons(r2, List.nil[I]))
-}
-
-define two_col_list[I](c: I, c2: I) -> List[I] {
-    List.cons(c, List.cons(c2, List.nil[I]))
-}
-
-define flip_entry[R: Ring, I](entry: (I, I) -> R, c: I, r: I) -> R {
-    entry(r, c)
-}
-
-theorem sum_map_zero_fn[T, A: AddCommMonoid](items: List[T], f: T -> A) {
-    (forall(item: T) { f(item) = A.0 }) implies sum[A](map[T, A](items, f)) = A.0
-}
-
-theorem sum_map_sum_exchange[T, A: AddCommMonoid](xs: List[T], ys: List[T], h: T -> T -> A) {
-    sum[A](map[T, A](xs, function(x: T) {
-        sum[A](map[T, A](ys, function(y: T) { h(x, y) }))
-    })) = sum[A](map[T, A](ys, function(y: T) {
-        sum[A](map[T, A](xs, function(x: T) { h(x, y) }))
-    }))
-}
-
-theorem unique_cons_not_contains_head[T](head: T, tail: List[T]) {
-    List.cons(head, tail).is_unique implies not tail.contains(head)
-}
-
-theorem remove_one_length_suc[T](list: List[T], item: T) {
-    list.contains(item) implies list.remove_one(item).length.suc = list.length
-}
-
-theorem nat_suc_eq_cancel(a: Nat, b: Nat) {
-    a.suc = b.suc implies a = b
-}
-
-theorem list_index_or_zero_zero_iff_head[I](head: I, tail: List[I], x: I) {
-    List.cons(head, tail).contains(x) and list_index_or_zero[I](List.cons(head, tail), x) = Nat.0 implies x = head
-}
-
-theorem list_index_or_zero_remove_after[I](list: List[I], x: I, c: I) {
-    list.contains(x) and list.contains(c) and x != c and
-        list_index_or_zero[I](list, c) < list_index_or_zero[I](list, x) implies
-        list_index_or_zero[I](list.remove_one(x), c) = list_index_or_zero[I](list, c)
-}
-
-theorem list_index_or_zero_remove_before[I](list: List[I], x: I, c: I) {
-    list.contains(x) and list.contains(c) and x != c and
-        list_index_or_zero[I](list, x) < list_index_or_zero[I](list, c) implies
-        list_index_or_zero[I](list.remove_one(x), c).suc = list_index_or_zero[I](list, c)
-}
-
-theorem list_index_or_zero_injective_unique[I](list: List[I], x: I, y: I) {
-    list.is_unique and list.contains(x) and list.contains(y) and
-        list_index_or_zero[I](list, x) = list_index_or_zero[I](list, y) implies x = y
-}
-
-define triangular_condition[R: Ring, I](entry: (I, I) -> R, rows: List[I], cols: List[I]) -> Bool {
-    forall(r: I, c: I) {
-        rows.contains(r) and cols.contains(c) and
-        list_index_or_zero[I](rows, r) > list_index_or_zero[I](cols, c) implies entry(r, c) = R.0
-    }
-}
-
-theorem triangular_preserved_first[R: Ring, I](entry: (I, I) -> R, head: I, tail: List[I], c: I, cs: List[I]) {
-    List.cons(head, tail).is_unique and List.cons(c, cs).is_unique and
-    triangular_condition[R, I](entry, List.cons(head, tail), List.cons(c, cs)) implies
-        triangular_condition[R, I](entry, tail, cs)
-}
-
-theorem triangular_preserved_remove[R: Ring, I](entry: (I, I) -> R, head: I, tail: List[I], cols: List[I], x: I) {
-    List.cons(head, tail).is_unique and cols.is_unique and
-    triangular_condition[R, I](entry, List.cons(head, tail), cols) and cols.contains(x) implies
-        triangular_condition[R, I](entry, tail, cols.remove_one(x))
-}
-
-theorem remove_one_comm[T](list: List[T], x: T, y: T) {
-    list.remove_one(x).remove_one(y) = list.remove_one(y).remove_one(x)
-}
-
-theorem sum_double_remove_flip[T, R: Ring](cols: List[T], f: T -> T -> R) {
-    cols.is_unique implies
-    (sum[R](map[T, R](cols, function(x: T) {
-        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(x, y) }))
-    })) = sum[R](map[T, R](cols, function(x: T) {
-        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(y, x) }))
-    })))
-}
-
-define det_row_replace_entry[R: Ring, I](entry: (I, I) -> R, r: I, g: (I) -> R, i: I, c: I) -> R {
-    if i = r {
-        g(c)
-    } else {
-        entry(i, c)
-    }
-}
-
-define matrix_row_replace[R: Ring](n: Nat, a: Matrix[R, n.suc, n.suc], r: Fin[n.suc], g: (Fin[n.suc]) -> R) -> Matrix[R, n.suc, n.suc] {
-    Matrix[R, n.suc, n.suc].new(det_row_replace_entry[R, Fin[n.suc]](square_matrix_entry_function[R](n.suc, a), r, g))
-}
-
-theorem sum_map_zero_contains[T, A: AddCommMonoid](items: List[T], g: T -> A) {
-    (forall(item: T) { items.contains(item) implies g(item) = A.0 }) implies
-        sum[A](map[T, A](items, g)) = A.0
-}
-
-define is_nonzero_vector[S: Semiring](n: Nat, v: Fin[n] -> S) -> Bool {
-    exists(i: Fin[n]) {
-        v(i) != S.0
-    }
-}
-
-theorem is_nonzero_vector_intro[S: Semiring](n: Nat, v: Fin[n] -> S, i: Fin[n]) {
-    v(i) != S.0 implies is_nonzero_vector[S](n, v)
-}
-
-theorem is_nonzero_vector_witness[S: Semiring](n: Nat, v: Fin[n] -> S) {
-    is_nonzero_vector[S](n, v) implies exists(i: Fin[n]) { v(i) != S.0 }
-}
-
-theorem zero_vector_not_nonzero[S: Semiring](n: Nat) {
-    not is_nonzero_vector[S](n, fin_vector_zero[S](n))
-}
-
-define matrix_row_fn[S: Semiring](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n], k: Fin[n]
-) -> S {
-    matrix_entry[S](n, n, a, i, k)
-}
-
-define matrix_row_sum[S: Semiring](n: Nat, a: Matrix[S, n, n], i: Fin[n]) -> S {
-    fin_sum[S](n, matrix_row_fn[S](n, a, i))
-}
-
-define is_row_stochastic[S: Semiring](n: Nat, a: Matrix[S, n, n]) -> Bool {
-    forall(i: Fin[n]) {
-        matrix_row_sum[S](n, a, i) = S.1
-    }
-}
-
-theorem is_row_stochastic_apply[S: Semiring](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n]
-) {
-    is_row_stochastic[S](n, a) implies matrix_row_sum[S](n, a, i) = S.1
-}
-
-theorem is_row_stochastic_intro[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
-    (forall(i: Fin[n]) { matrix_row_sum[S](n, a, i) = S.1 })
-        implies is_row_stochastic[S](n, a)
-}
-
-define ones_vector[S: Semiring](n: Nat, i: Fin[n]) -> S {
-    S.1
-}
-
-theorem ones_vector_nonzero[S: Semiring](n: Nat) {
-    S.1 != S.0 implies is_nonzero_vector[S](n.suc, ones_vector[S](n.suc))
-}
-
-define is_nonnegative_matrix[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
-    forall(i: Fin[n], j: Fin[n]) {
-        S.0 <= matrix_entry[S](n, n, a, i, j)
-    }
-}
-
-theorem is_nonnegative_matrix_apply[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
-) {
-    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_entry[S](n, n, a, i, j)
-}
-
-theorem is_nonnegative_matrix_intro[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    (forall(i: Fin[n], j: Fin[n]) { S.0 <= matrix_entry[S](n, n, a, i, j) })
-        implies is_nonnegative_matrix[S](n, a)
-}
-
-define is_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
-    is_nonnegative_matrix[S](n, a) and is_row_stochastic[S](n, a)
-}
-
-theorem is_stochastic_nonnegative[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    is_stochastic[S](n, a) implies is_nonnegative_matrix[S](n, a)
-}
-
-theorem is_stochastic_row_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    is_stochastic[S](n, a) implies is_row_stochastic[S](n, a)
-}
-
-theorem is_stochastic_intro[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    is_nonnegative_matrix[S](n, a) and is_row_stochastic[S](n, a)
-        implies is_stochastic[S](n, a)
-}
-
-theorem stochastic_entry_le_one[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
-) {
-    is_stochastic[S](n, a) implies matrix_entry[S](n, n, a, i, j) <= S.1
-}
-
-theorem matrix_one_row_sum[S: Semiring](n: Nat, i: Fin[n]) {
-    matrix_row_sum[S](n, matrix_one[S](n), i) = S.1
-}
-
-theorem matrix_one_is_row_stochastic[S: Semiring](n: Nat) {
-    is_row_stochastic[S](n, matrix_one[S](n))
-}
-
-define matrix_col_fn[S: Semiring](
-    n: Nat, a: Matrix[S, n, n], j: Fin[n], k: Fin[n]
-) -> S {
-    matrix_entry[S](n, n, a, k, j)
-}
-
-define matrix_col_sum[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) -> S {
-    fin_sum[S](n, matrix_col_fn[S](n, a, j))
-}
-
-theorem matrix_col_sum_transpose[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) {
-    matrix_col_sum[S](n, a, j) = matrix_row_sum[S](n, matrix_transpose[S](n, n, a), j)
-}
-
-define is_col_stochastic[S: Semiring](n: Nat, a: Matrix[S, n, n]) -> Bool {
-    forall(j: Fin[n]) {
-        matrix_col_sum[S](n, a, j) = S.1
-    }
-}
-
-theorem is_col_stochastic_apply[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) {
-    is_col_stochastic[S](n, a) implies matrix_col_sum[S](n, a, j) = S.1
-}
-
-theorem is_col_stochastic_intro[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
-    (forall(j: Fin[n]) { matrix_col_sum[S](n, a, j) = S.1 })
-        implies is_col_stochastic[S](n, a)
-}
-
-theorem col_stochastic_iff_transpose_row_stochastic[S: Semiring](
-    n: Nat, a: Matrix[S, n, n]
-) {
-    is_col_stochastic[S](n, a) = is_row_stochastic[S](n, matrix_transpose[S](n, n, a))
-}
-
-define is_doubly_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
-    is_stochastic[S](n, a) and is_col_stochastic[S](n, a)
-}
-
-theorem is_doubly_stochastic_row[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    is_doubly_stochastic[S](n, a) implies is_stochastic[S](n, a)
-}
-
-theorem is_doubly_stochastic_col[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
-    is_doubly_stochastic[S](n, a) implies is_col_stochastic[S](n, a)
-}
-
-theorem nonnegative_row_sum_nonneg[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n]
-) {
-    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_row_sum[S](n, a, i)
-}
-
-theorem nonnegative_col_sum_nonneg[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], j: Fin[n]
-) {
-    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_col_sum[S](n, a, j)
-}
-
-theorem doubly_stochastic_entry_le_one[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
-) {
-    is_doubly_stochastic[S](n, a) implies matrix_entry[S](n, n, a, i, j) <= S.1
-}
-
-theorem row_sum_mono[S: OrderedField](
-    n: Nat, a: Matrix[S, n, n], b: Matrix[S, n, n], i: Fin[n]
-) {
-    (forall(k: Fin[n]) {
-        matrix_entry[S](n, n, a, i, k) <= matrix_entry[S](n, n, b, i, k)
-    }) implies matrix_row_sum[S](n, a, i) <= matrix_row_sum[S](n, b, i)
-}
-
-theorem abs_of_not_negative(x: Real) {
-    not x.is_negative implies x.abs = x
-}
-
-theorem max_abs_positive(m: Nat, v: Fin[m.suc] -> Real) {
-    (exists(j: Fin[m.suc]) { v(j) != Real.0 })
-        implies Real.0 < fin_function_max[Real](m, fin_abs(m.suc, v))
-}
-
-theorem fin_two_one_value {
-    fin_succ(Nat.0.suc, fin_zero(Nat.0)).value = Nat.0.suc
-}
-
-theorem fin_two_zero_value {
-    fin_zero(Nat.0.suc).value = Nat.0
-}
-
-theorem fin_two_one_ne_zero {
-    fin_succ(Nat.0.suc, fin_zero(Nat.0)) != fin_zero(Nat.0.suc)
-}
-
-define matrix2_entry_at[R](n: Nat, a00: R, a01: R, a10: R, a11: R, i: Fin[n], j: Fin[n]) -> R {
-    if i.value = Nat.0 {
-        if j.value = Nat.0 {
-            a00
-        } else {
-            a01
-        }
-    } else {
-        if j.value = Nat.0 {
-            a10
-        } else {
-            a11
-        }
-    }
-}
-
-theorem fin_two_zero_ne_one {
-    fin_zero(Nat.0.suc) != fin_succ(Nat.0.suc, fin_zero(Nat.0))
-}
-
-theorem matrix2_entry_at_zero_zero[R](a00: R, a01: R, a10: R, a11: R) {
-    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_zero(Nat.0.suc), fin_zero(Nat.0.suc)) = a00
-}
-
-theorem matrix2_entry_at_zero_one[R](a00: R, a01: R, a10: R, a11: R) {
-    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) = a01
-}
-
-theorem matrix2_entry_at_one_zero[R](a00: R, a01: R, a10: R, a11: R) {
-    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc)) = a10
-}
-
-theorem matrix2_entry_at_one_one[R](a00: R, a01: R, a10: R, a11: R) {
-    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_succ(Nat.0.suc, fin_zero(Nat.0))) = a11
-}
-
-define matrix2_entry_00[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_zero(n.suc))
-}
-
-define matrix2_entry_01[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_succ(n.suc, fin_zero(n)))
-}
-
-define matrix2_entry_10[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_zero(n.suc))
-}
-
-define matrix2_entry_11[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_succ(n.suc, fin_zero(n)))
-}
-
-define matrix2_scalar_one_entry[R: Ring](n: Nat, r: R, i: Fin[n.suc.suc], j: Fin[n.suc.suc]) -> R {
-    if i = j {
-        r
-    } else {
-        R.0
-    }
-}
-
-define matrix2_replace_col_entry[R: Ring](
-    n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc], j: Fin[n.suc.suc], b: Fin[n.suc.suc] -> R,
-    i: Fin[n.suc.suc], k: Fin[n.suc.suc]
-) -> R {
-    if k = j {
-        b(i)
-    } else {
-        matrix_entry[R](n.suc.suc, n.suc.suc, a, i, k)
-    }
-}
-
-define matrix2_replace_col[R: Ring](
-    n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc], j: Fin[n.suc.suc], b: Fin[n.suc.suc] -> R
-) -> Matrix[R, n.suc.suc, n.suc.suc] {
-    Matrix[R, n.suc.suc, n.suc.suc].new(matrix2_replace_col_entry[R](n, a, j, b))
-}
-
-theorem fin_two_zero_value_two {
-    fin_zero(Nat.0.suc).value = Nat.0
-}
-
-theorem fin_two_one_value_two {
-    fin_succ(Nat.0.suc, fin_zero(Nat.0)).value = Nat.0.suc
-}
-
-theorem fin_skip_first_two {
-    fin_skip(Nat.0.suc, fin_zero(Nat.0.suc), fin_zero(Nat.0)) = fin_succ(Nat.0.suc, fin_zero(Nat.0))
-}
-
-theorem fin_skip_second_two {
-    fin_skip(Nat.0.suc, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0)) =
-        fin_cast_suc(Nat.0.suc, fin_zero(Nat.0))
-}
-
-theorem fin_cast_suc_first_two {
-    fin_cast_suc(Nat.0.suc, fin_zero(Nat.0)) = fin_zero(Nat.0.suc)
-}
-
-theorem fin_two_index_cases(i: Fin[Nat.0.suc.suc]) {
-    i.value = Nat.0 or i.value = Nat.0.suc
-}
-
-theorem matrix2_replace_col_entry_self[F: Ring](
-    a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], j: Fin[Nat.0.suc.suc], b: Fin[Nat.0.suc.suc] -> F, i: Fin[Nat.0.suc.suc]
-) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, matrix2_replace_col[F](Nat.0, a, j, b), i, j) = b(i)
-}
-
-theorem matrix2_replace_col_entry_other[F: Ring](
-    a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], j: Fin[Nat.0.suc.suc], b: Fin[Nat.0.suc.suc] -> F, i: Fin[Nat.0.suc.suc], k: Fin[Nat.0.suc.suc]
-) {
-    k != j implies matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, matrix2_replace_col[F](Nat.0, a, j, b), i, k) = matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, a, i, k)
-}
-
-theorem fin_last_two_eq_succ {
-    fin_last(Nat.0.suc) = fin_succ(Nat.0.suc, fin_zero(Nat.0))
-}
-
-theorem fin_enum_suc_two {
-    fin_enum_suc(Nat.0.suc) =
-        List.cons(fin_zero(Nat.0.suc), List.cons(fin_succ(Nat.0.suc, fin_zero(Nat.0)), List.nil[Fin[Nat.0.suc.suc]]))
-}
-
-theorem matrix2_vec_entry_0[R](x0: R, x1: R) {
-    matrix2_vec[R](Nat.0.suc.suc, x0, x1, fin_zero(Nat.0.suc)) = x0
-}
-
-theorem matrix2_vec_entry_1[R](x0: R, x1: R) {
-    matrix2_vec[R](Nat.0.suc.suc, x0, x1, fin_succ(Nat.0.suc, fin_zero(Nat.0))) = x1
-}
-
-theorem matrix2_vec_nonzero_0[F: Semiring](x: F, y: F) {
-    x != F.0 implies is_nonzero_vector[F](Nat.0.suc.suc, matrix2_vec[F](Nat.0.suc.suc, x, y))
-}
-
-theorem matrix2_vec_nonzero_1[F: Semiring](x: F, y: F) {
-    y != F.0 implies is_nonzero_vector[F](Nat.0.suc.suc, matrix2_vec[F](Nat.0.suc.suc, x, y))
-}
-
-define matrix_trace_term[R: Ring](n: Nat, a: Matrix[R, n, n], i: Fin[n]) -> R {
-    matrix_entry[R](n, n, a, i, i)
-}
-
-define matrix_trace[R: Ring](n: Nat, a: Matrix[R, n, n]) -> R {
-    fin_sum[R](n, matrix_trace_term[R](n, a))
-}
-
-theorem matrix_trace_transpose[R: Ring](n: Nat, a: Matrix[R, n, n]) {
-    matrix_trace[R](n, matrix_transpose[R](n, n, a)) = matrix_trace[R](n, a)
-}
-
-define matrix_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) -> Matrix[A, m, n] {
-    Matrix[A, m, n].new(matrix_add_entry[A](m, n, a, b))
-}
-
-attributes Matrix[A: Add, m: Nat, n: Nat] {
-    /// The pointwise sum of two matrices.
-    define add(self, other: Matrix[A, m, n]) -> Matrix[A, m, n] {
-        matrix_add[A](m, n, self, other)
-    }
-}
-
-instance Matrix[A: Add, m: Nat, n: Nat]: Add {
-    let add = Matrix[A, m, n].add
-}
-
-define fin_pointwise_add[A: Add](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A, i: Fin[n]) -> A {
-    f(i) + g(i)
-}
-
-theorem fin_value_or_zero_add[A: AddCommMonoid](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A, k: Nat) {
-    fin_value_or_zero[A](n, fin_pointwise_add[A](n, f, g), k) =
-        fin_value_or_zero[A](n, f, k) + fin_value_or_zero[A](n, g, k)
-}
-
-theorem fin_sum_add[A: AddCommMonoid](n: Nat, f: Fin[n] -> A, g: Fin[n] -> A) {
-    fin_sum[A](n, fin_pointwise_add[A](n, f, g)) = fin_sum[A](n, f) + fin_sum[A](n, g)
-}
-
-theorem abs_add_le(a: Real, b: Real) {
-    (a + b).abs <= a.abs + b.abs
-}
-
-theorem sum_map_fin_append[A: AddCommMonoid](n: Nat, left: List[Fin[n]], right: List[Fin[n]], f: Fin[n] -> A) {
-    sum(map(left + right, f)) = sum(map(left, f)) + sum(map(right, f))
-}
-
-theorem fin_sum_suc_split_zero[A: AddCommMonoid](n: Nat, f: Fin[n.suc] -> A) {
-    fin_sum[A](n.suc, f) = f(fin_zero(n)) + fin_sum[A](n, fin_succ_apply[A](n, f))
-}
-
-define fin_vector_add[A: Add](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) -> A {
-    v(i) + w(i)
-}
-
-theorem fin_vector_add_apply[A: Add](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
-    fin_vector_add[A](n, v, w, i) = v(i) + w(i)
-}
-
-theorem fin_vector_add_assoc_at[A: AddSemigroup](
-    n: Nat, u: Fin[n] -> A, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]
-) {
-    fin_vector_add[A](n, u, fin_vector_add[A](n, v, w), i) =
-        fin_vector_add[A](n, fin_vector_add[A](n, u, v), w, i)
-}
-
-theorem fin_vector_add_comm_at[A: AddCommSemigroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A, i: Fin[n]) {
-    fin_vector_add[A](n, v, w, i) = fin_vector_add[A](n, w, v, i)
-}
-
-theorem fin_vector_add_zero_right_at[A: AddMonoid](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
-    fin_vector_add[A](n, v, fin_vector_zero[A](n), i) = v(i)
-}
-
-theorem fin_vector_add_zero_left_at[A: AddMonoid](n: Nat, v: Fin[n] -> A, i: Fin[n]) {
-    fin_vector_add[A](n, fin_vector_zero[A](n), v, i) = v(i)
-}
-
-theorem fin_vector_smul_add_left_at[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], n: Nat, r: R, s: R, v: Fin[n] -> M, i: Fin[n]
-) {
-    fin_vector_smul[R, M](carrier, n, r + s, v, i) =
-        fin_vector_add[M](n, fin_vector_smul[R, M](carrier, n, r, v), fin_vector_smul[R, M](carrier, n, s, v), i)
-}
-
-theorem fin_vector_smul_add_right_at[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], n: Nat, r: R, v: Fin[n] -> M, w: Fin[n] -> M, i: Fin[n]
-) {
-    fin_vector_smul[R, M](carrier, n, r, fin_vector_add[M](n, v, w), i) =
-        fin_vector_add[M](n, fin_vector_smul[R, M](carrier, n, r, v), fin_vector_smul[R, M](carrier, n, r, w), i)
-}
-
-theorem fin_vector_add_assoc[A: AddSemigroup](n: Nat, u: Fin[n] -> A, v: Fin[n] -> A, w: Fin[n] -> A) {
-    fin_vector_add[A](n, u, fin_vector_add[A](n, v, w)) =
-        fin_vector_add[A](n, fin_vector_add[A](n, u, v), w)
-}
-
-theorem fin_vector_add_comm[A: AddCommSemigroup](n: Nat, v: Fin[n] -> A, w: Fin[n] -> A) {
-    fin_vector_add[A](n, v, w) = fin_vector_add[A](n, w, v)
-}
-
-theorem fin_vector_add_zero_right[A: AddMonoid](n: Nat, v: Fin[n] -> A) {
-    fin_vector_add[A](n, v, fin_vector_zero[A](n)) = v
-}
-
-theorem fin_vector_add_zero_left[A: AddMonoid](n: Nat, v: Fin[n] -> A) {
-    fin_vector_add[A](n, fin_vector_zero[A](n), v) = v
-}
-
-define matrix_add_entry[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) -> A {
-    a.entry(i, j) + b.entry(i, j)
-}
-
-define matrix_cofactor_sign[R: Ring](n: Nat, row: Fin[n], col: Fin[n]) -> R {
-    alternating_sign[R](row.value + col.value)
-}
-
-theorem matrix_entry_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
-    matrix_entry[A](m, n, a + b, i, j) = matrix_entry[A](m, n, a, i, j) + matrix_entry[A](m, n, b, i, j)
-}
-
-theorem matrix_minor_add[A: Add](n: Nat, a: Matrix[A, n.suc, n.suc], b: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
-    matrix_minor[A](n, a + b, row, col) = matrix_minor[A](n, a, row, col) + matrix_minor[A](n, b, row, col)
-}
-
-theorem matrix_add_associative[A: AddSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], c: Matrix[A, m, n]) {
-    a + (b + c) = (a + b) + c
-}
-
-theorem matrix_add_commutative[A: AddCommSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
-    a + b = b + a
-}
-
-theorem matrix_add_identity_right[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
-    a + matrix_zero[A](m, n) = a
-}
-
-theorem matrix_add_identity_left[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
-    matrix_zero[A](m, n) + a = a
-}
-
-theorem matrix_row_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m]) {
-    matrix_row[A](m, n, a + b, i) = fin_vector_add[A](n, matrix_row[A](m, n, a, i), matrix_row[A](m, n, b, i))
-}
-
-theorem matrix_col_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], j: Fin[n]) {
-    matrix_col[A](m, n, a + b, j) = fin_vector_add[A](m, matrix_col[A](m, n, a, j), matrix_col[A](m, n, b, j))
-}
-
-theorem matrix_transpose_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
-    matrix_transpose[A](m, n, a + b) = matrix_transpose[A](m, n, a) + matrix_transpose[A](m, n, b)
-}
-
-theorem matrix_smul_add_left[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, s: R, a: Matrix[M, m, n]) {
-    matrix_smul[R, M](carrier, m, n, r + s, a) = matrix_smul[R, M](carrier, m, n, r, a) + matrix_smul[R, M](carrier, m, n, s, a)
-}
-
-theorem matrix_smul_add_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], b: Matrix[M, m, n]) {
-    matrix_smul[R, M](carrier, m, n, r, a + b) = matrix_smul[R, M](carrier, m, n, r, a) + matrix_smul[R, M](carrier, m, n, r, b)
-}
-
-theorem matrix_add_semigroup_law[A: AddSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], c: Matrix[A, m, n]) {
-    Add.add(a, Add.add(b, c)) = Add.add(Add.add(a, b), c)
-}
-
-theorem matrix_add_comm_semigroup_law[A: AddCommSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
-    Add.add(a, b) = Add.add(b, a)
-}
-
-theorem matrix_add_monoid_right_law[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
-    Add.add(a, Zero.0[Matrix[A, m, n]]) = a
-}
-
-theorem matrix_add_monoid_left_law[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
-    Add.add(Zero.0[Matrix[A, m, n]], a) = a
-}
-
-define matrix2_trace[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
-    matrix2_00[R](n, a) + matrix2_11[R](n, a)
-}
-
-theorem add_regroup_mid[R: CommRing](a: R, b: R, c: R, d: R) {
-    a + (b + (c + d)) = a + (c + (b + d))
-}
-
-theorem fin_sum_two_suc[R: AddCommMonoid](f: Fin[Nat.1.suc] -> R) {
-    fin_sum[R](Nat.1.suc, f) = f(fin_zero(Nat.1)) + f(fin_last(Nat.1))
-}
-
-theorem sum_map_add_fn[T, A: AddCommMonoid](items: List[T], f: T -> A, g: T -> A) {
-    sum[A](map[T, A](items, function(y: T) { f(y) + g(y) })) =
-        sum[A](map[T, A](items, f)) + sum[A](map[T, A](items, g))
-}
-
-define det_row_fn_add[R: Ring, I](g1: (I) -> R, g2: (I) -> R, c: I) -> R {
-    g1(c) + g2(c)
-}
-
-theorem fin_sum_two[A: AddCommMonoid](f: Fin[Nat.0.suc.suc] -> A) {
-    fin_sum[A](Nat.0.suc.suc, f) =
-        f(fin_zero(Nat.0.suc)) + f(fin_succ(Nat.0.suc, fin_zero(Nat.0)))
-}
-
-let real_two: Real = Real.1 + Real.1
-
-let real_three: Real = real_two + Real.1
-
-let real_four: Real = real_three + Real.1
-
-theorem add_swap_left[A: AddCommMonoid](a: A, b: A, c: A) {
-    a + (b + c) = b + (a + c)
-}
-
-let real_six: Real = real_four + real_two
-
-let real_seven: Real = real_six + Real.1
-
-let real_twenty_one: Real = real_seven + real_seven + real_seven
-
-theorem matrix_trace_two[R: Ring](a: Matrix[R, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_trace[R](Nat.0.suc.suc, a) = matrix2_00[R](Nat.0, a) + matrix2_11[R](Nat.0, a)
-}
-
-theorem matrix_trace_two_eq_matrix2_trace[R: Ring](a: Matrix[R, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_trace[R](Nat.0.suc.suc, a) = matrix2_trace[R](Nat.0, a)
-}
-
-theorem matrix_trace_add[R: Ring](n: Nat, a: Matrix[R, n, n], b: Matrix[R, n, n]) {
-    matrix_trace[R](n, matrix_add[R](n, n, a, b)) = matrix_trace[R](n, a) + matrix_trace[R](n, b)
-}
-
-theorem lte_of_add_lte(a: Nat, b: Nat, k: Nat) {
-    a + b <= k implies a <= k
-}
-
-define matrix_mul[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix[S, m, n], b: Matrix[S, n, p]) -> Matrix[S, m, p] {
-    Matrix[S, m, p].new(matrix_mul_entry[S](m, n, p, a, b))
-}
-
-attributes Matrix[S: Semiring, m: Nat, n: Nat] {
-    /// Matrix multiplication with a compatible right factor.
-    define mul(self, p: Nat, other: Matrix[S, n, p]) -> Matrix[S, m, p] {
-        matrix_mul[S](m, n, p, self, other)
-    }
-}
-
-define scale_seq[S: Semiring](c: S, f: Nat -> S) -> (Nat -> S) {
-    function(k: Nat) {
-        c * f(k)
-    }
-}
-
-theorem partial_scalar_mul[S: Semiring](c: S, f: Nat -> S, n: Nat) {
-    partial(scale_seq[S](c, f), n) = c * partial(f, n)
-}
-
-define fin_scale[S: Semiring](n: Nat, c: S, f: Fin[n] -> S) -> (Fin[n] -> S) {
-    function(i: Fin[n]) {
-        c * f(i)
-    }
-}
-
-theorem fin_value_or_zero_scale[S: Semiring](n: Nat, c: S, f: Fin[n] -> S, k: Nat) {
-    k < n implies fin_value_or_zero[S](n, fin_scale[S](n, c, f), k)
-        = c * fin_value_or_zero[S](n, f, k)
-}
-
-theorem fin_sum_scalar_mul[S: Semiring](n: Nat, c: S, f: Fin[n] -> S) {
-    fin_sum[S](n, fin_scale[S](n, c, f)) = c * fin_sum[S](n, f)
-}
-
-theorem fin_vector_smul_assoc_at[R: Ring, M: AddCommGroup](
-    carrier: Module[R, M], n: Nat, r: R, s: R, v: Fin[n] -> M, i: Fin[n]
-) {
-    fin_vector_smul[R, M](carrier, n, r * s, v, i) =
-        fin_vector_smul[R, M](carrier, n, r, fin_vector_smul[R, M](carrier, n, s, v), i)
-}
-
 define matrix_mul_term[S: Semiring](
     m: Nat,
     n: Nat,
@@ -1587,6 +849,29 @@ define matrix_mul_entry[S: Semiring](
     fin_sum[S](n, matrix_mul_term[S](m, n, p, a, b, i, j))
 }
 
+define matrix_mul[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix[S, m, n], b: Matrix[S, n, p]) -> Matrix[S, m, p] {
+    Matrix[S, m, p].new(matrix_mul_entry[S](m, n, p, a, b))
+}
+
+attributes Matrix[S: Semiring, m: Nat, n: Nat] {
+    /// Matrix multiplication with a compatible right factor.
+    define mul(self, p: Nat, other: Matrix[S, n, p]) -> Matrix[S, m, p] {
+        matrix_mul[S](m, n, p, self, other)
+    }
+}
+
+define matrix_one_entry[S: Semiring](n: Nat, i: Fin[n], j: Fin[n]) -> S {
+    if i = j {
+        S.1
+    } else {
+        S.0
+    }
+}
+
+define matrix_one[S: Semiring](n: Nat) -> Matrix[S, n, n] {
+    Matrix[S, n, n].new(matrix_one_entry[S](n))
+}
+
 define square_matrix_mul[S: Semiring](n: Nat, a: Matrix[S, n, n], b: Matrix[S, n, n]) -> Matrix[S, n, n] {
     matrix_mul[S](n, n, n, a, b)
 }
@@ -1600,6 +885,18 @@ define matrix_pow[S: Semiring](n: Nat, a: Matrix[S, n, n], exp: Nat) -> Matrix[S
             square_matrix_mul[S](n, a, matrix_pow[S](n, a, k))
         }
     }
+}
+
+define matrix_minor_entry[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc], i: Fin[n], j: Fin[n]) -> A {
+    matrix_entry[A](n.suc, n.suc, a, fin_skip(n, row, i), fin_skip(n, col, j))
+}
+
+define matrix_minor[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) -> Matrix[A, n, n] {
+    Matrix[A, n, n].new(matrix_minor_entry[A](n, a, row, col))
+}
+
+define matrix_cofactor_sign[R: Ring](n: Nat, row: Fin[n], col: Fin[n]) -> R {
+    alternating_sign[R](row.value + col.value)
 }
 
 define matrix_cofactor_with[R: Ring](n: Nat, det_small: Matrix[R, n, n] -> R, a: Matrix[R, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) -> R {
@@ -1622,6 +919,25 @@ define matrix_laplace_first_row[R: Ring](n: Nat, det_small: Matrix[R, n, n] -> R
     matrix_laplace_row[R](n, det_small, a, fin_zero(n))
 }
 
+define matrix_zero_det_function[R: Ring](n: Nat, a: Matrix[R, n, n]) -> R {
+    R.0
+}
+
+define list_index_or_zero[I](items: List[I], item: I) -> Nat {
+    match items {
+        List.nil {
+            Nat.0
+        }
+        List.cons(head, tail) {
+            if head = item {
+                Nat.0
+            } else {
+                list_index_or_zero[I](tail, item).suc
+            }
+        }
+    }
+}
+
 define determinant_list[R: Ring, I](entry: (I, I) -> R, rows: List[I], cols: List[I]) -> R {
     match rows {
         List.nil {
@@ -1637,12 +953,70 @@ define determinant_list[R: Ring, I](entry: (I, I) -> R, rows: List[I], cols: Lis
     }
 }
 
+define square_matrix_entry_function[A](n: Nat, a: Matrix[A, n, n], row: Fin[n], col: Fin[n]) -> A {
+    matrix_entry[A](n, n, a, row, col)
+}
+
 define matrix_det_list[R: Ring](n: Nat, a: Matrix[R, n, n], rows: List[Fin[n]], cols: List[Fin[n]]) -> R {
     determinant_list[R, Fin[n]](square_matrix_entry_function[R](n, a), rows, cols)
 }
 
+theorem matrix_entry_self[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, a, i, j) = a.entry(i, j)
+}
+
+theorem matrix_ext[A](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    (forall(i: Fin[m], j: Fin[n]) { matrix_entry[A](m, n, a, i, j) = matrix_entry[A](m, n, b, i, j) }) implies a = b
+}
+
+theorem matrix_entry_zero[A: Zero](m: Nat, n: Nat, i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, matrix_zero[A](m, n), i, j) = A.0
+}
+
+theorem matrix_entry_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, a + b, i, j) = matrix_entry[A](m, n, a, i, j) + matrix_entry[A](m, n, b, i, j)
+}
+
+theorem matrix_entry_neg[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, -a, i, j) = -matrix_entry[A](m, n, a, i, j)
+}
+
+theorem matrix_entry_sub[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, matrix_sub[A](m, n, a, b), i, j) = matrix_entry[A](m, n, a, i, j) - matrix_entry[A](m, n, b, i, j)
+}
+
+theorem matrix_entry_smul[R: Ring, M: AddCommGroup](
+    carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]
+) {
+    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), i, j) = carrier.smul(r, matrix_entry[M](m, n, a, i, j))
+}
+
+theorem matrix_entry_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](n, m, matrix_transpose[A](m, n, a), j, i) = matrix_entry[A](m, n, a, i, j)
+}
+
+theorem matrix_row_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_row[A](m, n, a, i, j) = matrix_entry[A](m, n, a, i, j)
+}
+
+theorem matrix_col_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n], i: Fin[m]) {
+    matrix_col[A](m, n, a, j, i) = matrix_entry[A](m, n, a, i, j)
+}
+
 theorem matrix_entry_mul[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix[S, m, n], b: Matrix[S, n, p], i: Fin[m], j: Fin[p]) {
     matrix_entry[S](m, p, matrix_mul[S](m, n, p, a, b), i, j) = fin_sum[S](n, matrix_mul_term[S](m, n, p, a, b, i, j))
+}
+
+theorem matrix_entry_one_diag[S: Semiring](n: Nat, i: Fin[n]) {
+    matrix_entry[S](n, n, matrix_one[S](n), i, i) = S.1
+}
+
+theorem matrix_entry_one_off_diag[S: Semiring](n: Nat, i: Fin[n], j: Fin[n]) {
+    i != j implies matrix_entry[S](n, n, matrix_one[S](n), i, j) = S.0
+}
+
+theorem matrix_transpose_one[S: Semiring](n: Nat) {
+    matrix_transpose[S](n, n, matrix_one[S](n)) = matrix_one[S](n)
 }
 
 theorem matrix_mul_one_right[S: Semiring](m: Nat, n: Nat, a: Matrix[S, m, n]) {
@@ -1655,6 +1029,36 @@ theorem matrix_mul_one_left[S: Semiring](m: Nat, n: Nat, a: Matrix[S, m, n]) {
 
 theorem matrix_entry_square_mul[S: Semiring](n: Nat, a: Matrix[S, n, n], b: Matrix[S, n, n], i: Fin[n], j: Fin[n]) {
     matrix_entry[S](n, n, square_matrix_mul[S](n, a, b), i, j) = fin_sum[S](n, matrix_mul_term[S](n, n, n, a, b, i, j))
+}
+
+theorem matrix_entry_minor[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc], i: Fin[n], j: Fin[n]) {
+    matrix_entry[A](n, n, matrix_minor[A](n, a, row, col), i, j) =
+        matrix_entry[A](n.suc, n.suc, a, fin_skip(n, row, i), fin_skip(n, col, j))
+}
+
+theorem matrix_minor_zero[A: Zero](n: Nat, row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[A](n, matrix_zero[A](n.suc, n.suc), row, col) = matrix_zero[A](n, n)
+}
+
+theorem matrix_minor_add[A: Add](n: Nat, a: Matrix[A, n.suc, n.suc], b: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[A](n, a + b, row, col) = matrix_minor[A](n, a, row, col) + matrix_minor[A](n, b, row, col)
+}
+
+theorem matrix_minor_neg[A: Neg](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[A](n, -a, row, col) = -matrix_minor[A](n, a, row, col)
+}
+
+theorem matrix_minor_sub[A: AddGroup](n: Nat, a: Matrix[A, n.suc, n.suc], b: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[A](n, matrix_sub[A](n.suc, n.suc, a, b), row, col) = matrix_sub[A](n, n, matrix_minor[A](n, a, row, col), matrix_minor[A](n, b, row, col))
+}
+
+theorem matrix_minor_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], n: Nat, r: R, a: Matrix[M, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[M](n, matrix_smul[R, M](carrier, n.suc, n.suc, r, a), row, col) =
+        matrix_smul[R, M](carrier, n, n, r, matrix_minor[M](n, a, row, col))
+}
+
+theorem matrix_minor_transpose[A](n: Nat, a: Matrix[A, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
+    matrix_minor[A](n, matrix_transpose[A](n.suc, n.suc, a), row, col) = matrix_transpose[A](n, n, matrix_minor[A](n, a, col, row))
 }
 
 theorem matrix_cofactor_with_eq[R: Ring](n: Nat, det_small: Matrix[R, n, n] -> R, a: Matrix[R, n.suc, n.suc], row: Fin[n.suc], col: Fin[n.suc]) {
@@ -1701,6 +1105,18 @@ theorem matrix_laplace_first_row_zero_matrix[R: Ring](n: Nat, det_small: Matrix[
 
 theorem determinant_list_nil_rows[R: Ring, I](entry: (I, I) -> R, cols: List[I]) {
     determinant_list[R, I](entry, List.nil[I], cols) = R.1
+}
+
+theorem list_index_or_zero_nil[I](item: I) {
+    list_index_or_zero[I](List.nil[I], item) = Nat.0
+}
+
+theorem list_index_or_zero_cons_self[I](head: I, tail: List[I]) {
+    list_index_or_zero[I](List.cons(head, tail), head) = Nat.0
+}
+
+theorem list_index_or_zero_cons_other[I](head: I, tail: List[I], item: I) {
+    head != item implies list_index_or_zero[I](List.cons(head, tail), item) = list_index_or_zero[I](tail, item).suc
 }
 
 theorem determinant_list_cons_rows[R: Ring, I](entry: (I, I) -> R, row: I, tail_rows: List[I], cols: List[I]) {
@@ -1822,8 +1238,142 @@ theorem square_matrix_mul_add_left[S: Semiring](n: Nat, a: Matrix[S, n, n], b: M
     square_matrix_mul[S](n, a + b, c) = square_matrix_mul[S](n, a, c) + square_matrix_mul[S](n, b, c)
 }
 
+theorem matrix_add_associative[A: AddSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], c: Matrix[A, m, n]) {
+    a + (b + c) = (a + b) + c
+}
+
+theorem matrix_add_commutative[A: AddCommSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    a + b = b + a
+}
+
+theorem matrix_add_identity_right[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    a + matrix_zero[A](m, n) = a
+}
+
+theorem matrix_add_identity_left[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    matrix_zero[A](m, n) + a = a
+}
+
+theorem matrix_inverse_right[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    a + -a = matrix_zero[A](m, n)
+}
+
+theorem matrix_sub_eq_add_neg[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    matrix_sub[A](m, n, a, b) = a + -b
+}
+
+theorem matrix_transpose_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    matrix_transpose[A](n, m, matrix_transpose[A](m, n, a)) = a
+}
+
+theorem matrix_row_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n], i: Fin[m]) {
+    matrix_row[A](n, m, matrix_transpose[A](m, n, a), j, i) = matrix_col[A](m, n, a, j, i)
+}
+
+theorem matrix_col_transpose[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_col[A](n, m, matrix_transpose[A](m, n, a), i, j) = matrix_row[A](m, n, a, i, j)
+}
+
+theorem matrix_row_transpose_vector[A](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n]) {
+    matrix_row[A](n, m, matrix_transpose[A](m, n, a), j) = matrix_col[A](m, n, a, j)
+}
+
+theorem matrix_col_transpose_vector[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m]) {
+    matrix_col[A](n, m, matrix_transpose[A](m, n, a), i) = matrix_row[A](m, n, a, i)
+}
+
+theorem matrix_row_zero[A: Zero](m: Nat, n: Nat, i: Fin[m]) {
+    matrix_row[A](m, n, matrix_zero[A](m, n), i) = fin_vector_zero[A](n)
+}
+
+theorem matrix_col_zero[A: Zero](m: Nat, n: Nat, j: Fin[n]) {
+    matrix_col[A](m, n, matrix_zero[A](m, n), j) = fin_vector_zero[A](m)
+}
+
+theorem matrix_row_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m]) {
+    matrix_row[A](m, n, a + b, i) = fin_vector_add[A](n, matrix_row[A](m, n, a, i), matrix_row[A](m, n, b, i))
+}
+
+theorem matrix_col_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], j: Fin[n]) {
+    matrix_col[A](m, n, a + b, j) = fin_vector_add[A](m, matrix_col[A](m, n, a, j), matrix_col[A](m, n, b, j))
+}
+
+theorem matrix_row_neg[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m]) {
+    matrix_row[A](m, n, -a, i) = fin_vector_neg[A](n, matrix_row[A](m, n, a, i))
+}
+
+theorem matrix_col_neg[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n], j: Fin[n]) {
+    matrix_col[A](m, n, -a, j) = fin_vector_neg[A](m, matrix_col[A](m, n, a, j))
+}
+
+theorem matrix_row_sub[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], i: Fin[m]) {
+    matrix_row[A](m, n, matrix_sub[A](m, n, a, b), i) = fin_vector_sub[A](n, matrix_row[A](m, n, a, i), matrix_row[A](m, n, b, i))
+}
+
+theorem matrix_col_sub[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], j: Fin[n]) {
+    matrix_col[A](m, n, matrix_sub[A](m, n, a, b), j) = fin_vector_sub[A](m, matrix_col[A](m, n, a, j), matrix_col[A](m, n, b, j))
+}
+
+theorem matrix_row_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], i: Fin[m]) {
+    matrix_row[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), i) =
+        fin_vector_smul[R, M](carrier, n, r, matrix_row[M](m, n, a, i))
+}
+
+theorem matrix_col_smul[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], j: Fin[n]) {
+    matrix_col[M](m, n, matrix_smul[R, M](carrier, m, n, r, a), j) =
+        fin_vector_smul[R, M](carrier, m, r, matrix_col[M](m, n, a, j))
+}
+
+theorem matrix_transpose_zero[A: Zero](m: Nat, n: Nat) {
+    matrix_transpose[A](m, n, matrix_zero[A](m, n)) = matrix_zero[A](n, m)
+}
+
+theorem matrix_transpose_add[A: Add](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    matrix_transpose[A](m, n, a + b) = matrix_transpose[A](m, n, a) + matrix_transpose[A](m, n, b)
+}
+
+theorem matrix_transpose_neg[A: Neg](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    matrix_transpose[A](m, n, -a) = -matrix_transpose[A](m, n, a)
+}
+
+theorem matrix_transpose_sub[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    matrix_transpose[A](m, n, matrix_sub[A](m, n, a, b)) = matrix_sub[A](n, m, matrix_transpose[A](m, n, a), matrix_transpose[A](m, n, b))
+}
+
+theorem matrix_smul_one_entry[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, R.1, a), i, j) = matrix_entry[M](m, n, a, i, j)
+}
+
+theorem matrix_smul_zero_left_entry[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n], i: Fin[m], j: Fin[n]) {
+    matrix_entry[M](m, n, matrix_smul[R, M](carrier, m, n, R.0, a), i, j) = M.0
+}
+
+theorem matrix_smul_zero_left[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, a: Matrix[M, m, n]) {
+    matrix_smul[R, M](carrier, m, n, R.0, a) = matrix_zero[M](m, n)
+}
+
+theorem matrix_smul_zero_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R) {
+    matrix_smul[R, M](carrier, m, n, r, matrix_zero[M](m, n)) = matrix_zero[M](m, n)
+}
+
+theorem matrix_smul_add_left[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, s: R, a: Matrix[M, m, n]) {
+    matrix_smul[R, M](carrier, m, n, r + s, a) = matrix_smul[R, M](carrier, m, n, r, a) + matrix_smul[R, M](carrier, m, n, s, a)
+}
+
+theorem matrix_smul_add_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n], b: Matrix[M, m, n]) {
+    matrix_smul[R, M](carrier, m, n, r, a + b) = matrix_smul[R, M](carrier, m, n, r, a) + matrix_smul[R, M](carrier, m, n, r, b)
+}
+
 theorem matrix_smul_assoc[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, s: R, a: Matrix[M, m, n]) {
     matrix_smul[R, M](carrier, m, n, r * s, a) = matrix_smul[R, M](carrier, m, n, r, matrix_smul[R, M](carrier, m, n, s, a))
+}
+
+theorem matrix_smul_neg_left[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n]) {
+    matrix_smul[R, M](carrier, m, n, -r, a) = -matrix_smul[R, M](carrier, m, n, r, a)
+}
+
+theorem matrix_smul_neg_right[R: Ring, M: AddCommGroup](carrier: Module[R, M], m: Nat, n: Nat, r: R, a: Matrix[M, m, n]) {
+    matrix_smul[R, M](carrier, m, n, r, -a) = -matrix_smul[R, M](carrier, m, n, r, a)
 }
 
 theorem matrix_pow_zero[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
@@ -1874,12 +1424,123 @@ theorem matrix_transpose_pow_one[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
         matrix_pow[S](n, matrix_transpose[S](n, n, a), Nat.1)
 }
 
+theorem matrix_add_semigroup_law[A: AddSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n], c: Matrix[A, m, n]) {
+    Add.add(a, Add.add(b, c)) = Add.add(Add.add(a, b), c)
+}
+
+theorem matrix_add_comm_semigroup_law[A: AddCommSemigroup](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
+    Add.add(a, b) = Add.add(b, a)
+}
+
+theorem matrix_add_monoid_right_law[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    Add.add(a, Zero.0[Matrix[A, m, n]]) = a
+}
+
+theorem matrix_add_monoid_left_law[A: AddMonoid](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    Add.add(Zero.0[Matrix[A, m, n]], a) = a
+}
+
+theorem matrix_add_group_inverse_law[A: AddGroup](m: Nat, n: Nat, a: Matrix[A, m, n]) {
+    Add.add(a, Neg.neg(a)) = Zero.0[Matrix[A, m, n]]
+}
+
+define matrix_swap_rows_entry[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m], r: Fin[m], c: Fin[n]) -> A {
+    if r = i {
+        matrix_entry[A](m, n, a, j, c)
+    } else {
+        if r = j {
+            matrix_entry[A](m, n, a, i, c)
+        } else {
+            matrix_entry[A](m, n, a, r, c)
+        }
+    }
+}
+
+define matrix_swap_rows[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m]) -> Matrix[A, m, n] {
+    Matrix[A, m, n].new(matrix_swap_rows_entry[A](m, n, a, i, j))
+}
+
+theorem matrix_entry_swap_rows[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: Fin[m], r: Fin[m], c: Fin[n]) {
+    matrix_entry[A](m, n, matrix_swap_rows[A](m, n, a, i, j), r, c) =
+        matrix_swap_rows_entry[A](m, n, a, i, j, r, c)
+}
+
+define matrix2_00[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_zero(n.suc))
+}
+
+define matrix2_01[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_zero(n.suc), fin_succ(n.suc, fin_zero(n)))
+}
+
+define matrix2_10[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_zero(n.suc))
+}
+
+define matrix2_11[R](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix_entry[R](n.suc.suc, n.suc.suc, a, fin_succ(n.suc, fin_zero(n)), fin_succ(n.suc, fin_zero(n)))
+}
+
+define matrix2_trace[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix2_00[R](n, a) + matrix2_11[R](n, a)
+}
+
+define matrix2_det_entries[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> R {
+    matrix2_00[R](n, a) * matrix2_11[R](n, a) - matrix2_01[R](n, a) * matrix2_10[R](n, a)
+}
+
+define char_poly_2x2[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc], lam: R) -> R {
+    (matrix2_00[R](n, a) - lam) * (matrix2_11[R](n, a) - lam) - matrix2_01[R](n, a) * matrix2_10[R](n, a)
+}
+
+define char_poly_2x2_standard[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc], lam: R) -> R {
+    lam * lam - matrix2_trace[R](n, a) * lam + matrix2_det_entries[R](n, a)
+}
+
+define cayley_hamilton_lhs[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) -> Matrix[R, n.suc.suc, n.suc.suc] {
+    square_matrix_mul[R](n.suc.suc, a, a) -
+        matrix_smul[R, R](ring_as_module[R], n.suc.suc, n.suc.suc, matrix2_trace[R](n, a), a) +
+        matrix_smul[R, R](ring_as_module[R], n.suc.suc, n.suc.suc, matrix2_det_entries[R](n, a), matrix_one[R](n.suc.suc))
+}
+
+define matrix2_vec[R](n: Nat, x0: R, x1: R, i: Fin[n]) -> R {
+    if i.value = Nat.0 {
+        x0
+    } else {
+        x1
+    }
+}
+
 define matrix_det_suc[R: Ring](n: Nat, a: Matrix[R, n.suc, n.suc]) -> R {
     matrix_det_list[R](n.suc, a, fin_enum_suc(n), fin_enum_suc(n))
 }
 
 theorem matrix_det_suc_unfold[R: Ring](n: Nat, a: Matrix[R, n.suc, n.suc]) {
     matrix_det_suc[R](n, a) = matrix_det_list[R](n.suc, a, fin_enum_suc(n), fin_enum_suc(n))
+}
+
+theorem matrix_det_suc_enum_length(n: Nat) {
+    fin_enum_suc(n).length = n.suc
+}
+
+theorem matrix_det_suc_enum_contains(n: Nat, i: Fin[n.suc]) {
+    fin_enum_suc(n).contains(i)
+}
+
+theorem matrix_det_suc_enum_is_unique(n: Nat) {
+    fin_enum_suc(n).is_unique
+}
+
+theorem fin_enum_suc_zero_eq_singleton_zero {
+    fin_enum_suc(Nat.0) = List.singleton(fin_zero(Nat.0))
+}
+
+theorem sum_singleton_ring[R: Ring](x: R) {
+    sum[R](List.singleton(x)) = x
+}
+
+theorem sum_map_zero_ring[T, R: Ring](items: List[T], f: T -> R) {
+    (forall(item: T) { f(item) = R.0 }) implies sum[R](map[T, R](items, f)) = R.0
 }
 
 theorem matrix_det_list_zero_cons_rows[R: Ring](n: Nat, row: Fin[n], tail_rows: List[Fin[n]], cols: List[Fin[n]]) {
@@ -1915,13 +1576,59 @@ theorem matrix_det_suc_one_by_one_identity[R: Ring] {
     matrix_det_suc[R](Nat.0, matrix_one[R](Nat.0.suc)) = R.1
 }
 
+theorem fin_enum_suc_one_eq_two {
+    fin_enum_suc(Nat.1) = List.cons(fin_zero(Nat.1), List.cons(fin_last(Nat.1), List.nil[Fin[Nat.1.suc]]))
+}
+
 theorem determinant_list_singleton_row_col[R: Ring, I](entry: (I, I) -> R, row: I, col: I) {
     determinant_list[R, I](entry, List.singleton(row), List.singleton(col)) = entry(row, col)
+}
+
+define two_row_list[I](r: I, r2: I) -> List[I] {
+    List.cons(r, List.cons(r2, List.nil[I]))
+}
+
+define two_col_list[I](c: I, c2: I) -> List[I] {
+    List.cons(c, List.cons(c2, List.nil[I]))
 }
 
 define det_two_two_term[R: Ring, I](entry: (I, I) -> R, r: I, r2: I, cols: List[I], col: I) -> R {
     entry(r, col) * alternating_sign[R](list_index_or_zero[I](cols, col)) *
         determinant_list[R, I](entry, List.cons(r2, List.nil[I]), cols.remove_one(col))
+}
+
+theorem determinant_list_two_two[R: Ring, I](entry: (I, I) -> R, r: I, r2: I, c: I, c2: I) {
+    c != c2 implies
+        determinant_list[R, I](entry, two_row_list(r, r2), two_col_list(c, c2)) =
+            entry(r, c) * entry(r2, c2) - entry(r, c2) * entry(r2, c)
+}
+
+theorem matrix_det_suc_two_by_two[R: Ring](a: Matrix[R, Nat.1.suc, Nat.1.suc]) {
+    matrix_det_suc[R](Nat.1, a) =
+        matrix_entry[R](Nat.1.suc, Nat.1.suc, a, fin_zero(Nat.1), fin_zero(Nat.1)) *
+            matrix_entry[R](Nat.1.suc, Nat.1.suc, a, fin_last(Nat.1), fin_last(Nat.1)) -
+        matrix_entry[R](Nat.1.suc, Nat.1.suc, a, fin_zero(Nat.1), fin_last(Nat.1)) *
+            matrix_entry[R](Nat.1.suc, Nat.1.suc, a, fin_last(Nat.1), fin_zero(Nat.1))
+}
+
+theorem sub_neg_rev[R: CommRing](a: R, b: R) {
+    a - b = -(b - a)
+}
+
+theorem sub_self_zero[R: CommRing](x: R) {
+    x - x = R.0
+}
+
+theorem add_regroup_mid[R: CommRing](a: R, b: R, c: R, d: R) {
+    a + (b + (c + d)) = a + (c + (b + d))
+}
+
+theorem add_sub_fold4[R: CommRing](a: R, b: R, c: R, d: R) {
+    a + (-b) + (-c) + d = a - b - c + d
+}
+
+theorem sub_factor[R: CommRing](x: R, y: R, z: R) {
+    x * y - x * z = x * (y - z)
 }
 
 theorem mul_comm4[R: CommRing](a: R, b: R, c: R, d: R) {
@@ -1932,8 +1639,30 @@ theorem mul_comm3[R: CommRing](a: R, b: R, c: R) {
     a * b * c = a * c * b
 }
 
+theorem sub_split_pair[R: CommRing](a: R, b: R, c: R, d: R) {
+    (a + b) - (c + d) = (a - c) + (b - d)
+}
+
 theorem expand_sum_prod[R: CommRing](x: R, y: R, z: R, w: R) {
     (x + y) * (z + w) = x * z + x * w + y * z + y * w
+}
+
+theorem expand_diff_prod[R: CommRing](x: R, y: R, z: R, w: R) {
+    (x - y) * (z - w) = x * z - x * w - y * z + y * w
+}
+
+theorem sub_factor_right[R: CommRing](x: R, y: R, w: R) {
+    x * w - y * w = (x - y) * w
+}
+
+theorem det2_mul_identity[R: CommRing](a00: R, a01: R, a10: R, a11: R, b00: R, b01: R, b10: R, b11: R) {
+    (a00 * b00 + a01 * b10) * (a10 * b01 + a11 * b11) -
+        (a00 * b01 + a01 * b11) * (a10 * b00 + a11 * b10) =
+        (a00 * a11 - a01 * a10) * (b00 * b11 - b01 * b10)
+}
+
+theorem fin_sum_two_suc[R: AddCommMonoid](f: Fin[Nat.1.suc] -> R) {
+    fin_sum[R](Nat.1.suc, f) = f(fin_zero(Nat.1)) + f(fin_last(Nat.1))
 }
 
 theorem matrix_entry_mul_two_by_two[R: CommRing](a: Matrix[R, Nat.1.suc, Nat.1.suc], b: Matrix[R, Nat.1.suc, Nat.1.suc], i: Fin[Nat.1.suc], j: Fin[Nat.1.suc]) {
@@ -1968,8 +1697,17 @@ theorem matrix_det_suc_two_by_two_identity[R: Ring] {
     matrix_det_suc[R](Nat.1, matrix_one[R](Nat.1.suc)) = R.1
 }
 
+theorem sub_zero_right[R: Ring](x: R) {
+    x - R.0 = x
+}
+
 theorem matrix_det_suc_two_by_two_transpose[R: CommRing](a: Matrix[R, Nat.1.suc, Nat.1.suc]) {
     matrix_det_suc[R](Nat.1, matrix_transpose[R](Nat.1.suc, Nat.1.suc, a)) = matrix_det_suc[R](Nat.1, a)
+}
+
+theorem matrix_det_suc_two_by_two_swap_rows[R: CommRing](a: Matrix[R, Nat.1.suc, Nat.1.suc]) {
+    matrix_det_suc[R](Nat.1, matrix_swap_rows[R](Nat.1.suc, Nat.1.suc, a, fin_zero(Nat.1), fin_last(Nat.1))) =
+        -matrix_det_suc[R](Nat.1, a)
 }
 
 theorem matrix_det_suc_two_by_two_equal_rows[R: CommRing](a: Matrix[R, Nat.1.suc, Nat.1.suc]) {
@@ -1986,6 +1724,10 @@ theorem matrix_det_suc_two_by_two_upper_triangular[R: Ring](a: Matrix[R, Nat.1.s
                 matrix_entry[R](Nat.1.suc, Nat.1.suc, a, fin_last(Nat.1), fin_last(Nat.1))
 }
 
+define flip_entry[R: Ring, I](entry: (I, I) -> R, c: I, r: I) -> R {
+    entry(r, c)
+}
+
 theorem alternating_sign_mul_comm[R: Ring](a: Nat, b: Nat) {
     alternating_sign[R](a) * alternating_sign[R](b) = alternating_sign[R](b) * alternating_sign[R](a)
 }
@@ -1993,6 +1735,27 @@ theorem alternating_sign_mul_comm[R: Ring](a: Nat, b: Nat) {
 theorem alternating_sign_suc_comm[R: Ring](a: Nat, b: Nat) {
     alternating_sign[R](a.suc) * alternating_sign[R](b) =
         alternating_sign[R](b.suc) * alternating_sign[R](a)
+}
+
+theorem sum_map_zero_fn[T, A: AddCommMonoid](items: List[T], f: T -> A) {
+    (forall(item: T) { f(item) = A.0 }) implies sum[A](map[T, A](items, f)) = A.0
+}
+
+theorem sum_map_add_fn[T, A: AddCommMonoid](items: List[T], f: T -> A, g: T -> A) {
+    sum[A](map[T, A](items, function(y: T) { f(y) + g(y) })) =
+        sum[A](map[T, A](items, f)) + sum[A](map[T, A](items, g))
+}
+
+theorem sum_map_sum_exchange[T, A: AddCommMonoid](xs: List[T], ys: List[T], h: T -> T -> A) {
+    sum[A](map[T, A](xs, function(x: T) {
+        sum[A](map[T, A](ys, function(y: T) { h(x, y) }))
+    })) = sum[A](map[T, A](ys, function(y: T) {
+        sum[A](map[T, A](xs, function(x: T) { h(x, y) }))
+    }))
+}
+
+theorem unique_cons_not_contains_head[T](head: T, tail: List[T]) {
+    List.cons(head, tail).is_unique implies not tail.contains(head)
 }
 
 define det_row_sum_term[R: Ring, I](entry: (I, I) -> R, row: I, tail_rows: List[I], cols: List[I], col: I) -> R {
@@ -2005,6 +1768,10 @@ theorem determinant_list_cons_rows_term[R: Ring, I](entry: (I, I) -> R, row: I, 
         sum[R](map[I, R](cols, det_row_sum_term[R, I](entry, row, tail_rows, cols)))
 }
 
+theorem remove_one_length_suc[T](list: List[T], item: T) {
+    list.contains(item) implies list.remove_one(item).length.suc = list.length
+}
+
 theorem sum_map_scalar_mul[T, R: Ring](items: List[T], c: R, f: T -> R) {
     c * sum[R](map[T, R](items, f)) = sum[R](map[T, R](items, function(x: T) { c * f(x) }))
 }
@@ -2012,6 +1779,10 @@ theorem sum_map_scalar_mul[T, R: Ring](items: List[T], c: R, f: T -> R) {
 theorem determinant_list_pointwise[R: Ring, I](e1: (I, I) -> R, e2: (I, I) -> R, rows: List[I], cols: List[I]) {
     (forall(r: I, c: I) { e1(r, c) = e2(r, c) }) implies
         determinant_list[R, I](e1, rows, cols) = determinant_list[R, I](e2, rows, cols)
+}
+
+theorem nat_suc_eq_cancel(a: Nat, b: Nat) {
+    a.suc = b.suc implies a = b
 }
 
 theorem prod_exchange_comm[R: CommRing](a: R, b: R, s1: R, s2: R, s3: R, s4: R) {
@@ -2071,8 +1842,73 @@ define determinant_diagonal[R: Ring, I](entry: (I, I) -> R, rows: List[I], cols:
     }
 }
 
+theorem list_index_or_zero_zero_iff_head[I](head: I, tail: List[I], x: I) {
+    List.cons(head, tail).contains(x) and list_index_or_zero[I](List.cons(head, tail), x) = Nat.0 implies x = head
+}
+
+theorem list_index_or_zero_remove_after[I](list: List[I], x: I, c: I) {
+    list.contains(x) and list.contains(c) and x != c and
+        list_index_or_zero[I](list, c) < list_index_or_zero[I](list, x) implies
+        list_index_or_zero[I](list.remove_one(x), c) = list_index_or_zero[I](list, c)
+}
+
+theorem list_index_or_zero_remove_before[I](list: List[I], x: I, c: I) {
+    list.contains(x) and list.contains(c) and x != c and
+        list_index_or_zero[I](list, x) < list_index_or_zero[I](list, c) implies
+        list_index_or_zero[I](list.remove_one(x), c).suc = list_index_or_zero[I](list, c)
+}
+
+theorem list_index_or_zero_injective_unique[I](list: List[I], x: I, y: I) {
+    list.is_unique and list.contains(x) and list.contains(y) and
+        list_index_or_zero[I](list, x) = list_index_or_zero[I](list, y) implies x = y
+}
+
+define triangular_condition[R: Ring, I](entry: (I, I) -> R, rows: List[I], cols: List[I]) -> Bool {
+    forall(r: I, c: I) {
+        rows.contains(r) and cols.contains(c) and
+        list_index_or_zero[I](rows, r) > list_index_or_zero[I](cols, c) implies entry(r, c) = R.0
+    }
+}
+
+theorem triangular_preserved_first[R: Ring, I](entry: (I, I) -> R, head: I, tail: List[I], c: I, cs: List[I]) {
+    List.cons(head, tail).is_unique and List.cons(c, cs).is_unique and
+    triangular_condition[R, I](entry, List.cons(head, tail), List.cons(c, cs)) implies
+        triangular_condition[R, I](entry, tail, cs)
+}
+
+theorem triangular_preserved_remove[R: Ring, I](entry: (I, I) -> R, head: I, tail: List[I], cols: List[I], x: I) {
+    List.cons(head, tail).is_unique and cols.is_unique and
+    triangular_condition[R, I](entry, List.cons(head, tail), cols) and cols.contains(x) implies
+        triangular_condition[R, I](entry, tail, cols.remove_one(x))
+}
+
+theorem remove_one_comm[T](list: List[T], x: T, y: T) {
+    list.remove_one(x).remove_one(y) = list.remove_one(y).remove_one(x)
+}
+
 theorem alternating_sign_add[R: Ring](m: Nat, n: Nat) {
     alternating_sign[R](m) * alternating_sign[R](n) = alternating_sign[R](m + n)
+}
+
+theorem sum_double_remove_flip[T, R: Ring](cols: List[T], f: T -> T -> R) {
+    cols.is_unique implies
+    (sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(x, y) }))
+    })) = sum[R](map[T, R](cols, function(x: T) {
+        sum[R](map[T, R](cols.remove_one(x), function(y: T) { f(y, x) }))
+    })))
+}
+
+theorem sum_map_neg[T, R: Ring](items: List[T], f: T -> R) {
+    sum[R](map[T, R](items, function(x: T) { -(f(x)) })) = -(sum[R](map[T, R](items, f)))
+}
+
+theorem det_swap_sign_pair[R: Ring, I](cols: List[I], x: I, y: I) {
+    cols.is_unique and cols.contains(x) and cols.contains(y) and x != y implies
+    alternating_sign[R](list_index_or_zero[I](cols, x)) *
+        alternating_sign[R](list_index_or_zero[I](cols.remove_one(x), y)) =
+    -(alternating_sign[R](list_index_or_zero[I](cols, y)) *
+        alternating_sign[R](list_index_or_zero[I](cols.remove_one(y), x)))
 }
 
 define det_two_row_term[R: Ring, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I], x: I, y: I) -> R {
@@ -2088,6 +1924,30 @@ theorem determinant_list_two_rows[R: Ring, I](entry: (I, I) -> R, r1: I, r2: I, 
                 det_two_row_term[R, I](entry, r1, r2, rs, cols, x, y)
             }))
         }))
+}
+
+theorem swap_term_pair_neg[R: CommRing, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I], x: I, y: I) {
+    cols.is_unique and cols.contains(x) and cols.remove_one(x).contains(y) implies
+    det_two_row_term[R, I](entry, r2, r1, rs, cols, x, y) =
+        -(det_two_row_term[R, I](entry, r1, r2, rs, cols, y, x))
+}
+
+theorem determinant_list_swap_first_two_rows[R: CommRing, I](entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I]) {
+    cols.is_unique implies
+    determinant_list[R, I](entry, List.cons(r2, List.cons(r1, rs)), cols) =
+        -(determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols))
+}
+
+define det_row_replace_entry[R: Ring, I](entry: (I, I) -> R, r: I, g: (I) -> R, i: I, c: I) -> R {
+    if i = r {
+        g(c)
+    } else {
+        entry(i, c)
+    }
+}
+
+define det_row_fn_add[R: Ring, I](g1: (I) -> R, g2: (I) -> R, c: I) -> R {
+    g1(c) + g2(c)
 }
 
 define det_row_fn_smul[R: Ring, I](c: R, g: (I) -> R, i: I) -> R {
@@ -2111,6 +1971,10 @@ theorem determinant_list_row_smul[R: CommRing, I](entry: (I, I) -> R, c: R, g: (
     rows.contains(r) and not rows.remove_one(r).contains(r) implies
         determinant_list[R, I](det_row_replace_entry[R, I](entry, r, det_row_fn_smul[R, I](c, g)), rows, cols) =
             c * determinant_list[R, I](det_row_replace_entry[R, I](entry, r, g), rows, cols)
+}
+
+define matrix_row_replace[R: Ring](n: Nat, a: Matrix[R, n.suc, n.suc], r: Fin[n.suc], g: (Fin[n.suc]) -> R) -> Matrix[R, n.suc, n.suc] {
+    Matrix[R, n.suc, n.suc].new(det_row_replace_entry[R, Fin[n.suc]](square_matrix_entry_function[R](n.suc, a), r, g))
 }
 
 theorem matrix_det_suc_row_add[R: Ring](n: Nat, a: Matrix[R, n.suc, n.suc], r: Fin[n.suc], x: (Fin[n.suc]) -> R, y: (Fin[n.suc]) -> R) {
@@ -2149,6 +2013,15 @@ theorem matrix_mul_square_assoc[R: Semiring](
         matrix_mul[R](n.suc, n.suc, n.suc, a, matrix_mul[R](n.suc, n.suc, n.suc, b, c))
 }
 
+theorem sum_double_antisym_zero[R: Ring, I](cols: List[I], f: I -> I -> R) {
+    cols.is_unique and (forall(x: I, y: I) {
+        cols.contains(x) and cols.remove_one(x).contains(y) implies f(x, y) = -(f(y, x))
+    }) implies
+    sum[R](map[I, R](cols, function(x: I) {
+        sum[R](map[I, R](cols.remove_one(x), function(y: I) { f(x, y) }))
+    })) = R.0
+}
+
 theorem det_two_row_term_equal_rows_sym[R: CommRing, I](
     entry: (I, I) -> R, r1: I, r2: I, rs: List[I], cols: List[I], x: I, y: I
 ) {
@@ -2162,6 +2035,14 @@ theorem determinant_list_equal_first_two_rows[R: CommRing, I](
 ) {
     cols.is_unique and (forall(c: I) { entry(r1, c) = entry(r2, c) }) implies
         determinant_list[R, I](entry, List.cons(r1, List.cons(r2, rs)), cols) = R.0
+}
+
+theorem determinant_list_swap_adjacent[R: CommRing, I](
+    entry: (I, I) -> R, prefix: List[I], r1: I, r2: I, rest: List[I], cols: List[I]
+) {
+    cols.is_unique implies
+    determinant_list[R, I](entry, prefix + List.cons(r1, List.cons(r2, rest)), cols) =
+        -(determinant_list[R, I](entry, prefix + List.cons(r2, List.cons(r1, rest)), cols))
 }
 
 theorem determinant_list_move_to_front[R: CommRing, I](
@@ -2196,6 +2077,11 @@ theorem determinant_list_equal_rows[R: CommRing, I](
         determinant_list[R, I](entry, p1 + List.cons(r1, mid + List.cons(r2, rest)), cols) = R.0
 }
 
+theorem sum_map_zero_contains[T, A: AddCommMonoid](items: List[T], g: T -> A) {
+    (forall(item: T) { items.contains(item) implies g(item) = A.0 }) implies
+        sum[A](map[T, A](items, g)) = A.0
+}
+
 theorem determinant_list_equal_rows_mem[R: CommRing, I](
     entry: (I, I) -> R, rows: List[I], cols: List[I], r1: I, r2: I
 ) {
@@ -2208,6 +2094,10 @@ theorem matrix_det_suc_equal_rows[R: CommRing](n: Nat, a: Matrix[R, n.suc, n.suc
     i != j and (forall(c: Fin[n.suc]) {
         matrix_entry[R](n.suc, n.suc, a, i, c) = matrix_entry[R](n.suc, n.suc, a, j, c)
     }) implies matrix_det_suc[R](n, a) = R.0
+}
+
+theorem char_poly_2x2_zero[R: Ring](n: Nat, a: Matrix[R, n.suc.suc, n.suc.suc]) {
+    char_poly_2x2[R](n, a, R.0) = matrix2_det_entries[R](n, a)
 }
 
 define is_invertible[S: Semiring](n: Nat, a: Matrix[S, n.suc, n.suc]) -> Bool {
@@ -2275,6 +2165,24 @@ theorem matrix_apply_pointwise_eq[S: Semiring](
         implies matrix_apply[S](n, a, v, i) = matrix_apply[S](n, a, w, i)
 }
 
+define is_nonzero_vector[S: Semiring](n: Nat, v: Fin[n] -> S) -> Bool {
+    exists(i: Fin[n]) {
+        v(i) != S.0
+    }
+}
+
+theorem is_nonzero_vector_intro[S: Semiring](n: Nat, v: Fin[n] -> S, i: Fin[n]) {
+    v(i) != S.0 implies is_nonzero_vector[S](n, v)
+}
+
+theorem is_nonzero_vector_witness[S: Semiring](n: Nat, v: Fin[n] -> S) {
+    is_nonzero_vector[S](n, v) implies exists(i: Fin[n]) { v(i) != S.0 }
+}
+
+theorem zero_vector_not_nonzero[S: Semiring](n: Nat) {
+    not is_nonzero_vector[S](n, fin_vector_zero[S](n))
+}
+
 define is_eigenvector[S: Semiring](
     n: Nat, a: Matrix[S, n, n], lam: S, v: Fin[n] -> S
 ) -> Bool {
@@ -2321,8 +2229,43 @@ theorem is_eigenvalue_witness[S: Semiring](n: Nat, a: Matrix[S, n, n], lam: S) {
     }
 }
 
+define matrix_row_fn[S: Semiring](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n], k: Fin[n]
+) -> S {
+    matrix_entry[S](n, n, a, i, k)
+}
+
+define matrix_row_sum[S: Semiring](n: Nat, a: Matrix[S, n, n], i: Fin[n]) -> S {
+    fin_sum[S](n, matrix_row_fn[S](n, a, i))
+}
+
+define is_row_stochastic[S: Semiring](n: Nat, a: Matrix[S, n, n]) -> Bool {
+    forall(i: Fin[n]) {
+        matrix_row_sum[S](n, a, i) = S.1
+    }
+}
+
+theorem is_row_stochastic_apply[S: Semiring](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n]
+) {
+    is_row_stochastic[S](n, a) implies matrix_row_sum[S](n, a, i) = S.1
+}
+
+theorem is_row_stochastic_intro[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
+    (forall(i: Fin[n]) { matrix_row_sum[S](n, a, i) = S.1 })
+        implies is_row_stochastic[S](n, a)
+}
+
+define ones_vector[S: Semiring](n: Nat, i: Fin[n]) -> S {
+    S.1
+}
+
 theorem matrix_apply_ones[S: Semiring](n: Nat, a: Matrix[S, n, n], i: Fin[n]) {
     matrix_apply[S](n, a, ones_vector[S](n), i) = matrix_row_sum[S](n, a, i)
+}
+
+theorem ones_vector_nonzero[S: Semiring](n: Nat) {
+    S.1 != S.0 implies is_nonzero_vector[S](n.suc, ones_vector[S](n.suc))
 }
 
 theorem row_stochastic_has_eigenvalue_one[S: Semiring](
@@ -2363,6 +2306,11 @@ theorem matrix_apply_lin_comb2[R: CommRing](
         s * matrix_apply[R](n, a, v, i) + t * matrix_apply[R](n, a, w, i)
 }
 
+theorem eigen_combine_equations[R: CommRing](s: R, t: R, lam: R, mu: R, v: R, w: R) {
+    s * lam * v + t * mu * w = R.0 and s * lam * v + t * lam * w = R.0
+        implies t * (mu - lam) * w = R.0
+}
+
 theorem eigenvectors_distinct_eigenvalues_independent[F: Field](
     n: Nat, a: Matrix[F, n, n], lam: F, mu: F, v: Fin[n] -> F, w: Fin[n] -> F
 ) {
@@ -2381,8 +2329,138 @@ theorem eigenvectors_independent_at[F: Field](
         implies s = F.0 and t = F.0
 }
 
+define is_nonnegative_matrix[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
+    forall(i: Fin[n], j: Fin[n]) {
+        S.0 <= matrix_entry[S](n, n, a, i, j)
+    }
+}
+
+theorem is_nonnegative_matrix_apply[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
+) {
+    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_entry[S](n, n, a, i, j)
+}
+
+theorem is_nonnegative_matrix_intro[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    (forall(i: Fin[n], j: Fin[n]) { S.0 <= matrix_entry[S](n, n, a, i, j) })
+        implies is_nonnegative_matrix[S](n, a)
+}
+
+define is_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
+    is_nonnegative_matrix[S](n, a) and is_row_stochastic[S](n, a)
+}
+
+theorem is_stochastic_nonnegative[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    is_stochastic[S](n, a) implies is_nonnegative_matrix[S](n, a)
+}
+
+theorem is_stochastic_row_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    is_stochastic[S](n, a) implies is_row_stochastic[S](n, a)
+}
+
+theorem is_stochastic_intro[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    is_nonnegative_matrix[S](n, a) and is_row_stochastic[S](n, a)
+        implies is_stochastic[S](n, a)
+}
+
+theorem stochastic_entry_le_one[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
+) {
+    is_stochastic[S](n, a) implies matrix_entry[S](n, n, a, i, j) <= S.1
+}
+
+theorem matrix_one_row_sum[S: Semiring](n: Nat, i: Fin[n]) {
+    matrix_row_sum[S](n, matrix_one[S](n), i) = S.1
+}
+
+theorem matrix_one_is_row_stochastic[S: Semiring](n: Nat) {
+    is_row_stochastic[S](n, matrix_one[S](n))
+}
+
+define matrix_col_fn[S: Semiring](
+    n: Nat, a: Matrix[S, n, n], j: Fin[n], k: Fin[n]
+) -> S {
+    matrix_entry[S](n, n, a, k, j)
+}
+
+define matrix_col_sum[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) -> S {
+    fin_sum[S](n, matrix_col_fn[S](n, a, j))
+}
+
+theorem matrix_col_sum_transpose[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) {
+    matrix_col_sum[S](n, a, j) = matrix_row_sum[S](n, matrix_transpose[S](n, n, a), j)
+}
+
+define is_col_stochastic[S: Semiring](n: Nat, a: Matrix[S, n, n]) -> Bool {
+    forall(j: Fin[n]) {
+        matrix_col_sum[S](n, a, j) = S.1
+    }
+}
+
+theorem is_col_stochastic_apply[S: Semiring](n: Nat, a: Matrix[S, n, n], j: Fin[n]) {
+    is_col_stochastic[S](n, a) implies matrix_col_sum[S](n, a, j) = S.1
+}
+
+theorem is_col_stochastic_intro[S: Semiring](n: Nat, a: Matrix[S, n, n]) {
+    (forall(j: Fin[n]) { matrix_col_sum[S](n, a, j) = S.1 })
+        implies is_col_stochastic[S](n, a)
+}
+
+theorem col_stochastic_iff_transpose_row_stochastic[S: Semiring](
+    n: Nat, a: Matrix[S, n, n]
+) {
+    is_col_stochastic[S](n, a) = is_row_stochastic[S](n, matrix_transpose[S](n, n, a))
+}
+
+define is_doubly_stochastic[S: OrderedField](n: Nat, a: Matrix[S, n, n]) -> Bool {
+    is_stochastic[S](n, a) and is_col_stochastic[S](n, a)
+}
+
+theorem is_doubly_stochastic_row[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    is_doubly_stochastic[S](n, a) implies is_stochastic[S](n, a)
+}
+
+theorem is_doubly_stochastic_col[S: OrderedField](n: Nat, a: Matrix[S, n, n]) {
+    is_doubly_stochastic[S](n, a) implies is_col_stochastic[S](n, a)
+}
+
 theorem matrix_one_has_eigenvalue_one[S: Semiring](n: Nat) {
     S.1 != S.0 implies is_eigenvalue[S](n.suc, matrix_one[S](n.suc), S.1)
+}
+
+theorem nonnegative_row_sum_nonneg[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n]
+) {
+    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_row_sum[S](n, a, i)
+}
+
+theorem nonnegative_col_sum_nonneg[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], j: Fin[n]
+) {
+    is_nonnegative_matrix[S](n, a) implies S.0 <= matrix_col_sum[S](n, a, j)
+}
+
+theorem doubly_stochastic_entry_le_one[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], i: Fin[n], j: Fin[n]
+) {
+    is_doubly_stochastic[S](n, a) implies matrix_entry[S](n, n, a, i, j) <= S.1
+}
+
+theorem row_sum_mono[S: OrderedField](
+    n: Nat, a: Matrix[S, n, n], b: Matrix[S, n, n], i: Fin[n]
+) {
+    (forall(k: Fin[n]) {
+        matrix_entry[S](n, n, a, i, k) <= matrix_entry[S](n, n, b, i, k)
+    }) implies matrix_row_sum[S](n, a, i) <= matrix_row_sum[S](n, b, i)
+}
+
+theorem abs_of_not_negative(x: Real) {
+    not x.is_negative implies x.abs = x
+}
+
+theorem max_abs_positive(m: Nat, v: Fin[m.suc] -> Real) {
+    (exists(j: Fin[m.suc]) { v(j) != Real.0 })
+        implies Real.0 < fin_function_max[Real](m, fin_abs(m.suc, v))
 }
 
 theorem stochastic_row_apply_abs_le(
@@ -2406,6 +2484,23 @@ theorem stochastic_spectral_radius_one(m: Nat, a: Matrix[Real, m.suc, m.suc]) {
         implies is_eigenvalue[Real](m.suc, a, Real.1) and forall(lam: Real) {
             is_eigenvalue[Real](m.suc, a, lam) implies lam.abs <= Real.1
         }
+}
+
+theorem fin_two_one_value {
+    fin_succ(Nat.0.suc, fin_zero(Nat.0)).value = Nat.0.suc
+}
+
+theorem fin_two_zero_value {
+    fin_zero(Nat.0.suc).value = Nat.0
+}
+
+theorem fin_two_one_ne_zero {
+    fin_succ(Nat.0.suc, fin_zero(Nat.0)) != fin_zero(Nat.0.suc)
+}
+
+theorem fin_sum_two[A: AddCommMonoid](f: Fin[Nat.0.suc.suc] -> A) {
+    fin_sum[A](Nat.0.suc.suc, f) =
+        f(fin_zero(Nat.0.suc)) + f(fin_succ(Nat.0.suc, fin_zero(Nat.0)))
 }
 
 theorem matrix_entry_mul_two[S: Semiring](
@@ -2437,144 +2532,49 @@ theorem square_matrix_mul_assoc_two[S: Semiring](
         square_matrix_mul[S](Nat.0.suc.suc, a, square_matrix_mul[S](Nat.0.suc.suc, b, c))
 }
 
-theorem square_matrix_mul_one_right_two[S: Semiring](a: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    square_matrix_mul[S](Nat.0.suc.suc, a, matrix_one[S](Nat.0.suc.suc)) = a
+define matrix2_entry_at[R](n: Nat, a00: R, a01: R, a10: R, a11: R, i: Fin[n], j: Fin[n]) -> R {
+    if i.value = Nat.0 {
+        if j.value = Nat.0 {
+            a00
+        } else {
+            a01
+        }
+    } else {
+        if j.value = Nat.0 {
+            a10
+        } else {
+            a11
+        }
+    }
 }
 
-theorem square_matrix_mul_one_left_two[S: Semiring](a: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    square_matrix_mul[S](Nat.0.suc.suc, matrix_one[S](Nat.0.suc.suc), a) = a
+theorem fin_two_zero_ne_one {
+    fin_zero(Nat.0.suc) != fin_succ(Nat.0.suc, fin_zero(Nat.0))
 }
 
-theorem square_matrix_mul_add_right_two[S: Semiring](
-    a: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    b: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    c: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc]
-) {
-    square_matrix_mul[S](Nat.0.suc.suc, a, b + c) =
-        square_matrix_mul[S](Nat.0.suc.suc, a, b) + square_matrix_mul[S](Nat.0.suc.suc, a, c)
+theorem matrix2_entry_at_zero_zero[R](a00: R, a01: R, a10: R, a11: R) {
+    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_zero(Nat.0.suc), fin_zero(Nat.0.suc)) = a00
 }
 
-theorem square_matrix_mul_add_left_two[S: Semiring](
-    a: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    b: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    c: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc]
-) {
-    square_matrix_mul[S](Nat.0.suc.suc, a + b, c) =
-        square_matrix_mul[S](Nat.0.suc.suc, a, c) + square_matrix_mul[S](Nat.0.suc.suc, b, c)
+theorem matrix2_entry_at_zero_one[R](a00: R, a01: R, a10: R, a11: R) {
+    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) = a01
 }
 
-define matrix_apply_vec[S: Semiring](n: Nat, a: Matrix[S, n, n], v: Fin[n] -> S, k: Fin[n]) -> S {
-    matrix_apply[S](n, a, v, k)
+theorem matrix2_entry_at_one_zero[R](a00: R, a01: R, a10: R, a11: R) {
+    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc)) = a10
 }
 
-theorem matrix_apply_mul_two[S: Semiring](
-    a: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    b: Matrix[S, Nat.0.suc.suc, Nat.0.suc.suc],
-    v: Fin[Nat.0.suc.suc] -> S,
-    i: Fin[Nat.0.suc.suc]
-) {
-    matrix_apply[S](Nat.0.suc.suc, square_matrix_mul[S](Nat.0.suc.suc, a, b), v, i) =
-        matrix_apply[S](Nat.0.suc.suc, a, matrix_apply_vec[S](Nat.0.suc.suc, b, v), i)
+theorem matrix2_entry_at_one_one[R](a00: R, a01: R, a10: R, a11: R) {
+    matrix2_entry_at[R](Nat.0.suc.suc, a00, a01, a10, a11, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_succ(Nat.0.suc, fin_zero(Nat.0))) = a11
 }
 
-define matrix2_adjugate_entry[F: Field](n: Nat, a: Matrix[F, n.suc.suc, n.suc.suc], i: Fin[n.suc.suc], j: Fin[n.suc.suc]) -> F {
-    matrix_cofactor_with[F](n.suc, matrix_det_suc[F](n), a, j, i)
+define det2_entry[R: Ring](a00: R, a01: R, a10: R, a11: R) -> R {
+    a00 * a11 - a01 * a10
 }
 
-define matrix2_adjugate[F: Field](n: Nat, a: Matrix[F, n.suc.suc, n.suc.suc]) -> Matrix[F, n.suc.suc, n.suc.suc] {
-    Matrix[F, n.suc.suc, n.suc.suc].new(matrix2_adjugate_entry[F](n, a))
-}
-
-theorem matrix2_adjugate_matrix_entry[F: Field](
-    a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], i: Fin[Nat.0.suc.suc], j: Fin[Nat.0.suc.suc]
-) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, matrix2_adjugate[F](Nat.0, a), i, j) =
-        matrix2_adjugate_entry[F](Nat.0, a, i, j)
-}
-
-theorem matrix2_adjugate_entry_00[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix2_adjugate_entry[F](Nat.0, a, fin_zero(Nat.0.suc), fin_zero(Nat.0.suc)) = matrix2_entry_11[F](Nat.0, a)
-}
-
-theorem matrix2_adjugate_entry_11[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix2_adjugate_entry[F](Nat.0, a, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_succ(Nat.0.suc, fin_zero(Nat.0))) =
-        matrix2_entry_00[F](Nat.0, a)
-}
-
-theorem matrix2_mul_entry[F: Ring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], i: Fin[Nat.0.suc.suc], j: Fin[Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, b), i, j) =
-        matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, a, i, fin_zero(Nat.0.suc)) *
-            matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, b, fin_zero(Nat.0.suc), j) +
-        matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, a, i, fin_succ(Nat.0.suc, fin_zero(Nat.0))) *
-            matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, b, fin_succ(Nat.0.suc, fin_zero(Nat.0)), j)
-}
-
-theorem matrix2_mul_entry_00[F: Ring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, b), fin_zero(Nat.0.suc), fin_zero(Nat.0.suc)) =
-        matrix2_entry_00[F](Nat.0, a) * matrix2_entry_00[F](Nat.0, b) + matrix2_entry_01[F](Nat.0, a) * matrix2_entry_10[F](Nat.0, b)
-}
-
-theorem matrix2_mul_entry_01[F: Ring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, b), fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) =
-        matrix2_entry_00[F](Nat.0, a) * matrix2_entry_01[F](Nat.0, b) + matrix2_entry_01[F](Nat.0, a) * matrix2_entry_11[F](Nat.0, b)
-}
-
-theorem matrix2_mul_entry_10[F: Ring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, b), fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc)) =
-        matrix2_entry_10[F](Nat.0, a) * matrix2_entry_00[F](Nat.0, b) + matrix2_entry_11[F](Nat.0, a) * matrix2_entry_10[F](Nat.0, b)
-}
-
-theorem matrix2_mul_entry_11[F: Ring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, b), fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_succ(Nat.0.suc, fin_zero(Nat.0))) =
-        matrix2_entry_10[F](Nat.0, a) * matrix2_entry_01[F](Nat.0, b) + matrix2_entry_11[F](Nat.0, a) * matrix2_entry_11[F](Nat.0, b)
-}
-
-theorem matrix2_adjugate_mul_entry_01[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, matrix2_adjugate[F](Nat.0, a)), fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) =
-        F.0
-}
-
-theorem matrix2_adjugate_mul_entry_10[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, a, matrix2_adjugate[F](Nat.0, a)), fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc)) =
-        F.0
-}
-
-theorem matrix2_adjugate_mul_left_entry_01[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, matrix2_adjugate[F](Nat.0, a), a), fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) =
-        F.0
-}
-
-theorem matrix2_adjugate_mul_left_entry_10[F: Field](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]) {
-    matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, square_matrix_mul[F](Nat.0.suc.suc, matrix2_adjugate[F](Nat.0, a), a), fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc)) =
-        F.0
-}
-
-theorem square_matrix_inv_unique_two[F: Ring](
-    a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc],
-    b: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc],
-    c: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc]
-) {
-    (square_matrix_mul[F](Nat.0.suc.suc, a, b) = matrix_one[F](Nat.0.suc.suc) and
-        square_matrix_mul[F](Nat.0.suc.suc, b, a) = matrix_one[F](Nat.0.suc.suc) and
-        square_matrix_mul[F](Nat.0.suc.suc, a, c) = matrix_one[F](Nat.0.suc.suc) and
-        square_matrix_mul[F](Nat.0.suc.suc, c, a) = matrix_one[F](Nat.0.suc.suc)) implies
-        b = c
-}
-
-theorem ring4_mul_swap_second[F: CommRing](a: F, b: F, c: F, d: F) {
-    a * b * c * d = a * c * b * d
-}
-
-theorem ring4_mul_swap_fourth[F: CommRing](a: F, b: F, c: F, d: F) {
-    a * b * c * d = a * b * d * c
-}
-
-theorem matrix2_apply_entry[F: Semiring](a: Matrix[F, Nat.0.suc.suc, Nat.0.suc.suc], v: Fin[Nat.0.suc.suc] -> F, i: Fin[Nat.0.suc.suc]) {
-    matrix_apply[F](Nat.0.suc.suc, a, v, i) =
-        matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, a, i, fin_zero(Nat.0.suc)) * v(fin_zero(Nat.0.suc)) +
-        matrix_entry[F](Nat.0.suc.suc, Nat.0.suc.suc, a, i, fin_succ(Nat.0.suc, fin_zero(Nat.0))) * v(fin_succ(Nat.0.suc, fin_zero(Nat.0)))
-}
-
-theorem matrix2_apply_one[F: Semiring](v: Fin[Nat.0.suc.suc] -> F, i: Fin[Nat.0.suc.suc]) {
-    matrix_apply[F](Nat.0.suc.suc, matrix_one[F](Nat.0.suc.suc), v, i) = v(i)
+define det2[R: Ring](a: Matrix[R, Nat.0.suc.suc, Nat.0.suc.suc]) -> R {
+    matrix_entry[R](Nat.0.suc.suc, Nat.0.suc.suc, a, fin_zero(Nat.0.suc), fin_zero(Nat.0.suc)) *
+        matrix_entry[R](Nat.0.suc.suc, Nat.0.suc.suc, a, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_succ(Nat.0.suc, fin_zero(Nat.0))) -
+    matrix_entry[R](Nat.0.suc.suc, Nat.0.suc.suc, a, fin_zero(Nat.0.suc), fin_succ(Nat.0.suc, fin_zero(Nat.0))) *
+        matrix_entry[R](Nat.0.suc.suc, Nat.0.suc.suc, a, fin_succ(Nat.0.suc, fin_zero(Nat.0)), fin_zero(Nat.0.suc))
 }
