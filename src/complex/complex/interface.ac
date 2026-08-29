@@ -11,16 +11,6 @@ instance Complex: Add {
     }
 }
 
-instance Complex: Mul {
-    define mul(self, other: Complex) -> Complex {
-        // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
-        Complex.new(
-            self.re * other.re - self.im * other.im,
-            self.re * other.im + self.im * other.re
-        )
-    }
-}
-
 instance Complex: Zero {
     let 0: Complex = Complex.new(Real.0, Real.0)
 }
@@ -43,13 +33,23 @@ instance Complex: AddMonoid
 
 instance Complex: AddCommMonoid
 
+instance Complex: AddGroup
+
+instance Complex: Mul {
+    define mul(self, other: Complex) -> Complex {
+        // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
+        Complex.new(
+            self.re * other.re - self.im * other.im,
+            self.re * other.im + self.im * other.re
+        )
+    }
+}
+
 instance Complex: Semigroup
 
 instance Complex: Monoid
 
 instance Complex: Semiring
-
-instance Complex: AddGroup
 
 instance Complex: AddCommGroup
 
@@ -66,14 +66,6 @@ instance Complex: MetricSpace {
 }
 
 instance Complex: CompleteMetricSpace
-
-attributes Complex {
-    /// Divides this complex number by another.
-    /// Division by zero returns zero (making this a total function).
-    define div(self, other: Complex) -> Complex {
-        self * other.inverse
-    }
-}
 
 theorem add_comm(a: Complex, b: Complex) {
     a + b = b + a
@@ -131,16 +123,8 @@ theorem mul_one_left(a: Complex) {
     Complex.1 * a = a
 }
 
-theorem zero_inverse {
-    Complex.0.inverse = Complex.0
-}
-
 theorem neg_eq_mul_neg_one(a: Complex) {
     -a = (-Complex.1) * a
-}
-
-theorem mul_inverse(a: Complex) {
-    a != Complex.0 implies a * a.inverse = Complex.1
 }
 
 theorem mul_right_cancel(a: Complex, b: Complex, c: Complex) {
@@ -197,14 +181,6 @@ theorem re_sub(a: Complex, b: Complex) {
 
 theorem im_sub(a: Complex, b: Complex) {
     (a - b).im = a.im - b.im
-}
-
-theorem div_one(a: Complex) {
-    a / Complex.1 = a
-}
-
-theorem div_self(a: Complex) {
-    a != Complex.0 implies a / a = Complex.1
 }
 
 theorem re_zero {
@@ -271,10 +247,6 @@ theorem im_smul(r: Real, x: Complex) {
     complex_real_smul(r, x).im = r * x.im
 }
 
-theorem inverse_mul_self(a: Complex) {
-    a != Complex.0 implies a.inverse * a = Complex.1
-}
-
 let complex_re_fn: Complex -> Real = function(c: Complex) {
     c.re
 }
@@ -297,10 +269,6 @@ theorem nonneg_eq_of_squares_eq(a: Real, b: Real) {
 
 theorem abs_squared_add_identity(ar: Real, br: Real, ai: Real, bi: Real, p: Real, q: Real) {
     (ar + (p + p) + br) + (ai + (q + q) + bi) = (ar + ai) + (br + bi) + ((p + q) + (p + q))
-}
-
-theorem complex_field_hom_eq_of_hom_eq(f: FieldHom[Complex, Complex], g: FieldHom[Complex, Complex]) {
-    f.hom = g.hom implies f = g
 }
 
 theorem complex_real_smul_add_left_constraint {
@@ -335,14 +303,6 @@ theorem complex_real_module_linearly_equivalent_self {
     modules_linearly_equivalent(complex_real_module, complex_real_module)
 }
 
-theorem complex_norm_mul(a: Complex, b: Complex) {
-    (a * b).norm = a.norm * b.norm
-}
-
-theorem complex_real_norm_smul(r: Real, z: Complex) {
-    complex_real_smul(r, z).norm = r.norm * z.norm
-}
-
 theorem complex_real_module_norm_smul_constraint {
     norm_smul_constraint[Real, Complex](complex_real_module.smul)
 }
@@ -365,22 +325,6 @@ theorem complex_re_fn_is_hom {
 
 theorem complex_im_fn_is_hom {
     is_add_group_hom(complex_im_fn)
-}
-
-let complex_re_hom: AddGroupHom[Complex, Real] satisfy {
-    AddGroupHom.new(complex_re_fn) = Option.some(complex_re_hom)
-}
-
-let complex_im_hom: AddGroupHom[Complex, Real] satisfy {
-    AddGroupHom.new(complex_im_fn) = Option.some(complex_im_hom)
-}
-
-theorem complex_re_hom_hom {
-    complex_re_hom.hom = complex_re_fn
-}
-
-theorem complex_im_hom_hom {
-    complex_im_hom.hom = complex_im_fn
 }
 
 theorem complex_re_fn_preserves_add {
@@ -960,11 +904,6 @@ theorem exp_term_abs_zero_imp_suc_zero(x: Real, n: Nat) {
     exp_term(x, n).abs = Real.0 implies exp_term(x, n.suc).abs = Real.0
 }
 
-theorem exp_term_ratio(x: Real, n: Nat) {
-    exp_term(x, n).abs != Real.0 implies
-    exp_term(x, n.suc).abs / exp_term(x, n).abs = x.abs / Real.from_rat(Rat.from_nat(n.suc))
-}
-
 theorem exp_term_ratio_le_half(x: Real, n: Nat) {
     exp_term(x, n).abs != Real.0 and x.abs * two <= Real.from_rat(Rat.from_nat(n.suc))
     implies exp_term(x, n.suc).abs <= Real.one_half * exp_term(x, n).abs
@@ -1064,18 +1003,6 @@ theorem complex_cauchy_partial_im(a: Nat -> Complex, b: Nat -> Complex, n: Nat) 
 
 theorem complex_mul_four_rearrange(a: Complex, b: Complex, c: Complex, d: Complex) {
     (a * b) * (c * d) = (a * c) * (b * d)
-}
-
-theorem complex_one_div(c: Complex) {
-    Complex.1 / c = c.inverse
-}
-
-define complex_div_fn(f: Nat -> Complex, c: Complex, n: Nat) -> Complex {
-    f(n) / c
-}
-
-theorem complex_partial_div_fn(f: Nat -> Complex, c: Complex, n: Nat) {
-    partial(complex_div_fn(f, c), n) = partial(f, n) / c
 }
 
 theorem seq_abs_eq_abs_fn(a: Nat -> Real) {
@@ -1192,14 +1119,6 @@ theorem complex_neg_zero {
     -Complex.0 = Complex.0
 }
 
-theorem complex_zero_div(a: Complex) {
-    Complex.0 / a = Complex.0
-}
-
-theorem complex_div_mul_cancel(b: Complex, a: Complex) {
-    b != Complex.0 implies (b * a) / b = a
-}
-
 theorem real_two_mul(x: Real) {
     two * x = x + x
 }
@@ -1222,6 +1141,10 @@ theorem real_neg_pow_even(x: Real, n: Nat) {
 
 theorem real_cos_term_neg(x: Real, n: Nat) {
     cos_term(-x, n) = cos_term(x, n)
+}
+
+theorem real_cos_neg(x: Real) {
+    (-x).cos = x.cos
 }
 
 theorem real_alternating_sign_double_suc(n: Nat) {
@@ -1252,15 +1175,11 @@ theorem real_limit_neg_seq(a: Nat -> Real) {
     converges(a) implies limit(mul_seq(-Real.1, a)) = -limit(a)
 }
 
+theorem real_sin_neg(x: Real) {
+    (-x).sin = -x.sin
+}
+
 let real_four: Real = two + two
-
-define linear_polynomial(b: Complex, c: Complex) -> Polynomial[Complex] {
-    polynomial_constant(c) + polynomial_monomial(Nat.1, b)
-}
-
-define quadratic_polynomial(a: Complex, b: Complex, c: Complex) -> Polynomial[Complex] {
-    polynomial_constant(c) + polynomial_monomial(Nat.1, b) + polynomial_monomial(Nat.2, a)
-}
 
 theorem sub_sub_right(a: Complex, b: Complex, c: Complex) {
     a - (b - c) = a - b + c
@@ -1308,13 +1227,6 @@ theorem polynomial_eval_bound_monomial_two(r: Complex, x: Complex) {
 
 theorem polynomial_eval_monomial_two(r: Complex, x: Complex) {
     polynomial_eval(polynomial_monomial(Nat.2, r), x) = r * x * x
-}
-
-theorem fta_linear(b: Complex, c: Complex) {
-    b != Complex.0 implies
-    exists(z: Complex) {
-        polynomial_eval(linear_polynomial(b, c), z) = Complex.0
-    }
 }
 
 theorem real_left_distrib(a: Real, b: Real, c: Real) {
@@ -1365,13 +1277,6 @@ theorem complex_sqrt_square_exists(z: Complex) {
     }
 }
 
-theorem fta_quadratic(a: Complex, b: Complex, c: Complex) {
-    a != Complex.0 implies
-    exists(z: Complex) {
-        polynomial_eval(quadratic_polynomial(a, b, c), z) = Complex.0
-    }
-}
-
 theorem nat_ge_one_ne_zero(n: Nat) {
     n >= Nat.1 implies n != Nat.0
 }
@@ -1388,32 +1293,8 @@ theorem from_nat_two_real {
     from_nat[Real](Nat.2) = two
 }
 
-theorem two_pi_over_four_eq {
-    two * pi / from_nat[Real](Nat.4) = pi / two
-}
-
-theorem pi_div_two_eq {
-    pi / two = pi_over_two
-}
-
 define is_root_of_unity(z: Complex, n: Nat) -> Bool {
     z.pow(n) = Complex.1
-}
-
-theorem complex_mul_inverse_self(a: Complex) {
-    a != Complex.0 implies a * a.inverse = Complex.1
-}
-
-theorem complex_inverse_mul(a: Complex, b: Complex) {
-    (a * b).inverse = a.inverse * b.inverse
-}
-
-theorem complex_div_self(a: Complex) {
-    a != Complex.0 implies a / a = Complex.1
-}
-
-theorem complex_inverse_nonzero(a: Complex) {
-    a != Complex.0 implies a.inverse != Complex.0
 }
 
 theorem pow_two_neg_one {
@@ -1516,38 +1397,6 @@ theorem diff_of_squares(a: Complex, b: Complex) {
     (a + b) * (a - b) = a * a - b * b
 }
 
-theorem div_distrib_right(a: Complex, b: Complex, c: Complex) {
-    (a + b) / c = a / c + b / c
-}
-
-theorem neg_div_num(a: Complex, b: Complex) {
-    -(a / b) = (-a) / b
-}
-
-theorem inverse_neg(a: Complex) {
-    (-a).inverse = -a.inverse
-}
-
-theorem neg_div(a: Complex, b: Complex) {
-    a / (-b) = -(a / b)
-}
-
-theorem inverse_inverse_restated(a: Complex) {
-    a.inverse.inverse = a
-}
-
-theorem inverse_one_restated {
-    Complex.1.inverse = Complex.1
-}
-
-theorem one_div_inverse(a: Complex) {
-    Complex.1 / a = a.inverse
-}
-
-theorem mul_div_assoc(a: Complex, b: Complex, c: Complex) {
-    (a * b) / c = a * (b / c)
-}
-
 theorem one_neq_neg_one_complex {
     Complex.1 != -Complex.1
 }
@@ -1560,10 +1409,6 @@ theorem complex_pow_mul_distrib(z: Complex, w: Complex, n: Nat) {
     (z * w).pow(n) = z.pow(n) * w.pow(n)
 }
 
-theorem complex_pow_inverse(z: Complex, n: Nat) {
-    z.inverse.pow(n) = z.pow(n).inverse
-}
-
 theorem is_root_of_unity_one(n: Nat) {
     is_root_of_unity(Complex.1, n)
 }
@@ -1574,10 +1419,6 @@ theorem is_root_of_unity_neg_one_two {
 
 theorem roots_of_unity_mul(z: Complex, w: Complex, n: Nat) {
     is_root_of_unity(z, n) and is_root_of_unity(w, n) implies is_root_of_unity(z * w, n)
-}
-
-theorem roots_of_unity_inv(z: Complex, n: Nat) {
-    is_root_of_unity(z, n) implies is_root_of_unity(z.inverse, n)
 }
 
 define complex_pow_seq(z: Nat -> Complex, k: Nat, n: Nat) -> Complex {
@@ -1648,36 +1489,6 @@ theorem nat_not_ge_one_imp_zero(n: Nat) {
     not n >= Nat.1 implies n = Nat.0
 }
 
-theorem nonconstant_has_nonzero_high_coeff(p: Polynomial[Complex]) {
-    exists(x: Complex, y: Complex) { polynomial_eval(p, x) != polynomial_eval(p, y) } implies exists(j: Nat) {
-        j >= Nat.1 and p.coeff(j) != Complex.0
-    }
-}
-
-let polynomial_least_bound(p: Polynomial[Complex]) -> n0: Nat satisfy {
-    polynomial_support_bounded_by(p, n0) and
-    (forall(m: Nat) { polynomial_support_bounded_by(p, m) implies n0 <= m })
-}
-
-theorem polynomial_least_bound_props(p: Polynomial[Complex]) {
-    polynomial_support_bounded_by(p, polynomial_least_bound(p)) and
-    (forall(m: Nat) { polynomial_support_bounded_by(p, m) implies polynomial_least_bound(p) <= m })
-}
-
-theorem polynomial_support_bound_pred_of_coeff_zero(p: Polynomial[Complex], nb: Nat) {
-    polynomial_support_bounded_by(p, nb) and nb >= Nat.1 and p.coeff(nb - 1) = Complex.0 implies polynomial_support_bounded_by(p, nb - 1)
-}
-
-theorem polynomial_leading_coeff_nonzero(p: Polynomial[Complex]) {
-    polynomial_least_bound(p) >= Nat.1 implies p.coeff(polynomial_least_bound(p) - 1) != Complex.0
-}
-
-theorem nonconstant_has_leading_coefficient(p: Polynomial[Complex]) {
-    exists(x: Complex, y: Complex) { polynomial_eval(p, x) != polynomial_eval(p, y) } implies exists(n: Nat) {
-        n >= Nat.1 and p.coeff(n) != Complex.0 and polynomial_support_bounded_by(p, n.suc)
-    }
-}
-
 theorem real_inv_pos(a: Real) {
     a > Real.0 implies a.inverse > Real.0
 }
@@ -1692,6 +1503,31 @@ theorem nat_sub_ge_one(j: Nat, n: Nat) {
 
 theorem nat_sub_sub_suc(j: Nat, n: Nat) {
     j < n implies n - j - 1 = n - j.suc
+}
+
+define iterated_quotient[F: Field](p: Polynomial[F], a: F, n: Nat, j: Nat) -> Polynomial[F] {
+    match j {
+        Nat.zero {
+            p
+        }
+        Nat.suc(pred) {
+            polynomial_quotient(iterated_quotient(p, a, n, pred), a, n - pred)
+        }
+    }
+}
+
+theorem iterated_quotient_zero[F: Field](p: Polynomial[F], a: F, n: Nat) {
+    iterated_quotient(p, a, n, Nat.0) = p
+}
+
+theorem iterated_quotient_suc[F: Field](p: Polynomial[F], a: F, n: Nat, j: Nat) {
+    iterated_quotient(p, a, n, j.suc) =
+        polynomial_quotient(iterated_quotient(p, a, n, j), a, n - j)
+}
+
+theorem iterated_quotient_support_bounded[F: Field](p: Polynomial[F], a: F, n: Nat, j: Nat) {
+    polynomial_support_bounded_by(p, n) and j <= n
+    implies polynomial_support_bounded_by(iterated_quotient(p, a, n, j), n - j)
 }
 
 theorem re_mul_im_factor(x: Real, y: Real, u: Real, v: Real) {
@@ -1715,10 +1551,6 @@ theorem exists_neg_real_part_four(d: Complex, w: Complex) {
     implies exists(j: Nat) {
         j <= 3 and (d * w.pow(j)).re < Real.0
     }
-}
-
-theorem polynomial_zero_of_support_bound_zero(p: Polynomial[Complex]) {
-    polynomial_support_bounded_by(p, Nat.0) implies p = Polynomial[Complex].zero
 }
 
 theorem real_pow_le_self(t: Real, k: Nat) {
@@ -1831,27 +1663,6 @@ theorem nat_ne_zero_imp_ge_one(n: Nat) {
     n != Nat.0 implies n >= Nat.1
 }
 
-define complex_log(z: Complex) -> Complex {
-    Complex.from_real((z.modulus).log.get_or_else(Real.0))
-}
-
-attributes Complex {
-    /// The complex logarithm.
-    let log = complex_log
-}
-
-theorem complex_log_one {
-    complex_log(Complex.1) = Complex.0
-}
-
-theorem complex_log_im(z: Complex) {
-    complex_log(z).im = Real.0
-}
-
-theorem complex_log_mul(z: Complex, w: Complex) {
-    z != Complex.0 and w != Complex.0 implies complex_log(z * w) = complex_log(z) + complex_log(w)
-}
-
 let i = Complex.i
 
 attributes Complex {
@@ -1892,6 +1703,14 @@ instance Complex: Inverse {
 
 instance Complex: Field
 
+attributes Complex {
+    /// Divides this complex number by another.
+    /// Division by zero returns zero (making this a total function).
+    define div(self, other: Complex) -> Complex {
+        self * other.inverse
+    }
+}
+
 theorem neg_one_lifts {
     -Complex.1 = Complex.from_real(-Real.1)
 }
@@ -1928,6 +1747,10 @@ theorem abs_squared_from_real(a: Real) {
     Complex.from_real(a).abs_squared = a * a
 }
 
+theorem zero_inverse {
+    Complex.0.inverse = Complex.0
+}
+
 theorem mul_from_real(c: Complex, r: Real) {
     c * Complex.from_real(r) = Complex.new(c.re * r, c.im * r)
 }
@@ -1942,6 +1765,10 @@ theorem real_add_lifts(a: Real, b: Real) {
 
 theorem abs_sq_zero_imp_zero(a: Complex) {
     a.abs_squared = Real.0 implies a = Complex.0
+}
+
+theorem mul_inverse(a: Complex) {
+    a != Complex.0 implies a * a.inverse = Complex.1
 }
 
 theorem inverse_lifts(a: Real) {
@@ -2032,6 +1859,14 @@ theorem conj_sub(a: Complex, b: Complex) {
     (a - b).conj = a.conj - b.conj
 }
 
+theorem div_one(a: Complex) {
+    a / Complex.1 = a
+}
+
+theorem div_self(a: Complex) {
+    a != Complex.0 implies a / a = Complex.1
+}
+
 theorem div_from_real(a: Real, b: Real) {
     Complex.from_real(a) / Complex.from_real(b) = Complex.from_real(a / b)
 }
@@ -2098,4 +1933,163 @@ theorem im_from_real(a: Real) {
 
 theorem re_conj(a: Complex) {
     a.conj.re = a.re
+}
+
+theorem im_conj(a: Complex) {
+    a.conj.im = -a.im
+}
+
+theorem abs_squared_eq(a: Complex) {
+    a.abs_squared = a.re * a.re + a.im * a.im
+}
+
+theorem abs_squared_eq_zero(a: Complex) {
+    a.abs_squared = Real.0 iff a = Complex.0
+}
+
+theorem from_real_eq_zero(a: Real) {
+    Complex.from_real(a) = Complex.0 iff a = Real.0
+}
+
+theorem from_real_zero {
+    Complex.from_real(Real.0) = Complex.0
+}
+
+theorem from_real_one {
+    Complex.from_real(Real.1) = Complex.1
+}
+
+theorem from_real_neg(a: Real) {
+    Complex.from_real(-a) = -Complex.from_real(a)
+}
+
+theorem from_real_sub(a: Real, b: Real) {
+    Complex.from_real(a - b) = Complex.from_real(a) - Complex.from_real(b)
+}
+
+theorem inverse_mul_self(a: Complex) {
+    a != Complex.0 implies a.inverse * a = Complex.1
+}
+
+theorem mul_conj_re(a: Complex) {
+    (a * a.conj).re = a.abs_squared
+}
+
+theorem mul_conj_im(a: Complex) {
+    (a * a.conj).im = Real.0
+}
+
+theorem mul_conj_is_real(a: Complex) {
+    (a * a.conj).is_real
+}
+
+theorem from_real_div(a: Real, b: Real) {
+    Complex.from_real(a / b) = Complex.from_real(a) / Complex.from_real(b)
+}
+
+theorem conj_inverse(a: Complex) {
+    a.inverse.conj = a.conj.inverse
+}
+
+theorem conj_div(a: Complex, b: Complex) {
+    (a / b).conj = a.conj / b.conj
+}
+
+theorem abs_squared_mul_inverse(a: Complex) {
+    a != Complex.0 implies a.abs_squared * a.inverse.abs_squared = Real.1
+}
+
+let complex_modulus(z: Complex) -> r: Real satisfy {
+    z.abs_squared.sqrt = Option.some(r) and r * r = z.abs_squared and r >= Real.0
+}
+
+attributes Complex {
+    /// The modulus |z| of the complex number.
+    let modulus: Complex -> Real = complex_modulus
+}
+
+instance Complex: NormedAddCommGroup {
+    let norm: Complex -> Real = Complex.modulus
+}
+
+instance Complex: NormedField
+
+theorem modulus_nonneg(z: Complex) {
+    z.modulus >= Real.0
+}
+
+theorem modulus_squared(z: Complex) {
+    z.modulus * z.modulus = z.abs_squared
+}
+
+theorem modulus_eq_zero(z: Complex) {
+    z.modulus = Real.0 iff z = Complex.0
+}
+
+theorem modulus_of_zero {
+    Complex.0.modulus = Real.0
+}
+
+theorem conj_abs_squared(z: Complex) {
+    z.conj.abs_squared = z.abs_squared
+}
+
+theorem modulus_mul(a: Complex, b: Complex) {
+    (a * b).modulus = a.modulus * b.modulus
+}
+
+theorem modulus_of_one {
+    Complex.1.modulus = Real.1
+}
+
+theorem modulus_from_real_nonneg(a: Real) {
+    a >= Real.0 implies Complex.from_real(a).modulus = a
+}
+
+theorem modulus_of_i {
+    Complex.i.modulus = Real.1
+}
+
+theorem modulus_neg(z: Complex) {
+    (-z).modulus = z.modulus
+}
+
+theorem modulus_from_real(a: Real) {
+    Complex.from_real(a).modulus = a.abs
+}
+
+theorem modulus_conj(z: Complex) {
+    z.conj.modulus = z.modulus
+}
+
+theorem re_sq_le_abs_squared(z: Complex) {
+    z.re * z.re <= z.abs_squared
+}
+
+theorem re_le_modulus(z: Complex) {
+    z.re <= z.modulus
+}
+
+theorem re_abs_le_modulus(z: Complex) {
+    z.re.abs <= z.modulus
+}
+
+theorem im_abs_le_modulus(z: Complex) {
+    z.im.abs <= z.modulus
+}
+
+theorem re_mul_conj(a: Complex, b: Complex) {
+    (a * b.conj).re = a.re * b.re + a.im * b.im
+}
+
+theorem abs_squared_add(a: Complex, b: Complex) {
+    (a + b).abs_squared = a.abs_squared + b.abs_squared + ((a * b.conj).re + (a * b.conj).re)
+}
+
+theorem modulus_triangle(a: Complex, b: Complex) {
+    (a + b).modulus <= a.modulus + b.modulus
+}
+
+theorem modulus_le_re_abs_add_im_abs(z: Complex) {
+    z.modulus <= z.re.abs + z.im.abs
 }
