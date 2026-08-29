@@ -16,10 +16,6 @@ numerals Real
 
 // This file defines infinite series and proves theorems about them.
 
-attributes Real {
-    // Placeholder to let other modules import Real from here.
-}
-
 // seq_lte is whether every element of the sequence is lte.
 define seq_lte(a: Nat -> Real, b: Nat -> Real) -> Bool {
     forall(n: Nat) {
@@ -63,16 +59,16 @@ theorem partial_seq_lte(a: Nat -> Real, b: Nat -> Real) {
 
 // This definition of increasing is not strict.
 // It includes less-than-or-equal.
-define is_increasing(a: Nat -> Real) -> Bool {
+define real_is_increasing(a: Nat -> Real) -> Bool {
     forall(n: Nat) {
         a(n) <= a(n.suc)
     }
 }
 
 theorem distant_increasing(a: Nat -> Real, m: Nat, n: Nat) {
-    is_increasing(a) and m <= n implies a(m) <= a(n)
+    real_is_increasing(a) and m <= n implies a(m) <= a(n)
 } by {
-    if is_increasing(a) and m <= n {
+    if real_is_increasing(a) and m <= n {
         define p(k: Nat) -> Bool {
             forall(j: Nat) {
                 j + k <= n implies a(j) <= a(j + k)
@@ -120,7 +116,7 @@ theorem distant_increasing(a: Nat -> Real, m: Nat, n: Nat) {
 
 /// A monotone map from natural numbers to reals is an increasing sequence.
 theorem monotone_is_increasing(a: Nat -> Real) {
-    is_monotone(a) implies is_increasing(a)
+    is_monotone(a) implies real_is_increasing(a)
 } by {
     if is_monotone(a) {
         forall(n: Nat) {
@@ -132,9 +128,9 @@ theorem monotone_is_increasing(a: Nat -> Real) {
 
 /// An increasing sequence is a monotone map from the naturals.
 theorem increasing_is_monotone(a: Nat -> Real) {
-    is_increasing(a) implies is_monotone(a)
+    real_is_increasing(a) implies is_monotone(a)
 } by {
-    if is_increasing(a) {
+    if real_is_increasing(a) {
         forall(m: Nat, n: Nat) {
             if m <= n {
                 distant_increasing(a, m, n)
@@ -148,17 +144,17 @@ theorem increasing_is_monotone(a: Nat -> Real) {
 
 /// A local increasing sequence and a monotone map from the naturals are the same condition.
 theorem increasing_iff_monotone(a: Nat -> Real) {
-    is_increasing(a) = is_monotone(a)
+    real_is_increasing(a) = is_monotone(a)
 } by {
-    if is_increasing(a) {
+    if real_is_increasing(a) {
         increasing_is_monotone(a)
         is_monotone(a)
     }
     if is_monotone(a) {
         monotone_is_increasing(a)
-        is_increasing(a)
+        real_is_increasing(a)
     }
-    is_increasing(a) = is_monotone(a)
+    real_is_increasing(a) = is_monotone(a)
 }
 
 /// A monotone real sequence preserves order between arbitrary indices.
@@ -166,7 +162,7 @@ theorem distant_monotone(a: Nat -> Real, m: Nat, n: Nat) {
     is_monotone(a) and m <= n implies a(m) <= a(n)
 } by {
     if is_monotone(a) and m <= n {
-        is_increasing(a)
+        real_is_increasing(a)
         distant_increasing(a, m, n)
         a(m) <= a(n)
     }
@@ -206,7 +202,7 @@ define has_lower_bound_seq(a: Nat -> Real) -> Bool {
 
 // Theorem: If a sequence is increasing and converges, then its limit is an upper bound
 theorem increasing_convergent_bounded_by_limit(a: Nat -> Real) {
-    is_increasing(a) and converges(a)
+    real_is_increasing(a) and converges(a)
     implies is_upper_bound(a, limit(a))
 } by {
     // We'll prove that for any n, a(n) <= limit(a)
@@ -307,7 +303,7 @@ theorem ub_imp_image_ub(a: Nat -> Real, b: Real) {
 }
 
 // If there's an upper bound, there's a least upper bound.
-theorem ub_imp_lub(a: Nat -> Real, b: Real) {
+theorem ub_imp_lub_seq(a: Nat -> Real, b: Real) {
     is_upper_bound(a, b) implies exists(c: Real) {
         is_least_upper_bound(a, c)
     }
@@ -338,7 +334,7 @@ theorem ub_imp_lub(a: Nat -> Real, b: Real) {
 // The monotone convergence principle states that any increasing sequence
 // that is bounded above converges
 theorem monotone_convergence_principle(a: Nat -> Real, b: Real) {
-    is_increasing(a) and is_upper_bound(a, b) implies converges(a)
+    real_is_increasing(a) and is_upper_bound(a, b) implies converges(a)
 } by {
     let l: Real satisfy {
         is_least_upper_bound(a, l)
@@ -402,9 +398,9 @@ theorem monotone_convergence_principle(a: Nat -> Real, b: Real) {
 
 /// An increasing sequence with an upper bound converges.
 theorem increasing_bounded_above_converges(a: Nat -> Real) {
-    is_increasing(a) and has_upper_bound_seq(a) implies converges(a)
+    real_is_increasing(a) and has_upper_bound_seq(a) implies converges(a)
 } by {
-    if is_increasing(a) and has_upper_bound_seq(a) {
+    if real_is_increasing(a) and has_upper_bound_seq(a) {
         let ub: Real satisfy {
             is_upper_bound(a, ub)
         }
@@ -417,7 +413,7 @@ theorem monotone_bounded_above_converges(a: Nat -> Real, b: Real) {
     is_monotone(a) and is_upper_bound(a, b) implies converges(a)
 } by {
     if is_monotone(a) and is_upper_bound(a, b) {
-        is_increasing(a)
+        real_is_increasing(a)
         converges(a)
     }
 }
@@ -427,7 +423,7 @@ theorem monotone_has_upper_bound_converges(a: Nat -> Real) {
     is_monotone(a) and has_upper_bound_seq(a) implies converges(a)
 } by {
     if is_monotone(a) and has_upper_bound_seq(a) {
-        is_increasing(a)
+        real_is_increasing(a)
         converges(a)
     }
 }
@@ -437,13 +433,13 @@ theorem monotone_convergent_bounded_by_limit(a: Nat -> Real) {
     is_monotone(a) and converges(a) implies is_upper_bound(a, limit(a))
 } by {
     if is_monotone(a) and converges(a) {
-        is_increasing(a)
+        real_is_increasing(a)
         is_upper_bound(a, limit(a))
     }
 }
 
 theorem nonneg_partial_increasing(a: Nat -> Real) {
-    is_lower_bound(a, Real.0) implies is_increasing(partial(a))
+    is_lower_bound(a, Real.0) implies real_is_increasing(partial(a))
 } by {
     forall(n: Nat) {
         if is_lower_bound(a, Real.0) {
@@ -462,7 +458,7 @@ theorem nonneg_partial_monotone(a: Nat -> Real) {
 } by {
     if is_lower_bound(a, Real.0) {
         nonneg_partial_increasing(a)
-        is_increasing(partial(a))
+        real_is_increasing(partial(a))
         increasing_is_monotone(partial(a))
         is_monotone(partial(a))
     }
@@ -650,7 +646,7 @@ theorem comparison_test(a: Nat -> Real, b: Nat -> Real) {
         }
         is_lower_bound(b, Real.0)
         // Partial sums of a are increasing
-        is_increasing(partial(a))
+        real_is_increasing(partial(a))
         // Partial sums satisfy a <= b pointwise
         seq_lte(partial(a), partial(b))
         // b's partial sums are bounded by limit(partial(b))
@@ -1241,7 +1237,7 @@ define is_decreasing_seq(a: Nat -> Real) -> Bool {
 
 /// Negation changes decreasing sequences into increasing sequences.
 theorem decreasing_neg_increasing(a: Nat -> Real) {
-    is_decreasing_seq(a) implies is_increasing(neg_seq(a))
+    is_decreasing_seq(a) implies real_is_increasing(neg_seq(a))
 } by {
     forall(n: Nat) {
         if is_decreasing_seq(a) {
@@ -1259,7 +1255,7 @@ theorem distant_decreasing(a: Nat -> Real, m: Nat, n: Nat) {
     is_decreasing_seq(a) and m <= n implies a(n) <= a(m)
 } by {
     if is_decreasing_seq(a) and m <= n {
-        is_increasing(neg_seq(a))
+        real_is_increasing(neg_seq(a))
         neg_seq(a, m) <= neg_seq(a, n)
         neg_seq(a, m) = -a(m)
         neg_seq(a, n) = -a(n)
@@ -1324,10 +1320,10 @@ theorem distant_antitone(a: Nat -> Real, m: Nat, n: Nat) {
 
 /// The first term of an increasing sequence is a lower bound.
 theorem increasing_lower_bound_first(a: Nat -> Real) {
-    is_increasing(a) implies is_lower_bound(a, a(Nat.0))
+    real_is_increasing(a) implies is_lower_bound(a, a(Nat.0))
 } by {
     forall(n: Nat) {
-        if is_increasing(a) {
+        if real_is_increasing(a) {
             Nat.0 <= n
             a(Nat.0) <= a(n)
         }
@@ -1339,7 +1335,7 @@ theorem monotone_lower_bound_first(a: Nat -> Real) {
     is_monotone(a) implies is_lower_bound(a, a(Nat.0))
 } by {
     if is_monotone(a) {
-        is_increasing(a)
+        real_is_increasing(a)
         increasing_lower_bound_first(a)
         is_lower_bound(a, a(Nat.0))
     }
@@ -1370,10 +1366,10 @@ theorem antitone_upper_bound_first(a: Nat -> Real) {
 
 /// Negation changes increasing sequences into decreasing sequences.
 theorem increasing_neg_decreasing(a: Nat -> Real) {
-    is_increasing(a) implies is_decreasing_seq(neg_seq(a))
+    real_is_increasing(a) implies is_decreasing_seq(neg_seq(a))
 } by {
     forall(n: Nat) {
-        if is_increasing(a) {
+        if real_is_increasing(a) {
             a(n) <= a(n.suc)
             -a(n.suc) <= -a(n)
             neg_seq(a, n) = -a(n)
@@ -1416,7 +1412,7 @@ theorem decreasing_bounded_below_converges(a: Nat -> Real, lb: Real) {
     is_decreasing_seq(a) and is_lower_bound(a, lb) implies converges(a)
 } by {
     if is_decreasing_seq(a) and is_lower_bound(a, lb) {
-        is_increasing(neg_seq(a))
+        real_is_increasing(neg_seq(a))
         is_upper_bound(neg_seq(a), -lb)
         converges(neg_seq(a))
         converges(a)
@@ -1474,7 +1470,7 @@ theorem decreasing_convergent_bounded_by_limit(a: Nat -> Real) {
     implies is_lower_bound(a, limit(a))
 } by {
     if is_decreasing_seq(a) and converges(a) {
-        is_increasing(neg_seq(a))
+        real_is_increasing(neg_seq(a))
         converges(neg_seq(a))
         is_upper_bound(neg_seq(a), limit(neg_seq(a)))
         limit(neg_seq(a)) = -limit(a)
@@ -1752,11 +1748,11 @@ define nonneg_seq(a: Nat -> Real) -> Bool {
 }
 
 theorem nonneg_imp_partial_increasing(a: Nat -> Real) {
-    nonneg_seq(a) implies is_increasing(partial(a))
+    nonneg_seq(a) implies real_is_increasing(partial(a))
 }
 
 theorem increasing_from_nonneg_start(a: Nat -> Real) {
-    not a(Nat.0).is_negative and is_increasing(a) implies nonneg_seq(a)
+    not a(Nat.0).is_negative and real_is_increasing(a) implies nonneg_seq(a)
 } by {
     forall(n: Nat) {
         Nat.0 <= n
@@ -1964,7 +1960,7 @@ theorem geom_series_no_div(r: Real) {
 }
 
 /// Delta function: returns v if k = a, and 0 otherwise.
-define delta(v: Real, a: Nat, k: Nat) -> Real {
+define delta_fn(v: Real, a: Nat, k: Nat) -> Real {
     if k = a {
         v
     } else {
@@ -1972,42 +1968,42 @@ define delta(v: Real, a: Nat, k: Nat) -> Real {
     }
 }
 
-/// For indices less than a, delta is zero.
+/// For indices less than a, delta_fn is zero.
 theorem delta_before(v: Real, a: Nat, k: Nat) {
-    k < a implies delta(v, a, k) = Real.0
+    k < a implies delta_fn(v, a, k) = Real.0
 } by {
     if k < a {
         k != a
-        delta(v, a, k) = Real.0
+        delta_fn(v, a, k) = Real.0
     }
 }
 
-/// At index a, delta returns v.
+/// At index a, delta_fn returns v.
 theorem delta_at(v: Real, a: Nat) {
-    delta(v, a, a) = v
+    delta_fn(v, a, a) = v
 } by {
     a = a
-    delta(v, a, a) = v
+    delta_fn(v, a, a) = v
 }
 
-/// For indices greater than a, delta is zero.
+/// For indices greater than a, delta_fn is zero.
 theorem delta_after(v: Real, a: Nat, k: Nat) {
-    k > a implies delta(v, a, k) = Real.0
+    k > a implies delta_fn(v, a, k) = Real.0
 } by {
     if k > a {
         k != a
-        delta(v, a, k) = Real.0
+        delta_fn(v, a, k) = Real.0
     }
 }
 
 /// Delta as a sequence function.
 define delta_seq(v: Real, a: Nat) -> (Nat -> Real) {
     function(k: Nat) {
-        delta(v, a, k)
+        delta_fn(v, a, k)
     }
 }
 
-/// Partial sums of delta before reaching a.
+/// Partial sums of delta_fn before reaching a.
 theorem partial_delta_before(v: Real, a: Nat, n: Nat) {
     n <= a implies partial(delta_seq(v, a), n) = Real.0
 } by {
@@ -2025,11 +2021,11 @@ theorem partial_delta_before(v: Real, a: Nat, n: Nat) {
                 // By IH: partial(delta_seq(v, a), m) = 0
                 partial(delta_seq(v, a), m) = Real.0
 
-                // Also m < a, so delta(v, a, m) = 0
+                // Also m < a, so delta_fn(v, a, m) = 0
                 m < m.suc
                 m.suc <= a
                 m < a
-                delta(v, a, m) = Real.0
+                delta_fn(v, a, m) = Real.0
                 delta_seq(v, a)(m) = Real.0
 
                 // Therefore partial(delta_seq(v, a), m.suc) = 0 + 0 = 0
@@ -2043,7 +2039,7 @@ theorem partial_delta_before(v: Real, a: Nat, n: Nat) {
     p(n)
 }
 
-/// Partial sums of delta at or after a equal v.
+/// Partial sums of delta_fn at or after a equal v.
 theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
     a < n implies partial(delta_seq(v, a), n) = v
 } by {
@@ -2057,16 +2053,16 @@ theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
         // = partial(delta_seq(v, a), a.suc) + partial(tail(delta_seq(v, a), a.suc), k)
         partial(delta_seq(v, a), a.suc + k) = partial(delta_seq(v, a), a.suc) + partial(tail(delta_seq(v, a), a.suc), k)
 
-        // partial(delta_seq(v, a), a.suc) = partial(delta_seq(v, a), a) + delta(v, a, a)
+        // partial(delta_seq(v, a), a.suc) = partial(delta_seq(v, a), a) + delta_fn(v, a, a)
         partial(delta_seq(v, a), a.suc) = partial(delta_seq(v, a), a) + delta_seq(v, a)(a)
-        delta_seq(v, a)(a) = delta(v, a, a)
+        delta_seq(v, a)(a) = delta_fn(v, a, a)
 
         // partial(delta_seq(v, a), a) = 0 (by partial_delta_before)
         a <= a
         partial(delta_seq(v, a), a) = Real.0
 
-        // delta(v, a, a) = v
-        delta(v, a, a) = v
+        // delta_fn(v, a, a) = v
+        delta_fn(v, a, a) = v
 
         // So partial(delta_seq(v, a), a.suc) = 0 + v = v
         partial(delta_seq(v, a), a.suc) = v
@@ -2074,9 +2070,9 @@ theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
         // For the tail: all elements are 0
         forall(j: Nat) {
             tail(delta_seq(v, a), a.suc)(j) = delta_seq(v, a)(a.suc + j)
-            delta_seq(v, a)(a.suc + j) = delta(v, a, a.suc + j)
+            delta_seq(v, a)(a.suc + j) = delta_fn(v, a, a.suc + j)
             a.suc + j > a
-            delta(v, a, a.suc + j) = Real.0
+            delta_fn(v, a, a.suc + j) = Real.0
             tail(delta_seq(v, a), a.suc)(j) = Real.0
         }
         forall(j: Nat) {
@@ -2091,7 +2087,7 @@ theorem partial_delta_at_or_after(v: Real, a: Nat, n: Nat) {
     }
 }
 
-/// The partial sums of delta converge to v.
+/// The partial sums of delta_fn converge to v.
 theorem delta_partial_converges(v: Real, a: Nat) {
     converges_to(partial(delta_seq(v, a)), v)
 } by {
@@ -2113,33 +2109,33 @@ theorem delta_partial_converges(v: Real, a: Nat) {
     converges_to(partial(delta_seq(v, a)), v)
 }
 
-/// Helper: absolute value of delta equals delta of absolute value.
+/// Helper: absolute value of delta_fn equals delta_fn of absolute value.
 theorem delta_abs_commute(v: Real, a: Nat, k: Nat) {
-    delta(v, a, k).abs = delta(v.abs, a, k)
+    delta_fn(v, a, k).abs = delta_fn(v.abs, a, k)
 } by {
     if k = a {
-        delta(v, a, k) = v
-        delta(v.abs, a, k) = v.abs
-        delta(v, a, k).abs = delta(v.abs, a, k)
+        delta_fn(v, a, k) = v
+        delta_fn(v.abs, a, k) = v.abs
+        delta_fn(v, a, k).abs = delta_fn(v.abs, a, k)
     }
     if k != a {
-        delta(v, a, k) = Real.0
-        delta(v.abs, a, k) = Real.0
-        delta(v, a, k).abs = delta(v.abs, a, k)
+        delta_fn(v, a, k) = Real.0
+        delta_fn(v.abs, a, k) = Real.0
+        delta_fn(v, a, k).abs = delta_fn(v.abs, a, k)
     }
 }
 
-/// The partial sums of delta absolutely converge.
+/// The partial sums of delta_fn absolutely converge.
 theorem delta_absolutely_converges(v: Real, a: Nat) {
     converges(partial(compose(Real.abs, delta_seq(v, a))))
 } by {
     // Show that compose(Real.abs, delta_seq(v, a)) = delta_seq(v.abs, a)
     forall(k: Nat) {
         compose(Real.abs, delta_seq(v, a))(k) = delta_seq(v, a)(k).abs
-        delta_seq(v, a)(k) = delta(v, a, k)
-        delta_seq(v, a)(k).abs = delta(v, a, k).abs
-        delta(v, a, k).abs = delta(v.abs, a, k)
-        delta(v.abs, a, k) = delta_seq(v.abs, a)(k)
+        delta_seq(v, a)(k) = delta_fn(v, a, k)
+        delta_seq(v, a)(k).abs = delta_fn(v, a, k).abs
+        delta_fn(v, a, k).abs = delta_fn(v.abs, a, k)
+        delta_fn(v.abs, a, k) = delta_seq(v.abs, a)(k)
         compose(Real.abs, delta_seq(v, a))(k) = delta_seq(v.abs, a)(k)
     }
     compose(Real.abs, delta_seq(v, a)) = delta_seq(v.abs, a)

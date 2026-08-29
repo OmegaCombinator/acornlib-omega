@@ -23,6 +23,14 @@
 /// real.normal_distribution and real/gamma.ac.
 
 from real.real_field import Real
+from real.normal_distribution import normalizing_const
+from real.normal_distribution import normalizing_const_pos
+from real.normal_distribution import normalizing_const_exists
+from real.normal_distribution import normal_pdf_at_zero
+from real.normal_distribution import normal_pdf_pos
+from real.normal_distribution import normal_pdf_nonneg
+from real.normal_distribution import normal_pdf_even
+from real.normal_distribution import normal_pdf
 from real.exp import exp_pos, exp_zero, two, two_positive
 from real.sqrt import sqrt_mul_self
 from real.sqrt_inequalities import sqrt_value_nonneg
@@ -79,80 +87,8 @@ lemma two_pi_pos {
 }
 
 /// The square root of two pi exists.
-theorem normalizing_const_exists {
-    exists(y: Real) {
-        (two * pi).sqrt = Option.some(y) and y > Real.0
-    }
-} by {
-    two_pi_pos
-    two * pi > Real.0
-    lt_imp_lte(Real.0, two * pi)
-    Real.0 <= two * pi
-    sqrt_mul_self(two * pi)
-    let y: Real satisfy {
-        (two * pi).sqrt = Option.some(y) and y * y = two * pi
-    }
-    (two * pi).sqrt = Option.some(y)
-    y * y = two * pi
-    sqrt_value_nonneg(two * pi, y)
-    y >= Real.0
-    y * y = two * pi
-    two * pi != Real.0
-    y * y != Real.0
-    if y = Real.0 {
-        y * y = Real.0 * Real.0
-        Real.0 * Real.0 = Real.0
-        y * y = Real.0
-        false
-    }
-    y != Real.0
-    Real.0 <= y and Real.0 != y
-    not_lte_imp_gt(Real.0, y)
-    Real.0 < y
-    exists(witness: Real) {
-        (two * pi).sqrt = Option.some(witness) and witness > Real.0
-    }
-}
-
 /// The normalizing constant of the standard normal density: (2 pi).sqrt.
-let normalizing_const: Real satisfy {
-    (two * pi).sqrt = Option.some(normalizing_const)
-}
-
 /// The normalizing constant is positive.
-theorem normalizing_const_pos {
-    normalizing_const > Real.0
-} by {
-    two_pi_pos
-    two * pi > Real.0
-    lt_imp_lte(Real.0, two * pi)
-    Real.0 <= two * pi
-    sqrt_mul_self(two * pi)
-    let y: Real satisfy {
-        (two * pi).sqrt = Option.some(y) and y * y = two * pi
-    }
-    (two * pi).sqrt = Option.some(y)
-    (two * pi).sqrt = Option.some(normalizing_const)
-    some_injective[Real](y, normalizing_const)
-    y = normalizing_const
-    y * y = two * pi
-    normalizing_const * normalizing_const = two * pi
-    sqrt_value_nonneg(two * pi, normalizing_const)
-    normalizing_const >= Real.0
-    two * pi != Real.0
-    normalizing_const * normalizing_const != Real.0
-    if normalizing_const = Real.0 {
-        normalizing_const * normalizing_const = Real.0 * Real.0
-        Real.0 * Real.0 = Real.0
-        normalizing_const * normalizing_const = Real.0
-        false
-    }
-    normalizing_const != Real.0
-    Real.0 <= normalizing_const and Real.0 != normalizing_const
-    not_lte_imp_gt(Real.0, normalizing_const)
-    Real.0 < normalizing_const
-}
-
 /// The reciprocal of the normalizing constant is positive.
 lemma normalizing_const_inv_pos {
     Real.1 / normalizing_const > Real.0
@@ -188,68 +124,10 @@ lemma normalizing_const_inv_nonneg {
 // ---------------------------------------------------------------------------
 
 /// The standard normal density: φ(x) = (-x²/2).exp / (2 pi).sqrt.
-define normal_pdf(x: Real) -> Real {
-    (-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const)
-}
-
 /// The standard normal density is strictly positive.
-theorem normal_pdf_pos(x: Real) {
-    normal_pdf(x) > Real.0
-} by {
-    exp_pos(-(x * x) * Real.one_half)
-    (-(x * x) * Real.one_half).exp > Real.0
-    gt_zero_imp_pos((-(x * x) * Real.one_half).exp)
-    (-(x * x) * Real.one_half).exp.is_positive
-    normalizing_const_inv_pos
-    Real.1 / normalizing_const > Real.0
-    gt_zero_imp_pos(Real.1 / normalizing_const)
-    (Real.1 / normalizing_const).is_positive
-    mul_pos_pos((-(x * x) * Real.one_half).exp, Real.1 / normalizing_const)
-    ((-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const)).is_positive
-    pos_gt_zero((-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const))
-    (-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const) > Real.0
-    normal_pdf(x) = (-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const)
-    normal_pdf(x) > Real.0
-}
-
 /// The standard normal density is nonnegative.
-theorem normal_pdf_nonneg(x: Real) {
-    Real.0 <= normal_pdf(x)
-} by {
-    normal_pdf_pos(x)
-    normal_pdf(x) > Real.0
-    lt_imp_lte(Real.0, normal_pdf(x))
-    Real.0 <= normal_pdf(x)
-}
-
 /// The standard normal density is even: φ(-x) = φ(x).
-theorem normal_pdf_even(x: Real) {
-    normal_pdf(-x) = normal_pdf(x)
-} by {
-    normal_pdf(-x) = (-((-x) * (-x)) * Real.one_half).exp * (Real.1 / normalizing_const)
-    mul_neg_neg(x, x)
-    (-x) * (-x) = x * x
-    (-((-x) * (-x)) * Real.one_half).exp = (-(x * x) * Real.one_half).exp
-    normal_pdf(-x) = (-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const)
-    normal_pdf(x) = (-(x * x) * Real.one_half).exp * (Real.1 / normalizing_const)
-    normal_pdf(-x) = normal_pdf(x)
-}
-
 /// The standard normal density at zero is 1 / (2 pi).sqrt.
-theorem normal_pdf_at_zero {
-    normal_pdf(Real.0) = Real.1 / normalizing_const
-} by {
-    normal_pdf(Real.0) = (-(Real.0 * Real.0) * Real.one_half).exp * (Real.1 / normalizing_const)
-    Real.0 * Real.0 = Real.0
-    -(Real.0 * Real.0) * Real.one_half = Real.0
-    (-(Real.0 * Real.0) * Real.one_half).exp = (Real.0).exp
-    exp_zero
-    (Real.0).exp = Real.1
-    normal_pdf(Real.0) = Real.1 * (Real.1 / normalizing_const)
-    Real.1 * (Real.1 / normalizing_const) = Real.1 / normalizing_const
-    normal_pdf(Real.0) = Real.1 / normalizing_const
-}
-
 /// The standard normal density is at most 1 / (2 pi).sqrt.
 theorem normal_pdf_upper_bound(x: Real) {
     normal_pdf(x) <= Real.1 / normalizing_const

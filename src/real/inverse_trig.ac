@@ -30,6 +30,10 @@ from rational import Rat
 from order import lte_antisymm, lte_trans, lte_refl, not_lt_imp_gte, lt_of_lte_of_lt, lt_of_lt_of_lte, lt_imp_ne, lt_imp_ne_symm
 from order import lt_imp_lte, not_lte_imp_gt
 from real.real_base import lt_trans
+from real.trig_identities_deep import tan_has_derivative_at
+from real.trig_identities_deep import pi_over_four
+from real.trig_identities_deep import tan_eq_pointwise_div
+from real.trig_identities_deep import tan_pi_over_four
 from set import closed_interval_set, closed_interval_set_contains_eq, closed_interval_set_lower_le, closed_interval_set_le_upper
 from order import closed_interval
 from set import Set
@@ -68,7 +72,6 @@ from real.sqrt import sqrt_unique_nonneg
 numerals Real
 
 /// One quarter of pi, the arctangent of one.
-let pi_over_four = pi_over_two / two
 
 /// Half of pi is the sum of two quarters of pi.
 theorem pi_over_two_eq_two_mul_pi_over_four {
@@ -787,29 +790,6 @@ theorem lt_neg_lt(a: Real, b: Real) {
 // oddness.
 
 /// The tangent of pi over four is one.
-theorem tan_pi_over_four {
-    tan(pi_over_four) = Real.1
-} by {
-    sin_pi_over_two_sub(pi_over_four)
-    (pi_over_two - pi_over_four).sin = pi_over_four.cos
-    pi_over_two_eq_two_mul_pi_over_four
-    pi_over_four + pi_over_four = pi_over_two
-    pi_over_two - pi_over_four = pi_over_four
-    pi_over_four.sin = pi_over_four.cos
-    pi_over_four_pos
-    Real.0 < pi_over_four and pi_over_four < pi_over_two
-    Real.0 < pi_over_four
-    cos_pos_on_pos_lt_pi_over_two(pi_over_four)
-    pi_over_four.cos > Real.0
-    lt_imp_ne(Real.0, pi_over_four.cos)
-    pi_over_four.cos != Real.0
-    tan(pi_over_four) = pi_over_four.sin / pi_over_four.cos
-    pi_over_four.sin / pi_over_four.cos = pi_over_four.cos / pi_over_four.cos
-    div_mul_cancel_left(pi_over_four.cos, Real.1)
-    pi_over_four.cos / pi_over_four.cos = Real.1
-    tan(pi_over_four) = Real.1
-}
-
 /// A nonpositive real is below the tangent of pi over four.
 theorem tan_above_nonpos(x: Real) {
     x <= Real.0 implies x < tan(pi_over_four)
@@ -1052,18 +1032,6 @@ theorem tan_unbounded_below(x: Real) {
 // tangent preimage of x.
 
 /// The tangent agrees with the pointwise quotient of sine by cosine.
-theorem tan_eq_pointwise_div {
-    tan = pointwise_div_real(Real.sin, Real.cos)
-} by {
-    forall(x: Real) {
-        tan(x) = x.sin / x.cos
-        pointwise_div_real_apply(Real.sin, Real.cos, x)
-        pointwise_div_real(Real.sin, Real.cos, x) = x.sin / x.cos
-        tan(x) = pointwise_div_real(Real.sin, Real.cos, x)
-    }
-    function_extensionality(tan, pointwise_div_real(Real.sin, Real.cos))
-}
-
 /// The tangent is continuous at every point of (-pi/2, pi/2).
 theorem tan_continuous_at(x0: Real) {
     -pi_over_two < x0 and x0 < pi_over_two implies continuous_at(tan, x0)
@@ -2587,55 +2555,6 @@ theorem arctan_continuous {
 // and tan'(y0) = 1/y0.cos^2 = 1/(1 + x0^2).
 
 /// The tangent has derivative 1/x0.cos^2 at every point where x0.cos is nonzero.
-theorem tan_has_derivative_at(x0: Real) {
-    x0.cos != Real.0 implies
-    has_derivative_at(tan, x0, Real.1 / (x0.cos * x0.cos))
-} by {
-    if x0.cos != Real.0 {
-        sin_has_derivative_at(x0)
-        has_derivative_at(Real.sin, x0, x0.cos)
-        cos_has_derivative_at(x0)
-        has_derivative_at(Real.cos, x0, -x0.sin)
-        derivative_pointwise_div(Real.sin, Real.cos, x0, x0.cos, -x0.sin)
-        has_derivative_at(pointwise_div_real(Real.sin, Real.cos), x0,
-            (x0.cos * x0.cos - x0.sin * -x0.sin) / (x0.cos * x0.cos))
-        mul_neg_right(x0.sin, x0.sin)
-        x0.sin * -x0.sin = -(x0.sin * x0.sin)
-        neg_neg(x0.sin * x0.sin)
-        -(-(x0.sin * x0.sin)) = x0.sin * x0.sin
-        x0.cos * x0.cos - (-(x0.sin * x0.sin)) = x0.cos * x0.cos + x0.sin * x0.sin
-        x0.cos * x0.cos - x0.sin * -x0.sin = x0.cos * x0.cos + x0.sin * x0.sin
-        pow_suc(x0.sin, Nat.1)
-        x0.sin.pow(Nat.1.suc) = x0.sin * x0.sin.pow(Nat.1)
-        Nat.1.suc = Nat.2
-        pow_one[Real](x0.sin)
-        x0.sin.pow(Nat.1) = x0.sin
-        x0.sin.pow(Nat.2) = x0.sin * x0.sin
-        pow_suc(x0.cos, Nat.1)
-        x0.cos.pow(Nat.1.suc) = x0.cos * x0.cos.pow(Nat.1)
-        pow_one[Real](x0.cos)
-        x0.cos.pow(Nat.1) = x0.cos
-        x0.cos.pow(Nat.2) = x0.cos * x0.cos
-        sin_sq_add_cos_sq(x0)
-        x0.sin.pow(Nat.2) + x0.cos.pow(Nat.2) = Real.1
-        x0.cos * x0.cos + x0.sin * x0.sin = Real.1
-        x0.cos * x0.cos - x0.sin * -x0.sin = Real.1
-        (x0.cos * x0.cos - x0.sin * -x0.sin) / (x0.cos * x0.cos) =
-            Real.1 / (x0.cos * x0.cos)
-        has_derivative_at(pointwise_div_real(Real.sin, Real.cos), x0, Real.1 / (x0.cos * x0.cos))
-        tan_eq_pointwise_div
-        tan = pointwise_div_real(Real.sin, Real.cos)
-        function_eq_transport_predicate_rev(
-            function(h: Real -> Real) {
-                has_derivative_at(h, x0, Real.1 / (x0.cos * x0.cos))
-            },
-            tan,
-            pointwise_div_real(Real.sin, Real.cos)
-        )
-        has_derivative_at(tan, x0, Real.1 / (x0.cos * x0.cos))
-    }
-}
-
 /// Cosine squared of the arctangent is 1/(1 + x^2).
 theorem cos_sq_arctan_eq(x: Real) {
     (arctan(x)).cos * (arctan(x)).cos = Real.1 / (Real.1 + x * x)

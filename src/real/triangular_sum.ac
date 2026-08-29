@@ -4,7 +4,7 @@ from list import List, partial
 from list import partial_add, partial_pointwise_eq, reverse_index, partial_reverse
 from function import flip
 from algebra_core import add_fn
-from real.real_series import Real, is_lower_bound, partial_nonneg, const_seq, const_seq_n, is_increasing, distant_increasing, increasing_is_monotone
+from real.real_series import Real, is_lower_bound, partial_nonneg, const_seq, const_seq_n, real_is_increasing, distant_increasing, increasing_is_monotone
 from order import is_monotone
 from real.rectangular_sum import nat_to_real, nonneg_fn_2, is_upper_bound_fn_2, is_lower_bound_fn_2, lte_fn_2, const_fn_2, add_fn_2, sub_fn_2, scalar_mul_fn_2, rectangular_sum, row_sum, shift_rows, shift_cols
 from real.double_sum import square_sum, double_sum_converges, double_sum, square_sum_converges_to_double_sum, pos_part_2, neg_part_2, abs_fn_2, double_image_is_supremum, double_sum_pos_part_converges_of_supremum, double_sum_neg_part_converges_of_supremum, row_iterated_limit_eq_double_sum, limit_sub_seq, rectangular_sum_decomposition, sub_seq_eq_add_neg, partial_sub_seq
@@ -629,7 +629,7 @@ theorem triangular_sum_increasing(f: (Nat, Nat) -> Real, n: Nat) {
 theorem triangular_sum_is_increasing(f: (Nat, Nat) -> Real) {
     nonneg_fn_2(f)
     implies
-    is_increasing(triangular_sum_seq(f))
+    real_is_increasing(triangular_sum_seq(f))
 } by {
     if nonneg_fn_2(f) {
         forall(n: Nat) {
@@ -649,7 +649,7 @@ theorem triangular_sum_is_monotone(f: (Nat, Nat) -> Real) {
 } by {
     if nonneg_fn_2(f) {
         triangular_sum_is_increasing(f)
-        is_increasing(triangular_sum_seq(f))
+        real_is_increasing(triangular_sum_seq(f))
         increasing_is_monotone(triangular_sum_seq(f))
         is_monotone(triangular_sum_seq(f))
     }
@@ -1154,16 +1154,16 @@ theorem triangular_sum_flip(f: (Nat, Nat) -> Real, n: Nat) {
 }
 
 /// Helper: relate shifted partial sums.
-define shift_fn(g: Nat -> Real, offset: Nat, j: Nat) -> Real {
+define shift_seq_fn(g: Nat -> Real, offset: Nat, j: Nat) -> Real {
     g(offset + j)
 }
 
 /// Split a partial sum at a boundary.
 theorem partial_split(g: Nat -> Real, n: Nat, k: Nat) {
-    partial(g, n + k) = partial(g, n) + partial(shift_fn(g, n), k)
+    partial(g, n + k) = partial(g, n) + partial(shift_seq_fn(g, n), k)
 } by {
     define p(m: Nat) -> Bool {
-        partial(g, n + m) = partial(g, n) + partial(shift_fn(g, n), m)
+        partial(g, n + m) = partial(g, n) + partial(shift_seq_fn(g, n), m)
     }
 
     p(Nat.0)
@@ -1171,14 +1171,14 @@ theorem partial_split(g: Nat -> Real, n: Nat, k: Nat) {
     forall(m: Nat) {
         if p(m) {
             partial(g, n + m.suc) = partial(g, n + m) + g(n + m)
-            partial(g, n + m) = partial(g, n) + partial(shift_fn(g, n), m)
-            partial(g, n + m.suc) = partial(g, n) + partial(shift_fn(g, n), m) + g(n + m)
+            partial(g, n + m) = partial(g, n) + partial(shift_seq_fn(g, n), m)
+            partial(g, n + m.suc) = partial(g, n) + partial(shift_seq_fn(g, n), m) + g(n + m)
 
-            shift_fn(g, n, m) = g(n + m)
-            partial(shift_fn(g, n), m.suc) = partial(shift_fn(g, n), m) + shift_fn(g, n, m)
-            partial(shift_fn(g, n), m.suc) = partial(shift_fn(g, n), m) + g(n + m)
+            shift_seq_fn(g, n, m) = g(n + m)
+            partial(shift_seq_fn(g, n), m.suc) = partial(shift_seq_fn(g, n), m) + shift_seq_fn(g, n, m)
+            partial(shift_seq_fn(g, n), m.suc) = partial(shift_seq_fn(g, n), m) + g(n + m)
 
-            partial(g, n + m.suc) = partial(g, n) + partial(shift_fn(g, n), m.suc)
+            partial(g, n + m.suc) = partial(g, n) + partial(shift_seq_fn(g, n), m.suc)
             p(m.suc)
         }
     }
@@ -1214,16 +1214,16 @@ theorem triangular_sum_decomposition(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
             tri_row_sum(f, m + n, i) = partial(f(i), m + n - i)
             tri_row_sum(f, m + n, i) = partial(f(i), n + (m - i))
 
-            // Use partial_split to decompose this sum            partial(f(i), n + (m - i)) = partial(f(i), n) + partial(shift_fn(f(i), n), m - i)
+            // Use partial_split to decompose this sum            partial(f(i), n + (m - i)) = partial(f(i), n) + partial(shift_seq_fn(f(i), n), m - i)
 
-            // Show shift_fn(f(i), n) equals shift_cols(f, n, i)
+            // Show shift_seq_fn(f(i), n) equals shift_cols(f, n, i)
             forall(j: Nat) {
-                shift_fn(f(i), n, j) = f(i, n + j)
+                shift_seq_fn(f(i), n, j) = f(i, n + j)
                 shift_cols(f, n, i, j) = f(i, n + j)
-                shift_fn(f(i), n, j) = shift_cols(f, n, i, j)
+                shift_seq_fn(f(i), n, j) = shift_cols(f, n, i, j)
             }
 
-            partial(shift_fn(f(i), n), m - i) = partial(shift_cols(f, n, i), m - i)
+            partial(shift_seq_fn(f(i), n), m - i) = partial(shift_cols(f, n, i), m - i)
 
             tri_row_sum(f, m + n, i) = partial(f(i), n) + partial(shift_cols(f, n, i), m - i)
 
@@ -1287,7 +1287,7 @@ theorem triangular_sum_decomposition(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
     triangular_sum(f, m + n) = partial(tri_row_sum(f, m + n), m + n)
 
     // Use partial_split to split at position m
-    partial(tri_row_sum(f, m + n), m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_fn(tri_row_sum(f, m + n), m), n)
+    partial(tri_row_sum(f, m + n), m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_seq_fn(tri_row_sum(f, m + n), m), n)
 
     // For i < m, we showed tri_row_sum(f, m+n, i) = row_sum(f, n, i) + tri_row_sum(shift_cols(f, n), m, i)
     forall(i: Nat) {
@@ -1306,7 +1306,7 @@ theorem triangular_sum_decomposition(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
     partial(tri_row_sum(f, m + n), m) = rectangular_sum(f, m, n) + triangular_sum(shift_cols(f, n), m)
 
     // For i >= m, we showed tri_row_sum(f, m+n, i) = tri_row_sum(shift_rows(f, m), n, i-m)
-    // So shift_fn(tri_row_sum(f, m+n), m, j) = tri_row_sum(f, m+n, m+j) = tri_row_sum(shift_rows(f, m), n, j)
+    // So shift_seq_fn(tri_row_sum(f, m+n), m, j) = tri_row_sum(f, m+n, m+j) = tri_row_sum(shift_rows(f, m), n, j)
     forall(j: Nat) {
         if j < n {
             m + j < m + n
@@ -1314,16 +1314,16 @@ theorem triangular_sum_decomposition(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
             tri_row_sum(f, m + n, m + j) = tri_row_sum(shift_rows(f, m), n, (m + j) - m)
             (m + j) - m = j
             tri_row_sum(f, m + n, m + j) = tri_row_sum(shift_rows(f, m), n, j)
-            shift_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(f, m + n, m + j)
-            shift_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(shift_rows(f, m), n, j)
+            shift_seq_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(f, m + n, m + j)
+            shift_seq_fn(tri_row_sum(f, m + n), m, j) = tri_row_sum(shift_rows(f, m), n, j)
         }
     }
 
-    partial_pointwise_eq(shift_fn(tri_row_sum(f, m + n), m), tri_row_sum(shift_rows(f, m), n), n)
-    partial(shift_fn(tri_row_sum(f, m + n), m), n) = partial(tri_row_sum(shift_rows(f, m), n), n)
+    partial_pointwise_eq(shift_seq_fn(tri_row_sum(f, m + n), m), tri_row_sum(shift_rows(f, m), n), n)
+    partial(shift_seq_fn(tri_row_sum(f, m + n), m), n) = partial(tri_row_sum(shift_rows(f, m), n), n)
     partial(tri_row_sum(shift_rows(f, m), n), n) = triangular_sum(shift_rows(f, m), n)
 
-    triangular_sum(f, m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_fn(tri_row_sum(f, m + n), m), n)
+    triangular_sum(f, m + n) = partial(tri_row_sum(f, m + n), m) + partial(shift_seq_fn(tri_row_sum(f, m + n), m), n)
     triangular_sum(f, m + n) = rectangular_sum(f, m, n) + triangular_sum(shift_cols(f, n), m) + triangular_sum(shift_rows(f, m), n)
 }
 
@@ -1439,7 +1439,7 @@ theorem triangular_sum_converges_to_double_sum(f: (Nat, Nat) -> Real) {
                         // We'll use induction-style reasoning on the distance m - (n+n)
                         forall(j: Nat) {
                         }
-                        is_increasing(triangular_sum(f))
+                        real_is_increasing(triangular_sum(f))
                         define increasing_to_m(k: Nat) -> Bool {
                             n + n + k <= m
                             implies

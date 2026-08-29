@@ -15,7 +15,7 @@
 ///     g_diff_le_upper_sum from integral_exp.ac) gives the endpoint values,
 ///   - integrability of Real.sin and Real.cos is established by comparing upper and lower
 ///     Darboux sums over the uniform partitions of [a, b], whose difference is
-///     at most ((b - a) * (b - a)) / (n + 1) by the Lipschitz bound, and so can
+///     at most ((b - a) * (b - a)) / (n.suc) by the Lipschitz bound, and so can
 ///     be made arbitrarily small (fn_integrable).
 
 from nat import Nat, from_nat_add, lt_imp_lte_suc, pow_one
@@ -23,8 +23,10 @@ from nat import from_nat
 from rational import Rat
 from order import lte_antisymm, lte_trans, lt_imp_ne, lt_imp_ne_symm, not_lt_imp_gte, lt_of_lt_of_lte, lt_of_lte_of_lt, not_lt_self
 from order import lt_imp_lte, not_lte_imp_gt
-from real.real_base import lt_trans
+from order import lt_trans
 from real.real_field import Real, mul_div, mul_inverse
+from real.derivative_trig import cos_is_derivative_fn
+from real.derivative_trig import cos_has_derivative_at
 from real.real_base import add_comm, add_assoc, neg_distrib, abs_neg, neg_neg, lte_abs, abs_gte_zero, lte_lt_trans, lte_add_right, gt_zero_imp_pos, pos_gt_zero, sub_cancels, sub_moves_sides, lte_self, neg_lt_zero, neg_zero
 from real.real_ring import from_nat_is_from_rat, mul_pos_pos, lt_mul_pos_left, lte_mul_nonneg_right, mul_sub_distrib_left, mul_abs, square_nonneg, non_neg_imp_zero_lte
 from real.real_seq import sub_zero_imp_eq
@@ -313,75 +315,7 @@ theorem cos_add_pi_over_two(x: Real) {
 }
 
 /// The cosine function is everywhere differentiable with derivative negative sine.
-theorem cos_is_derivative_fn {
-    is_derivative_fn(Real.cos, pointwise_neg(Real.sin))
-} by {
-    forall(y: Real) {
-        compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), y) =
-            (pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), y)).sin
-        pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), y) =
-            identity_fn[Real](y) + constant[Real, Real](pi_over_two, y)
-        identity_fn[Real](y) = y
-        constant[Real, Real](pi_over_two, y) = pi_over_two
-        pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), y) = y + pi_over_two
-        compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), y) =
-            (y + pi_over_two).sin
-        sin_add_pi_over_two(y)
-        (y + pi_over_two).sin = y.cos
-        compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), y) = y.cos
-    }
-    compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two))) = Real.cos
-    forall(x: Real) {
-        identity_has_derivative_at(x)
-        has_derivative_at(identity_fn[Real], x, Real.1)
-        constant_has_derivative_at(pi_over_two, x)
-        has_derivative_at(constant[Real, Real](pi_over_two), x, Real.0)
-        derivative_pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), x, Real.1, Real.0)
-        has_derivative_at(pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), x,
-            Real.1 + Real.0)
-        Real.1 + Real.0 = Real.1
-        has_derivative_at(pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), x, Real.1)
-        pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), x) =
-            identity_fn[Real](x) + constant[Real, Real](pi_over_two, x)
-        identity_fn[Real](x) = x
-        constant[Real, Real](pi_over_two, x) = pi_over_two
-        pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two), x) = x + pi_over_two
-        sin_has_derivative_at(x + pi_over_two)
-        has_derivative_at(Real.sin, x + pi_over_two, (x + pi_over_two).cos)
-        derivative_compose(pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two)), Real.sin,
-            x, Real.1, (x + pi_over_two).cos)
-        has_derivative_at(compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two))),
-            x, (x + pi_over_two).cos * Real.1)
-        (x + pi_over_two).cos * Real.1 = (x + pi_over_two).cos
-        has_derivative_at(compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two))),
-            x, (x + pi_over_two).cos)
-        cos_add_pi_over_two(x)
-        (x + pi_over_two).cos = -x.sin
-        pointwise_neg(Real.sin, x) = -x.sin
-        has_derivative_at(compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two))),
-            x, pointwise_neg(Real.sin, x))
-        define pred(h: Real -> Real) -> Bool {
-            has_derivative_at(h, x, pointwise_neg(Real.sin, x))
-        }
-        function_eq_transport_predicate(pred,
-            compose(Real.sin, pointwise_add(identity_fn[Real], constant[Real, Real](pi_over_two))), Real.cos)
-        has_derivative_at(Real.cos, x, pointwise_neg(Real.sin, x))
-    }
-    is_derivative_fn_iff(Real.cos, pointwise_neg(Real.sin))
-    is_derivative_fn(Real.cos, pointwise_neg(Real.sin))
-}
-
 /// The cosine has derivative negative sine at every point.
-theorem cos_has_derivative_at(x0: Real) {
-    has_derivative_at(Real.cos, x0, -x0.sin)
-} by {
-    cos_is_derivative_fn
-    is_derivative_fn_at(Real.cos, pointwise_neg(Real.sin), x0)
-    has_derivative_at(Real.cos, x0, pointwise_neg(Real.sin, x0))
-    pointwise_neg(Real.sin, x0) = -x0.sin
-    has_derivative_at(Real.cos, x0, -x0.sin)
-}
-
 /// The pointwise negation of cosine has derivative sine everywhere.
 theorem neg_cos_is_derivative_fn {
     is_derivative_fn(pointwise_neg(Real.cos), Real.sin)
@@ -990,17 +924,17 @@ theorem cos_interval_sup_sub_inf_le_width(x: Real, y: Real) {
 // On each subinterval of the uniform partition of [a, b], the supremum and
 // infimum of a one-Lipschitz f differ by at most the mesh, so the difference
 // of the upper and lower Darboux sums is at most the mesh times the total
-// width, ((b - a) * (b - a)) / (n + 1).
+// width, ((b - a) * (b - a)) / (n.suc).
 
 /// The common width of the subintervals of the uniform partition of [a, b] of
-/// length n + 1.
+/// length n.suc.
 define uniform_mesh(a: Real, b: Real, n: Nat) -> Real {
     (b - a) / from_nat[Real](n.suc)
 }
 
 /// If f is one-Lipschitz and bounded by one in absolute value on [a, b], the
 /// difference of its upper and lower Darboux sums over the uniform partition
-/// of [a, b] into n + 1 equal parts is at most ((b - a) * (b - a)) / (n + 1).
+/// of [a, b] into n.suc equal parts is at most ((b - a) * (b - a)) / (n.suc).
 theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n: Nat) {
     a <= b and
     (forall(u: Real, v: Real) { (f(u) - f(v)).abs <= (u - v).abs }) and
@@ -1019,36 +953,36 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
         forall(i: Nat) {
             if i < n.suc {
                 uniform_partition_width(a, b, n, i)
-                uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i) =
+                uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i) =
                     (b - a) / from_nat[Real](n.suc)
-                uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i) =
+                uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i) =
                     uniform_mesh(a, b, n)
                 lt_imp_lte_suc(i, n.suc)
-                i + 1 <= n.suc
-                i <= i + 1
+                i.suc <= n.suc
+                i <= i.suc
                 lt_imp_lte(i, n.suc)
                 i <= n.suc
-                partition_mono(uniform_partition(a, b, n), a, b, n.suc, i, i + 1)
-                uniform_partition(a, b, n, i) <= uniform_partition(a, b, n, i + 1)
-                interval_set_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))
-                interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)).contains(
+                partition_mono(uniform_partition(a, b, n), a, b, n.suc, i, i.suc)
+                uniform_partition(a, b, n, i) <= uniform_partition(a, b, n, i.suc)
+                interval_set_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))
+                interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)).contains(
                     uniform_partition(a, b, n, i))
                 exists(z: Real) {
-                    interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)).contains(z)
+                    interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)).contains(z)
                 }
-                is_nonempty(interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)))
+                is_nonempty(interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)))
                 forall(t: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
                         uniform_partition(a, b, n, i) <= t
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
-                        t <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
+                        t <= uniform_partition(a, b, n, i.suc)
                         partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i)
                         interval_contains(a, b, uniform_partition(a, b, n, i))
-                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i + 1)
-                        interval_contains(a, b, uniform_partition(a, b, n, i + 1))
+                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i.suc)
+                        interval_contains(a, b, uniform_partition(a, b, n, i.suc))
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), t)
+                            uniform_partition(a, b, n, i.suc), t)
                         interval_contains(a, b, t)
                         forall(t0: Real) {
                             interval_contains(a, b, t0) implies f(t0) <= Real.1
@@ -1057,27 +991,27 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
                         f(t) <= Real.1
                     }
                 }
-                image_upper_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), Real.1)
+                image_upper_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), Real.1)
                 is_set_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)), Real.1)
+                    uniform_partition(a, b, n, i.suc)), Real.1)
                 exists(b0: Real) {
                     is_set_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                        uniform_partition(a, b, n, i + 1)), b0)
+                        uniform_partition(a, b, n, i.suc)), b0)
                 }
                 has_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)))
+                    uniform_partition(a, b, n, i.suc)))
                 forall(t: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
                         uniform_partition(a, b, n, i) <= t
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
-                        t <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
+                        t <= uniform_partition(a, b, n, i.suc)
                         partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i)
                         interval_contains(a, b, uniform_partition(a, b, n, i))
-                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i + 1)
-                        interval_contains(a, b, uniform_partition(a, b, n, i + 1))
+                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i.suc)
+                        interval_contains(a, b, uniform_partition(a, b, n, i.suc))
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), t)
+                            uniform_partition(a, b, n, i.suc), t)
                         interval_contains(a, b, t)
                         forall(t0: Real) {
                             interval_contains(a, b, t0) implies -Real.1 <= f(t0)
@@ -1086,29 +1020,29 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
                         -Real.1 <= f(t)
                     }
                 }
-                image_lower_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), -Real.1)
+                image_lower_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), -Real.1)
                 is_set_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)), -Real.1)
+                    uniform_partition(a, b, n, i.suc)), -Real.1)
                 exists(b0: Real) {
                     is_set_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                        uniform_partition(a, b, n, i + 1)), b0)
+                        uniform_partition(a, b, n, i.suc)), b0)
                 }
                 has_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)))
+                    uniform_partition(a, b, n, i.suc)))
                 forall(u: Real, v: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u) and
-                       interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u) and
+                       interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u)
                         uniform_partition(a, b, n, i) <= u
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u)
-                        u <= uniform_partition(a, b, n, i + 1)
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u)
+                        u <= uniform_partition(a, b, n, i.suc)
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v)
                         uniform_partition(a, b, n, i) <= v
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v)
-                        v <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v)
+                        v <= uniform_partition(a, b, n, i.suc)
                         interval_abs_diff_le_width(uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), u, v)
-                        (u - v).abs <= uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
+                            uniform_partition(a, b, n, i.suc), u, v)
+                        (u - v).abs <= uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
                         (u - v).abs <= uniform_mesh(a, b, n)
                         forall(u0: Real, v0: Real) {
                             (f(u0) - f(v0)).abs <= (u0 - v0).abs
@@ -1116,34 +1050,34 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
                         (f(u) - f(v)).abs <= (u - v).abs
                         lte_trans[Real]((f(u) - f(v)).abs, (u - v).abs, uniform_mesh(a, b, n))
                         (f(u) - f(v)).abs <= uniform_mesh(a, b, n)
-                        (f(u) - f(v)).abs <= uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
+                        (f(u) - f(v)).abs <= uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
                     }
                 }
                 interval_sup_sub_inf_le_lipschitz(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1))
-                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) <= uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
-                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) <= uniform_mesh(a, b, n)
+                    uniform_partition(a, b, n, i.suc))
+                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) <= uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
+                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) <= uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) =
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         diff_step(uniform_partition(a, b, n), i)
                 diff_step(uniform_partition(a, b, n), i) =
-                    uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
+                    uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
                 diff_step(uniform_partition(a, b, n), i) = uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) =
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         uniform_mesh(a, b, n)
                 partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         diff_step(uniform_partition(a, b, n), i)
                 partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) -
                     partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))) *
+                    (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))) *
                         uniform_mesh(a, b, n)
                 from_nat_suc_pos_real(n)
                 from_nat[Real](n.suc) > Real.0
@@ -1153,11 +1087,11 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
                 div_nonneg_pos_denom(b - a, from_nat[Real](n.suc))
                 Real.0 <= uniform_mesh(a, b, n)
                 mul_le_mul_of_nonneg_right(
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)),
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)),
                     uniform_mesh(a, b, n), uniform_mesh(a, b, n))
-                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))) *
+                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))) *
                     uniform_mesh(a, b, n) <= uniform_mesh(a, b, n) * uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) -
                     partition_step_lower(f, uniform_partition(a, b, n), i) <= uniform_mesh(a, b, n) * uniform_mesh(a, b, n)
@@ -1227,7 +1161,7 @@ theorem lipschitz_uniform_upper_minus_lower(f: Real -> Real, a: Real, b: Real, n
 //
 // Following integral_exp.ac: the lower sums of f over [a, b] have a supremum
 // l and the upper sums an infimum u, both sandwiched by g(b) - g(a) when
-// g' = f; the uniform partition forces u - l below ((b - a) * (b - a)) / (n + 1)
+// g' = f; the uniform partition forces u - l below ((b - a) * (b - a)) / (n.suc)
 // for every n, and the Archimedean property then forces u = l, which is
 // integrability.
 
@@ -1613,7 +1547,7 @@ theorem integral_cos_zero_pi_over_two {
 // mean-value-theorem sandwich pins the Darboux sums between the increments of
 // an antiderivative, and the m-Lipschitz bound forces the upper and lower
 // sums over the uniform partitions to differ by at most
-// m * (b - a)^2 / (n + 1), which goes to zero by the Archimedean property.
+// m * (b - a)^2 / (n.suc), which goes to zero by the Archimedean property.
 
 /// If f is m * (y - x)-Lipschitz on [x, y] and bounded there, its supremum
 /// and infimum over [x, y] differ by at most m * (y - x).
@@ -1712,7 +1646,7 @@ theorem interval_sup_sub_inf_le_lipschitz_m(f: Real -> Real, m: Real, x: Real, y
 
 /// If f is m-Lipschitz on [a, b] and bounded there, the difference of its
 /// upper and lower Darboux sums over the uniform partition of [a, b] into
-/// n + 1 equal parts is at most m * (b - a)^2 / (n + 1).
+/// n.suc equal parts is at most m * (b - a)^2 / (n.suc).
 theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real, b: Real, n: Nat, lb: Real, ub: Real) {
     a <= b and Real.0 <= m and
     (forall(u: Real, v: Real) {
@@ -1735,36 +1669,36 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
         forall(i: Nat) {
             if i < n.suc {
                 uniform_partition_width(a, b, n, i)
-                uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i) =
+                uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i) =
                     (b - a) / from_nat[Real](n.suc)
-                uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i) =
+                uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i) =
                     uniform_mesh(a, b, n)
                 lt_imp_lte_suc(i, n.suc)
-                i + 1 <= n.suc
-                i <= i + 1
+                i.suc <= n.suc
+                i <= i.suc
                 lt_imp_lte(i, n.suc)
                 i <= n.suc
-                partition_mono(uniform_partition(a, b, n), a, b, n.suc, i, i + 1)
-                uniform_partition(a, b, n, i) <= uniform_partition(a, b, n, i + 1)
-                interval_set_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))
-                interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)).contains(
+                partition_mono(uniform_partition(a, b, n), a, b, n.suc, i, i.suc)
+                uniform_partition(a, b, n, i) <= uniform_partition(a, b, n, i.suc)
+                interval_set_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))
+                interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)).contains(
                     uniform_partition(a, b, n, i))
                 exists(z: Real) {
-                    interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)).contains(z)
+                    interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)).contains(z)
                 }
-                is_nonempty(interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)))
+                is_nonempty(interval_set(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)))
                 forall(t: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
                         uniform_partition(a, b, n, i) <= t
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
-                        t <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
+                        t <= uniform_partition(a, b, n, i.suc)
                         partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i)
                         interval_contains(a, b, uniform_partition(a, b, n, i))
-                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i + 1)
-                        interval_contains(a, b, uniform_partition(a, b, n, i + 1))
+                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i.suc)
+                        interval_contains(a, b, uniform_partition(a, b, n, i.suc))
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), t)
+                            uniform_partition(a, b, n, i.suc), t)
                         interval_contains(a, b, t)
                         forall(t0: Real) {
                             interval_contains(a, b, t0) implies f(t0) <= ub
@@ -1773,27 +1707,27 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
                         f(t) <= ub
                     }
                 }
-                image_upper_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), ub)
+                image_upper_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), ub)
                 is_set_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)), ub)
+                    uniform_partition(a, b, n, i.suc)), ub)
                 exists(b0: Real) {
                     is_set_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                        uniform_partition(a, b, n, i + 1)), b0)
+                        uniform_partition(a, b, n, i.suc)), b0)
                 }
                 has_upper_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)))
+                    uniform_partition(a, b, n, i.suc)))
                 forall(t: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
                         uniform_partition(a, b, n, i) <= t
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), t)
-                        t <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), t)
+                        t <= uniform_partition(a, b, n, i.suc)
                         partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i)
                         interval_contains(a, b, uniform_partition(a, b, n, i))
-                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i + 1)
-                        interval_contains(a, b, uniform_partition(a, b, n, i + 1))
+                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i.suc)
+                        interval_contains(a, b, uniform_partition(a, b, n, i.suc))
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), t)
+                            uniform_partition(a, b, n, i.suc), t)
                         interval_contains(a, b, t)
                         forall(t0: Real) {
                             interval_contains(a, b, t0) implies lb <= f(t0)
@@ -1802,29 +1736,29 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
                         lb <= f(t)
                     }
                 }
-                image_lower_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), lb)
+                image_lower_bound(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), lb)
                 is_set_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)), lb)
+                    uniform_partition(a, b, n, i.suc)), lb)
                 exists(b0: Real) {
                     is_set_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                        uniform_partition(a, b, n, i + 1)), b0)
+                        uniform_partition(a, b, n, i.suc)), b0)
                 }
                 has_lower_bound(interval_image(f, uniform_partition(a, b, n, i),
-                    uniform_partition(a, b, n, i + 1)))
+                    uniform_partition(a, b, n, i.suc)))
                 forall(u: Real, v: Real) {
-                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u) and
-                       interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v) {
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u)
+                    if interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u) and
+                       interval_contains(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v) {
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u)
                         uniform_partition(a, b, n, i) <= u
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), u)
-                        u <= uniform_partition(a, b, n, i + 1)
-                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), u)
+                        u <= uniform_partition(a, b, n, i.suc)
+                        interval_contains_left(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v)
                         uniform_partition(a, b, n, i) <= v
-                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1), v)
-                        v <= uniform_partition(a, b, n, i + 1)
+                        interval_contains_right(uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc), v)
+                        v <= uniform_partition(a, b, n, i.suc)
                         interval_abs_diff_le_width(uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), u, v)
-                        (u - v).abs <= uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
+                            uniform_partition(a, b, n, i.suc), u, v)
+                        (u - v).abs <= uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
                         (u - v).abs <= uniform_mesh(a, b, n)
                         forall(u0: Real, v0: Real) {
                             interval_contains(a, b, u0) and interval_contains(a, b, v0) implies (f(u0) - f(v0)).abs <= m * (u0 - v0).abs
@@ -1832,13 +1766,13 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
                         interval_contains(a, b, u) and interval_contains(a, b, v) implies (f(u) - f(v)).abs <= m * (u - v).abs
                         partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i)
                         interval_contains(a, b, uniform_partition(a, b, n, i))
-                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i + 1)
-                        interval_contains(a, b, uniform_partition(a, b, n, i + 1))
+                        partition_point_in_interval(uniform_partition(a, b, n), a, b, n.suc, i.suc)
+                        interval_contains(a, b, uniform_partition(a, b, n, i.suc))
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), u)
+                            uniform_partition(a, b, n, i.suc), u)
                         interval_contains(a, b, u)
                         interval_contains_mono(a, b, uniform_partition(a, b, n, i),
-                            uniform_partition(a, b, n, i + 1), v)
+                            uniform_partition(a, b, n, i.suc), v)
                         interval_contains(a, b, v)
                         interval_contains(a, b, u) and interval_contains(a, b, v)
                         (f(u) - f(v)).abs <= m * (u - v).abs
@@ -1847,34 +1781,34 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
                         m * (u - v).abs <= m * uniform_mesh(a, b, n)
                         lte_trans[Real]((f(u) - f(v)).abs, m * (u - v).abs, m * uniform_mesh(a, b, n))
                         (f(u) - f(v)).abs <= m * uniform_mesh(a, b, n)
-                        (f(u) - f(v)).abs <= m * (uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i))
+                        (f(u) - f(v)).abs <= m * (uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i))
                     }
                 }
                 interval_sup_sub_inf_le_lipschitz_m(f, m,
-                    uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))
-                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) <= m * (uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i))
-                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) <= m * uniform_mesh(a, b, n)
+                    uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))
+                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) <= m * (uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i))
+                interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) <= m * uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) =
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         diff_step(uniform_partition(a, b, n), i)
                 diff_step(uniform_partition(a, b, n), i) =
-                    uniform_partition(a, b, n, i + 1) - uniform_partition(a, b, n, i)
+                    uniform_partition(a, b, n, i.suc) - uniform_partition(a, b, n, i)
                 diff_step(uniform_partition(a, b, n), i) = uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) =
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         uniform_mesh(a, b, n)
                 partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         diff_step(uniform_partition(a, b, n), i)
                 partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) *
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) *
                         uniform_mesh(a, b, n)
                 partition_step_upper(f, uniform_partition(a, b, n), i) -
                     partition_step_lower(f, uniform_partition(a, b, n), i) =
-                    (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))) *
+                    (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))) *
                         uniform_mesh(a, b, n)
                 from_nat_suc_pos_real(n)
                 from_nat[Real](n.suc) > Real.0
@@ -1884,16 +1818,16 @@ theorem lipschitz_uniform_upper_minus_lower_m(f: Real -> Real, m: Real, a: Real,
                 div_nonneg_pos_denom(b - a, from_nat[Real](n.suc))
                 Real.0 <= uniform_mesh(a, b, n)
                 mul_le_mul_of_nonneg_right(
-                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)),
+                    interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                        interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)),
                     m * uniform_mesh(a, b, n), uniform_mesh(a, b, n))
-                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))) *
+                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))) *
                     uniform_mesh(a, b, n) <= (m * uniform_mesh(a, b, n)) * uniform_mesh(a, b, n)
                 (m * uniform_mesh(a, b, n)) * uniform_mesh(a, b, n) =
                     m * (uniform_mesh(a, b, n) * uniform_mesh(a, b, n))
-                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1)) -
-                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i + 1))) *
+                (interval_sup(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc)) -
+                    interval_inf(f, uniform_partition(a, b, n, i), uniform_partition(a, b, n, i.suc))) *
                     uniform_mesh(a, b, n) <= m * (uniform_mesh(a, b, n) * uniform_mesh(a, b, n))
                 partition_step_upper(f, uniform_partition(a, b, n), i) -
                     partition_step_lower(f, uniform_partition(a, b, n), i) <= m * (uniform_mesh(a, b, n) * uniform_mesh(a, b, n))

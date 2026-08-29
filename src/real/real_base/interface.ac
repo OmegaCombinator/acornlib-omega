@@ -128,13 +128,6 @@ instance Real: Lattice
 
 instance Real: DistribLattice
 
-attributes Real {
-}
-
-attributes Real {
-    // Placeholder to let other modules import Real from here.
-}
-
 theorem gt_is_cut(r: Rat) {
     is_cut(r.gt)
 }
@@ -234,6 +227,16 @@ theorem gt_from_rat_imp_gt_rat(a: Real, r: Rat) {
     a > Real.from_rat(r) implies a.gt_rat(r)
 }
 
+define add_gt(z1: Real, z2: Real, r: Rat) -> Bool {
+    exists(r1: Rat, r2: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and r = r1 + r2
+    }
+}
+
+theorem add_gt_symm(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies add_gt(z2, z1, r)
+}
+
 theorem exists_lesser_rat(z: Real) {
     exists(r: Rat) {
         z.gt_rat(r)
@@ -244,6 +247,58 @@ theorem exists_gte_rat(z: Real) {
     exists(r: Rat) {
         not z.gt_rat(r)
     }
+}
+
+theorem add_gt_is_cut(z1: Real, z2: Real) {
+    is_cut(add_gt(z1, z2))
+}
+
+theorem add_gt_is_lower(z1: Real, z2: Real) {
+    is_lower(add_gt(z1, z2))
+}
+
+theorem add_gt_has_no_greatest(z1: Real, z2: Real) {
+    not has_greatest(add_gt(z1, z2))
+}
+
+theorem add_gt_is_dedekind_cut(z1: Real, z2: Real) {
+    is_dedekind_cut(add_gt(z1, z2))
+}
+
+let add(a: Real, b: Real) -> c: Real satisfy {
+    Real.new(add_gt(a, b)) = Option.some(c)
+}
+
+instance Real: Add {
+    let add = add
+}
+
+instance Real: AddSemigroup
+
+instance Real: AddCommSemigroup
+
+theorem add_gt_rat(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    z1.gt_rat(r1) and z2.gt_rat(r2) implies (z1 + z2).gt_rat(r1 + r2)
+}
+
+theorem add_comm(a: Real, b: Real) {
+    a + b = b + a
+}
+
+theorem gt_rat_adding_three(z1: Real, z2: Real, z3: Real, q: Rat) {
+    (z1 + z2 + z3).gt_rat(q) implies exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    }
+}
+
+theorem gt_rat_adding_three_converse(z1: Real, z2: Real, z3: Real, q: Rat) {
+    exists(r1: Rat, r2: Rat, r3: Rat) {
+        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
+    } implies (z1 + z2 + z3).gt_rat(q)
+}
+
+theorem add_assoc(a: Real, b: Real, c: Real) {
+    a + b + c = a + (b + c)
 }
 
 theorem gt_imp_not_lte(a: Real, b: Real) {
@@ -287,6 +342,18 @@ theorem rat_between_reals_gt(a: Real, b: Real) {
     }
 }
 
+theorem add_gt_trans(z1: Real, z2: Real, r1: Rat, r2: Rat) {
+    add_gt(z1, z2, r1) and r1 > r2 implies add_gt(z1, z2, r2)
+}
+
+theorem add_gt_imp_gt_from_rat(z1: Real, z2: Real, r: Rat) {
+    add_gt(z1, z2, r) implies z1 + z2 > Real.from_rat(r)
+}
+
+theorem gt_from_rat_imp_add_gt(z1: Real, z2: Real, r: Rat) {
+    z1 + z2 > Real.from_rat(r) implies add_gt(z1, z2, r)
+}
+
 theorem lt_lte_trans(a: Real, b: Real, c: Real) {
     a < b and b <= c implies a < c
 }
@@ -299,8 +366,40 @@ theorem lt_trans(a: Real, b: Real, c: Real) {
     a < b and b < c implies a < c
 }
 
+theorem add_gt_from_rat_imp_rat_add_gt(p: Rat, q: Rat, r: Rat) {
+    add_gt(Real.from_rat(p), Real.from_rat(q), r) implies p + q > r
+}
+
+theorem rat_add_gt_imp_add_gt_from_rat(p: Rat, q: Rat, r: Rat) {
+    p + q > r implies add_gt(Real.from_rat(p), Real.from_rat(q), r)
+}
+
+theorem add_from_rat(p: Rat, q: Rat) {
+    Real.from_rat(p) + Real.from_rat(q) = Real.from_rat(p + q)
+}
+
+theorem lte_add_right(a: Real, b: Real, c: Real) {
+    a <= b implies a + c <= b + c
+}
+
+theorem lte_add_left(a: Real, b: Real, c: Real) {
+    a <= b implies c + a <= c + b
+}
+
+theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
+    a <= b and c <= d implies a + c <= b + d
+}
+
+theorem lt_add_converse(a: Real, b: Real, c: Real) {
+    a + c < b + c implies a < b
+}
+
 theorem from_rat_maintains_lt(p: Rat, q: Rat) {
     p < q implies Real.from_rat(p) < Real.from_rat(q)
+}
+
+theorem add_lt_lt(a: Real, b: Real, c: Real, d: Real) {
+    a < b and c < d implies a + c < b + d
 }
 
 theorem lte_some_rat(a: Real) {
@@ -349,6 +448,42 @@ theorem floor_exists(a: Real) {
 
 let floor(a: Real) -> n: Int satisfy {
     Real.from_int(n) <= a and a < Real.from_int(n + Int.1)
+}
+
+theorem add_from_int(m: Int, n: Int) {
+    Real.from_int(m) + Real.from_int(n) = Real.from_int(m + n)
+}
+
+theorem lt_add_pos_int(a: Real, n: Int) {
+    n.is_positive implies a < a + Real.from_int(n)
+}
+
+theorem lt_add_pos_rat(a: Real, r: Rat) {
+    r.is_positive implies a < a + Real.from_rat(r)
+}
+
+theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
+    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
+}
+
+theorem lt_add_rat_left(a: Real, b: Real, r: Rat) {
+    a < b implies Real.from_rat(r) + a < Real.from_rat(r) + b
+}
+
+theorem lt_add_right(a: Real, b: Real, c: Real) {
+    a < b implies a + c < b + c
+}
+
+theorem lt_add_left(a: Real, b: Real, c: Real) {
+    a < b implies c + a < c + b
+}
+
+theorem lt_add_cancel_right(a: Real, b: Real, c: Real) {
+    a + c = b + c implies a = b
+}
+
+theorem lt_add_cancel_left(a: Real, b: Real, c: Real) {
+    c + a = c + b implies a = b
 }
 
 define neg_gt(a: Real, r: Rat) -> Bool {
@@ -413,6 +548,10 @@ theorem rat_window(a: Real, eps: Rat) {
     eps.is_positive implies exists(r: Rat) {
         Real.from_rat(r) < a and a < Real.from_rat(r + eps)
     }
+}
+
+theorem neg_distrib(a: Real, b: Real) {
+    -(a + b) = -a + -b
 }
 
 theorem min_lte_left(a: Real, b: Real) {
@@ -579,6 +718,10 @@ theorem lift_seq_elt(q: Nat -> Rat, n: Nat) {
     lift_seq(q)(n) = Real.from_rat(q(n))
 }
 
+define add_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
+    a(n) + b(n)
+}
+
 define add_rat_seq(a: Nat -> Rat, b: Nat -> Rat, n: Nat) -> Rat {
     a(n) + b(n)
 }
@@ -652,12 +795,12 @@ define is_nonempty_pred(s: Real -> Bool) -> Bool {
     }
 }
 
-define flip(f: Real -> Bool, x: Real) -> Bool {
+define flip_pred(f: Real -> Bool, x: Real) -> Bool {
     f(-x)
 }
 
 theorem flip_flip(f: Real -> Bool) {
-    flip(flip(f)) = f
+    flip_pred(flip_pred(f)) = f
 }
 
 define seq_lte(a: Nat -> Real, b: Nat -> Real) -> Bool {
@@ -666,14 +809,14 @@ define seq_lte(a: Nat -> Real, b: Nat -> Real) -> Bool {
     }
 }
 
-define is_increasing(a: Nat -> Real) -> Bool {
+define real_is_increasing(a: Nat -> Real) -> Bool {
     forall(n: Nat) {
         a(n) <= a(n.suc)
     }
 }
 
 theorem distant_increasing(a: Nat -> Real, m: Nat, n: Nat) {
-    is_increasing(a) and m <= n implies a(m) <= a(n)
+    real_is_increasing(a) and m <= n implies a(m) <= a(n)
 }
 
 define is_upper_bound(a: Nat -> Real, b: Real) -> Bool {
@@ -712,6 +855,12 @@ define image(a: Nat -> Real, x: Real) -> Bool {
     }
 }
 
+theorem ub_imp_lub_seq(a: Nat -> Real, b: Real) {
+    is_upper_bound(a, b) implies exists(c: Real) {
+        is_least_upper_bound(a, c)
+    }
+}
+
 theorem seq_lte_ub(a: Nat -> Real, b: Nat -> Real, ub: Real) {
     seq_lte(a, b) and is_upper_bound(b, ub)
     implies is_upper_bound(a, ub)
@@ -742,7 +891,7 @@ theorem distant_decreasing(a: Nat -> Real, m: Nat, n: Nat) {
 }
 
 theorem increasing_lower_bound_first(a: Nat -> Real) {
-    is_increasing(a) implies is_lower_bound(a, a(Nat.0))
+    real_is_increasing(a) implies is_lower_bound(a, a(Nat.0))
 }
 
 theorem decreasing_upper_bound_first(a: Nat -> Real) {
@@ -770,8 +919,19 @@ theorem finite_set_sum_eq_of_function_eq_global[T, A: AddCommMonoid](
     f = g implies finite_set_sum(s, f) = finite_set_sum(s, g)
 }
 
+theorem finite_set_sum_pointwise_add[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A, g: T -> A) {
+    finite_set_sum(s, add_fn(f, g)) = finite_set_sum(s, f) + finite_set_sum(s, g)
+}
+
 theorem finite_set_sum_insert_right[T, A: AddCommMonoid](s: FiniteSet[T], item: T, f: T -> A) {
     not s.contains(item) implies finite_set_sum(fs_insert(s, item), f) = finite_set_sum(s, f) + f(item)
+}
+
+theorem finite_set_sum_disjoint_union_commuted[T, A: AddCommMonoid](
+    a: FiniteSet[T], b: FiniteSet[T], f: T -> A
+) {
+    a.is_disjoint(b) implies
+        finite_set_sum(fs_union(a, b), f) = finite_set_sum(b, f) + finite_set_sum(a, f)
 }
 
 theorem finite_set_sum_scalar_mul_right_form[T, S: Semiring](c: S, s: FiniteSet[T], f: T -> S) {
@@ -915,12 +1075,36 @@ theorem mul_unbounded(k: Nat) {
     Nat.1 <= k implies is_unbounded(k.mul)
 }
 
+theorem add_nondecreasing(k: Nat) {
+    is_nondecreasing_nat(k.add)
+}
+
+theorem add_monotone(k: Nat) {
+    is_monotone(k.add)
+}
+
+theorem add_unbounded(k: Nat) {
+    is_unbounded(k.add)
+}
+
 theorem mul_subsequence_index(k: Nat) {
     Nat.1 <= k implies is_subsequence_index(k.mul)
 }
 
+theorem add_subsequence_index(k: Nat) {
+    is_subsequence_index(k.add)
+}
+
 theorem suc_subsequence_index {
     is_subsequence_index(Nat.suc)
+}
+
+define recip_rat_seq(a: Nat -> Rat, n: Nat) -> Rat {
+    a(n).inverse
+}
+
+theorem neg_recip_rat_seq(a: Nat -> Rat) {
+    neg_rat_seq(recip_rat_seq(a)) = recip_rat_seq(neg_rat_seq(a))
 }
 
 define rat_increasing(f: Rat -> Real) -> Bool {
@@ -935,6 +1119,18 @@ define increasing(f: Real -> Real) -> Bool {
     }
 }
 
+define add_fns[T](f: T -> Real, g: T -> Real, t: T) -> Real {
+    f(t) + g(t)
+}
+
+define const_add_left(c: Real, f: Real -> Real, x: Real) -> Real {
+    c + f(x)
+}
+
+define const_add_right(f: Real -> Real, c: Real, x: Real) -> Real {
+    f(x) + c
+}
+
 theorem forall_elim[T](p: T -> Bool, x: T) {
     (forall(y: T) { p(y) }) implies p(x)
 }
@@ -943,12 +1139,8 @@ define real_from_rat_fn(r: Rat) -> Real {
     Real.from_rat(r)
 }
 
-theorem real_from_rat_is_ring_hom {
-    is_ring_hom(real_from_rat_fn)
-}
-
-theorem real_from_rat_is_field_hom {
-    is_field_hom(real_from_rat_fn)
+theorem real_from_rat_fn_add(p: Rat, q: Rat) {
+    real_from_rat_fn(p + q) = real_from_rat_fn(p) + real_from_rat_fn(q)
 }
 
 theorem real_from_rat_injective(p: Rat, q: Rat) {
@@ -997,6 +1189,38 @@ define const_fn_2(c: Real, i: Nat, j: Nat) -> Real {
     c
 }
 
+define add_fn_2(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, i: Nat, j: Nat) -> Real {
+    f(i, j) + g(i, j)
+}
+
+define shift_rows(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(offset + i, j)
+}
+
+define shift_cols(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
+    f(i, offset + j)
+}
+
+theorem shift_rows_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_rows(shift_rows(f, k1), k2, i, j) = shift_rows(f, k1 + k2, i, j)
+}
+
+theorem shift_cols_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_cols(shift_cols(f, k1), k2, i, j) = shift_cols(f, k1 + k2, i, j)
+}
+
+theorem shift_rows_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
+    shift_rows(add_fn_2(f, g), k, i, j) = add_fn_2(shift_rows(f, k), shift_rows(g, k), i, j)
+}
+
+theorem shift_cols_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
+    shift_cols(add_fn_2(f, g), k, i, j) = add_fn_2(shift_cols(f, k), shift_cols(g, k), i, j)
+}
+
+theorem shift_rows_cols_commute(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
+    shift_rows(shift_cols(f, k2), k1, i, j) = shift_cols(shift_rows(f, k1), k2, i, j)
+}
+
 define doubly_increasing(f: (Nat, Nat) -> Real) -> Bool {
     forall(i: Nat, j: Nat) {
         f(i, j) <= f(i, j.suc) and f(i, j) <= f(i.suc, j)
@@ -1004,15 +1228,15 @@ define doubly_increasing(f: (Nat, Nat) -> Real) -> Bool {
 }
 
 theorem doubly_increasing_right(f: (Nat, Nat) -> Real, i: Nat) {
-    doubly_increasing(f) implies is_increasing(function(j: Nat) { f(i, j) })
+    doubly_increasing(f) implies real_is_increasing(function(j: Nat) { f(i, j) })
 }
 
 theorem doubly_increasing_left(f: (Nat, Nat) -> Real, j: Nat) {
-    doubly_increasing(f) implies is_increasing(function(i: Nat) { f(i, j) })
+    doubly_increasing(f) implies real_is_increasing(function(i: Nat) { f(i, j) })
 }
 
 theorem doubly_increasing_flip(f: (Nat, Nat) -> Real, j: Nat) {
-    doubly_increasing(f) implies is_increasing(function(i: Nat) { flip(f, j, i) })
+    doubly_increasing(f) implies real_is_increasing(function(i: Nat) { flip(f, j, i) })
 }
 
 theorem doubly_increasing_first_mono(f: (Nat, Nat) -> Real, i1: Nat, i2: Nat, j: Nat) {
@@ -1111,6 +1335,11 @@ theorem seq_eventually_equal_real_compose_tends_to_infinity(
     implies seq_eventually_equal_real(compose(a, f), compose(b, f))
 }
 
+theorem seq_eventually_equal_real_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    seq_eventually_equal_real(a, b) implies
+    seq_eventually_equal_real(compose(a, k.add), compose(b, k.add))
+}
+
 theorem seq_eventually_equal_real_subsequence(
     a: Nat -> Real,
     b: Nat -> Real,
@@ -1118,6 +1347,11 @@ theorem seq_eventually_equal_real_subsequence(
 ) {
     seq_eventually_equal_real(a, b) and is_subsequence_index(f)
     implies seq_eventually_equal_real(subsequence(a, f), subsequence(b, f))
+}
+
+theorem seq_eventually_equal_real_tail_subsequence(a: Nat -> Real, b: Nat -> Real, k: Nat) {
+    seq_eventually_equal_real(a, b) implies
+    seq_eventually_equal_real(subsequence(a, k.add), subsequence(b, k.add))
 }
 
 theorem tail_seq_lte_of_eventual_index_lte(f: Nat -> Real, g: Nat -> Real, n: Nat) {
@@ -1212,6 +1446,10 @@ theorem nat_sub_lte(a: Nat, b: Nat, c: Nat) {
 
 theorem nat_sub_le_sub(a: Nat, b: Nat, k: Nat) {
     a <= b implies a - k <= b - k
+}
+
+theorem nat_suc_sub(a: Nat, b: Nat) {
+    b <= a implies (a + Nat.1) - b = (a - b) + Nat.1
 }
 
 define closed_interval_sublevel_contains(f: Real -> Real, lower: Real, upper: Real, target: Real, x: Real) -> Bool {
@@ -1409,12 +1647,32 @@ theorem eventual_ub_compose_tends_to_infinity(a: Nat -> Real, f: Nat -> Nat, ub:
     eventual_ub(a, ub) and tends_to_infinity(f) implies eventual_ub(compose(a, f), ub)
 }
 
+theorem eventual_lb_shift_add(a: Nat -> Real, k: Nat, lb: Real) {
+    eventual_lb(a, lb) implies eventual_lb(compose(a, k.add), lb)
+}
+
+theorem eventual_ub_shift_add(a: Nat -> Real, k: Nat, ub: Real) {
+    eventual_ub(a, ub) implies eventual_ub(compose(a, k.add), ub)
+}
+
 theorem eventual_lb_subsequence(a: Nat -> Real, f: Nat -> Nat, lb: Real) {
     eventual_lb(a, lb) and is_subsequence_index(f) implies eventual_lb(subsequence(a, f), lb)
 }
 
 theorem eventual_ub_subsequence(a: Nat -> Real, f: Nat -> Nat, ub: Real) {
     eventual_ub(a, ub) and is_subsequence_index(f) implies eventual_ub(subsequence(a, f), ub)
+}
+
+theorem eventual_lb_tail_subsequence(a: Nat -> Real, k: Nat, lb: Real) {
+    eventual_lb(a, lb) implies eventual_lb(subsequence(a, k.add), lb)
+}
+
+theorem eventual_ub_tail_subsequence(a: Nat -> Real, k: Nat, ub: Real) {
+    eventual_ub(a, ub) implies eventual_ub(subsequence(a, k.add), ub)
+}
+
+define shift_seq_fn(g: Nat -> Real, offset: Nat, j: Nat) -> Real {
+    g(offset + j)
 }
 
 theorem rat_from_nat_mul(m: Nat, n: Nat) {
@@ -1432,6 +1690,11 @@ theorem rat_from_nat_mul3(a: Nat, b: Nat, c: Nat) {
 
 theorem factorial_3_eq_6 {
     Nat.3.factorial = Nat.6
+}
+
+theorem pascal_sub_form(n: Nat, k: Nat) {
+    Nat.0 < k and k <= n implies
+        n.binom(k) = (n - Nat.1).binom(k - Nat.1) + (n - Nat.1).binom(k)
 }
 
 theorem hockey_stick_sum_form(k: Nat, n: Nat) {
@@ -1463,6 +1726,50 @@ theorem vandermonde_r1_eval(m: Nat, n: Nat) {
     partial(vandermonde_term(m, n, Nat.1), Nat.2) = m + n
 }
 
+define fib_pair(n: Nat) -> Pair[Nat, Nat] {
+    match n {
+        Nat.zero {
+            Pair.new(Nat.0, Nat.1)
+        }
+        Nat.suc(k) {
+            let p: Pair[Nat, Nat] = fib_pair(k)
+            Pair.new(p.second, p.first + p.second)
+        }
+    }
+}
+
+define fib(n: Nat) -> Nat {
+    fib_pair(n).first
+}
+
+theorem fib_pair_suc(k: Nat) {
+    fib_pair(k.suc) = Pair.new(fib_pair(k).second, fib_pair(k).first + fib_pair(k).second)
+}
+
+theorem fib_pair_zero {
+    fib_pair(Nat.0) = Pair.new(Nat.0, Nat.1)
+}
+
+theorem fib_pair_second_suc(k: Nat) {
+    fib_pair(k).second = fib(k.suc)
+}
+
+theorem fib_zero {
+    fib(Nat.0) = Nat.0
+}
+
+theorem fib_one {
+    fib(Nat.1) = Nat.1
+}
+
+theorem fib_suc_suc(j: Nat) {
+    fib(j.suc.suc) = fib(j.suc) + fib(j)
+}
+
+theorem fib_two {
+    fib(Nat.2) = Nat.1
+}
+
 theorem rat_from_nat_lte_of_nat_lte(m: Nat, n: Nat) {
     m <= n implies Rat.from_nat(m) <= Rat.from_nat(n)
 }
@@ -1475,24 +1782,8 @@ define const_real_fn(c: Real) -> (Nat -> Real) {
     function(i: Nat) { c }
 }
 
-define seq_tends_to_infinity(a: Nat -> Real) -> Bool {
-    forall(b: Real) {
-        exists(n0: Nat) {
-            forall(n: Nat) {
-                n0 <= n implies b < a(n)
-            }
-        }
-    }
-}
-
-define seq_tends_to_neg_infinity(a: Nat -> Real) -> Bool {
-    forall(b: Real) {
-        exists(n0: Nat) {
-            forall(n: Nat) {
-                n0 <= n implies a(n) < b
-            }
-        }
-    }
+define neg_seq_fn(f: Nat -> Real) -> (Nat -> Real) {
+    function(i: Nat) { -f(i) }
 }
 
 define bounded_above_on_prefix(f: Real -> Real, lower: Real, x: Real) -> Bool {
@@ -1575,12 +1866,32 @@ theorem unbounded_peaks_subsequence(a: Nat -> Real) {
 theorem no_peaks_subsequence(a: Nat -> Real) {
     (exists(m0: Nat) { forall(p: Nat) { m0 < p implies not is_peak(a, p) } })
     implies exists(f: Nat -> Nat) {
-        is_subsequence_index(f) and is_increasing(subsequence(a, f))
+        is_subsequence_index(f) and real_is_increasing(subsequence(a, f))
     }
 }
 
 define partition_g_values(g: Real -> Real, p: Nat -> Real, i: Nat) -> Real {
     g(p(i))
+}
+
+define seq_tends_to_infinity(a: Nat -> Real) -> Bool {
+    forall(b: Real) {
+        exists(n0: Nat) {
+            forall(n: Nat) {
+                n0 <= n implies b < a(n)
+            }
+        }
+    }
+}
+
+define seq_tends_to_neg_infinity(a: Nat -> Real) -> Bool {
+    forall(b: Real) {
+        exists(n0: Nat) {
+            forall(n: Nat) {
+                n0 <= n implies a(n) < b
+            }
+        }
+    }
 }
 
 define pointwise_apply(f: Real -> Real, x: Nat -> Real, i: Nat) -> Real {
@@ -1665,6 +1976,10 @@ define odd_subseq(f: Nat -> Real, k: Nat) -> Real {
     f(Nat.2 * k + Nat.1)
 }
 
+theorem add_swap_outers(a: Real, b: Real, c: Real, d: Real) {
+    a + b + c + d = a + d + b + c
+}
+
 theorem two_k_add_two_sub(n: Nat, k: Nat) {
     k <= n implies Nat.2 * k + Nat.2 * (n - k) = Nat.2 * n
 }
@@ -1687,6 +2002,18 @@ theorem two_pred_add_two(n: Nat) {
 
 theorem pred_suc(n: Nat) {
     n >= Nat.1 implies (n - Nat.1).suc = n
+}
+
+theorem partition_cell_lb(f: Real -> Real, lb: Real, p: Nat -> Real, a: Real, b: Real, n: Nat, k: Nat) {
+    is_partition(p, a, b, n) and k < n and
+    (forall(t: Real) { interval_contains(a, b, t) implies lb <= f(t) })
+    implies forall(t: Real) { interval_contains(p(k), p(k.suc), t) implies lb <= f(t) }
+}
+
+theorem partition_cell_ub(f: Real -> Real, ub: Real, p: Nat -> Real, a: Real, b: Real, n: Nat, k: Nat) {
+    is_partition(p, a, b, n) and k < n and
+    (forall(t: Real) { interval_contains(a, b, t) implies f(t) <= ub })
+    implies forall(t: Real) { interval_contains(p(k), p(k.suc), t) implies f(t) <= ub }
 }
 
 theorem strict_lb_imp_lb(f: Real -> Real, x0: Real, x: Real, c: Real) {
@@ -1726,6 +2053,14 @@ theorem not_lt_and_ne_imp_gt(x: Real, y: Real) {
 
 define family_at(f: Nat -> Real -> Real, t: Real, j: Nat) -> Real {
     f(j)(t)
+}
+
+theorem add_cancel_mid(a: Real, b: Real, c: Real) {
+    (a + b) + -b = a
+}
+
+theorem add_swap_cancel(a: Real, b: Real) {
+    (a + b) + -a = b
 }
 
 theorem eq_neg_transport(p: Bool, q: Bool) {
@@ -1778,328 +2113,16 @@ theorem two_mul_suc_add_one(k: Nat) {
     Nat.2 * (k + Nat.1) + Nat.1 = Nat.2 * k + Nat.3
 }
 
+theorem real_add_two_lower(a: Real, b: Real, u: Real, v: Real) {
+    a >= u and b >= v implies a + b >= u + v
+}
+
 theorem lte_suc_imp_lt(a: Nat, b: Nat) {
     a.suc <= b implies a < b
 }
 
 theorem nat_pos_ne_zero_atomic(n: Nat) {
     n > Nat.0 implies n != Nat.0
-}
-
-let add(a: Real, b: Real) -> c: Real satisfy {
-    Real.new(add_gt(a, b)) = Option.some(c)
-}
-
-instance Real: Add {
-    let add = add
-}
-
-instance Real: AddSemigroup
-
-instance Real: AddCommSemigroup
-
-define add_gt(z1: Real, z2: Real, r: Rat) -> Bool {
-    exists(r1: Rat, r2: Rat) {
-        z1.gt_rat(r1) and z2.gt_rat(r2) and r = r1 + r2
-    }
-}
-
-theorem add_gt_symm(z1: Real, z2: Real, r: Rat) {
-    add_gt(z1, z2, r) implies add_gt(z2, z1, r)
-}
-
-theorem add_gt_is_cut(z1: Real, z2: Real) {
-    is_cut(add_gt(z1, z2))
-}
-
-theorem add_gt_is_lower(z1: Real, z2: Real) {
-    is_lower(add_gt(z1, z2))
-}
-
-theorem add_gt_has_no_greatest(z1: Real, z2: Real) {
-    not has_greatest(add_gt(z1, z2))
-}
-
-theorem add_gt_is_dedekind_cut(z1: Real, z2: Real) {
-    is_dedekind_cut(add_gt(z1, z2))
-}
-
-theorem add_gt_rat(z1: Real, z2: Real, r1: Rat, r2: Rat) {
-    z1.gt_rat(r1) and z2.gt_rat(r2) implies (z1 + z2).gt_rat(r1 + r2)
-}
-
-theorem add_comm(a: Real, b: Real) {
-    a + b = b + a
-}
-
-theorem gt_rat_adding_three(z1: Real, z2: Real, z3: Real, q: Rat) {
-    (z1 + z2 + z3).gt_rat(q) implies exists(r1: Rat, r2: Rat, r3: Rat) {
-        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
-    }
-}
-
-theorem gt_rat_adding_three_converse(z1: Real, z2: Real, z3: Real, q: Rat) {
-    exists(r1: Rat, r2: Rat, r3: Rat) {
-        z1.gt_rat(r1) and z2.gt_rat(r2) and z3.gt_rat(r3) and q = r1 + r2 + r3
-    } implies (z1 + z2 + z3).gt_rat(q)
-}
-
-theorem add_assoc(a: Real, b: Real, c: Real) {
-    a + b + c = a + (b + c)
-}
-
-theorem add_gt_trans(z1: Real, z2: Real, r1: Rat, r2: Rat) {
-    add_gt(z1, z2, r1) and r1 > r2 implies add_gt(z1, z2, r2)
-}
-
-theorem add_gt_imp_gt_from_rat(z1: Real, z2: Real, r: Rat) {
-    add_gt(z1, z2, r) implies z1 + z2 > Real.from_rat(r)
-}
-
-theorem gt_from_rat_imp_add_gt(z1: Real, z2: Real, r: Rat) {
-    z1 + z2 > Real.from_rat(r) implies add_gt(z1, z2, r)
-}
-
-theorem add_gt_from_rat_imp_rat_add_gt(p: Rat, q: Rat, r: Rat) {
-    add_gt(Real.from_rat(p), Real.from_rat(q), r) implies p + q > r
-}
-
-theorem rat_add_gt_imp_add_gt_from_rat(p: Rat, q: Rat, r: Rat) {
-    p + q > r implies add_gt(Real.from_rat(p), Real.from_rat(q), r)
-}
-
-theorem add_from_rat(p: Rat, q: Rat) {
-    Real.from_rat(p) + Real.from_rat(q) = Real.from_rat(p + q)
-}
-
-theorem lte_add_right(a: Real, b: Real, c: Real) {
-    a <= b implies a + c <= b + c
-}
-
-theorem lte_add_left(a: Real, b: Real, c: Real) {
-    a <= b implies c + a <= c + b
-}
-
-theorem add_lte_add(a: Real, b: Real, c: Real, d: Real) {
-    a <= b and c <= d implies a + c <= b + d
-}
-
-theorem lt_add_converse(a: Real, b: Real, c: Real) {
-    a + c < b + c implies a < b
-}
-
-theorem add_lt_lt(a: Real, b: Real, c: Real, d: Real) {
-    a < b and c < d implies a + c < b + d
-}
-
-theorem add_from_int(m: Int, n: Int) {
-    Real.from_int(m) + Real.from_int(n) = Real.from_int(m + n)
-}
-
-theorem lt_add_pos_int(a: Real, n: Int) {
-    n.is_positive implies a < a + Real.from_int(n)
-}
-
-theorem lt_add_pos_rat(a: Real, r: Rat) {
-    r.is_positive implies a < a + Real.from_rat(r)
-}
-
-theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
-    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
-}
-
-theorem lt_add_rat_left(a: Real, b: Real, r: Rat) {
-    a < b implies Real.from_rat(r) + a < Real.from_rat(r) + b
-}
-
-theorem lt_add_right(a: Real, b: Real, c: Real) {
-    a < b implies a + c < b + c
-}
-
-theorem lt_add_left(a: Real, b: Real, c: Real) {
-    a < b implies c + a < c + b
-}
-
-theorem lt_add_cancel_right(a: Real, b: Real, c: Real) {
-    a + c = b + c implies a = b
-}
-
-theorem lt_add_cancel_left(a: Real, b: Real, c: Real) {
-    c + a = c + b implies a = b
-}
-
-theorem neg_distrib(a: Real, b: Real) {
-    -(a + b) = -a + -b
-}
-
-define add_seq(a: Nat -> Real, b: Nat -> Real, n: Nat) -> Real {
-    a(n) + b(n)
-}
-
-theorem finite_set_sum_pointwise_add[T, A: AddCommMonoid](s: FiniteSet[T], f: T -> A, g: T -> A) {
-    finite_set_sum(s, add_fn(f, g)) = finite_set_sum(s, f) + finite_set_sum(s, g)
-}
-
-theorem finite_set_sum_disjoint_union_commuted[T, A: AddCommMonoid](
-    a: FiniteSet[T], b: FiniteSet[T], f: T -> A
-) {
-    a.is_disjoint(b) implies
-        finite_set_sum(fs_union(a, b), f) = finite_set_sum(b, f) + finite_set_sum(a, f)
-}
-
-theorem add_nondecreasing(k: Nat) {
-    is_nondecreasing_nat(k.add)
-}
-
-theorem add_monotone(k: Nat) {
-    is_monotone(k.add)
-}
-
-theorem add_unbounded(k: Nat) {
-    is_unbounded(k.add)
-}
-
-theorem add_subsequence_index(k: Nat) {
-    is_subsequence_index(k.add)
-}
-
-define add_fns[T](f: T -> Real, g: T -> Real, t: T) -> Real {
-    f(t) + g(t)
-}
-
-define const_add_left(c: Real, f: Real -> Real, x: Real) -> Real {
-    c + f(x)
-}
-
-define const_add_right(f: Real -> Real, c: Real, x: Real) -> Real {
-    f(x) + c
-}
-
-theorem real_from_rat_fn_add(p: Rat, q: Rat) {
-    real_from_rat_fn(p + q) = real_from_rat_fn(p) + real_from_rat_fn(q)
-}
-
-define add_fn_2(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, i: Nat, j: Nat) -> Real {
-    f(i, j) + g(i, j)
-}
-
-define shift_rows(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
-    f(offset + i, j)
-}
-
-define shift_cols(f: (Nat, Nat) -> Real, offset: Nat, i: Nat, j: Nat) -> Real {
-    f(i, offset + j)
-}
-
-theorem shift_rows_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
-    shift_rows(shift_rows(f, k1), k2, i, j) = shift_rows(f, k1 + k2, i, j)
-}
-
-theorem shift_cols_compose(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
-    shift_cols(shift_cols(f, k1), k2, i, j) = shift_cols(f, k1 + k2, i, j)
-}
-
-theorem shift_rows_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
-    shift_rows(add_fn_2(f, g), k, i, j) = add_fn_2(shift_rows(f, k), shift_rows(g, k), i, j)
-}
-
-theorem shift_cols_add(f: (Nat, Nat) -> Real, g: (Nat, Nat) -> Real, k: Nat, i: Nat, j: Nat) {
-    shift_cols(add_fn_2(f, g), k, i, j) = add_fn_2(shift_cols(f, k), shift_cols(g, k), i, j)
-}
-
-theorem shift_rows_cols_commute(f: (Nat, Nat) -> Real, k1: Nat, k2: Nat, i: Nat, j: Nat) {
-    shift_rows(shift_cols(f, k2), k1, i, j) = shift_cols(shift_rows(f, k1), k2, i, j)
-}
-
-theorem seq_eventually_equal_real_shift_add(a: Nat -> Real, b: Nat -> Real, k: Nat) {
-    seq_eventually_equal_real(a, b) implies
-    seq_eventually_equal_real(compose(a, k.add), compose(b, k.add))
-}
-
-theorem seq_eventually_equal_real_tail_subsequence(a: Nat -> Real, b: Nat -> Real, k: Nat) {
-    seq_eventually_equal_real(a, b) implies
-    seq_eventually_equal_real(subsequence(a, k.add), subsequence(b, k.add))
-}
-
-theorem eventual_lb_shift_add(a: Nat -> Real, k: Nat, lb: Real) {
-    eventual_lb(a, lb) implies eventual_lb(compose(a, k.add), lb)
-}
-
-theorem eventual_ub_shift_add(a: Nat -> Real, k: Nat, ub: Real) {
-    eventual_ub(a, ub) implies eventual_ub(compose(a, k.add), ub)
-}
-
-theorem eventual_lb_tail_subsequence(a: Nat -> Real, k: Nat, lb: Real) {
-    eventual_lb(a, lb) implies eventual_lb(subsequence(a, k.add), lb)
-}
-
-theorem eventual_ub_tail_subsequence(a: Nat -> Real, k: Nat, ub: Real) {
-    eventual_ub(a, ub) implies eventual_ub(subsequence(a, k.add), ub)
-}
-
-theorem pascal_sub_form(n: Nat, k: Nat) {
-    Nat.0 < k and k <= n implies
-        n.binom(k) = (n - Nat.1).binom(k - Nat.1) + (n - Nat.1).binom(k)
-}
-
-define fib_pair(n: Nat) -> Pair[Nat, Nat] {
-    match n {
-        Nat.zero {
-            Pair.new(Nat.0, Nat.1)
-        }
-        Nat.suc(k) {
-            let p: Pair[Nat, Nat] = fib_pair(k)
-            Pair.new(p.second, p.first + p.second)
-        }
-    }
-}
-
-define fib(n: Nat) -> Nat {
-    fib_pair(n).first
-}
-
-theorem fib_pair_suc(k: Nat) {
-    fib_pair(k.suc) = Pair.new(fib_pair(k).second, fib_pair(k).first + fib_pair(k).second)
-}
-
-theorem fib_pair_zero {
-    fib_pair(Nat.0) = Pair.new(Nat.0, Nat.1)
-}
-
-theorem fib_pair_second_suc(k: Nat) {
-    fib_pair(k).second = fib(k.suc)
-}
-
-theorem fib_zero {
-    fib(Nat.0) = Nat.0
-}
-
-theorem fib_one {
-    fib(Nat.1) = Nat.1
-}
-
-theorem fib_suc_suc(j: Nat) {
-    fib(j.suc.suc) = fib(j.suc) + fib(j)
-}
-
-theorem fib_two {
-    fib(Nat.2) = Nat.1
-}
-
-theorem add_swap_outers(a: Real, b: Real, c: Real, d: Real) {
-    a + b + c + d = a + d + b + c
-}
-
-theorem add_cancel_mid(a: Real, b: Real, c: Real) {
-    (a + b) + -b = a
-}
-
-theorem add_swap_cancel(a: Real, b: Real) {
-    (a + b) + -a = b
-}
-
-theorem real_add_two_lower(a: Real, b: Real, u: Real, v: Real) {
-    a >= u and b >= v implies a + b >= u + v
 }
 
 instance Real: Zero {
@@ -2347,43 +2370,5 @@ theorem rat_upper(x: Real, eps: Rat) {
 theorem rat_lower(x: Real, eps: Rat) {
     eps.is_positive implies exists(r: Rat) {
         not x.is_close(Real.from_rat(r), Real.from_rat(eps)) and Real.from_rat(r) < x
-    }
-}
-
-theorem rat_intersect(a: Real, b: Real, c: Real, d: Real, e: Real) {
-    a.is_close(b, c) and a.is_close(d, e)
-    implies
-    exists(r: Rat) {
-        Real.from_rat(r).is_close(b, c) and Real.from_rat(r).is_close(d, e)
-    }
-}
-
-theorem swap_minus_plus(a: Real, b: Real, c: Real) {
-    a + b - c = a - c + b
-}
-
-define cauchy_bound(q: Nat -> Real, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).is_close(q(j), eps)
-    }
-}
-
-define converges(q: Nat -> Real) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_bound(q, n, eps)
-        }
-    }
-}
-
-theorem cauchy_gt_something(q: Nat -> Real) {
-    converges(q) implies exists(r: Rat) {
-        cauchy_gt_rat(q, r)
-    }
-}
-
-theorem cauchy_gt_not_everything(q: Nat -> Real) {
-    converges(q) implies exists(r: Rat) {
-        not cauchy_gt_rat(q, r)
     }
 }

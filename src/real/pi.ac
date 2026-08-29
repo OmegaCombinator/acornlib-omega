@@ -1,20 +1,23 @@
 from nat import Nat, lt_add_suc, lt_suc
-from algebra import pow_add
+from nat import pow_add
 from nat import mul_comm
-from integer import lte_mul_both, lte_add_left
+from nat import lte_mul_both, lte_add_left
 from nat import from_nat
 from rational import Rat, nat_lt_imp_rat_lt
 from order import lte_refl, lte_trans, not_lt_imp_gte, not_gte_imp_lt, lte_antisymm, lt_of_lte_of_lt, lt_of_lt_of_lte
 from order import lt_imp_lte, not_lte_imp_gt
-from real.real_base import lt_trans
+from order import lt_trans
 from list import partial, partial_split_last
 from set import Set, set_ext
 from real.real_field import Real, mul_div, real_no_zero_divisors, zero_is_different_than_one
+from real.integral import set_lower_bound_contains_le
+from real.interval_characterization import set_not_lower_bound_witness
+from real.integral import set_infimum_is_lower_bound
 from real.real_ring import converges, limit, converges_to, mul_abs, mul_zero_left, mul_zero_right, real_mul_comm, lte_mul_nonneg_right, exists_small_mul_variant, lt_mul_pos_left, mul_nonneg, mul_pos_pos, mul_from_rat, lt_mul_pos_right, mul_distrib_left, mul_distrib_right, mul_sub_distrib_left
 from real.real_seq import eq_imp_limit, eventual_eq, converges_to_imp_converges, converges_imp_converges_to, converges_to_unique, add_seq, eps_smaller_than_both, close_and_lt_imp_close
 from real.real_base import abs_neg, neg_neg, add_comm, add_assoc, abs_gte_zero, lte_abs, pos_imp_eq_abs, lte_lt_trans, lt_add_right, lte_add_right, bounds_imp_close, self_close, from_rat_maintains_lt, lt_add_pos
 from real.abs_conv import absolutely_converges, abs_fn, absolutely_converges_imp_converges, sub_seq
-from real.real_series import partial_suc, partial_zero, partial_one, tail, tail_imp_converges_to, const_converges, const_limit, const_seq, mul_seq, neg_seq, seq_lte, seq_lte_preserves_limit, partial_seq_lte, partial_tail_sub, partial_tail_decomp, triangle_ineq, partial_tail_conv_imp_partial_conv, tail_partial_converges, is_lower_bound, is_upper_bound, nonneg_partial_increasing, is_increasing, increasing_convergent_bounded_by_limit, increasing_bounded_above_converges, pow_nonneg, abs_pow, has_upper_bound_seq
+from real.real_series import partial_suc, partial_zero, partial_one, tail, tail_imp_converges_to, const_converges, const_limit, const_seq, mul_seq, neg_seq, seq_lte, seq_lte_preserves_limit, partial_seq_lte, partial_tail_sub, partial_tail_decomp, triangle_ineq, partial_tail_conv_imp_partial_conv, tail_partial_converges, is_lower_bound, is_upper_bound, nonneg_partial_increasing, real_is_increasing, increasing_convergent_bounded_by_limit, increasing_bounded_above_converges, pow_nonneg, abs_pow, has_upper_bound_seq
 from real.limits import is_subsequence_index, subsequence, converges_subsequence, converges_subsequence_add, is_monotone, is_unbounded, subsequence_index_of_monotone_unbounded
 from real.cauchy_criterion import is_cauchy_seq, converges_to_imp_cauchy
 from real.exp import exp_term, factorial_pos, pow_suc, zero_pow_pos, inverse_pos, abs_div, two, mul_frac_assoc, mul_assoc_real, two_positive, factorial_suc_real, exp_term_mul_recurrence, exp_term_pos, div_lt_div_pos, suc_pos, rat_from_nat_mul
@@ -1530,11 +1533,6 @@ let pi_over_two: Real satisfy {
 }
 
 /// An infimum of a set is a lower bound of it.
-theorem set_infimum_is_lower_bound(s: Set[Real], inf: Real) {
-    is_set_infimum(s, inf) implies is_set_lower_bound(s, inf)
-} by {
-}
-
 /// An infimum is at most every lower bound of its set.
 theorem set_infimum_le_lower_bound(s: Set[Real], inf: Real, b: Real) {
     is_set_infimum(s, inf) and is_set_lower_bound(s, b) implies b <= inf
@@ -1553,22 +1551,6 @@ theorem set_infimum_le_lower_bound(s: Set[Real], inf: Real, b: Real) {
 }
 
 /// A member of a set is above any lower bound of that set.
-theorem set_lower_bound_contains_le(s: Set[Real], bound: Real, x: Real) {
-    is_set_lower_bound(s, bound) and s.contains(x) implies bound <= x
-} by {
-    if is_set_lower_bound(s, bound) and s.contains(x) {
-        is_set_lower_bound(s, bound) implies forall(y: Real) {
-            s.contains(y) implies bound <= y
-        }
-        is_set_lower_bound(s, bound)
-        forall(y: Real) {
-            s.contains(y) implies bound <= y
-        }
-        s.contains(x)
-        bound <= x
-    }
-}
-
 /// The defining property of pi over two.
 theorem pi_over_two_is_infimum {
     is_set_infimum(cos_zero_set, pi_over_two)
@@ -1637,21 +1619,6 @@ theorem set_bound_above_infimum_not_lower(s: Set[Real], inf: Real, bound: Real) 
 }
 
 /// A number that is not a lower bound is exceeded by a member of the set.
-theorem set_not_lower_bound_witness(s: Set[Real], bound: Real) {
-    not is_set_lower_bound(s, bound) implies exists(x: Real) {
-        s.contains(x) and not bound <= x
-    }
-} by {
-    if not is_set_lower_bound(s, bound) {
-        is_set_lower_bound(s, bound) = forall(x: Real) {
-            s.contains(x) implies bound <= x
-        }
-        exists(x: Real) {
-            s.contains(x) and not bound <= x
-        }
-    }
-}
-
 /// The infimum of a set is approached from above by points of the set.
 theorem set_infimum_close_from_above(s: Set[Real], inf: Real, eps: Real) {
     is_set_infimum(s, inf) and eps.is_positive implies exists(x: Real) {
