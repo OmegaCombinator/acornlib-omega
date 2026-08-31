@@ -2,6 +2,7 @@ from nat import Nat
 from algebra_core import Monoid
 from algebra_core import CommRing, Inverse
 from integer import Int
+from integer import sub_add_left, neg_sub
 
 /// A field is a commutative ring with multiplicative inverses for all non-zero elements.
 typeclass F: Field extends CommRing, Inverse {
@@ -43,6 +44,15 @@ theorem zero_pow_nonnegative[F: Field](n: Int) {
 } by {
     match n {
         Int.from_nat(k) {
+            n > Int.0
+            n != Int.0
+            n = Int.from_nat(k)
+            Int.from_nat(k) != Int.0
+            Int.from_nat(Nat.0) = Int.0
+            Int.from_nat(k) != Int.from_nat(Nat.0)
+            k != Nat.0
+            F.0.pow(k) = F.0
+            F.0.zpow(Int.from_nat(k)) = F.0.pow(k)
             F.0.zpow(n) = F.0
         }
         Int.neg_suc(k) {
@@ -67,6 +77,21 @@ theorem unique_inverse[F: Field](a: F, b: F) {
 
 theorem inverse_inverse_field[F: Field](a: F) {
     a.inverse.inverse = a
+} by {
+    if a != F.0 {
+        F.field_inverse(a)
+        a * a.inverse = F.1
+        a.inverse * a = a * a.inverse
+        a.inverse * a = F.1
+        unique_inverse[F](a.inverse, a)
+        a = a.inverse.inverse
+        a.inverse.inverse = a
+    } else {
+        F.0.inverse = F.0
+        a.inverse = F.0
+        a.inverse.inverse = F.0
+        a.inverse.inverse = a
+    }
 }
 
 /// A nonzero field element has a right inverse.
@@ -122,6 +147,14 @@ theorem inverse_dist[F: Field](a: F, b: F) {
     (a * b).inverse = a.inverse * b.inverse
 } by {
     if a = F.0 {
+        a * b = F.0
+        F.0 * b = F.0
+        (a * b) = F.0
+        (a * b).inverse = F.0.inverse
+        F.0.inverse = F.0
+        (a * b).inverse = F.0
+        a.inverse = F.0
+        a.inverse * b.inverse = F.0
         (a * b).inverse = a.inverse * b.inverse
     } else {
         if b = F.0 {
@@ -278,12 +311,39 @@ theorem pow_sub_inverse[F: Field](a: F, n: Int, m: Int) {
         a.zpow(n) * a.inverse.zpow(m) = a.pow(l) * a.inverse.pow(k)
         k <= l
         a.zpow(n) * a.inverse.zpow(m) = a.pow(l - k)
+        Int.from_nat(l - k) + Int.from_nat(k) = Int.from_nat((l - k) + k)
+        (l - k) + k = l
+        Int.from_nat(l - k) + Int.from_nat(k) = Int.from_nat(l)
+        sub_add_left(Int.from_nat(l - k), Int.from_nat(k))
+        (Int.from_nat(l - k) + Int.from_nat(k)) - Int.from_nat(k) = Int.from_nat(l - k)
+        Int.from_nat(l) - Int.from_nat(k) = Int.from_nat(l - k)
+        n - m = Int.from_nat(l) - Int.from_nat(k)
+        n - m = Int.from_nat(l - k)
+        a.pow(l - k) = a.zpow(Int.from_nat(l - k))
+        a.pow(l - k) = a.zpow(n - m)
         a.zpow(n) * a.inverse.zpow(m) = a.zpow(n - m)
     } else {
         a.zpow(n) * a.inverse.zpow(m) = a.inverse.pow(k) * a.inverse.inverse.pow(l)
         l <= k
         a.inverse != F.0
         a.zpow(n) * a.inverse.zpow(m) = a.inverse.pow(k - l)
+        Int.from_nat(l) + Int.from_nat(k - l) = Int.from_nat(l + (k - l))
+        l + (k - l) = k
+        Int.from_nat(l) + Int.from_nat(k - l) = Int.from_nat(k)
+        sub_add_left(Int.from_nat(k - l), Int.from_nat(l))
+        (Int.from_nat(k - l) + Int.from_nat(l)) - Int.from_nat(l) = Int.from_nat(k - l)
+        Int.from_nat(k) - Int.from_nat(l) = Int.from_nat(k - l)
+        neg_sub(Int.from_nat(k), Int.from_nat(l))
+        -(Int.from_nat(k) - Int.from_nat(l)) = Int.from_nat(l) - Int.from_nat(k)
+        Int.from_nat(l) - Int.from_nat(k) = -(Int.from_nat(k - l))
+        n - m = Int.from_nat(l) - Int.from_nat(k)
+        n - m = -(Int.from_nat(k - l))
+        pow_inverse[F](a, Int.from_nat(k - l))
+        a.zpow(-(Int.from_nat(k - l))) = a.inverse.zpow(Int.from_nat(k - l))
+        a.zpow(n - m) = a.inverse.zpow(Int.from_nat(k - l))
+        a.inverse.zpow(Int.from_nat(k - l)) = a.inverse.pow(k - l)
+        a.zpow(n - m) = a.inverse.pow(k - l)
+        a.inverse.pow(k - l) = a.zpow(n - m)
         a.zpow(n) * a.inverse.zpow(m) = a.zpow(n - m)
     }
 }
@@ -354,6 +414,15 @@ theorem pow_inverse2[F: Field](a: F, n: Int) {
             a.pow(Nat.0) = F.1
             a.zpow(-n) = a.zpow(n).inverse
         } else {
+            n != Int.0
+            -n != Int.0
+            zero_pow[F](n)
+            zero_pow[F](-n)
+            F.0.zpow(n) = F.0
+            F.0.zpow(-n) = F.0
+            a.zpow(n) = F.0
+            a.zpow(n).inverse = F.0
+            a.zpow(-n) = F.0
             a.zpow(-n) = a.zpow(n).inverse
         }
     } else {
@@ -438,6 +507,9 @@ theorem pow_pow[F: Field](a: F, n: Int, m: Int) {
             a.inverse != F.0
             a.inverse.zpow(-n).zpow(-m) = a.inverse.zpow((-n) * (-m))
             a.zpow(n).zpow(-m) = a.inverse.zpow((-n) * (-m))
+            (-n) * (-m) = -(n * (-m))
+            n * (-m) = -(n * m)
+            -(-(n * m)) = n * m
             (-n) * (-m) = n * m
             // a.inverse.zpow(n * m) = a.zpow(-(n * m)).inverse = a.zpow(n * -m)
 

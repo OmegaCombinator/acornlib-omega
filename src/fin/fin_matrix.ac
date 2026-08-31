@@ -14,7 +14,7 @@ from algebra_core import Ring
 from algebra_core import CommRing
 from algebra_core import Semiring
 from algebra import Module, module_smul_add_left, module_smul_add_right, module_smul_assoc, module_smul_one, module_smul_zero_left, module_smul_zero_right, module_smul_neg_left, module_smul_neg_right
-from function import function_extensionality
+from function import function_extensionality, binary_function_extensionality
 from fin.fin_vector import fin_vector_add, fin_vector_neg, fin_vector_smul, fin_vector_sub, fin_vector_zero
 from list import List, map, sum
 from fin.fin_sum import fin_sum, fin_pointwise_add, fin_zero_function, fin_sum_add, fin_sum_pointwise_eq, fin_sum_zero_function, fin_sum_zero_of_bound_zero
@@ -333,10 +333,30 @@ theorem matrix_entry_self[A](m: Nat, n: Nat, a: Matrix[A, m, n], i: Fin[m], j: F
 /// A matrix is determined by its entries.
 theorem matrix_ext[A](m: Nat, n: Nat, a: Matrix[A, m, n], b: Matrix[A, m, n]) {
     (forall(i: Fin[m], j: Fin[n]) { matrix_entry[A](m, n, a, i, j) = matrix_entry[A](m, n, b, i, j) }) implies a = b
+} by {
+    if forall(i: Fin[m], j: Fin[n]) { matrix_entry[A](m, n, a, i, j) = matrix_entry[A](m, n, b, i, j) } {
+        forall(i: Fin[m], j: Fin[n]) {
+            matrix_entry[A](m, n, a, i, j) = a.entry(i, j)
+            matrix_entry[A](m, n, b, i, j) = b.entry(i, j)
+            a.entry(i, j) = b.entry(i, j)
+        }
+        binary_function_extensionality(a.entry, b.entry)
+        a.entry = b.entry
+        Matrix[A, m, n].new(a.entry) = a
+        Matrix[A, m, n].new(b.entry) = b
+        Matrix[A, m, n].new(a.entry) = Matrix[A, m, n].new(b.entry)
+        a = b
+    }
 }
 
 /// The zero matrix has zero in every entry.
 theorem matrix_entry_zero[A: Zero](m: Nat, n: Nat, i: Fin[m], j: Fin[n]) {
+    matrix_entry[A](m, n, matrix_zero[A](m, n), i, j) = A.0
+} by {
+    matrix_entry[A](m, n, matrix_zero[A](m, n), i, j) = matrix_zero[A](m, n).entry(i, j)
+    matrix_zero[A](m, n).entry = matrix_zero_entry[A](m, n)
+    matrix_zero[A](m, n).entry(i, j) = matrix_zero_entry[A](m, n, i, j)
+    matrix_zero_entry[A](m, n, i, j) = A.0
     matrix_entry[A](m, n, matrix_zero[A](m, n), i, j) = A.0
 }
 
@@ -412,6 +432,7 @@ theorem matrix_entry_one_off_diag[S: Semiring](n: Nat, i: Fin[n], j: Fin[n]) {
     if i != j {
         matrix_entry[S](n, n, matrix_one[S](n), i, j) = matrix_one_entry[S](n, i, j)
         matrix_one_entry[S](n, i, j) = S.0
+        matrix_entry[S](n, n, matrix_one[S](n), i, j) = S.0
     }
 }
 
@@ -818,6 +839,7 @@ theorem matrix_mul_zero_left_row[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix[
         fin_sum_zero_function[S](n)
         fin_sum[S](n, fin_zero_function[S](n)) = S.0
         matrix_entry[S](m, p, prod, i, j) = S.0
+        matrix_entry[S](m, p, matrix_mul[S](m, n, p, a, b), i, j) = S.0
     }
 }
 
@@ -839,6 +861,7 @@ theorem matrix_mul_zero_right_col[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix
         fin_sum_zero_function[S](n)
         fin_sum[S](n, fin_zero_function[S](n)) = S.0
         matrix_entry[S](m, p, prod, i, j) = S.0
+        matrix_entry[S](m, p, matrix_mul[S](m, n, p, a, b), i, j) = S.0
     }
 }
 
@@ -855,6 +878,7 @@ theorem matrix_mul_zero_left[S: Semiring](m: Nat, n: Nat, p: Nat, b: Matrix[S, n
             matrix_entry[S](m, n, z, i, k) = S.0
         }
         matrix_mul_zero_left_row[S](m, n, p, z, b, i, j)
+        matrix_entry[S](m, p, matrix_mul[S](m, n, p, z, b), i, j) = S.0
         matrix_entry_zero[S](m, p, i, j)
         matrix_entry[S](m, p, lhs, i, j) = S.0
         matrix_entry[S](m, p, rhs, i, j) = S.0
@@ -877,6 +901,7 @@ theorem matrix_mul_zero_right[S: Semiring](m: Nat, n: Nat, p: Nat, a: Matrix[S, 
             matrix_entry[S](n, p, z, k, j) = S.0
         }
         matrix_mul_zero_right_col[S](m, n, p, a, z, i, j)
+        matrix_entry[S](m, p, matrix_mul[S](m, n, p, a, z), i, j) = S.0
         matrix_entry_zero[S](m, p, i, j)
         matrix_entry[S](m, p, lhs, i, j) = S.0
         matrix_entry[S](m, p, rhs, i, j) = S.0

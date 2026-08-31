@@ -855,6 +855,15 @@ theorem determinant_list_zero_row_head[R: Ring, I](entry: (I, I) -> R, row: I, t
         }))
         forall(col: I) {
             entry(row, col) = R.0
+            R.0 * alternating_sign[R](list_index_or_zero(cols, col)) = R.0
+            entry(row, col) * alternating_sign[R](list_index_or_zero(cols, col)) =
+                R.0 * alternating_sign[R](list_index_or_zero(cols, col))
+            entry(row, col) * alternating_sign[R](list_index_or_zero(cols, col)) = R.0
+            entry(row, col) * alternating_sign[R](list_index_or_zero(cols, col)) * R.0 = R.0
+            entry(row, col) * alternating_sign[R](list_index_or_zero(cols, col)) *
+                determinant_list(entry, tail, cols.remove_one(col)) =
+                R.0 * determinant_list(entry, tail, cols.remove_one(col))
+            R.0 * determinant_list(entry, tail, cols.remove_one(col)) = R.0
             entry(row, col) * alternating_sign[R](list_index_or_zero(cols, col)) *
                 determinant_list(entry, tail, cols.remove_one(col)) = R.0
         }
@@ -906,6 +915,7 @@ theorem determinant_list_zero_row_anywhere[R: Ring, I](entry: (I, I) -> R, rows:
                             forall(col2: I) {
                                 if tail.contains(row) and (forall(col3: I) { entry(row, col3) = R.0 }) {
                                     determinant_list(entry, tail, other2.remove_one(col2)) = R.0
+                                    entry(head, col2) * alternating_sign[R](list_index_or_zero(other2, col2)) * R.0 = R.0
                                     entry(head, col2) * alternating_sign[R](list_index_or_zero(other2, col2)) *
                                         determinant_list(entry, tail, other2.remove_one(col2)) = R.0
                                 }
@@ -1515,8 +1525,10 @@ theorem remove_one_length_suc[T](list: List[T], item: T) {
             }
             p(List.cons(head, tail))
         }
+        p(tail) implies p(List.cons(head, tail))
     }
     List.induction(function(l: List[T]) { p(l) })
+    p(List.nil[T]) and forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
     forall(l: List[T]) { p(l) }
     p(list)
     list.contains(item) implies list.remove_one(item).length.suc = list.length
@@ -2559,6 +2571,8 @@ theorem list_index_or_zero_remove_after[I](list: List[I], x: I, c: I) {
                     head != c
                     list_index_or_zero_cons_other[I](head, tail, c)
                     list_index_or_zero[I](List.cons(head, tail), c) = list_index_or_zero[I](tail, c).suc
+                    list_index_or_zero[I](tail, c) < list_index_or_zero[I](tail, c).suc
+                    lt_trans(list_index_or_zero[I](tail, c), list_index_or_zero[I](tail, c).suc, list_index_or_zero[I](List.cons(head, tail), x))
                     list_index_or_zero[I](tail, c) < list_index_or_zero[I](List.cons(head, tail), x)
                     list_index_or_zero_cons_self[I](head, tail)
                     list_index_or_zero[I](List.cons(head, tail), x) = Nat.0
@@ -2870,6 +2884,18 @@ theorem triangular_preserved_remove[R: Ring, I](entry: (I, I) -> R, head: I, tai
                 }
                 c != x
                 list_index_or_zero_injective_unique[I](cols, x, c)
+                if list_index_or_zero[I](cols, x) = list_index_or_zero[I](cols, c) {
+                    list_index_or_zero_injective_unique[I](cols, x, c)
+                    cols.is_unique and cols.contains(x) and cols.contains(c) and
+                        list_index_or_zero[I](cols, x) = list_index_or_zero[I](cols, c) implies x = c
+                    cols.is_unique
+                    cols.contains(x)
+                    cols.contains(c)
+                    list_index_or_zero[I](cols, x) = list_index_or_zero[I](cols, c)
+                    x = c
+                    c = x
+                    false
+                }
                 list_index_or_zero[I](cols, x) != list_index_or_zero[I](cols, c)
                 if list_index_or_zero[I](cols, c) < list_index_or_zero[I](cols, x) {
                     list_index_or_zero_remove_after[I](cols, x, c)
@@ -3015,6 +3041,7 @@ theorem remove_one_comm[T](list: List[T], x: T, y: T) {
             List.cons(head, tail).remove_one(x).remove_one(y) =
                 List.cons(head, tail).remove_one(y).remove_one(x)
         }
+        p(tail) implies p(List.cons(head, tail))
     }
     p(List.nil[T]) and forall(head: T, tail: List[T]) { p(tail) implies p(List.cons(head, tail)) }
     List.induction(p)
