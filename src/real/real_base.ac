@@ -72,6 +72,9 @@ theorem gt_is_lower(r: Rat) {
     forall(x: Rat, y: Rat) {
         if r.gt(y) and x < y {
             r > y
+            y < r
+            x < y
+            x < r
             r > x
         }
     }
@@ -802,6 +805,17 @@ theorem lt_some_rat(a: Real) {
     exists(r: Rat) {
         a < Real.from_rat(r)
     }
+} by {
+    lte_some_rat(a)
+    exists(r0: Rat) { a <= Real.from_rat(r0) }
+    let r0: Rat satisfy { a <= Real.from_rat(r0) }
+    a <= Real.from_rat(r0)
+    r0 < r0 + Rat.1
+    from_rat_maintains_lt(r0, r0 + Rat.1)
+    Real.from_rat(r0) < Real.from_rat(r0 + Rat.1)
+    lte_lt_trans(a, Real.from_rat(r0), Real.from_rat(r0 + Rat.1))
+    a < Real.from_rat(r0 + Rat.1)
+    exists(r: Rat) { a < Real.from_rat(r) }
 }
 
 theorem gt_some_rat(a: Real) {
@@ -829,6 +843,10 @@ theorem gt_some_int(a: Real) {
     let r: Rat satisfy {
         a > Real.from_rat(r)
     }
+    Rat.from_int(r.floor) <= r
+    from_rat_maintains_lte(Rat.from_int(r.floor), r)
+    Real.from_rat(Rat.from_int(r.floor)) <= Real.from_rat(r)
+    Real.from_int(r.floor) = Real.from_rat(Rat.from_int(r.floor))
     Real.from_int(r.floor) <= Real.from_rat(r)
 }
 
@@ -854,7 +872,15 @@ theorem real_neg_imp_rat_neg(r: Rat) {
 theorem lt_some_int_cancel(m: Int, n: Int) {
     Real.from_int(m) < Real.from_int(n) implies m < n
 } by {
-    Rat.from_int(m) < Rat.from_int(n)
+    if Real.from_int(m) < Real.from_int(n) {
+        Real.from_int(m) = Real.from_rat(Rat.from_int(m))
+        Real.from_int(n) = Real.from_rat(Rat.from_int(n))
+        Real.from_rat(Rat.from_int(m)) < Real.from_rat(Rat.from_int(n))
+        Rat.from_int(m) < Rat.from_int(n)
+        Rat.from_int(m) < Rat.from_int(n) implies m < n
+        m < n
+    }
+    Real.from_int(m) < Real.from_int(n) implies m < n
 }
 
 theorem floor_exists(a: Real) {
@@ -988,6 +1014,12 @@ theorem lt_add_pos_rat(a: Real, r: Rat) {
         }
 
         // Base case
+        Int.from_nat(Nat.0) = Int.0
+        Rat.from_int(Int.0) = Rat.0
+        r * Rat.0 = Rat.0
+        Real.from_rat(Rat.0) = Real.0
+        a + Real.0 = a
+        a = a + Real.from_rat(r * Rat.from_int(Int.from_nat(Nat.0)))
         f(Nat.0)
 
         // Inductive step
@@ -1034,12 +1066,6 @@ theorem lt_add_pos(a: Real, b: Real) {
     a < a + Real.from_rat(r)
 }
 
-theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
-    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
-} by {
-  a + Real.from_rat(r) + Real.from_rat(-r) < b + Real.from_rat(r) + Real.from_rat(-r)
-}
-
 theorem lt_add_rat_left(a: Real, b: Real, r: Rat) {
     a < b implies Real.from_rat(r) + a < Real.from_rat(r) + b
 }
@@ -1079,6 +1105,12 @@ theorem lt_add_right(a: Real, b: Real, c: Real) {
     a + c + Real.from_rat(r) <= b + c
     a + c < a + c + Real.from_rat(r)
     a + c < b + c
+}
+
+theorem lt_add_rat_right(a: Real, b: Real, r: Rat) {
+    a < b implies a + Real.from_rat(r) < b + Real.from_rat(r)
+} by {
+    lt_add_right(a, b, Real.from_rat(r))
 }
 
 theorem lt_add_left(a: Real, b: Real, c: Real) {
@@ -1129,6 +1161,7 @@ theorem neg_gt_is_lower(a: Real) {
             a < Real.from_rat(-y)
             -y < -x
             Real.from_rat(-y) < Real.from_rat(-x)
+            lt_trans(a, Real.from_rat(-y), Real.from_rat(-x))
             a < Real.from_rat(-x)
             neg_gt(a, x)
         }
@@ -1347,6 +1380,11 @@ theorem add_neg_gte_zero(a: Real) {
         let b: Rat satisfy {
             Real.from_rat(b) < a and a < Real.from_rat(b + -r)
         }
+        -Real.from_rat(-b + r) = Real.from_rat(-(-b + r))
+        -(-b + r) = b + -r
+        Real.from_rat(-(-b + r)) = Real.from_rat(b + -r)
+        -Real.from_rat(-b + r) = Real.from_rat(b + -r)
+        a < Real.from_rat(b + -r)
         a < -Real.from_rat(-b + r)
         a + -a > Real.from_rat(b) + Real.from_rat(-b + r)
         false
@@ -1823,6 +1861,10 @@ theorem close_rats_imp_close_reals(q: Rat, r: Rat, eps: Rat) {
     q.is_close(r, eps) implies Real.from_rat(q).is_close(Real.from_rat(r), Real.from_rat(eps))
 } by {
     Real.from_rat((q - r).abs) < Real.from_rat(eps)
+    Real.from_rat(q) - Real.from_rat(r) = Real.from_rat(q - r)
+    (Real.from_rat(q) - Real.from_rat(r)).abs = Real.from_rat(q - r).abs
+    Real.from_rat(q - r).abs = Real.from_rat((q - r).abs)
+    (Real.from_rat(q) - Real.from_rat(r)).abs = Real.from_rat((q - r).abs)
     (Real.from_rat(q) - Real.from_rat(r)).abs < Real.from_rat(eps)
 }
 

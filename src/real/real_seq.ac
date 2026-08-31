@@ -5,7 +5,7 @@ from rational import Rat, iop
 from rational import finite_seq_abs_bounded
 from rational import no_greatest
 from function import compose
-from real.real_base import Real, is_cut, is_lower, is_greatest, has_greatest, is_dedekind_cut, add_rat_eps_between, close_imp_bounds, close_comm, pos_gt_zero, gt_zero_imp_pos, rat_between_reals, rat_between_reals_gt, rat_intersect, lt_some_rat, from_rat_maintains_lte
+from real.real_base import Real, is_cut, is_lower, is_greatest, has_greatest, is_dedekind_cut, add_rat_eps_between, close_imp_bounds, close_comm, pos_gt_zero, gt_zero_imp_pos, rat_between_reals, rat_between_reals_gt, rat_intersect, lt_some_rat, from_rat_maintains_lte, lt_trans, lte_lt_trans, lt_lte_trans
 
 /// The bound on the end of a sequence that's part of the Cauchy convergence condition.
 /// Separating it out like this makes convergence a bit clearer to prove.
@@ -96,6 +96,15 @@ theorem cauchy_gt_something(q: Nat -> Real) {
     }
     forall(i: Nat) {
         if n <= i {
+            cauchy_bound(q, n, eps) = forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
+            n <= i and n <= n implies q(i).is_close(q(n), eps)
+            n <= i and n <= n
+            q(i).is_close(q(n), eps)
+            close_imp_bounds(q(i), q(n), eps)
+            q(n) - eps < q(i)
+            q(n) - eps <= q(i)
+            lb < q(n) - eps
+            lt_lte_trans(lb, q(n) - eps, q(i))
             lb <= q(i)
         }
     }
@@ -138,11 +147,19 @@ theorem cauchy_gt_not_everything(q: Nat -> Real) {
             lb <= q(n2)
             q(n2).is_close(q(n), Real.1)
             q(n2) < q(n) + Real.1
+            lte_lt_trans(lb, q(n2), q(n) + Real.1)
             lb < q(n) + Real.1
             not lb < q(n) + Real.1
             false
         } else {
+            Real.from_rat(r) < lb
+            lb < lb + Real.1
+            lt_trans(Real.from_rat(r), lb, lb + Real.1)
             Real.from_rat(r) < lb + Real.1
+            q(n) < q(n) + Real.1
+            q(n) + Real.1 < Real.from_rat(r)
+            lt_trans(q(n), q(n) + Real.1, Real.from_rat(r))
+            q(n) < Real.from_rat(r)
             Real.from_rat(r) < q(n)
             false
         }
@@ -288,6 +305,8 @@ theorem eventual_lb_extends(q: Nat -> Real, lb1: Real, lb2: Real) {
         forall(i: Nat) {
             if n <= i {
                 lb1 <= q(i)
+                lb2 <= lb1
+                lte_trans(lb2, lb1, q(i))
                 lb2 <= q(i)
             }
         }
@@ -311,6 +330,8 @@ theorem lt_limit_imp_lb(q: Nat -> Real, lb: Real) {
             Real.from_rat(r) < lb2 and eventual_lb(q, lb2)
         }
         Real.from_rat(r) < lb2
+        lb < Real.from_rat(r)
+        lt_trans(lb, Real.from_rat(r), lb2)
         lb < lb2
         eventual_lb(q, lb2)
         eventual_lb(q, lb2) and lb < lb2 implies eventual_lb(q, lb)
@@ -363,6 +384,8 @@ theorem eventual_ub_extends(q: Nat -> Real, ub1: Real, ub2: Real) {
         forall(i: Nat) {
             if n <= i {
                 q(i) <= ub1
+                ub1 <= ub2
+                lte_trans(q(i), ub1, ub2)
                 q(i) <= ub2
             }
         }
@@ -450,6 +473,11 @@ theorem lb_ub_imp_eq(q: Nat -> Real, a: Real) {
     forall(i: Nat) {
         if n <= i {
             q(i) >= a
+            n1 <= n
+            n <= i
+            lte_trans(n1, n, i)
+            n1 <= i
+            q(i) <= a
             q(i) = a
         }
     }
@@ -475,6 +503,8 @@ theorem lb_lte_ub(q: Nat -> Real, lb: Real, ub: Real) {
     }
     lb <= q(k)
     q(k) <= ub
+    lte_trans(lb, q(k), ub)
+    lb <= ub
 }
 
 theorem ub_imp_limit_lte(q: Nat -> Real, ub: Real) {
@@ -489,6 +519,8 @@ theorem ub_imp_limit_lte(q: Nat -> Real, ub: Real) {
             converges(q) and Real.from_rat(r) < limit(q)
             eventual_lb(q, Real.from_rat(r))
             eventual_lb(q, Real.from_rat(r)) and eventual_ub(q, ub)
+            lb_lte_ub(q, Real.from_rat(r), ub)
+            eventual_lb(q, Real.from_rat(r)) and eventual_ub(q, ub) implies Real.from_rat(r) <= ub
             Real.from_rat(r) <= ub
             not Real.from_rat(r) <= ub
             false
@@ -503,6 +535,12 @@ theorem cauchy_imp_lb(q: Nat -> Real, n: Nat, eps: Real) {
 } by {
     forall(i: Nat) {
         if n <= i {
+            cauchy_bound(q, n, eps) = forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
+            n <= i and n <= n implies q(i).is_close(q(n), eps)
+            n <= i and n <= n
+            q(i).is_close(q(n), eps)
+            close_imp_bounds(q(i), q(n), eps)
+            q(n) - eps < q(i)
             q(n) - eps <= q(i)
         }
     }
@@ -558,8 +596,20 @@ theorem limit_lt_imp_ub(q: Nat -> Real, ub: Real) {
         cauchy_bound(q, n, eps)
     }
     if q(n) + eps = limit(q) + eps + eps {
+        limit(q) + eps + eps < ub
+        q(n) + eps < ub
+        cauch_imp_ub(q, n, eps)
+        eventual_ub(q, q(n) + eps)
+        eventual_ub_extends(q, q(n) + eps, ub)
+        eventual_ub(q, ub)
     } else {
         q(n) + eps < limit(q) + eps + eps
+        limit(q) + eps + eps < ub
+        lt_trans(q(n) + eps, limit(q) + eps + eps, ub)
+        q(n) + eps < ub
+        cauch_imp_ub(q, n, eps)
+        eventual_ub(q, q(n) + eps)
+        eventual_ub_extends(q, q(n) + eps, ub)
         eventual_ub(q, ub)
     }
 }
@@ -580,6 +630,14 @@ theorem limit_in_union(seq: Nat -> Real, a: Real, b: Real) {
             forall(i: Nat) {
                 if n <= i {
                     Real.from_rat(r) <= seq(i)
+                    if seq(i) <= a {
+                        Real.from_rat(r) <= seq(i)
+                        seq(i) <= a
+                        lte_trans(Real.from_rat(r), seq(i), a)
+                        Real.from_rat(r) <= a
+                        a < Real.from_rat(r)
+                        false
+                    }
                     not (seq(i) <= a)
                     b <= seq(i)
                 }
