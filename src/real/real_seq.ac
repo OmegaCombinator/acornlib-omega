@@ -1,6 +1,6 @@
 /// This file defines Cauchy sequences and proves various things about them.
-from nat import Nat
-from order import lte_trans
+from nat import Nat, lt_or_lte
+from order import lte_trans, lte_or_gte
 from rational import Rat, iop
 from rational import finite_seq_abs_bounded
 from rational import no_greatest
@@ -97,7 +97,10 @@ theorem cauchy_gt_something(q: Nat -> Real) {
     forall(i: Nat) {
         if n <= i {
             cauchy_bound(q, n, eps) = forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
+            forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
             n <= i and n <= n implies q(i).is_close(q(n), eps)
+            n <= i
+            n <= n
             n <= i and n <= n
             q(i).is_close(q(n), eps)
             close_imp_bounds(q(i), q(n), eps)
@@ -105,6 +108,7 @@ theorem cauchy_gt_something(q: Nat -> Real) {
             q(n) - eps <= q(i)
             lb < q(n) - eps
             lt_lte_trans(lb, q(n) - eps, q(i))
+            lb < q(i)
             lb <= q(i)
         }
     }
@@ -536,7 +540,10 @@ theorem cauchy_imp_lb(q: Nat -> Real, n: Nat, eps: Real) {
     forall(i: Nat) {
         if n <= i {
             cauchy_bound(q, n, eps) = forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
+            forall(i2: Nat, j: Nat) { n <= i2 and n <= j implies q(i2).is_close(q(j), eps) }
             n <= i and n <= n implies q(i).is_close(q(n), eps)
+            n <= i
+            n <= n
             n <= i and n <= n
             q(i).is_close(q(n), eps)
             close_imp_bounds(q(i), q(n), eps)
@@ -746,6 +753,9 @@ theorem eps_lt_half(a: Real) {
     let b = c / Rat.2
     Real.from_rat(c) <= Real.from_rat(c).abs
     Real.from_rat(c).abs = Real.from_rat(c.abs)
+    Real.from_rat(c) <= Real.from_rat(c.abs)
+    Real.0 < Real.from_rat(c)
+    lt_lte_trans(Real.0, Real.from_rat(c), Real.from_rat(c.abs))
     Real.0 < Real.from_rat(c.abs)
     c.is_positive
     Real.from_rat(b) + Real.from_rat(b) = Real.from_rat(c)
@@ -771,10 +781,29 @@ theorem is_close_triangle(a: Real, b: Real, c: Real, ace: Real, bce: Real) {
     a.is_close(b, ace + bce)
 } by {
     // First let's lower-bound a
+    close_imp_bounds(a, c, ace)
+    c - ace < a
+    close_imp_bounds(b, c, bce)
+    b < c + bce
+    b - bce < c
+    (c - ace) + ace < a + ace
+    c - ace + ace = c
+    c < a + ace
+    lt_trans(b - bce, c, a + ace)
+    b - bce < a + ace
     a + ace > b - bce
 
     // Then let's upper-bound a
     c + ace < b + bce + ace
+    close_imp_bounds(a, c, ace)
+    a < c + ace
+    lt_trans(a, c + ace, b + bce + ace)
+    a < b + bce + ace
+    b + bce + ace = b + (bce + ace)
+    bce + ace = ace + bce
+    b + (bce + ace) = b + (ace + bce)
+    b + (ace + bce) = b + ace + bce
+    b + bce + ace = b + ace + bce
     a < b + ace + bce
 
 }
@@ -1085,6 +1114,12 @@ theorem limit_add_seq(a: Nat -> Real, b: Nat -> Real) {
                     a(i).is_close(limit(a), eps2)
                     b(i).is_close(limit(b), eps2)
                     (a(i) + b(i)).is_close(limit(a) + limit(b), eps2 + eps2)
+                    (a(i) + b(i) - (limit(a) + limit(b))).abs < eps2 + eps2
+                    eps2 + eps2 < eps
+                    lt_trans((a(i) + b(i) - (limit(a) + limit(b))).abs, eps2 + eps2, eps)
+                    (a(i) + b(i) - (limit(a) + limit(b))).abs < eps
+                    q(i) = a(i) + b(i)
+                    ql = limit(a) + limit(b)
                     q(i).is_close(ql, eps)
                 }
             }
@@ -1142,6 +1177,11 @@ theorem rat_close_to_both_lt(x: Real, y: Real, eps: Real) {
     }
     y < Real.from_rat(r) + eps
     x.is_close(Real.from_rat(r), eps)
+    y.is_close(Real.from_rat(r), eps)
+    x.is_close(Real.from_rat(r), eps) and y.is_close(Real.from_rat(r), eps)
+    exists(r2: Rat) {
+        x.is_close(Real.from_rat(r2), eps) and y.is_close(Real.from_rat(r2), eps)
+    }
 }
 
 theorem rat_close(x: Real, y: Real, eps: Real) {
@@ -1327,6 +1367,14 @@ theorem close_limit_imp_seqs_get_close(a: Nat -> Real, b: Nat -> Real, eps: Real
 
 theorem close_and_lt_imp_close(x: Real, y: Real, eps1: Real, eps2: Real) {
     x.is_close(y, eps1) and eps1 < eps2 implies x.is_close(y, eps2)
+} by {
+    if x.is_close(y, eps1) and eps1 < eps2 {
+        (x - y).abs < eps1
+        eps1 < eps2
+        lt_trans((x - y).abs, eps1, eps2)
+        (x - y).abs < eps2
+        x.is_close(y, eps2)
+    }
 }
 
 theorem find_less_than_a_third(x: Real) {
@@ -1497,11 +1545,20 @@ theorem converges_imp_bounded(a: Nat -> Rat) {
     }
     if eventual_bound <= finite_bound {
         Real.from_rat(eventual_bound) <= Real.from_rat(finite_bound)
+        eventual < Real.from_rat(eventual_bound)
+        lt_lte_trans(eventual, Real.from_rat(eventual_bound), Real.from_rat(finite_bound))
         eventual < Real.from_rat(finite_bound)
         exists(bound: Rat) {
             eventual < Real.from_rat(bound) and finite < bound
         }
     } else {
+        not eventual_bound <= finite_bound
+        lte_or_gte(eventual_bound, finite_bound)
+        eventual_bound <= finite_bound or finite_bound <= eventual_bound
+        finite_bound <= eventual_bound
+        finite_bound != eventual_bound
+        finite_bound < eventual_bound
+        finite < finite_bound
         finite < eventual_bound
         exists(bound: Rat) {
             eventual < Real.from_rat(bound) and finite < bound
@@ -1515,6 +1572,13 @@ theorem converges_imp_bounded(a: Nat -> Rat) {
             Real.from_rat(bound).gt_rat(a(i))
             a(i) < bound
         } else {
+            not n <= i
+            lt_or_lte(n, i)
+            n < i or i <= n
+            if n < i {
+                n <= i
+                false
+            }
             i <= n
             a(i) < finite
             finite < bound
