@@ -4,7 +4,7 @@ from list import partial
 from function import flip
 from real.real_base import Real, not_lte_imp_gt
 from real.rectangular_sum import rectangular_sum, row_sum, col_sum, nonneg_fn_2, rectangular_sum_nonneg, rectangular_sum_increasing_rows, rectangular_sum_increasing_cols, rectangular_sum_zero_rows, rectangular_sum_zero_cols, add_fn_2, sub_fn_2, rectangular_sum_add, rectangular_sum_sub, lte_fn_2
-from real.double_limit import all_cols_converge, all_rows_converge, double_limit_condition, double_converges_to, double_converges, double_limit, doubly_increasing, double_image_is_supremum, double_is_upper_bound, double_image, doubly_increasing_bounded_converges, double_limit_eq_of_converges_to, row_limit, col_limit, row_limit_unfold, col_limit_unfold, iterated_limit_rows, iterated_limit_cols, monotone_convergence_interchange, iterated_rows_converges, iterated_cols_converges, double_limit_sub
+from real.double_limit import double_limit_condition, double_converges_to, double_converges, double_limit, doubly_increasing, double_image_is_supremum, double_is_upper_bound, double_image, doubly_increasing_bounded_converges, double_limit_eq_of_converges_to, row_limit, col_limit, row_limit_unfold, col_limit_unfold, iterated_limit_rows, iterated_limit_cols, monotone_convergence_interchange, iterated_rows_converges, iterated_cols_converges, double_limit_sub
 from real.real_seq import converges, limit, converges_to, converges_to_imp_converges, converges_imp_converges_to, converges_to_unique, eventual_eq, eq_converges, eq_imp_limit, add_seq, limit_add_seq, tail_bound
 from real.real_series import real_is_increasing, is_upper_bound, increasing_convergent_bounded_by_limit, monotone_convergence_principle, neg_seq, neg_seq_converges, neg_seq_converges_to, partial_zero, increasing_is_monotone
 from real.abs_conv import sub_seq
@@ -68,7 +68,15 @@ define square_sum_seq(f: (Nat, Nat) -> Real, n: Nat) -> Real {
 
 
 /// True if all row series of f converge.
+define all_row_series_converge(f: (Nat, Nat) -> Real) -> Bool {
+    forall(i: Nat) { converges(partial(f(i))) }
+}
+
 /// True if all column series of f converge.
+define all_col_series_converge(f: (Nat, Nat) -> Real) -> Bool {
+    forall(j: Nat) { converges(partial(flip(f, j))) }
+}
+
 /// For nonnegative functions, partial sums of a row are increasing.
 theorem row_partial_increasing(f: (Nat, Nat) -> Real, i: Nat) {
     nonneg_fn_2(f)
@@ -200,17 +208,17 @@ theorem col_sum_bounded_by_infinite(f: (Nat, Nat) -> Real, j: Nat, m: Nat) {
 /// If a_{m,n} ≥ 0 and b_i = sum_{j=0}^∞ a_{i,j}, then
 /// sum_{i=0}^{m-1} sum_{j=0}^{n-1} a_{i,j} ≤ sum_{i=0}^{m-1} b_i.
 theorem rectangular_sum_bounded_by_row_sums(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    nonneg_fn_2(f) and all_rows_converge(f)
+    nonneg_fn_2(f) and all_row_series_converge(f)
     implies
     rectangular_sum(f, m, n) <= partial(row_sums_seq(f), m)
 } by {
     define p(k: Nat) -> Bool {
-        nonneg_fn_2(f) and all_rows_converge(f)
+        nonneg_fn_2(f) and all_row_series_converge(f)
         implies
         rectangular_sum(f, k, n) <= partial(row_sums_seq(f), k)
     }
 
-    if nonneg_fn_2(f) and all_rows_converge(f) {
+    if nonneg_fn_2(f) and all_row_series_converge(f) {
         rectangular_sum(f, Nat.0, n) = partial(row_sums_seq(f), Nat.0)
         rectangular_sum(f, Nat.0, n) <= partial(row_sums_seq(f), Nat.0)
     }
@@ -219,7 +227,7 @@ theorem rectangular_sum_bounded_by_row_sums(f: (Nat, Nat) -> Real, m: Nat, n: Na
 
     forall(k: Nat) {
         if p(k) {
-            if nonneg_fn_2(f) and all_rows_converge(f) {
+            if nonneg_fn_2(f) and all_row_series_converge(f) {
                 rectangular_sum(f, k.suc, n) = rectangular_sum(f, k, n) + row_sum(f, n, k)
                 rectangular_sum(f, k, n) <= partial(row_sums_seq(f), k)
                 converges(partial(f(k)))
@@ -241,17 +249,17 @@ theorem rectangular_sum_bounded_by_row_sums(f: (Nat, Nat) -> Real, m: Nat, n: Na
 /// If a_{m,n} ≥ 0 and c_j = sum_{i=0}^∞ a_{i,j}, then
 /// sum_{i=0}^{m-1} sum_{j=0}^{n-1} a_{i,j} ≤ sum_{j=0}^{n-1} c_j.
 theorem rectangular_sum_bounded_by_col_sums(f: (Nat, Nat) -> Real, m: Nat, n: Nat) {
-    nonneg_fn_2(f) and all_cols_converge(f)
+    nonneg_fn_2(f) and all_col_series_converge(f)
     implies
     rectangular_sum(f, m, n) <= partial(col_sums_seq(f), n)
 } by {
     define p(k: Nat) -> Bool {
-        nonneg_fn_2(f) and all_cols_converge(f)
+        nonneg_fn_2(f) and all_col_series_converge(f)
         implies
         rectangular_sum(f, m, k) <= partial(col_sums_seq(f), k)
     }
 
-    if nonneg_fn_2(f) and all_cols_converge(f) {
+    if nonneg_fn_2(f) and all_col_series_converge(f) {
         rectangular_sum(f, m, Nat.0) = partial(col_sums_seq(f), Nat.0)
         rectangular_sum(f, m, Nat.0) <= partial(col_sums_seq(f), Nat.0)
     }
@@ -260,7 +268,7 @@ theorem rectangular_sum_bounded_by_col_sums(f: (Nat, Nat) -> Real, m: Nat, n: Na
 
     forall(k: Nat) {
         if p(k) {
-            if nonneg_fn_2(f) and all_cols_converge(f) {
+            if nonneg_fn_2(f) and all_col_series_converge(f) {
                 rectangular_sum(f, m, k.suc) = rectangular_sum(f, m, k) + col_sum(f, m, k)
                 rectangular_sum(f, m, k) <= partial(col_sums_seq(f), k)
                 converges(partial(flip(f, k)))
@@ -393,40 +401,40 @@ theorem col_partial_converges_of_supremum(f: (Nat, Nat) -> Real, s: Real, j: Nat
 }
 
 /// All row series converge under the Tonelli hypotheses.
-theorem all_rows_converge_of_supremum(f: (Nat, Nat) -> Real, s: Real) {
+theorem all_row_series_converge_of_supremum(f: (Nat, Nat) -> Real, s: Real) {
     nonneg_fn_2(f) and double_image_is_supremum(rectangular_sum(f), s)
     implies
-    all_rows_converge(f)
+    all_row_series_converge(f)
 } by {
     if nonneg_fn_2(f) and double_image_is_supremum(rectangular_sum(f), s) {
         forall(i: Nat) {
             converges(partial(f(i)))
         }
-        all_rows_converge(f)
+        all_row_series_converge(f)
     }
 }
 
 /// All column series converge under the Tonelli hypotheses.
-theorem all_cols_converge_of_supremum(f: (Nat, Nat) -> Real, s: Real) {
+theorem all_col_series_converge_of_supremum(f: (Nat, Nat) -> Real, s: Real) {
     nonneg_fn_2(f) and double_image_is_supremum(rectangular_sum(f), s)
     implies
-    all_cols_converge(f)
+    all_col_series_converge(f)
 } by {
     if nonneg_fn_2(f) and double_image_is_supremum(rectangular_sum(f), s) {
         forall(j: Nat) {
             converges(partial(flip(f, j)))
         }
-        all_cols_converge(f)
+        all_col_series_converge(f)
     }
 }
 
 /// The row-wise limit of rectangular sums equals the partial sum of row infinite sums.
 theorem row_limit_rectangular_sum(f: (Nat, Nat) -> Real, m: Nat) {
-    all_rows_converge(f)
+    all_row_series_converge(f)
     implies
     row_limit(rectangular_sum(f), m) = partial(row_sums_seq(f), m)
 } by {
-    if all_rows_converge(f) {
+    if all_row_series_converge(f) {
         define p(k: Nat) -> Bool {
             converges_to(rectangular_sum(f)(k), partial(row_sums_seq(f), k))
         }
@@ -461,7 +469,7 @@ theorem row_limit_rectangular_sum(f: (Nat, Nat) -> Real, m: Nat) {
                 converges_to(rectangular_sum(f)(k), limit(rectangular_sum(f)(k)))
                 limit(rectangular_sum(f)(k)) = partial(row_sums_seq(f), k)
 
-                all_rows_converge(f)
+                all_row_series_converge(f)
                 converges(partial(f(k)))
                 converges_to(partial(f(k)), limit(partial(f(k))))
                 row_infinite_sum(f, k) = limit(partial(f(k)))
@@ -506,11 +514,11 @@ theorem row_limit_rectangular_sum(f: (Nat, Nat) -> Real, m: Nat) {
 }
 /// The column-wise limit of rectangular sums equals the partial sum of column infinite sums.
 theorem col_limit_rectangular_sum(f: (Nat, Nat) -> Real, n: Nat) {
-    all_cols_converge(f)
+    all_col_series_converge(f)
     implies
     col_limit(rectangular_sum(f), n) = partial(col_sums_seq(f), n)
 } by {
-    if all_cols_converge(f) {
+    if all_col_series_converge(f) {
         define p(k: Nat) -> Bool {
             converges_to(flip(rectangular_sum(f))(k), partial(col_sums_seq(f), k))
         }
@@ -545,7 +553,7 @@ theorem col_limit_rectangular_sum(f: (Nat, Nat) -> Real, n: Nat) {
                 converges_to(flip(rectangular_sum(f))(k), limit(flip(rectangular_sum(f))(k)))
                 limit(flip(rectangular_sum(f))(k)) = partial(col_sums_seq(f), k)
 
-                all_cols_converge(f)
+                all_col_series_converge(f)
                 converges(partial(flip(f, k)))
                 converges_to(partial(flip(f, k)), limit(partial(flip(f, k))))
                 col_infinite_sum(f, k) = limit(partial(flip(f, k)))
@@ -591,11 +599,11 @@ theorem col_limit_rectangular_sum(f: (Nat, Nat) -> Real, n: Nat) {
 
 /// The iterated row sum equals the iterated limit over rows of rectangular sums.
 theorem iterated_row_sum_eq_limit(f: (Nat, Nat) -> Real) {
-    all_rows_converge(f)
+    all_row_series_converge(f)
     implies
     iterated_limit_rows(rectangular_sum(f)) = limit(partial(row_sums_seq(f)))
 } by {
-    if all_rows_converge(f) {
+    if all_row_series_converge(f) {
         forall(m: Nat) {
             row_limit(rectangular_sum(f), m) = partial(row_sums_seq(f), m)
         }
@@ -607,11 +615,11 @@ theorem iterated_row_sum_eq_limit(f: (Nat, Nat) -> Real) {
 
 /// The iterated column sum equals the iterated limit over columns of rectangular sums.
 theorem iterated_col_sum_eq_limit(f: (Nat, Nat) -> Real) {
-    all_cols_converge(f)
+    all_col_series_converge(f)
     implies
     iterated_limit_cols(rectangular_sum(f)) = limit(partial(col_sums_seq(f)))
 } by {
-    if all_cols_converge(f) {
+    if all_col_series_converge(f) {
         forall(n: Nat) {
             col_limit(rectangular_sum(f), n) = partial(col_sums_seq(f), n)
         }
@@ -661,13 +669,13 @@ theorem double_sum_limit_eq_supremum(f: (Nat, Nat) -> Real, s: Real) {
 /// Tonelli's theorem with explicit row and column convergence hypotheses.
 /// The double sum, row-iterated sum, and column-iterated sum all coincide.
 theorem tonelli_double_sum_aux(f: (Nat, Nat) -> Real, s: Real) {
-    nonneg_fn_2(f) and all_rows_converge(f) and all_cols_converge(f) and double_image_is_supremum(rectangular_sum(f), s)
+    nonneg_fn_2(f) and all_row_series_converge(f) and all_col_series_converge(f) and double_image_is_supremum(rectangular_sum(f), s)
     implies
     double_sum(f) = limit(partial(row_sums_seq(f))) and
     double_sum(f) = limit(partial(col_sums_seq(f))) and
     limit(partial(row_sums_seq(f))) = limit(partial(col_sums_seq(f)))
 } by {
-    if nonneg_fn_2(f) and all_rows_converge(f) and all_cols_converge(f) and double_image_is_supremum(rectangular_sum(f), s) {
+    if nonneg_fn_2(f) and all_row_series_converge(f) and all_col_series_converge(f) and double_image_is_supremum(rectangular_sum(f), s) {
         // Rectangular sums are doubly increasing.
         doubly_increasing(rectangular_sum(f))
 
@@ -680,13 +688,13 @@ theorem tonelli_double_sum_aux(f: (Nat, Nat) -> Real, s: Real) {
         iterated_limit_rows(rectangular_sum(f)) = iterated_limit_cols(rectangular_sum(f))
 
         // Express the iterated limits as iterated sums.
-        all_rows_converge(f)
+        all_row_series_converge(f)
         iterated_limit_rows(rectangular_sum(f)) = limit(partial(row_sums_seq(f)))
         limit(partial(row_sums_seq(f))) = iterated_limit_rows(rectangular_sum(f))
         iterated_limit_rows(rectangular_sum(f)) = s
         limit(partial(row_sums_seq(f))) = s
 
-        all_cols_converge(f)
+        all_col_series_converge(f)
         iterated_limit_cols(rectangular_sum(f)) = limit(partial(col_sums_seq(f)))
         limit(partial(col_sums_seq(f))) = iterated_limit_cols(rectangular_sum(f))
         iterated_limit_cols(rectangular_sum(f)) = s
@@ -722,8 +730,8 @@ theorem tonelli_double_sum(f: (Nat, Nat) -> Real, s: Real) {
     limit(partial(row_sums_seq(f))) = limit(partial(col_sums_seq(f)))
 } by {
     if nonneg_fn_2(f) and double_image_is_supremum(rectangular_sum(f), s) {
-        all_rows_converge(f)
-        all_cols_converge(f)
+        all_row_series_converge(f)
+        all_col_series_converge(f)
 
         double_sum(f) = limit(partial(row_sums_seq(f)))
         double_sum(f) = limit(partial(col_sums_seq(f)))
@@ -1392,8 +1400,8 @@ theorem row_iterated_limit_eq_double_sum(f: (Nat, Nat) -> Real, s: Real, s_pos: 
         double_sum(neg_part_2(f)) = limit(partial(row_sums_seq(neg_part_2(f))))
 
         // Row sums decompose
-        all_rows_converge(pos_part_2(f))
-        all_rows_converge(neg_part_2(f))
+        all_row_series_converge(pos_part_2(f))
+        all_row_series_converge(neg_part_2(f))
 
         forall(i: Nat) {
             converges(partial(pos_part_2(f)(i)))
@@ -1492,8 +1500,8 @@ theorem col_iterated_limit_eq_double_sum(f: (Nat, Nat) -> Real, s: Real, s_pos: 
         double_sum(neg_part_2(f)) = limit(partial(col_sums_seq(neg_part_2(f))))
 
         // Column sums decompose
-        all_cols_converge(pos_part_2(f))
-        all_cols_converge(neg_part_2(f))
+        all_col_series_converge(pos_part_2(f))
+        all_col_series_converge(neg_part_2(f))
 
         forall(j: Nat) {
             converges(partial(flip(pos_part_2(f), j)))

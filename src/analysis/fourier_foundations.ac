@@ -20,6 +20,7 @@
 /// the two modules together cover the orthogonality and normalization of
 /// the first few harmonics.
 
+from analysis import add_sub_add_cancel, add_sub_sub_cancel, sub_add_cancel, sin_double
 from nat import Nat, from_nat_zero, from_nat_add, pow_one, alt_induction
 from integer import add_le_add
 from nat import from_nat
@@ -60,7 +61,7 @@ theorem two_pi_eq_pi_add_pi {
 }
 
 /// The period 2*pi is positive.
-theorem two_pi_pos {
+theorem two_pi_pos_alt {
     Real.0 < two * pi
 } by {
     two_pi_eq_pi_add_pi
@@ -112,7 +113,7 @@ theorem cos_two_pi_value {
 theorem integral_sin_zero_two_pi {
     integral(Real.sin, Real.0, two * pi) = Real.0
 } by {
-    two_pi_pos
+    two_pi_pos_alt
     Real.0 < two * pi
     lt_imp_lte(Real.0, two * pi)
     Real.0 <= two * pi
@@ -132,7 +133,7 @@ theorem integral_sin_zero_two_pi {
 theorem integral_cos_zero_two_pi {
     integral(Real.cos, Real.0, two * pi) = Real.0
 } by {
-    two_pi_pos
+    two_pi_pos_alt
     Real.0 < two * pi
     lt_imp_lte(Real.0, two * pi)
     Real.0 <= two * pi
@@ -180,23 +181,6 @@ theorem integral_sin_zero_pi_restated {
 // ---------------------------------------------------------------------------
 
 /// The double-angle identity for sine: (2x).sin = 2 x.sin x.cos.
-theorem sin_double(x: Real) {
-    (two * x).sin = two * x.sin * x.cos
-} by {
-    two * x = x + x
-    (two * x).sin = (x + x).sin
-    sin_add(x, x)
-    (x + x).sin = x.sin * x.cos + x.cos * x.sin
-    real_mul_comm(x.cos, x.sin)
-    x.cos * x.sin = x.sin * x.cos
-    x.sin * x.cos + x.cos * x.sin = x.sin * x.cos + x.sin * x.cos
-    x.sin * x.cos + x.sin * x.cos = two * (x.sin * x.cos)
-    mul_assoc(two, x.sin, x.cos)
-    two * (x.sin * x.cos) = two * x.sin * x.cos
-    x.sin * x.cos + x.sin * x.cos = two * x.sin * x.cos
-    (two * x).sin = two * x.sin * x.cos
-}
-
 /// The double-angle identity for cosine:
 /// (2x).cos = x.cos * x.cos - x.sin * x.sin.
 theorem cos_double(x: Real) {
@@ -210,58 +194,8 @@ theorem cos_double(x: Real) {
 }
 
 /// Ring helper: (a - b) + b = a, via unfolding the subtraction.
-theorem sub_add_cancel(a: Real, b: Real) {
-    (a - b) + b = a
-} by {
-    add_neg_eq_zero(b)
-    b + -b = Real.0
-    add_comm(b, -b)
-    -b + b = Real.0
-    (a - b) + b = a + -b + b
-    a + -b + b = a + (-b + b)
-    a + (-b + b) = a + Real.0
-    add_zero_right(a)
-    a + Real.0 = a
-    a + (-b + b) = a
-    (a - b) + b = a
-}
-
 /// Ring helper: telescoping of subtractions, (a - b) + (b - c) = a - c.
-theorem add_sub_sub_cancel(a: Real, b: Real, c: Real) {
-    (a - b) + (b - c) = a - c
-} by {
-    add_assoc(a - b, b, -c)
-    ((a - b) + b) + -c = (a - b) + (b + -c)
-    (a - b) + (b - c) = ((a - b) + b) + -c
-    sub_add_cancel(a, b)
-    (a - b) + b = a
-    ((a - b) + b) + -c = a + -c
-    a + -c = a - c
-    (a - b) + (b - c) = a - c
-}
-
 /// Ring helper: (a + b) - (b + c) = a - c.
-theorem add_sub_add_cancel(a: Real, b: Real, c: Real) {
-    (a + b) - (b + c) = a - c
-} by {
-    add_assoc(a, b, -b)
-    (a + b) + -b = a + (b + -b)
-    add_neg_eq_zero(b)
-    b + -b = Real.0
-    a + (b + -b) = a + Real.0
-    add_zero_right(a)
-    a + Real.0 = a
-    (a + b) + -b = a
-    add_assoc(a + b, -b, -c)
-    ((a + b) + -b) + -c = (a + b) + (-b + -c)
-    neg_distrib(b, c)
-    -(b + c) = -b + -c
-    (a + b) - (b + c) = (a + b) + (-b + -c)
-    ((a + b) + -b) + -c = a + -c
-    a + -c = a - c
-    (a + b) - (b + c) = a - c
-}
-
 /// Ring identity: a + b - (b - a) = a + a, used by the half-angle
 /// identities below (the ring solver times out on it directly, so the
 /// subtraction is unfolded explicitly).
@@ -768,7 +702,7 @@ theorem sincos_antiderivative_continuous {
 theorem sincos_integrable_zero_two_pi {
     is_integrable(sincos, Real.0, two * pi)
 } by {
-    two_pi_pos
+    two_pi_pos_alt
     Real.0 < two * pi
     lt_imp_lte(Real.0, two * pi)
     Real.0 <= two * pi
@@ -833,7 +767,7 @@ theorem integral_sincos_zero_two_pi {
 } by {
     sincos_integrable_zero_two_pi
     is_integrable(sincos, Real.0, two * pi)
-    two_pi_pos
+    two_pi_pos_alt
     Real.0 < two * pi
     lt_imp_lte(Real.0, two * pi)
     Real.0 <= two * pi

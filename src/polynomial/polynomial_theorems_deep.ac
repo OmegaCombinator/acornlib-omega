@@ -18,20 +18,18 @@ from polynomial.eval_mul import polynomial_eval_mul
 from polynomial.global_factor import polynomial_x_minus_a_polynomial_witness, polynomial_x_minus_a_polynomial_witness_apply, polynomial_divisible_by_x_minus_a_polynomial, polynomial_quotient_global_witness_of_support_bounded
 from polynomial.polynomial_ring import polynomial_degree_le, polynomial_monomial_support_bounded_by_suc, linear_polynomial, linear_polynomial_eval, polynomial_remainder_theorem_global
 
+from polynomial.polynomial_degree import polynomial_degree_constant_le_zero, polynomial_degree_le_monotone, polynomial_degree_le_zero, polynomial_degree_monomial_le, polynomial_degree_mul_le_add
+from polynomial.polynomial_mul_comm import polynomial_mul_one_left, polynomial_mul_one_right
+from polynomial.polynomial_divisibility import polynomial_mul_zero_left, polynomial_mul_zero_right
+from polynomial.polynomial_vieta import polynomial_root_mul_left, polynomial_root_mul_right
+from polynomial.polynomial_roots import polynomial_shift_eval
+from polynomial.polynomial_eval_deep import polynomial_eval_eq_of_eq
 numerals Nat
 
 // ---------------------------------------------------------------------------
 // Evaluation properties
 // ---------------------------------------------------------------------------
 
-/// Equal polynomials evaluate equally at every point.
-theorem polynomial_eval_eq_of_eq[R: Semiring](p: Polynomial[R], q: Polynomial[R], x: R) {
-    p = q implies polynomial_eval(p, x) = polynomial_eval(q, x)
-} by {
-    if p = q {
-        polynomial_eval(p, x) = polynomial_eval(q, x)
-    }
-}
 
 /// Polynomial equality implies equality of all evaluations: evaluation is
 /// extensional.
@@ -73,18 +71,6 @@ theorem polynomial_eval_constant_add[R: Semiring](r: R, p: Polynomial[R], x: R) 
     polynomial_eval(Polynomial[R].constant(r) + p, x) = r + polynomial_eval(p, x)
 }
 
-/// Evaluation of a scalar multiple: a constant polynomial times a polynomial
-/// evaluates to the scalar times the value.
-theorem polynomial_eval_constant_mul[R: CommRing](r: R, p: Polynomial[R], x: R) {
-    polynomial_eval(polynomial_mul(Polynomial[R].constant(r), p), x) = r * polynomial_eval(p, x)
-} by {
-    polynomial_eval_mul(Polynomial[R].constant(r), p, x)
-    polynomial_eval(polynomial_mul(Polynomial[R].constant(r), p), x) =
-        polynomial_eval(Polynomial[R].constant(r), x) * polynomial_eval(p, x)
-    polynomial_eval_constant(r, x)
-    polynomial_eval(Polynomial[R].constant(r), x) = r
-    polynomial_eval(polynomial_mul(Polynomial[R].constant(r), p), x) = r * polynomial_eval(p, x)
-}
 
 /// The evaluation of an iterated product is independent of the bracketing:
 /// associativity of multiplication at the evaluation level.
@@ -193,33 +179,7 @@ theorem polynomial_remainder_theorem_iff[R: CommRing](p: Polynomial[R], a: R) {
     polynomial_remainder_theorem_global(p, a)
 }
 
-/// A root of the first factor is a root of the product.
-theorem polynomial_root_mul_left[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
-    polynomial_eval(p, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
-} by {
-    if polynomial_eval(p, a) = R.0 {
-        polynomial_eval_mul(p, q, a)
-        polynomial_eval(polynomial_mul(p, q), a) = polynomial_eval(p, a) * polynomial_eval(q, a)
-        polynomial_eval(p, a) = R.0
-        polynomial_eval(polynomial_mul(p, q), a) = R.0 * polynomial_eval(q, a)
-        R.0 * polynomial_eval(q, a) = R.0
-        polynomial_eval(polynomial_mul(p, q), a) = R.0
-    }
-}
 
-/// A root of the second factor is a root of the product.
-theorem polynomial_root_mul_right[R: CommRing](p: Polynomial[R], q: Polynomial[R], a: R) {
-    polynomial_eval(q, a) = R.0 implies polynomial_eval(polynomial_mul(p, q), a) = R.0
-} by {
-    if polynomial_eval(q, a) = R.0 {
-        polynomial_eval_mul(p, q, a)
-        polynomial_eval(polynomial_mul(p, q), a) = polynomial_eval(p, a) * polynomial_eval(q, a)
-        polynomial_eval(q, a) = R.0
-        polynomial_eval(polynomial_mul(p, q), a) = polynomial_eval(p, a) * R.0
-        polynomial_eval(p, a) * R.0 = R.0
-        polynomial_eval(polynomial_mul(p, q), a) = R.0
-    }
-}
 
 /// Over a field, a root of a product is a root of one of the factors: the
 /// zero-product property for values.
@@ -240,11 +200,6 @@ theorem polynomial_root_of_product[F: Field](p: Polynomial[F], q: Polynomial[F],
 // Roots and translation (shifted evaluation)
 // ---------------------------------------------------------------------------
 
-/// The value of `p` after translating the evaluation point by `a`:
-/// `q(x) = p(x + a)` in value form.
-define polynomial_shift_eval[R: CommRing](p: Polynomial[R], a: R, x: R) -> R {
-    polynomial_eval(p, x + a)
-}
 
 /// Translating by zero changes no evaluation.
 theorem polynomial_shift_eval_zero[R: CommRing](p: Polynomial[R], x: R) {
@@ -300,82 +255,10 @@ theorem linear_polynomial_shift_eval[R: CommRing](a: R, b: R, t: R, x: R) {
 // Degrees
 // ---------------------------------------------------------------------------
 
-/// The zero polynomial has degree at most any natural number.
-theorem polynomial_degree_le_zero[R: Semiring](d: Nat) {
-    polynomial_degree_le(Polynomial[R].zero, d)
-} by {
-    polynomial_degree_le(Polynomial[R].zero, d) = polynomial_support_bounded_by(Polynomial[R].zero, d.suc)
-    polynomial_zero_support_bounded_by_zero[R]
-    polynomial_support_bounded_by(Polynomial[R].zero, Nat.0)
-    Nat.0 <= d.suc
-    polynomial_support_bounded_by_monotone(Polynomial[R].zero, Nat.0, d.suc)
-    polynomial_support_bounded_by(Polynomial[R].zero, d.suc)
-    polynomial_degree_le(Polynomial[R].zero, d)
-}
 
-/// A constant polynomial has degree at most zero.
-theorem polynomial_degree_constant_le_zero[R: Semiring](r: R) {
-    polynomial_degree_le(Polynomial[R].constant(r), Nat.0)
-} by {
-    polynomial_degree_le(Polynomial[R].constant(r), Nat.0) =
-        polynomial_support_bounded_by(Polynomial[R].constant(r), Nat.0.suc)
-    polynomial_constant_support_bounded_by_one(r)
-    polynomial_support_bounded_by(Polynomial[R].constant(r), Nat.0.suc)
-    polynomial_degree_le(Polynomial[R].constant(r), Nat.0)
-}
 
-/// A monomial of exponent `n` has degree at most `n`.
-theorem polynomial_degree_monomial_le[R: Semiring](n: Nat, r: R) {
-    polynomial_degree_le(Polynomial[R].monomial(n, r), n)
-} by {
-    polynomial_degree_le(Polynomial[R].monomial(n, r), n) =
-        polynomial_support_bounded_by(Polynomial[R].monomial(n, r), n.suc)
-    polynomial_monomial_support_bounded_by_suc(n, r)
-    polynomial_support_bounded_by(Polynomial[R].monomial(n, r), n.suc)
-    polynomial_degree_le(Polynomial[R].monomial(n, r), n)
-}
 
-/// A degree bound can be raised.
-theorem polynomial_degree_le_monotone[R: Semiring](p: Polynomial[R], d: Nat, e: Nat) {
-    polynomial_degree_le(p, d) and d <= e implies polynomial_degree_le(p, e)
-} by {
-    if polynomial_degree_le(p, d) and d <= e {
-        polynomial_degree_le(p, d) = polynomial_support_bounded_by(p, d.suc)
-        polynomial_support_bounded_by(p, d.suc)
-        lte_suc_suc(d, e)
-        d.suc <= e.suc
-        polynomial_support_bounded_by_monotone(p, d.suc, e.suc)
-        polynomial_support_bounded_by(p, e.suc)
-        polynomial_degree_le(p, e) = polynomial_support_bounded_by(p, e.suc)
-        polynomial_degree_le(p, e)
-    }
-}
 
-/// The classical bound for the degree of a product:
-/// `deg(f * g) <= deg f + deg g + 1` in strict-support-bound terms.
-theorem polynomial_degree_mul_le_add[R: Semiring](
-    p: Polynomial[R],
-    q: Polynomial[R],
-    m: Nat,
-    n: Nat
-) {
-    polynomial_degree_le(p, m) and polynomial_degree_le(q, n) implies
-    polynomial_degree_le(polynomial_mul(p, q), m + n + Nat.1)
-} by {
-    if polynomial_degree_le(p, m) and polynomial_degree_le(q, n) {
-        polynomial_degree_le(p, m) = polynomial_support_bounded_by(p, m.suc)
-        polynomial_support_bounded_by(p, m.suc)
-        polynomial_degree_le(q, n) = polynomial_support_bounded_by(q, n.suc)
-        polynomial_support_bounded_by(q, n.suc)
-        polynomial_mul_support_bounded_by_add(p, q, m.suc, n.suc)
-        polynomial_support_bounded_by(polynomial_mul(p, q), m.suc + n.suc)
-        (m + n + Nat.1).suc = m.suc + n.suc
-        polynomial_support_bounded_by(polynomial_mul(p, q), (m + n + Nat.1).suc)
-        polynomial_degree_le(polynomial_mul(p, q), m + n + Nat.1) =
-            polynomial_support_bounded_by(polynomial_mul(p, q), (m + n + Nat.1).suc)
-        polynomial_degree_le(polynomial_mul(p, q), m + n + Nat.1)
-    }
-}
 
 // ---------------------------------------------------------------------------
 // The zero polynomial
@@ -476,73 +359,7 @@ theorem polynomial_eval_constant_zero[R: Semiring](x: R) {
     polynomial_eval(Polynomial[R].constant(R.0), x) = R.0
 }
 
-/// The zero polynomial absorbs products on the left.
-theorem polynomial_mul_zero_left[R: Semiring](p: Polynomial[R]) {
-    polynomial_mul(Polynomial[R].zero, p) = Polynomial[R].zero
-} by {
-    forall(k: Nat) {
-        let term_fn: Nat -> R = function(i: Nat) {
-            polynomial_mul_term_coeff(Polynomial[R].zero, p, k, i)
-        }
-        forall(i: Nat) {
-            if i < k.suc {
-                term_fn(i) = polynomial_mul_term_coeff(Polynomial[R].zero, p, k, i)
-                polynomial_mul_term_coeff(Polynomial[R].zero, p, k, i) =
-                    Polynomial[R].zero.coeff(i) * p.coeff(k - i)
-                polynomial_zero_coeff[R](i)
-                Polynomial[R].zero.coeff(i) = R.0
-                polynomial_mul_term_coeff(Polynomial[R].zero, p, k, i) = R.0 * p.coeff(k - i)
-                R.0 * p.coeff(k - i) = R.0
-                term_fn(i) = R.0
-            }
-        }
-        theorems_deep_partial_zero_of_pointwise_zero(term_fn, k.suc)
-        partial(term_fn, k.suc) = R.0
-        polynomial_mul_coeff_apply(Polynomial[R].zero, p, k)
-        polynomial_mul(Polynomial[R].zero, p).coeff(k) = polynomial_mul_coeff(Polynomial[R].zero, p, k)
-        polynomial_mul_coeff(Polynomial[R].zero, p, k) =
-            partial(function(i: Nat) { polynomial_mul_term_coeff(Polynomial[R].zero, p, k, i) }, k.suc)
-        polynomial_mul_coeff(Polynomial[R].zero, p, k) = partial(term_fn, k.suc)
-        polynomial_mul(Polynomial[R].zero, p).coeff(k) = R.0
-        polynomial_zero_coeff[R](k)
-        polynomial_mul(Polynomial[R].zero, p).coeff(k) = Polynomial[R].zero.coeff(k)
-    }
-    polynomial_ext_pointwise(polynomial_mul(Polynomial[R].zero, p), Polynomial[R].zero)
-}
 
-/// The zero polynomial absorbs products on the right.
-theorem polynomial_mul_zero_right[R: Semiring](p: Polynomial[R]) {
-    polynomial_mul(p, Polynomial[R].zero) = Polynomial[R].zero
-} by {
-    forall(k: Nat) {
-        let term_fn: Nat -> R = function(i: Nat) {
-            polynomial_mul_term_coeff(p, Polynomial[R].zero, k, i)
-        }
-        forall(i: Nat) {
-            if i < k.suc {
-                term_fn(i) = polynomial_mul_term_coeff(p, Polynomial[R].zero, k, i)
-                polynomial_mul_term_coeff(p, Polynomial[R].zero, k, i) =
-                    p.coeff(i) * Polynomial[R].zero.coeff(k - i)
-                polynomial_zero_coeff[R](k - i)
-                Polynomial[R].zero.coeff(k - i) = R.0
-                polynomial_mul_term_coeff(p, Polynomial[R].zero, k, i) = p.coeff(i) * R.0
-                p.coeff(i) * R.0 = R.0
-                term_fn(i) = R.0
-            }
-        }
-        theorems_deep_partial_zero_of_pointwise_zero(term_fn, k.suc)
-        partial(term_fn, k.suc) = R.0
-        polynomial_mul_coeff_apply(p, Polynomial[R].zero, k)
-        polynomial_mul(p, Polynomial[R].zero).coeff(k) = polynomial_mul_coeff(p, Polynomial[R].zero, k)
-        polynomial_mul_coeff(p, Polynomial[R].zero, k) =
-            partial(function(i: Nat) { polynomial_mul_term_coeff(p, Polynomial[R].zero, k, i) }, k.suc)
-        polynomial_mul_coeff(p, Polynomial[R].zero, k) = partial(term_fn, k.suc)
-        polynomial_mul(p, Polynomial[R].zero).coeff(k) = R.0
-        polynomial_zero_coeff[R](k)
-        polynomial_mul(p, Polynomial[R].zero).coeff(k) = Polynomial[R].zero.coeff(k)
-    }
-    polynomial_ext_pointwise(polynomial_mul(p, Polynomial[R].zero), Polynomial[R].zero)
-}
 
 /// A partial sum in which every summand after the first vanishes equals the
 /// first summand.
@@ -603,99 +420,7 @@ lemma polynomial_partial_first_only[R: Semiring](f: Nat -> R, n: Nat) {
     }
 }
 
-/// The one polynomial is a left identity for multiplication.
-theorem polynomial_mul_one_left[R: Semiring](p: Polynomial[R]) {
-    polynomial_mul(Polynomial[R].one, p) = p
-} by {
-    forall(k: Nat) {
-        let term_fn: Nat -> R = function(i: Nat) {
-            polynomial_mul_term_coeff(Polynomial[R].one, p, k, i)
-        }
-        forall(i: Nat) {
-            if i < k.suc {
-                if i != Nat.0 {
-                    term_fn(i) = polynomial_mul_term_coeff(Polynomial[R].one, p, k, i)
-                    polynomial_mul_term_coeff(Polynomial[R].one, p, k, i) =
-                        Polynomial[R].one.coeff(i) * p.coeff(k - i)
-                    polynomial_one_coeff_of_ne_zero[R](i)
-                    Polynomial[R].one.coeff(i) = R.0
-                    polynomial_mul_term_coeff(Polynomial[R].one, p, k, i) = R.0 * p.coeff(k - i)
-                    R.0 * p.coeff(k - i) = R.0
-                    term_fn(i) = R.0
-                }
-            }
-        }
-        polynomial_partial_first_only(term_fn, k)
-        partial(term_fn, k.suc) = term_fn(Nat.0)
-        term_fn(Nat.0) = polynomial_mul_term_coeff(Polynomial[R].one, p, k, Nat.0)
-        polynomial_mul_term_coeff(Polynomial[R].one, p, k, Nat.0) =
-            Polynomial[R].one.coeff(Nat.0) * p.coeff(k - Nat.0)
-        polynomial_one_coeff_zero[R]
-        Polynomial[R].one.coeff(Nat.0) = R.1
-        k - Nat.0 = k
-        polynomial_mul_term_coeff(Polynomial[R].one, p, k, Nat.0) = R.1 * p.coeff(k)
-        R.1 * p.coeff(k) = p.coeff(k)
-        term_fn(Nat.0) = p.coeff(k)
-        partial(term_fn, k.suc) = p.coeff(k)
-        polynomial_mul_coeff_apply(Polynomial[R].one, p, k)
-        polynomial_mul(Polynomial[R].one, p).coeff(k) = polynomial_mul_coeff(Polynomial[R].one, p, k)
-        polynomial_mul_coeff(Polynomial[R].one, p, k) =
-            partial(function(i: Nat) { polynomial_mul_term_coeff(Polynomial[R].one, p, k, i) }, k.suc)
-        polynomial_mul_coeff(Polynomial[R].one, p, k) = partial(term_fn, k.suc)
-        polynomial_mul(Polynomial[R].one, p).coeff(k) = p.coeff(k)
-    }
-    polynomial_ext_pointwise(polynomial_mul(Polynomial[R].one, p), p)
-}
 
-/// The one polynomial is a right identity for multiplication.
-theorem polynomial_mul_one_right[R: Semiring](p: Polynomial[R]) {
-    polynomial_mul(p, Polynomial[R].one) = p
-} by {
-    forall(k: Nat) {
-        let term_fn: Nat -> R = function(i: Nat) {
-            polynomial_mul_term_coeff(p, Polynomial[R].one, k, i)
-        }
-        forall(i: Nat) {
-            if i < k {
-                term_fn(i) = polynomial_mul_term_coeff(p, Polynomial[R].one, k, i)
-                polynomial_mul_term_coeff(p, Polynomial[R].one, k, i) =
-                    p.coeff(i) * Polynomial[R].one.coeff(k - i)
-                sub_pos(k, i)
-                k - i > Nat.0
-                k - i != Nat.0
-                polynomial_one_coeff_of_ne_zero[R](k - i)
-                Polynomial[R].one.coeff(k - i) = R.0
-                polynomial_mul_term_coeff(p, Polynomial[R].one, k, i) = p.coeff(i) * R.0
-                p.coeff(i) * R.0 = R.0
-                term_fn(i) = R.0
-            }
-        }
-        theorems_deep_partial_zero_of_pointwise_zero(term_fn, k)
-        partial(term_fn, k) = R.0
-        partial_split_last[R](term_fn, k)
-        partial(term_fn, k.suc) = partial(term_fn, k) + term_fn(k)
-        partial(term_fn, k.suc) = R.0 + term_fn(k)
-        R.0 + term_fn(k) = term_fn(k)
-        term_fn(k) = polynomial_mul_term_coeff(p, Polynomial[R].one, k, k)
-        polynomial_mul_term_coeff(p, Polynomial[R].one, k, k) =
-            p.coeff(k) * Polynomial[R].one.coeff(k - k)
-        sub_self(k)
-        k - k = Nat.0
-        polynomial_one_coeff_zero[R]
-        Polynomial[R].one.coeff(Nat.0) = R.1
-        polynomial_mul_term_coeff(p, Polynomial[R].one, k, k) = p.coeff(k) * R.1
-        p.coeff(k) * R.1 = p.coeff(k)
-        term_fn(k) = p.coeff(k)
-        partial(term_fn, k.suc) = p.coeff(k)
-        polynomial_mul_coeff_apply(p, Polynomial[R].one, k)
-        polynomial_mul(p, Polynomial[R].one).coeff(k) = polynomial_mul_coeff(p, Polynomial[R].one, k)
-        polynomial_mul_coeff(p, Polynomial[R].one, k) =
-            partial(function(i: Nat) { polynomial_mul_term_coeff(p, Polynomial[R].one, k, i) }, k.suc)
-        polynomial_mul_coeff(p, Polynomial[R].one, k) = partial(term_fn, k.suc)
-        polynomial_mul(p, Polynomial[R].one).coeff(k) = p.coeff(k)
-    }
-    polynomial_ext_pointwise(polynomial_mul(p, Polynomial[R].one), p)
-}
 
 // ---------------------------------------------------------------------------
 // Deferred theorems

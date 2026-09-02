@@ -61,11 +61,6 @@ instance Complex: CommMonoid
 
 instance Complex: CommRing
 
-instance Complex: MetricSpace {
-    let distance: (Complex, Complex) -> Real = norm_distance[Complex]
-}
-
-instance Complex: CompleteMetricSpace
 
 theorem add_comm(a: Complex, b: Complex) {
     a + b = b + a
@@ -302,6 +297,65 @@ theorem complex_real_module_smul(r: Real, x: Complex) {
 theorem complex_real_module_linearly_equivalent_self {
     modules_linearly_equivalent(complex_real_module, complex_real_module)
 }
+
+attributes Complex {
+    /// Converts a real number to a complex number (with zero imaginary part).
+    let from_real: Real -> Complex = function(r: Real) {
+        Complex.new(r, Real.0)
+    }
+
+    /// The imaginary unit, satisfying `i² = -1`.
+    let i: Complex = Complex.new(Real.0, Real.1)
+
+    /// True if this complex number has no imaginary component.
+    define is_real(self) -> Bool {
+        self.im = Real.0
+    }
+
+    /// True if this complex number is purely imaginary (no real component).
+    define is_imaginary(self) -> Bool {
+        self.re = Real.0 and self.im != Real.0
+    }
+
+    /// Yields the complex conjugate (negates the imaginary part).
+    define conj(self) -> Complex {
+        Complex.new(self.re, -self.im)
+    }
+
+    /// Computes the squared magnitude |z|² = re² + im².
+    define abs_squared(self) -> Real {
+        self.re * self.re + self.im * self.im
+    }
+}
+instance Complex: Inverse {
+    define inverse(self) -> Complex {
+        self.conj * Complex.from_real(self.abs_squared.inverse)
+    }
+}
+
+instance Complex: Field
+
+let complex_modulus(z: Complex) -> r: Real satisfy {
+    z.abs_squared.sqrt = Option.some(r) and r * r = z.abs_squared and r >= Real.0
+}
+
+attributes Complex {
+    /// The modulus |z| of the complex number.
+    let modulus: Complex -> Real = complex_modulus
+}
+
+instance Complex: NormedAddCommGroup {
+    let norm: Complex -> Real = Complex.modulus
+}
+
+instance Complex: NormedField
+
+instance Complex: MetricSpace {
+    let distance: (Complex, Complex) -> Real = norm_distance[Complex]
+}
+
+instance Complex: CompleteMetricSpace
+
 
 theorem complex_real_module_norm_smul_constraint {
     norm_smul_constraint[Real, Complex](complex_real_module.smul)
@@ -935,7 +989,7 @@ theorem abs_series_imp_series(a: Nat -> Real) {
 }
 
 theorem nonneg_partial_increasing(a: Nat -> Real) {
-    is_lower_bound(a, Real.0) implies is_increasing(partial(a))
+    is_lower_bound(a, Real.0) implies real_is_increasing(partial(a))
 }
 
 theorem exp_term_abs_series_converges(x: Real) {
@@ -1663,45 +1717,7 @@ theorem nat_ne_zero_imp_ge_one(n: Nat) {
     n != Nat.0 implies n >= Nat.1
 }
 
-let i = Complex.i
 
-attributes Complex {
-    /// Converts a real number to a complex number (with zero imaginary part).
-    let from_real: Real -> Complex = function(r: Real) {
-        Complex.new(r, Real.0)
-    }
-
-    /// The imaginary unit, satisfying `i² = -1`.
-    let i: Complex = Complex.new(Real.0, Real.1)
-
-    /// True if this complex number has no imaginary component.
-    define is_real(self) -> Bool {
-        self.im = Real.0
-    }
-
-    /// True if this complex number is purely imaginary (no real component).
-    define is_imaginary(self) -> Bool {
-        self.re = Real.0 and self.im != Real.0
-    }
-
-    /// Yields the complex conjugate (negates the imaginary part).
-    define conj(self) -> Complex {
-        Complex.new(self.re, -self.im)
-    }
-
-    /// Computes the squared magnitude |z|² = re² + im².
-    define abs_squared(self) -> Real {
-        self.re * self.re + self.im * self.im
-    }
-}
-
-instance Complex: Inverse {
-    define inverse(self) -> Complex {
-        self.conj * Complex.from_real(self.abs_squared.inverse)
-    }
-}
-
-instance Complex: Field
 
 attributes Complex {
     /// Divides this complex number by another.
@@ -1999,20 +2015,6 @@ theorem abs_squared_mul_inverse(a: Complex) {
     a != Complex.0 implies a.abs_squared * a.inverse.abs_squared = Real.1
 }
 
-let complex_modulus(z: Complex) -> r: Real satisfy {
-    z.abs_squared.sqrt = Option.some(r) and r * r = z.abs_squared and r >= Real.0
-}
-
-attributes Complex {
-    /// The modulus |z| of the complex number.
-    let modulus: Complex -> Real = complex_modulus
-}
-
-instance Complex: NormedAddCommGroup {
-    let norm: Complex -> Real = Complex.modulus
-}
-
-instance Complex: NormedField
 
 theorem modulus_nonneg(z: Complex) {
     z.modulus >= Real.0

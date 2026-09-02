@@ -14,7 +14,7 @@ from nat import is_max, has_max, is_max_apply, is_max_intro,
 numerals Nat
 
 /// A subset of `s` that is a clique.
-define is_clique_subset[V](
+define is_clique_subset_fs[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) -> Bool {
     t.subset_eq(s) and is_clique_in(g, t)
@@ -24,10 +24,10 @@ define is_clique_subset[V](
 theorem is_clique_subset_apply[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    is_clique_subset(g, s, t) implies t.subset_eq(s) and is_clique_in(g, t)
+    is_clique_subset_fs(g, s, t) implies t.subset_eq(s) and is_clique_in(g, t)
 } by {
-    if is_clique_subset(g, s, t) {
-        (is_clique_subset(g, s, t) = (t.subset_eq(s) and is_clique_in(g, t)))
+    if is_clique_subset_fs(g, s, t) {
+        (is_clique_subset_fs(g, s, t) = (t.subset_eq(s) and is_clique_in(g, t)))
         (t.subset_eq(s) and is_clique_in(g, t))
     }
 }
@@ -36,11 +36,11 @@ theorem is_clique_subset_apply[V](
 theorem is_clique_subset_intro[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    t.subset_eq(s) and is_clique_in(g, t) implies is_clique_subset(g, s, t)
+    t.subset_eq(s) and is_clique_in(g, t) implies is_clique_subset_fs(g, s, t)
 } by {
     if t.subset_eq(s) and is_clique_in(g, t) {
-        (is_clique_subset(g, s, t) = (t.subset_eq(s) and is_clique_in(g, t)))
-        is_clique_subset(g, s, t)
+        (is_clique_subset_fs(g, s, t) = (t.subset_eq(s) and is_clique_in(g, t)))
+        is_clique_subset_fs(g, s, t)
     }
 }
 
@@ -48,9 +48,9 @@ theorem is_clique_subset_intro[V](
 theorem clique_subset_iff_independent_subset_complement[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    is_clique_subset(g, s, t) = is_independent_subset(graph_complement(g), s, t)
+    is_clique_subset_fs(g, s, t) = is_independent_subset(graph_complement(g), s, t)
 } by {
-    if is_clique_subset(g, s, t) {
+    if is_clique_subset_fs(g, s, t) {
         is_clique_subset_apply(g, s, t)
         (t.subset_eq(s) and is_clique_in(g, t))
         clique_is_independent_in_complement(g, t)
@@ -64,18 +64,18 @@ theorem clique_subset_iff_independent_subset_complement[V](
         independent_in_complement_is_clique(g, t)
         is_clique_in(g, t)
         is_clique_subset_intro(g, s, t)
-        is_clique_subset(g, s, t)
+        is_clique_subset_fs(g, s, t)
     }
-    (is_clique_subset(g, s, t) implies is_independent_subset(graph_complement(g), s, t))
-    (is_independent_subset(graph_complement(g), s, t) implies is_clique_subset(g, s, t))
-    is_clique_subset(g, s, t) = is_independent_subset(graph_complement(g), s, t)
+    (is_clique_subset_fs(g, s, t) implies is_independent_subset(graph_complement(g), s, t))
+    (is_independent_subset(graph_complement(g), s, t) implies is_clique_subset_fs(g, s, t))
+    is_clique_subset_fs(g, s, t) = is_independent_subset(graph_complement(g), s, t)
 }
 
 /// True of the sizes achieved by clique subsets of `s`.
 define clique_size_pred[V](g: SimpleGraph[V], s: FiniteSet[V]) -> (Nat -> Bool) {
     function(n: Nat) {
         exists(t: FiniteSet[V]) {
-            is_clique_subset(g, s, t) and fs_card(t) = n
+            is_clique_subset_fs(g, s, t) and fs_card(t) = n
         }
     }
 }
@@ -84,14 +84,14 @@ define clique_size_pred[V](g: SimpleGraph[V], s: FiniteSet[V]) -> (Nat -> Bool) 
 theorem clique_size_pred_intro[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    is_clique_subset(g, s, t) implies clique_size_pred(g, s)(fs_card(t))
+    is_clique_subset_fs(g, s, t) implies clique_size_pred(g, s)(fs_card(t))
 } by {
-    if is_clique_subset(g, s, t) {
+    if is_clique_subset_fs(g, s, t) {
         (clique_size_pred(g, s)(fs_card(t)) = exists(r: FiniteSet[V]) {
-            is_clique_subset(g, s, r) and fs_card(r) = fs_card(t)
+            is_clique_subset_fs(g, s, r) and fs_card(r) = fs_card(t)
         })
         exists(r: FiniteSet[V]) {
-            is_clique_subset(g, s, r) and fs_card(r) = fs_card(t)
+            is_clique_subset_fs(g, s, r) and fs_card(r) = fs_card(t)
         }
         clique_size_pred(g, s)(fs_card(t))
     }
@@ -100,15 +100,15 @@ theorem clique_size_pred_intro[V](
 /// An achieved clique size comes from a clique subset.
 theorem clique_size_pred_witness[V](g: SimpleGraph[V], s: FiniteSet[V], n: Nat) {
     clique_size_pred(g, s)(n) implies exists(t: FiniteSet[V]) {
-        is_clique_subset(g, s, t) and fs_card(t) = n
+        is_clique_subset_fs(g, s, t) and fs_card(t) = n
     }
 } by {
     if clique_size_pred(g, s)(n) {
         (clique_size_pred(g, s)(n) = exists(t: FiniteSet[V]) {
-            is_clique_subset(g, s, t) and fs_card(t) = n
+            is_clique_subset_fs(g, s, t) and fs_card(t) = n
         })
         exists(t: FiniteSet[V]) {
-            is_clique_subset(g, s, t) and fs_card(t) = n
+            is_clique_subset_fs(g, s, t) and fs_card(t) = n
         }
     }
 }
@@ -127,7 +127,7 @@ theorem clique_size_pred_independence_number[V](g: SimpleGraph[V], s: FiniteSet[
             and fs_card(t) = independence_number(graph_complement(g), s)
     }
     clique_subset_iff_independent_subset_complement(g, s, t)
-    is_clique_subset(g, s, t)
+    is_clique_subset_fs(g, s, t)
     clique_size_pred_intro(g, s, t)
     clique_size_pred(g, s)(fs_card(t))
     clique_size_pred(g, s)(independence_number(graph_complement(g), s))
@@ -141,10 +141,10 @@ theorem clique_size_pred_independence_bound[V](g: SimpleGraph[V], s: FiniteSet[V
         if clique_size_pred(g, s)(n) {
             clique_size_pred_witness(g, s, n)
             exists(t: FiniteSet[V]) {
-                is_clique_subset(g, s, t) and fs_card(t) = n
+                is_clique_subset_fs(g, s, t) and fs_card(t) = n
             }
             let (t: FiniteSet[V]) satisfy {
-                is_clique_subset(g, s, t) and fs_card(t) = n
+                is_clique_subset_fs(g, s, t) and fs_card(t) = n
             }
             clique_subset_iff_independent_subset_complement(g, s, t)
             is_independent_subset(graph_complement(g), s, t)
@@ -187,9 +187,9 @@ theorem clique_number_attained[V](g: SimpleGraph[V], s: FiniteSet[V]) {
 theorem clique_number_is_greatest[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    is_clique_subset(g, s, t) implies fs_card(t) <= clique_number(g, s)
+    is_clique_subset_fs(g, s, t) implies fs_card(t) <= clique_number(g, s)
 } by {
-    if is_clique_subset(g, s, t) {
+    if is_clique_subset_fs(g, s, t) {
         clique_size_pred_intro(g, s, t)
         clique_size_pred(g, s)(fs_card(t))
         is_max(clique_size_pred(g, s), clique_number(g, s))
@@ -221,7 +221,7 @@ theorem clique_number_eq_complement_independence_number[V](
 theorem independent_subset_iff_clique_subset_complement[V](
     g: SimpleGraph[V], s: FiniteSet[V], t: FiniteSet[V]
 ) {
-    is_independent_subset(g, s, t) = is_clique_subset(graph_complement(g), s, t)
+    is_independent_subset(g, s, t) = is_clique_subset_fs(graph_complement(g), s, t)
 } by {
     if is_independent_subset(g, s, t) {
         is_independent_subset_apply(g, s, t)
@@ -229,9 +229,9 @@ theorem independent_subset_iff_clique_subset_complement[V](
         independent_is_clique_in_complement(g, t)
         is_clique_in(graph_complement(g), t)
         is_clique_subset_intro(graph_complement(g), s, t)
-        is_clique_subset(graph_complement(g), s, t)
+        is_clique_subset_fs(graph_complement(g), s, t)
     }
-    if is_clique_subset(graph_complement(g), s, t) {
+    if is_clique_subset_fs(graph_complement(g), s, t) {
         is_clique_subset_apply(graph_complement(g), s, t)
         (t.subset_eq(s) and is_clique_in(graph_complement(g), t))
         clique_in_complement_is_independent(g, t)
@@ -239,9 +239,9 @@ theorem independent_subset_iff_clique_subset_complement[V](
         is_independent_subset_intro(g, s, t)
         is_independent_subset(g, s, t)
     }
-    (is_independent_subset(g, s, t) implies is_clique_subset(graph_complement(g), s, t))
-    (is_clique_subset(graph_complement(g), s, t) implies is_independent_subset(g, s, t))
-    is_independent_subset(g, s, t) = is_clique_subset(graph_complement(g), s, t)
+    (is_independent_subset(g, s, t) implies is_clique_subset_fs(graph_complement(g), s, t))
+    (is_clique_subset_fs(graph_complement(g), s, t) implies is_independent_subset(g, s, t))
+    is_independent_subset(g, s, t) = is_clique_subset_fs(graph_complement(g), s, t)
 }
 
 /// The independence number of a graph is the clique number of its complement.
@@ -258,11 +258,11 @@ theorem independence_number_eq_complement_clique_number[V](
     clique_size_pred(graph_complement(g), s)(clique_number(graph_complement(g), s))
     clique_size_pred_witness(graph_complement(g), s, clique_number(graph_complement(g), s))
     exists(t: FiniteSet[V]) {
-        is_clique_subset(graph_complement(g), s, t)
+        is_clique_subset_fs(graph_complement(g), s, t)
             and fs_card(t) = clique_number(graph_complement(g), s)
     }
     let (t: FiniteSet[V]) satisfy {
-        is_clique_subset(graph_complement(g), s, t)
+        is_clique_subset_fs(graph_complement(g), s, t)
             and fs_card(t) = clique_number(graph_complement(g), s)
     }
     independent_subset_iff_clique_subset_complement(g, s, t)
@@ -278,7 +278,7 @@ theorem independence_number_eq_complement_clique_number[V](
         is_independent_subset(g, s, r) and fs_card(r) = independence_number(g, s)
     }
     independent_subset_iff_clique_subset_complement(g, s, r)
-    is_clique_subset(graph_complement(g), s, r)
+    is_clique_subset_fs(graph_complement(g), s, r)
     clique_number_is_greatest(graph_complement(g), s, r)
     fs_card(r) <= clique_number(graph_complement(g), s)
     independence_number(g, s) <= clique_number(graph_complement(g), s)

@@ -57,6 +57,37 @@ define polynomial_constant[R: Semiring](r: R) -> Polynomial[R] {
 let polynomial_zero[R: Semiring]: Polynomial[R] = polynomial_constant(R.0)
 
 let polynomial_one[R: Semiring]: Polynomial[R] = polynomial_constant(R.1)
+let polynomial_add[R: Semiring](p: Polynomial[R], q: Polynomial[R]) -> result: Polynomial[R] satisfy {
+    Polynomial[R].new(pointwise_add(p.coeff, q.coeff)) = Option.some(result)
+}
+attributes Polynomial[R: Semiring] {
+    /// Polynomial extensionality from equality of coefficients.
+    let ext = polynomial_ext[R]
+
+    /// The monomial `r * X^n`.
+    let monomial: (Nat, R) -> Polynomial[R] = polynomial_monomial
+
+    /// The constant polynomial with coefficient `r`.
+    let constant: R -> Polynomial[R] = polynomial_constant
+
+    /// The zero polynomial.
+    let zero: Polynomial[R] = polynomial_zero[R]
+
+    /// The one polynomial.
+    let one: Polynomial[R] = polynomial_one[R]
+
+    /// Coefficientwise addition of polynomials.
+    define add(self, other: Polynomial[R]) -> Polynomial[R] {
+        polynomial_add(self, other)
+    }
+}
+
+instance Polynomial[R: Semiring]: Add {
+    let add = Polynomial[R].add
+}
+
+
+
 
 theorem polynomial_add_coeff[R: Semiring](p: Polynomial[R], q: Polynomial[R], n: Nat) {
     (p + q).coeff(n) = p.coeff(n) + q.coeff(n)
@@ -665,36 +696,6 @@ theorem polynomial_deriv_coeff_apply[R: Semiring](p: Polynomial[R], n: Nat) {
 theorem polynomial_deriv_monomial[R: CommRing](n: Nat, r: R) {
     polynomial_deriv(polynomial_monomial(n.suc, r)) =
         polynomial_monomial(n, from_nat[R](n.suc) * r)
-}
-
-instance Polynomial[R: Semiring]: Add {
-    let add = Polynomial[R].add
-}
-
-let polynomial_add[R: Semiring](p: Polynomial[R], q: Polynomial[R]) -> result: Polynomial[R] satisfy {
-    Polynomial[R].new(pointwise_add(p.coeff, q.coeff)) = Option.some(result)
-}
-
-attributes Polynomial[R: Semiring] {
-    /// Polynomial extensionality from equality of coefficients.
-    let ext = polynomial_ext[R]
-
-    /// The monomial `r * X^n`.
-    let monomial: (Nat, R) -> Polynomial[R] = polynomial_monomial
-
-    /// The constant polynomial with coefficient `r`.
-    let constant: R -> Polynomial[R] = polynomial_constant
-
-    /// The zero polynomial.
-    let zero: Polynomial[R] = polynomial_zero[R]
-
-    /// The one polynomial.
-    let one: Polynomial[R] = polynomial_one[R]
-
-    /// Coefficientwise addition of polynomials.
-    define add(self, other: Polynomial[R]) -> Polynomial[R] {
-        polynomial_add(self, other)
-    }
 }
 
 instance Polynomial[R: Semiring]: Zero {

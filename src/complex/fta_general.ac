@@ -28,17 +28,18 @@
 /// powers are the fourth roots of unity `1, i, -1, -i`, and one of the
 /// four corresponding real parts is always negative.
 
-from nat import Nat, alt_induction, zero_or_suc, lt_suc, lt_imp_lte_suc, lt_cancel_suc, lte_suc_suc, add_sub, lte_cancel_suc, suc_sub_one, add_imp_sub_left, from_nat_mul
-from algebra import one_pow
-from complex.complex import add_comm, add_assoc
-from integer import lt_and_lte, from_nat
+from nat import Nat, alt_induction, zero_or_suc, lt_suc, lt_imp_lte_suc, lt_cancel_suc, lte_suc_suc, add_sub, lte_cancel_suc, suc_sub_one, add_imp_sub_left, from_nat_mul, add_comm
+from nat import one_pow
+
+from integer import lt_and_lte
+from nat import from_nat
 from order import lt_or_lte, lt_not_symm, lte_imp_not_lt
 from order import lte_refl, lte_trans, lte_antisymm, lt_lte_trans, lte_lt_trans, min_lte_left, min_lte_right
 from order import lt_imp_lte
 from real import two, two_nonzero, one_half_positive, one_half_plus_one_half, pi, mul_nonneg, square_nonneg, add_lte_add, lt_imp_minus_pos, sub_cancels, lt_add_right, div_mul_cancel_left, mul_div_cancel, div_cancel_common, real_mul_comm, from_nat_suc_pos_real, abs_gte_zero, min_pos_pos, add_neg_eq_zero
-from real import Real
-from integer import lte_add_left, neg_neg, neg_distrib, lte_abs, abs_neg, mul_sub_distrib_right, mul_sub_distrib_left
-from nat import lte_add_right
+from real import Real, lte_abs, abs_neg, neg_neg, neg_distrib, mul_sub_distrib_right, mul_sub_distrib_left, lte_add_right
+from integer import lte_add_left
+
 from order import lte_self, lte_or_gte, not_lt_imp_gte, gte_imp_not_lt, lte_min_of_bounds
 from ordered_field import lt_trans, mul_le_mul_of_nonneg_right, mul_le_mul_of_nonneg_left, mul_pos_pos, mul_lt_mul_of_pos_right
 from nat import range_sum, range_sum_suc, range_sum_zero, range_sum_congr, range_sum_add, range_sum_one, range_sum_split, shift_fn, range_sum_zero_fn, zero_fn
@@ -46,12 +47,12 @@ from complex.complex import Complex, eq_by_components, re_mul, im_mul, mul_inver
 from complex.complex_abs_deep import modulus_pos
 from complex.complex_algebra_deep import complex_eq_new_components
 from complex.complex_region_deep import real_pow_le_one
-from complex.fundamental_theorem_algebra import one_half_mul_two, two_mul_eq_add_self_real, real_four
+from complex.fundamental_theorem_algebra import one_half_mul_two, two_mul_eq_add_self_real, real_four, coeff_eval_nat_zero
 from complex.roots_of_unity import omega, complex_i_mul_real_mul, complex_exp_pow, complex_exp_add, complex_i_mul_real_add, euler_identity, nat_ge_one_ne_zero, from_nat_two_real, complex_pow_pow
 from complex.complex_roots_deep import omega_modulus, complex_pow_mul_distrib
 from complex.complex_algebra_deep import from_real_pow
 from complex.complex_abs import complex_modulus, modulus_squared, modulus_nonneg, square_le_square_of_nonneg, modulus_mul, modulus_triangle, modulus_reverse_triangle, modulus_neg, modulus_from_real_nonneg, re_le_modulus, abs_squared_eq, nonneg_eq_of_squares_eq, modulus_eq_zero, re_abs_le_modulus, abs_squared_add, modulus_of_zero
-from complex.complex_exp import complex_pow_suc, complex_modulus_pow, real_pow_suc, pow_zero, real_one_positive, real_two_positive, complex_exp, complex_i_mul_real
+from complex.complex_exp import complex_pow_suc, complex_modulus_pow, real_pow_suc, pow_zero, real_one_positive, real_two_positive, complex_exp, complex_i_mul_real, real_pow_nonneg
 from algebra import Field, field_mul_nonzero, field_square_nonzero
 from algebra_core import mul_sub_left, mul_sub_right, mul_neg_left, mul_neg_right, mul_neg_neg
 from algebra_core import inverse_add, inverse_inverse, inverse_left, left_cancel, right_cancel
@@ -191,10 +192,6 @@ theorem scale_pow_step(c: Complex, x: Complex, i: Nat) {
     x * (c * x.pow(i)) = c * x.pow(i.suc)
 }
 
-/// Horner evaluation at zero is zero.
-theorem coeff_eval_nat_zero[R: Semiring](c: Nat -> R, x: R) {
-    coeff_eval(c, x, Nat.0) = R.0
-}
 
 /// Horner evaluation expands into the sum of monomial terms:
 /// `coeff_eval(c, x, n) = sum_{i < n} c(i) * x^i`.
@@ -305,36 +302,6 @@ theorem polynomial_eval_eq_range_sum(p: Polynomial[Complex], x: Complex, n: Nat)
 // Section 3.  Modulus bounds for sums, and real power monotonicity.
 // ---------------------------------------------------------------------------
 
-/// A nonnegative base raised to a power stays nonnegative.
-theorem real_pow_nonneg(x: Real, n: Nat) {
-    x >= Real.0 implies x.pow(n) >= Real.0
-} by {
-    define p(k: Nat) -> Bool {
-        x >= Real.0 implies x.pow(k) >= Real.0
-    }
-    pow_zero(x)
-    x.pow(Nat.0) = Real.1
-    Real.1 >= Real.0
-    p(Nat.0)
-    forall(k: Nat) {
-        if p(k) {
-            if x >= Real.0 {
-                x.pow(k) >= Real.0
-                real_pow_suc(x, k)
-                x.pow(k.suc) = x * x.pow(k)
-                mul_nonneg(x, x.pow(k))
-                x >= Real.0 and x.pow(k) >= Real.0 implies x * x.pow(k) >= Real.0
-                x.pow(k.suc) >= Real.0
-            }
-            p(k.suc)
-        }
-    }
-    p(Nat.0) and forall(k: Nat) {
-        p(k) implies p(k.suc)
-    }
-    alt_induction(p)
-    p(n)
-}
 
 /// Powers are monotone in the base for nonnegative bases:
 /// `0 <= x <= y` implies `x^n <= y^n`.

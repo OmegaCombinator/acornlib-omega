@@ -2065,16 +2065,22 @@ theorem geometric_comparison_test(a: Nat -> Real, c: Real, r: Real) {
         implies converges(partial(a))
 }
 
+define is_contraction_metric[M: MetricSpace](f: M -> M, c: Real) -> Bool {
+    Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
+        f(x).distance(f(y)) <= c * x.distance(y)
+    }
+}
+
 theorem contraction_constant_nonneg[M: MetricSpace](f: M -> M, c: Real) {
-    is_contraction(f, c) implies Real.0 <= c
+    is_contraction_metric(f, c) implies Real.0 <= c
 }
 
 theorem contraction_constant_lt_one[M: MetricSpace](f: M -> M, c: Real) {
-    is_contraction(f, c) implies c < Real.1
+    is_contraction_metric(f, c) implies c < Real.1
 }
 
 theorem contraction_distance[M: MetricSpace](f: M -> M, c: Real, x: M, y: M) {
-    is_contraction(f, c) implies f(x).distance(f(y)) <= c * x.distance(y)
+    is_contraction_metric(f, c) implies f(x).distance(f(y)) <= c * x.distance(y)
 }
 
 define orbit_seq[M: MetricSpace](f: M -> M, x0: M, n: Nat) -> M {
@@ -2094,30 +2100,30 @@ define orbit_partial[M: MetricSpace](f: M -> M, c: Real, x0: M, n: Nat) -> Real 
 }
 
 theorem contraction_iterate_distance[M: MetricSpace](f: M -> M, c: Real, n: Nat, x: M, y: M) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     implies iterate(f, n, x).distance(iterate(f, n, y)) <= c.pow(n) * x.distance(y)
 }
 
 theorem orbit_consecutive_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, n: Nat) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     implies orbit_seq(f, x0, n.suc).distance(orbit_seq(f, x0, n)) <=
         mul_seq(f(x0).distance(x0), c.pow, n)
 }
 
 theorem orbit_polygon_base[M: MetricSpace](f: M -> M, c: Real, x0: M, k: Nat) {
-    is_contraction(f, c) implies
+    is_contraction_metric(f, c) implies
     orbit_seq(f, x0, k).distance(orbit_seq(f, x0, k + Nat.0)) <=
         orbit_partial(f, c, x0, k + Nat.0) - orbit_partial(f, c, x0, k)
 }
 
 theorem orbit_polygon_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, m: Nat, n: Nat) {
-    is_contraction(f, c) and m <= n implies
+    is_contraction_metric(f, c) and m <= n implies
     orbit_seq(f, x0, m).distance(orbit_seq(f, x0, n)) <=
         orbit_partial(f, c, x0, n) - orbit_partial(f, c, x0, m)
 }
 
 theorem orbit_pair_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, eps: Real, n: Nat, i: Nat, j: Nat) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     and (forall(a: Nat, b: Nat) {
         n <= a and n <= b implies
             partial(mul_seq(f(x0).distance(x0), c.pow), a).is_close(partial(mul_seq(f(x0).distance(x0), c.pow), b), eps)
@@ -2127,7 +2133,7 @@ theorem orbit_pair_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, eps: Real, n
 }
 
 theorem orbit_cauchy_metric[M: MetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies is_cauchy_metric(orbit_seq(f, x0))
+    is_contraction_metric(f, c) implies is_cauchy_metric(orbit_seq(f, x0))
 }
 
 theorem lt_all_positive_eps_imp_lte_zero(x: Real) {
@@ -2136,23 +2142,23 @@ theorem lt_all_positive_eps_imp_lte_zero(x: Real) {
 }
 
 theorem banach_contraction_orbit_converges[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a) and tendsto_metric(orbit_seq(f, x0), a)
     }
 }
 
 theorem banach_contraction_fixed_point_exists[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a)
     }
 }
 
 theorem banach_contraction_fixed_point_unique[M: MetricSpace](f: M -> M, c: Real, x: M, y: M) {
-    is_contraction(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) implies x = y
+    is_contraction_metric(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) implies x = y
 }
 
 theorem banach_contraction_fixed_point[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a) and forall(y: M) {
             is_fixed_point(f, y) implies y = a
         }
@@ -2299,16 +2305,5 @@ theorem real_norm_triangle(x: Real, y: Real) {
     real_norm(x + y) <= real_norm(x) + real_norm(y)
 }
 
-theorem real_norm_mul(a: Real, b: Real) {
-    (a * b).norm = a.norm * b.norm
-}
 
-define tail_value(a: Nat -> Real, n: Nat, x: Real) -> Bool {
-    exists(k: Nat) {
-        n <= k and a(k) = x
-    }
-}
 
-define tail_set(a: Nat -> Real, n: Nat) -> Set[Real] {
-    Set[Real].new(tail_value(a, n))
-}

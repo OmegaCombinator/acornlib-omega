@@ -1,3 +1,5 @@
+numerals Real
+
 typeclass M: MetricSpace {
     /// Every metric space must have a distance function
     distance: (M, M) -> Real
@@ -20,6 +22,36 @@ typeclass M: MetricSpace {
     /// Rule: distance must satisfy the triangle inequality
     triangle(x: M, y: M, z: M) {
         x.distance(z) <= x.distance(y) + y.distance(z)
+    }
+}
+
+define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat, j: Nat) {
+        n <= i and n <= j implies q(i).distance(q(j)) < eps
+    }
+}
+
+define is_cauchy_metric[M: MetricSpace](q: Nat -> M) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(q, n, eps)
+        }
+    }
+}
+
+
+
+define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
+    forall(i: Nat) {
+        n <= i implies q(i).distance(a) < eps
+    }
+}
+
+define tendsto_metric[M: MetricSpace](q: Nat -> M, a: M) -> Bool {
+    forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            metric_tail_bound(q, a, n, eps)
+        }
     }
 }
 
@@ -64,6 +96,16 @@ typeclass K: NormedField extends Field, NormedAddCommGroup {
     }
 }
 
+define big_union_contains[T](c: Set[T] -> Bool, x: T) -> Bool {
+    exists(s: Set[T]) {
+        c(s) and s.contains(x)
+    }
+}
+
+define big_union[T](c: Set[T] -> Bool) -> Set[T] {
+    Set[T].new(big_union_contains(c))
+}
+
 typeclass T: TopologicalSpace {
     /// True if the given subset is open in the topology.
     is_open: Set[T] -> Bool
@@ -87,6 +129,24 @@ typeclass T: TopologicalSpace {
     open_big_union(c: Set[T] -> Bool) {
         (forall(s: Set[T]) { c(s) implies T.is_open(s) })
             implies T.is_open(big_union(c))
+    }
+}
+
+
+
+define in_open_ball[M: MetricSpace](x: M, r: Real, y: M) -> Bool {
+    y.distance(x) < r
+}
+
+define open_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
+    Set[M].new(in_open_ball(x, r))
+}
+
+define is_open_metric[M: MetricSpace](s: Set[M]) -> Bool {
+    forall(x: M) {
+        s.contains(x) implies exists(r: Real) {
+            r.is_positive and open_ball(x, r).subset(s)
+        }
     }
 }
 
@@ -2031,9 +2091,6 @@ theorem distance_zero_iff_eq[M: MetricSpace](x: M, y: M) {
     (x.distance(y) = 0) = (x = y)
 }
 
-define in_open_ball[M: MetricSpace](x: M, r: Real, y: M) -> Bool {
-    y.distance(x) < r
-}
 
 define in_closed_ball[M: MetricSpace](x: M, r: Real, y: M) -> Bool {
     y.distance(x) <= r
@@ -2075,17 +2132,7 @@ theorem discrete_triangle[T](x: T, y: T, z: T) {
     discrete(x, z) <= discrete(x, y) + discrete(y, z)
 }
 
-define metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat) {
-        n <= i implies q(i).distance(a) < eps
-    }
-}
 
-define cauchy_metric_bound[M: MetricSpace](q: Nat -> M, n: Nat, eps: Real) -> Bool {
-    forall(i: Nat, j: Nat) {
-        n <= i and n <= j implies q(i).distance(q(j)) < eps
-    }
-}
 
 define distance_set_contains[M: MetricSpace](s: Set[M], r: Real) -> Bool {
     exists(x: M, y: M) {
@@ -2152,9 +2199,6 @@ instance Real: MetricSpace {
 
 instance Real: CompleteMetricSpace
 
-define open_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
-    Set[M].new(in_open_ball(x, r))
-}
 
 define closed_ball[M: MetricSpace](x: M, r: Real) -> Set[M] {
     Set[M].new(in_closed_ball(x, r))
@@ -2242,21 +2286,7 @@ theorem open_ball_is_bounded[M: MetricSpace](x: M, r: Real) {
     is_bounded(open_ball(x, r))
 }
 
-define tendsto_metric[M: MetricSpace](q: Nat -> M, a: M) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            metric_tail_bound(q, a, n, eps)
-        }
-    }
-}
 
-define is_cauchy_metric[M: MetricSpace](q: Nat -> M) -> Bool {
-    forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(q, n, eps)
-        }
-    }
-}
 
 theorem tendsto_metric_tail_bound[M: MetricSpace](q: Nat -> M, a: M, eps: Real) {
     tendsto_metric(q, a) and eps.is_positive implies exists(n: Nat) {
@@ -2474,13 +2504,6 @@ theorem isometry_preserves_tendsto_metric_bounds[M: MetricSpace, N: MetricSpace]
     }
 }
 
-define is_open_metric[M: MetricSpace](s: Set[M]) -> Bool {
-    forall(x: M) {
-        s.contains(x) implies exists(r: Real) {
-            r.is_positive and open_ball(x, r).subset(s)
-        }
-    }
-}
 
 define is_closed_metric[M: MetricSpace](s: Set[M]) -> Bool {
     is_open_metric(s.c)
@@ -2528,24 +2551,8 @@ theorem universal_set_is_closed_metric[M: MetricSpace] {
     is_closed_metric(Set[M].universal_set)
 }
 
-theorem closed_ball_complement_open_ball_subset[M: MetricSpace](xc: M, rad: Real, y: M) {
-    rad < y.distance(xc) implies
-        open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
-}
 
-theorem closed_ball_complement_has_open_neighborhood[M: MetricSpace](xc: M, rad: Real, y: M) {
-    closed_ball(xc, rad).c.contains(y) implies exists(r: Real) {
-        r.is_positive and open_ball(y, r).subset(closed_ball(xc, rad).c)
-    }
-}
 
-theorem isometry_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](f: M -> N, q: Nat -> M) {
-    is_isometry(f) and is_cauchy_metric(q) implies forall(eps: Real) {
-        eps.is_positive implies exists(n: Nat) {
-            cauchy_metric_bound(compose(f, q), n, eps)
-        }
-    }
-}
 
 theorem isometry_preserves_tendsto_metric[M: MetricSpace, N: MetricSpace](
     f: M -> N, q: Nat -> M, a: M

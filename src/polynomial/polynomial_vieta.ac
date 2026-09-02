@@ -16,17 +16,10 @@ from polynomial.polynomial_monomial import polynomial_monomial_mul, polynomial_c
 from polynomial.polynomial_ring_theory import polynomial_constant_mul, polynomial_mul_add_right
 from polynomial.polynomial_mul_distrib import polynomial_mul_add_left
 
+from polynomial.polynomial_ring import linear_polynomial, linear_polynomial_coeff_one, linear_polynomial_coeff_zero, linear_polynomial_eval, quadratic_polynomial, quadratic_polynomial_coeff_one, quadratic_polynomial_coeff_two, quadratic_polynomial_coeff_zero, quadratic_polynomial_eval
 numerals Nat
 
-/// The linear polynomial `a * X + b`.
-define linear_polynomial[R: Semiring](a: R, b: R) -> Polynomial[R] {
-    polynomial_constant(b) + polynomial_monomial(Nat.1, a)
-}
 
-/// The quadratic polynomial `a * X^2 + b * X + c`.
-define quadratic_polynomial[R: Semiring](a: R, b: R, c: R) -> Polynomial[R] {
-    polynomial_constant(c) + polynomial_monomial(Nat.1, b) + polynomial_monomial(Nat.2, a)
-}
 
 /// The first power of an element is itself.
 lemma vieta_pow_one[R: Semiring](x: R) {
@@ -90,83 +83,9 @@ theorem polynomial_monomial_add_same[R: Semiring](n: Nat, r: R, s: R) {
         polynomial_monomial(n, r + s))
 }
 
-/// The constant coefficient of a linear polynomial.
-theorem linear_polynomial_coeff_zero[R: Semiring](a: R, b: R) {
-    linear_polynomial(a, b).coeff(Nat.0) = b
-} by {
-    polynomial_add_coeff(polynomial_constant(b), polynomial_monomial(Nat.1, a), Nat.0)
-    linear_polynomial(a, b).coeff(Nat.0) =
-        polynomial_constant(b).coeff(Nat.0) + polynomial_monomial(Nat.1, a).coeff(Nat.0)
-    polynomial_constant_coeff_zero(b)
-    polynomial_constant(b).coeff(Nat.0) = b
-    Nat.0 != Nat.1
-    polynomial_monomial_coeff_of_ne(Nat.1, a, Nat.0)
-    Polynomial[R].monomial(Nat.1, a) = polynomial_monomial(Nat.1, a)
-    polynomial_monomial(Nat.1, a).coeff(Nat.0) = R.0
-    linear_polynomial(a, b).coeff(Nat.0) = b + R.0
-    b + R.0 = b
-}
 
-/// The linear coefficient of a linear polynomial.
-theorem linear_polynomial_coeff_one[R: Semiring](a: R, b: R) {
-    linear_polynomial(a, b).coeff(Nat.1) = a
-} by {
-    polynomial_add_coeff(polynomial_constant(b), polynomial_monomial(Nat.1, a), Nat.1)
-    linear_polynomial(a, b).coeff(Nat.1) =
-        polynomial_constant(b).coeff(Nat.1) + polynomial_monomial(Nat.1, a).coeff(Nat.1)
-    Nat.1 != Nat.0
-    polynomial_constant_coeff_of_ne_zero(b, Nat.1)
-    polynomial_constant(b).coeff(Nat.1) = R.0
-    polynomial_monomial_coeff_self(Nat.1, a)
-    Polynomial[R].monomial(Nat.1, a) = polynomial_monomial(Nat.1, a)
-    polynomial_monomial(Nat.1, a).coeff(Nat.1) = a
-    linear_polynomial(a, b).coeff(Nat.1) = R.0 + a
-    R.0 + a = a
-}
 
-/// The value of a linear polynomial at a point.
-theorem linear_polynomial_eval[R: CommRing](a: R, b: R, x: R) {
-    polynomial_eval(linear_polynomial(a, b), x) = b + a * x
-} by {
-    polynomial_eval_add(polynomial_constant(b), polynomial_monomial(Nat.1, a), x)
-    polynomial_eval(linear_polynomial(a, b), x) =
-        polynomial_eval(polynomial_constant(b), x) + polynomial_eval(polynomial_monomial(Nat.1, a), x)
-    polynomial_eval_constant(b, x)
-    polynomial_eval(polynomial_constant(b), x) = b
-    polynomial_eval_monomial(Nat.1, a, x)
-    polynomial_eval(polynomial_monomial(Nat.1, a), x) = a * x.pow(Nat.1)
-    vieta_pow_one(x)
-    polynomial_eval(polynomial_monomial(Nat.1, a), x) = a * x
-    polynomial_eval(linear_polynomial(a, b), x) = b + a * x
-}
 
-/// The value of a quadratic polynomial at a point.
-theorem quadratic_polynomial_eval[R: CommRing](a: R, b: R, c: R, x: R) {
-    polynomial_eval(quadratic_polynomial(a, b, c), x) = c + b * x + a * x * x
-} by {
-    polynomial_eval_add(polynomial_constant(c) + polynomial_monomial(Nat.1, b),
-        polynomial_monomial(Nat.2, a), x)
-    polynomial_eval(quadratic_polynomial(a, b, c), x) =
-        polynomial_eval(polynomial_constant(c) + polynomial_monomial(Nat.1, b), x) +
-        polynomial_eval(polynomial_monomial(Nat.2, a), x)
-    polynomial_eval_add(polynomial_constant(c), polynomial_monomial(Nat.1, b), x)
-    polynomial_eval(polynomial_constant(c) + polynomial_monomial(Nat.1, b), x) =
-        polynomial_eval(polynomial_constant(c), x) + polynomial_eval(polynomial_monomial(Nat.1, b), x)
-    polynomial_eval_constant(c, x)
-    polynomial_eval(polynomial_constant(c), x) = c
-    polynomial_eval_monomial(Nat.1, b, x)
-    polynomial_eval(polynomial_monomial(Nat.1, b), x) = b * x.pow(Nat.1)
-    vieta_pow_one(x)
-    polynomial_eval(polynomial_monomial(Nat.1, b), x) = b * x
-    polynomial_eval_monomial(Nat.2, a, x)
-    polynomial_eval(polynomial_monomial(Nat.2, a), x) = a * x.pow(Nat.2)
-    vieta_pow_two(x)
-    polynomial_eval(polynomial_monomial(Nat.2, a), x) = a * (x * x)
-    polynomial_eval(polynomial_constant(c) + polynomial_monomial(Nat.1, b), x) = c + b * x
-    polynomial_eval(quadratic_polynomial(a, b, c), x) = c + b * x + a * (x * x)
-    a * (x * x) = a * x * x
-    polynomial_eval(quadratic_polynomial(a, b, c), x) = c + b * x + a * x * x
-}
 
 /// The polynomial `X - a` has `a` as a root.
 theorem linear_polynomial_neg_root[R: CommRing](a: R) {
@@ -481,83 +400,8 @@ theorem polynomial_linear_compose_eval[R: CommRing](a: R, b: R, c: R, d: R, x: R
         (b + a * d) + (a * c) * x
 }
 
-/// The constant coefficient of a quadratic polynomial.
-theorem quadratic_polynomial_coeff_zero[R: Semiring](a: R, b: R, c: R) {
-    quadratic_polynomial(a, b, c).coeff(Nat.0) = c
-} by {
-    polynomial_add_coeff(polynomial_constant(c) + polynomial_monomial(Nat.1, b),
-        polynomial_monomial(Nat.2, a), Nat.0)
-    quadratic_polynomial(a, b, c).coeff(Nat.0) =
-        (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.0) +
-        polynomial_monomial(Nat.2, a).coeff(Nat.0)
-    polynomial_add_coeff(polynomial_constant(c), polynomial_monomial(Nat.1, b), Nat.0)
-    (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.0) =
-        polynomial_constant(c).coeff(Nat.0) + polynomial_monomial(Nat.1, b).coeff(Nat.0)
-    polynomial_constant_coeff_zero(c)
-    polynomial_constant(c).coeff(Nat.0) = c
-    Nat.0 != Nat.1
-    polynomial_monomial_coeff_of_ne(Nat.1, b, Nat.0)
-    Polynomial[R].monomial(Nat.1, b) = polynomial_monomial(Nat.1, b)
-    polynomial_monomial(Nat.1, b).coeff(Nat.0) = R.0
-    Nat.0 != Nat.2
-    polynomial_monomial_coeff_of_ne(Nat.2, a, Nat.0)
-    Polynomial[R].monomial(Nat.2, a) = polynomial_monomial(Nat.2, a)
-    polynomial_monomial(Nat.2, a).coeff(Nat.0) = R.0
-    quadratic_polynomial(a, b, c).coeff(Nat.0) = c + R.0 + R.0
-    c + R.0 + R.0 = c
-}
 
-/// The linear coefficient of a quadratic polynomial.
-theorem quadratic_polynomial_coeff_one[R: Semiring](a: R, b: R, c: R) {
-    quadratic_polynomial(a, b, c).coeff(Nat.1) = b
-} by {
-    polynomial_add_coeff(polynomial_constant(c) + polynomial_monomial(Nat.1, b),
-        polynomial_monomial(Nat.2, a), Nat.1)
-    quadratic_polynomial(a, b, c).coeff(Nat.1) =
-        (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.1) +
-        polynomial_monomial(Nat.2, a).coeff(Nat.1)
-    polynomial_add_coeff(polynomial_constant(c), polynomial_monomial(Nat.1, b), Nat.1)
-    (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.1) =
-        polynomial_constant(c).coeff(Nat.1) + polynomial_monomial(Nat.1, b).coeff(Nat.1)
-    Nat.1 != Nat.0
-    polynomial_constant_coeff_of_ne_zero(c, Nat.1)
-    polynomial_constant(c).coeff(Nat.1) = R.0
-    polynomial_monomial_coeff_self(Nat.1, b)
-    Polynomial[R].monomial(Nat.1, b) = polynomial_monomial(Nat.1, b)
-    polynomial_monomial(Nat.1, b).coeff(Nat.1) = b
-    Nat.1 != Nat.2
-    polynomial_monomial_coeff_of_ne(Nat.2, a, Nat.1)
-    Polynomial[R].monomial(Nat.2, a) = polynomial_monomial(Nat.2, a)
-    polynomial_monomial(Nat.2, a).coeff(Nat.1) = R.0
-    quadratic_polynomial(a, b, c).coeff(Nat.1) = R.0 + b + R.0
-    R.0 + b + R.0 = b
-}
 
-/// The quadratic coefficient of a quadratic polynomial.
-theorem quadratic_polynomial_coeff_two[R: Semiring](a: R, b: R, c: R) {
-    quadratic_polynomial(a, b, c).coeff(Nat.2) = a
-} by {
-    polynomial_add_coeff(polynomial_constant(c) + polynomial_monomial(Nat.1, b),
-        polynomial_monomial(Nat.2, a), Nat.2)
-    quadratic_polynomial(a, b, c).coeff(Nat.2) =
-        (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.2) +
-        polynomial_monomial(Nat.2, a).coeff(Nat.2)
-    polynomial_add_coeff(polynomial_constant(c), polynomial_monomial(Nat.1, b), Nat.2)
-    (polynomial_constant(c) + polynomial_monomial(Nat.1, b)).coeff(Nat.2) =
-        polynomial_constant(c).coeff(Nat.2) + polynomial_monomial(Nat.1, b).coeff(Nat.2)
-    Nat.2 != Nat.0
-    polynomial_constant_coeff_of_ne_zero(c, Nat.2)
-    polynomial_constant(c).coeff(Nat.2) = R.0
-    Nat.1 != Nat.2
-    polynomial_monomial_coeff_of_ne(Nat.1, b, Nat.2)
-    Polynomial[R].monomial(Nat.1, b) = polynomial_monomial(Nat.1, b)
-    polynomial_monomial(Nat.1, b).coeff(Nat.2) = R.0
-    polynomial_monomial_coeff_self(Nat.2, a)
-    Polynomial[R].monomial(Nat.2, a) = polynomial_monomial(Nat.2, a)
-    polynomial_monomial(Nat.2, a).coeff(Nat.2) = a
-    quadratic_polynomial(a, b, c).coeff(Nat.2) = R.0 + R.0 + a
-    R.0 + R.0 + a = a
-}
 
 /// The simple Vieta relations: the monic quadratic with roots `r1` and `r2`
 /// has linear coefficient `-(r1 + r2)`.

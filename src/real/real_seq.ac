@@ -5,7 +5,7 @@ from rational import Rat, iop
 from rational import finite_seq_abs_bounded
 from rational import no_greatest
 from function import compose
-from real.real_base import Real, is_cut, is_lower, is_greatest, has_greatest, is_dedekind_cut, add_rat_eps_between, close_imp_bounds, close_comm, pos_gt_zero, gt_zero_imp_pos, rat_between_reals, rat_between_reals_gt, rat_intersect, lt_some_rat, from_rat_maintains_lte, lt_trans, lte_lt_trans, lt_lte_trans
+from real.real_base import Real, is_cut, bounds_imp_close, close_imp_eps_pos, is_lower, is_greatest, has_greatest, is_dedekind_cut, add_rat_eps_between, close_imp_bounds, close_comm, pos_gt_zero, gt_zero_imp_pos, rat_between_reals, rat_between_reals_gt, rat_intersect, lt_some_rat, from_rat_maintains_lte, lt_trans, lte_lt_trans, lt_lte_trans, neg_from_rat, neg_distrib, abs_neg
 
 /// The bound on the end of a sequence that's part of the Cauchy convergence condition.
 /// Separating it out like this makes convergence a bit clearer to prove.
@@ -1177,6 +1177,16 @@ theorem rat_close_to_both_lt(x: Real, y: Real, eps: Real) {
     }
     y < Real.from_rat(r) + eps
     x.is_close(Real.from_rat(r), eps)
+    x.is_close(y, eps)
+    close_imp_eps_pos(x, y, eps)
+    eps.is_positive
+    Real.from_rat(r).is_close(Real.from_rat(r), eps)
+    close_imp_bounds(Real.from_rat(r), Real.from_rat(r), eps)
+    Real.from_rat(r) - eps < Real.from_rat(r)
+    Real.from_rat(r) < y
+    lt_trans(Real.from_rat(r) - eps, Real.from_rat(r), y)
+    Real.from_rat(r) - eps < y
+    bounds_imp_close(y, Real.from_rat(r), eps)
     y.is_close(Real.from_rat(r), eps)
     x.is_close(Real.from_rat(r), eps) and y.is_close(Real.from_rat(r), eps)
     exists(r2: Rat) {
@@ -1587,6 +1597,54 @@ theorem converges_imp_bounded(a: Nat -> Rat) {
     }
 }
 
+/// Negating a rat sequence negates the limit of its lifted real sequence.
+theorem neg_rat_lift_seq_converges_to(a: Nat -> Rat) {
+    converges(lift_seq(a)) implies converges_to(lift_seq(neg_rat_seq(a)), -limit_rat(a))
+} by {
+    if converges(lift_seq(a)) {
+        converges_imp_converges_to(lift_seq(a))
+        converges_to(lift_seq(a), limit(lift_seq(a)))
+        limit_rat(a) = limit(lift_seq(a))
+        converges_to(lift_seq(a), limit_rat(a))
+        forall(eps: Real) {
+            if eps.is_positive {
+                converges_to(lift_seq(a), limit_rat(a)) = forall(eps0: Real) {
+                    eps0.is_positive implies exists(n0: Nat) { tail_bound(lift_seq(a), limit_rat(a), n0, eps0) }
+                }
+                exists(n0: Nat) { tail_bound(lift_seq(a), limit_rat(a), n0, eps) }
+                let n: Nat satisfy {
+                    tail_bound(lift_seq(a), limit_rat(a), n, eps)
+                }
+                forall(i: Nat) {
+                    if n <= i {
+                        tail_bound(lift_seq(a), limit_rat(a), n, eps) = forall(i0: Nat) {
+                            n <= i0 implies lift_seq(a)(i0).is_close(limit_rat(a), eps)
+                        }
+                        lift_seq(a)(i).is_close(limit_rat(a), eps)
+                        (lift_seq(a)(i) - limit_rat(a)).abs < eps
+                        lift_seq(neg_rat_seq(a), i) = Real.from_rat(neg_rat_seq(a, i))
+                        neg_rat_seq(a, i) = -a(i)
+                        Real.from_rat(neg_rat_seq(a, i)) = Real.from_rat(-a(i))
+                        neg_from_rat(a(i))
+                        Real.from_rat(-a(i)) = -Real.from_rat(a(i))
+                        lift_seq(neg_rat_seq(a), i) = -Real.from_rat(a(i))
+                        lift_seq(a, i) = Real.from_rat(a(i))
+                        -lift_seq(a, i) = -Real.from_rat(a(i))
+                        lift_seq(neg_rat_seq(a), i) = -lift_seq(a, i)
+                        lift_seq(neg_rat_seq(a))(i) = -lift_seq(a)(i)
+                        lift_seq(neg_rat_seq(a))(i) - (-limit_rat(a)) = -(lift_seq(a)(i) - limit_rat(a))
+                        (lift_seq(neg_rat_seq(a))(i) - (-limit_rat(a))).abs = (lift_seq(a)(i) - limit_rat(a)).abs
+                        (lift_seq(neg_rat_seq(a))(i) - (-limit_rat(a))).abs < eps
+                        lift_seq(neg_rat_seq(a))(i).is_close(-limit_rat(a), eps)
+                    }
+                }
+                tail_bound(lift_seq(neg_rat_seq(a)), -limit_rat(a), n, eps)
+                exists(n1: Nat) { tail_bound(lift_seq(neg_rat_seq(a)), -limit_rat(a), n1, eps) }
+            }
+        }
+    }
+}
+
 // Prove that convergent sequences can have their absolute value bounded.
 theorem converges_imp_abs_bounded(a: Nat -> Rat) {
     converges(lift_seq(a))
@@ -1602,6 +1660,9 @@ theorem converges_imp_abs_bounded(a: Nat -> Rat) {
             a(i) < pos_bound
         }
     }
+    neg_rat_lift_seq_converges_to(a)
+    converges_to(lift_seq(neg_rat_seq(a)), -limit_rat(a))
+    converges_to_imp_converges(lift_seq(neg_rat_seq(a)), -limit_rat(a))
     converges(lift_seq(neg_rat_seq(a)))
     let neg_bound: Rat satisfy {
         forall(i: Nat) {
@@ -1788,8 +1849,10 @@ theorem neg_rat_seq_well_def(a: Nat -> Rat, b: Nat -> Rat) {
         converges(lift_seq(a))
         converges_to(lift_seq(b), limit_rat(a))
         converges(lift_seq(b))
+        neg_rat_lift_seq_converges_to(a)
         converges_to(lift_seq(neg_rat_seq(a)), -limit_rat(a))
         converges(lift_seq(neg_rat_seq(a)))
+        neg_rat_lift_seq_converges_to(b)
         converges_to(lift_seq(neg_rat_seq(b)), -limit_rat(b))
         converges_to(lift_seq(neg_rat_seq(a)), limit(lift_seq(neg_rat_seq(a))))
         limit(lift_seq(neg_rat_seq(a))) = -limit_rat(a)
@@ -1824,6 +1887,7 @@ theorem sub_rat_seq_is_sub(a: Nat -> Rat, b: Nat -> Rat) {
     implies
     converges_to(lift_seq(sub_rat_seq(a, b)), limit_rat(a) - limit_rat(b))
 } by {
+    neg_rat_lift_seq_converges_to(b)
     converges_to(lift_seq(neg_rat_seq(b)), -limit_rat(b))
     converges(lift_seq(neg_rat_seq(b)))
     converges_to(lift_seq(neg_rat_seq(b)), limit(lift_seq(neg_rat_seq(b))))

@@ -30,7 +30,7 @@ numerals Nat
 
 /// True if `f` is a contraction of the metric space `M` with constant `c`:
 /// the constant lies in `[0, 1)` and `f` shrinks distances by the factor `c`.
-define is_contraction[M: MetricSpace](f: M -> M, c: Real) -> Bool {
+define is_contraction_metric[M: MetricSpace](f: M -> M, c: Real) -> Bool {
     Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
         f(x).distance(f(y)) <= c * x.distance(y)
     }
@@ -38,10 +38,10 @@ define is_contraction[M: MetricSpace](f: M -> M, c: Real) -> Bool {
 
 /// The constant of a contraction is nonnegative.
 theorem contraction_constant_nonneg[M: MetricSpace](f: M -> M, c: Real) {
-    is_contraction(f, c) implies Real.0 <= c
+    is_contraction_metric(f, c) implies Real.0 <= c
 } by {
-    if is_contraction(f, c) {
-        is_contraction(f, c) = (Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
+    if is_contraction_metric(f, c) {
+        is_contraction_metric(f, c) = (Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
             f(x).distance(f(y)) <= c * x.distance(y)
         })
         Real.0 <= c
@@ -50,10 +50,10 @@ theorem contraction_constant_nonneg[M: MetricSpace](f: M -> M, c: Real) {
 
 /// The constant of a contraction is strictly below one.
 theorem contraction_constant_lt_one[M: MetricSpace](f: M -> M, c: Real) {
-    is_contraction(f, c) implies c < Real.1
+    is_contraction_metric(f, c) implies c < Real.1
 } by {
-    if is_contraction(f, c) {
-        is_contraction(f, c) = (Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
+    if is_contraction_metric(f, c) {
+        is_contraction_metric(f, c) = (Real.0 <= c and c < Real.1 and forall(x: M, y: M) {
             f(x).distance(f(y)) <= c * x.distance(y)
         })
         c < Real.1
@@ -62,10 +62,10 @@ theorem contraction_constant_lt_one[M: MetricSpace](f: M -> M, c: Real) {
 
 /// A contraction shrinks every distance by the factor `c`.
 theorem contraction_distance[M: MetricSpace](f: M -> M, c: Real, x: M, y: M) {
-    is_contraction(f, c) implies f(x).distance(f(y)) <= c * x.distance(y)
+    is_contraction_metric(f, c) implies f(x).distance(f(y)) <= c * x.distance(y)
 } by {
-    if is_contraction(f, c) {
-        is_contraction(f, c) = (Real.0 <= c and c < Real.1 and forall(a: M, b: M) {
+    if is_contraction_metric(f, c) {
+        is_contraction_metric(f, c) = (Real.0 <= c and c < Real.1 and forall(a: M, b: M) {
             f(a).distance(f(b)) <= c * a.distance(b)
         })
         forall(a: M, b: M) {
@@ -109,10 +109,10 @@ define orbit_partial[M: MetricSpace](f: M -> M, c: Real, x0: M, n: Nat) -> Real 
 
 /// Iterating a contraction `n` times shrinks distances by `c^n`.
 theorem contraction_iterate_distance[M: MetricSpace](f: M -> M, c: Real, n: Nat, x: M, y: M) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     implies iterate(f, n, x).distance(iterate(f, n, y)) <= c.pow(n) * x.distance(y)
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         define p(k: Nat) -> Bool {
             iterate(f, k, x).distance(iterate(f, k, y)) <= c.pow(k) * x.distance(y)
         }
@@ -169,11 +169,11 @@ theorem contraction_iterate_distance[M: MetricSpace](f: M -> M, c: Real, n: Nat,
 /// The distance from the `n`-th iterate to the next is at most
 /// `c^n · d(f(x0), x0)`.
 theorem orbit_consecutive_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, n: Nat) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     implies orbit_seq(f, x0, n.suc).distance(orbit_seq(f, x0, n)) <=
         mul_seq(f(x0).distance(x0), c.pow, n)
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         iterate_suc_inner(f, n, x0)
         iterate(f, n.suc, x0) = iterate(f, n, f(x0))
         orbit_seq(f, x0, n.suc) = iterate(f, n.suc, x0)
@@ -191,11 +191,11 @@ theorem orbit_consecutive_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, n: Na
 /// The base case of the orbit polygon bound: the distance from an orbit point
 /// to itself is bounded by the empty tail of the dominating partial sums.
 theorem orbit_polygon_base[M: MetricSpace](f: M -> M, c: Real, x0: M, k: Nat) {
-    is_contraction(f, c) implies
+    is_contraction_metric(f, c) implies
     orbit_seq(f, x0, k).distance(orbit_seq(f, x0, k + Nat.0)) <=
         orbit_partial(f, c, x0, k + Nat.0) - orbit_partial(f, c, x0, k)
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         k + Nat.0 = k
         orbit_seq(f, x0, k).distance(orbit_seq(f, x0, k)) = Real.0
         orbit_partial(f, c, x0, k) - orbit_partial(f, c, x0, k) = Real.0
@@ -211,11 +211,11 @@ theorem orbit_polygon_base[M: MetricSpace](f: M -> M, c: Real, x0: M, k: Nat) {
 /// For `m <= n`, `d(x_m, x_n)` is at most `Σ_{k=m}^{n-1} c^k · d(f(x0), x0)`,
 /// expressed as the difference of the partial sums of the geometric majorant.
 theorem orbit_polygon_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, m: Nat, n: Nat) {
-    is_contraction(f, c) and m <= n implies
+    is_contraction_metric(f, c) and m <= n implies
     orbit_seq(f, x0, m).distance(orbit_seq(f, x0, n)) <=
         orbit_partial(f, c, x0, n) - orbit_partial(f, c, x0, m)
 } by {
-    if is_contraction(f, c) and m <= n {
+    if is_contraction_metric(f, c) and m <= n {
         define p(j: Nat) -> Bool {
             forall(k: Nat) {
                 orbit_seq(f, x0, k).distance(orbit_seq(f, x0, k + j)) <=
@@ -276,7 +276,7 @@ theorem orbit_polygon_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, m: Nat, n
 /// This is the two-case (ordered indices) core of the Cauchy proof: the
 /// polygon bound transfers the closeness of the partial sums to the orbit.
 theorem orbit_pair_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, eps: Real, n: Nat, i: Nat, j: Nat) {
-    is_contraction(f, c)
+    is_contraction_metric(f, c)
     and (forall(a: Nat, b: Nat) {
         n <= a and n <= b implies
             partial(mul_seq(f(x0).distance(x0), c.pow), a).is_close(partial(mul_seq(f(x0).distance(x0), c.pow), b), eps)
@@ -284,7 +284,7 @@ theorem orbit_pair_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, eps: Real, n
     and n <= i and n <= j
     implies orbit_seq(f, x0, i).distance(orbit_seq(f, x0, j)) < eps
 } by {
-    if is_contraction(f, c)
+    if is_contraction_metric(f, c)
         and (forall(a: Nat, b: Nat) {
             n <= a and n <= b implies
                 partial(mul_seq(f(x0).distance(x0), c.pow), a).is_close(partial(mul_seq(f(x0).distance(x0), c.pow), b), eps)
@@ -330,9 +330,9 @@ theorem orbit_pair_bound[M: MetricSpace](f: M -> M, c: Real, x0: M, eps: Real, n
 
 /// The orbit of a contraction is a Cauchy sequence.
 theorem orbit_cauchy_metric[M: MetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies is_cauchy_metric(orbit_seq(f, x0))
+    is_contraction_metric(f, c) implies is_cauchy_metric(orbit_seq(f, x0))
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         forall(eps: Real) {
             if eps.is_positive {
                 contraction_constant_nonneg(f, c)
@@ -416,11 +416,11 @@ theorem lt_all_positive_eps_imp_lte_zero(x: Real) {
 /// distances), completeness supplies a limit, and the contraction inequality
 /// forces the limit to be a fixed point.
 theorem banach_contraction_orbit_converges[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a) and tendsto_metric(orbit_seq(f, x0), a)
     }
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         orbit_cauchy_metric(f, c, x0)
         is_cauchy_metric(orbit_seq(f, x0))
         exists(a: M) {
@@ -493,11 +493,11 @@ theorem banach_contraction_orbit_converges[M: CompleteMetricSpace](f: M -> M, c:
 
 /// A contraction of a complete metric space has a fixed point.
 theorem banach_contraction_fixed_point_exists[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a)
     }
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         banach_contraction_orbit_converges(f, c, x0)
         exists(a: M) {
             is_fixed_point(f, a) and tendsto_metric(orbit_seq(f, x0), a)
@@ -514,9 +514,9 @@ theorem banach_contraction_fixed_point_exists[M: CompleteMetricSpace](f: M -> M,
 
 /// Two fixed points of a contraction coincide.
 theorem banach_contraction_fixed_point_unique[M: MetricSpace](f: M -> M, c: Real, x: M, y: M) {
-    is_contraction(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) implies x = y
+    is_contraction_metric(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) implies x = y
 } by {
-    if is_contraction(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) {
+    if is_contraction_metric(f, c) and is_fixed_point(f, x) and is_fixed_point(f, y) {
         is_fixed_point(f, x) = (f(x) = x)
         is_fixed_point(f, y) = (f(y) = y)
         f(x) = x
@@ -555,13 +555,13 @@ theorem banach_contraction_fixed_point_unique[M: MetricSpace](f: M -> M, c: Real
 /// The Banach fixed point theorem: a contraction of a complete metric space
 /// has a unique fixed point.
 theorem banach_contraction_fixed_point[M: CompleteMetricSpace](f: M -> M, c: Real, x0: M) {
-    is_contraction(f, c) implies exists(a: M) {
+    is_contraction_metric(f, c) implies exists(a: M) {
         is_fixed_point(f, a) and forall(y: M) {
             is_fixed_point(f, y) implies y = a
         }
     }
 } by {
-    if is_contraction(f, c) {
+    if is_contraction_metric(f, c) {
         banach_contraction_fixed_point_exists(f, c, x0)
         exists(a: M) {
             is_fixed_point(f, a)
@@ -614,7 +614,7 @@ theorem real_banach_fixed_point(f: Real -> Real, c: Real, x0: Real) {
             (f(x) - f(y)).abs <= c * (x - y).abs
             f(x).distance(f(y)) <= c * x.distance(y)
         }
-        is_contraction[Real](f, c)
+        is_contraction_metric[Real](f, c)
         banach_contraction_fixed_point[Real](f, c, x0)
         exists(a: Real) {
             is_fixed_point(f, a) and forall(y: Real) {

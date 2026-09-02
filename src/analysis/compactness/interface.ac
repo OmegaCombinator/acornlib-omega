@@ -1199,14 +1199,6 @@ define uniform_on(f: Real -> Real, lower: Real, upper: Real) -> Bool {
     }
 }
 
-define is_unbounded(f: Nat -> Nat) -> Bool {
-    forall(bound: Nat) {
-        exists(n: Nat) {
-            bound < f(n)
-        }
-    }
-}
-
 theorem intermediate_value_on_closed_interval(f: Real -> Real, a: Real, b: Real, t: Real) {
     continuous(f) and a <= b and f(a) <= t and t <= f(b)
     implies exists(c: Real) { a <= c and c <= b and f(c) = t }
@@ -1467,6 +1459,15 @@ theorem subspace_inclusion_preimage_contains[T: TopologicalSpace](
     set_preimage(subspace_inclusion[T](a), v).contains(p) = v.contains(p.value)
 }
 
+define subspace_open[T: TopologicalSpace](a: Set[T], u: Set[Subspace[T, a]]) -> Bool {
+    exists(v: Set[T]) {
+        has_subspace_witness(a, u, v)
+    }
+}
+
+instance Subspace[T: TopologicalSpace, a: Set[T]]: TopologicalSpace {
+    let is_open: Set[Subspace[T, a]] -> Bool = subspace_open(a)
+}
 theorem subspace_inclusion_continuous[T: TopologicalSpace](a: Set[T]) {
     is_continuous(subspace_inclusion[T](a))
 }
@@ -1736,15 +1737,7 @@ theorem closed_set_contains_eventually_equal_subsequence_limit(
     implies s.contains(x)
 }
 
-instance Subspace[T: TopologicalSpace, a: Set[T]]: TopologicalSpace {
-    let is_open: Set[Subspace[T, a]] -> Bool = subspace_open(a)
-}
 
-define subspace_open[T: TopologicalSpace](a: Set[T], u: Set[Subspace[T, a]]) -> Bool {
-    exists(v: Set[T]) {
-        has_subspace_witness(a, u, v)
-    }
-}
 
 theorem subspace_open_empty_helper[T: TopologicalSpace](a: Set[T]) {
     subspace_open(a, Set[Subspace[T, a]].empty_set)
@@ -1893,4 +1886,40 @@ theorem real_big_union_of_open_is_open(c: Set[Real] -> Bool) {
 
 theorem sum_is_open_eq[X: TopologicalSpace, Y: TopologicalSpace](w: Set[Sum[X, Y]]) {
     Sum[X, Y].is_open(w) = is_open_in_sum[X, Y](w)
+}
+theorem caratheodory_measurable_union[K](m: OuterMeasure[K], a: Set[K], b: Set[K]) {
+    caratheodory_measurable(m, a) and caratheodory_measurable(m, b)
+        implies caratheodory_measurable(m, a.union(b))
+}
+theorem caratheodory_measurable_intersection[K](m: OuterMeasure[K], a: Set[K], b: Set[K]) {
+    caratheodory_measurable(m, a) and caratheodory_measurable(m, b)
+        implies caratheodory_measurable(m, a.intersection(b))
+}
+theorem caratheodory_measurable_difference[K](m: OuterMeasure[K], a: Set[K], b: Set[K]) {
+    caratheodory_measurable(m, a) and caratheodory_measurable(m, b)
+        implies caratheodory_measurable(m, a.difference(b))
+}
+theorem union_compl_is_intersection_compl[K](a: Set[K], b: Set[K]) {
+    (a.c.union(b.c)).c = a.intersection(b)
+}
+theorem difference_eq_intersection_compl[K](a: Set[K], b: Set[K]) {
+    a.difference(b) = a.intersection(b.c)
+}
+
+
+theorem closed_ball_complement_open_ball_subset[M: MetricSpace](xc: M, rad: Real, y: M) {
+    rad < y.distance(xc) implies
+        open_ball(y, y.distance(xc) - rad).subset(closed_ball(xc, rad).c)
+}
+theorem closed_ball_complement_has_open_neighborhood[M: MetricSpace](xc: M, rad: Real, y: M) {
+    closed_ball(xc, rad).c.contains(y) implies exists(r: Real) {
+        r.is_positive and open_ball(y, r).subset(closed_ball(xc, rad).c)
+    }
+}
+theorem isometry_preserves_cauchy_metric_bounds[M: MetricSpace, N: MetricSpace](f: M -> N, q: Nat -> M) {
+    is_isometry(f) and is_cauchy_metric(q) implies forall(eps: Real) {
+        eps.is_positive implies exists(n: Nat) {
+            cauchy_metric_bound(compose(f, q), n, eps)
+        }
+    }
 }

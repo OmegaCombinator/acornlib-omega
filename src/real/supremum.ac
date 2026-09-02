@@ -1,5 +1,6 @@
 from function import compose
 from real.real_field import Real
+from ordered_field import mul_le_mul_of_nonpos_right, mul_le_mul_of_nonpos_left, inverse_of_negative_is_negative
 from real.real_base import bounds_imp_close, lt_add_pos
 from order import lt_of_lte_of_lt
 from order import not_lte_imp_gt
@@ -698,7 +699,19 @@ theorem mul_infimum_le(beta_l: Real, s: Set[Real], inf_s: Real, ub: Real) {
         forall(a: Real) {
             if s.contains(a) {
                 beta_l * a <= ub
-                // Since β < 0, dividing by β flips the inequality
+                a * beta_l <= ub
+                // Since β < 0, multiplying by β⁻¹ (also negative) flips the inequality
+                inverse_of_negative_is_negative(beta_l)
+                beta_l.inverse < Real.0
+                mul_le_mul_of_nonpos_right(a * beta_l, ub, beta_l.inverse)
+                ub * beta_l.inverse <= (a * beta_l) * beta_l.inverse
+                (a * beta_l) * beta_l.inverse = a * (beta_l * beta_l.inverse)
+                beta_l * beta_l.inverse = Real.1
+                a * (beta_l * beta_l.inverse) = a * Real.1
+                a * Real.1 = a
+                (a * beta_l) * beta_l.inverse = a
+                ub * beta_l.inverse <= a
+                ub / beta_l = ub * beta_l.inverse
                 ub / beta_l <= a
             }
         }
@@ -707,10 +720,24 @@ theorem mul_infimum_le(beta_l: Real, s: Set[Real], inf_s: Real, ub: Real) {
         is_set_lower_bound(s, ub / beta_l)
 
         // Since inf_s is the greatest lower bound
+        is_set_infimum(s, inf_s) = (is_set_lower_bound(s, inf_s) and
+            forall(b: Real) { is_set_lower_bound(s, b) implies b <= inf_s })
+        forall(b: Real) { is_set_lower_bound(s, b) implies b <= inf_s }
+        is_set_lower_bound(s, ub / beta_l) implies ub / beta_l <= inf_s
         ub / beta_l <= inf_s
 
         // Multiply both sides by β (which is negative), flipping the inequality
         // β·inf_s ≤ β·(ub/β) = ub
+        mul_le_mul_of_nonpos_right(ub / beta_l, inf_s, beta_l)
+        inf_s * beta_l <= (ub / beta_l) * beta_l
+        inf_s * beta_l = beta_l * inf_s
+        ub / beta_l = ub * beta_l.inverse
+        (ub / beta_l) * beta_l = (ub * beta_l.inverse) * beta_l
+        (ub * beta_l.inverse) * beta_l = ub * (beta_l.inverse * beta_l)
+        beta_l.inverse * beta_l = Real.1
+        ub * (beta_l.inverse * beta_l) = ub * Real.1
+        ub * Real.1 = ub
+        (ub / beta_l) * beta_l = ub
         beta_l * inf_s <= beta_l * (ub / beta_l)
         beta_l * (ub / beta_l) = ub
         beta_l * inf_s <= ub
