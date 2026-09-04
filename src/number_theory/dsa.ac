@@ -8,9 +8,9 @@ numerals Nat
 /// then raising `g` to `k * q + r` is congruent modulo `p` to raising
 /// `g` to `r`.
 theorem dsa_pow_order_reduce(p: Nat, q: Nat, g: Nat, k: Nat, r: Nat) {
-    g.pow(q).mod(p) = 1 implies g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
+    g.pow(q).mod(p) = Nat.1 implies g.pow(k * q + r).mod(p) = g.pow(r).mod(p)
 } by {
-    if g.pow(q).mod(p) = 1 {
+    if g.pow(q).mod(p) = Nat.1 {
         g.pow(q).congr_mod(Nat.1, p)
         congr_mod_pow(g.pow(q), Nat.1, p, k)
         congr_mod_refl(g.pow(r), p)
@@ -24,9 +24,9 @@ theorem dsa_pow_order_reduce(p: Nat, q: Nat, g: Nat, k: Nat, r: Nat) {
 /// If `g` has order dividing `q` modulo `p`, then `g.pow(a).mod(p)` only
 /// depends on `a` modulo `q`.
 theorem dsa_pow_mod_q(p: Nat, q: Nat, g: Nat, a: Nat) {
-    g.pow(q).mod(p) = 1 implies g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
+    g.pow(q).mod(p) = Nat.1 implies g.pow(a).mod(p) = g.pow(a.mod(q)).mod(p)
 } by {
-    if g.pow(q).mod(p) = 1 {
+    if g.pow(q).mod(p) = Nat.1 {
         add_mod(a, q)
         let k: Nat satisfy { k * q + a.mod(q) = a }
         dsa_pow_order_reduce(p, q, g, k, a.mod(q))
@@ -128,11 +128,11 @@ theorem dsa_congr_to_eq(q: Nat, k: Nat, lhs: Nat) {
 /// directly from the integer mod hypotheses used in DSA.
 theorem dsa_k_times_s_from_mod(q: Nat, h: Nat, x: Nat, r: Nat,
                                 k: Nat, kinv: Nat, s: Nat) {
-    1 < q and (k * kinv).mod(q) = 1 and
+    Nat.1 < q and (k * kinv).mod(q) = Nat.1 and
     s = (kinv * (h + x * r)).mod(q)
     implies (k * s).congr_mod(h + x * r, q)
 } by {
-    if 1 < q and (k * kinv).mod(q) = 1 and
+    if Nat.1 < q and (k * kinv).mod(q) = Nat.1 and
        s = (kinv * (h + x * r)).mod(q) {
         small_mod(Nat.1, q)
         mod_congr_mod_self(kinv * (h + x * r), q)
@@ -145,36 +145,36 @@ theorem dsa_k_times_s_from_mod(q: Nat, h: Nat, x: Nat, r: Nat,
 /// DSA domain parameters: a prime `p`, a prime `q` dividing `p - 1`,
 /// and a generator `g` of the unique order-`q` subgroup of `(Z/p)*`.
 define is_dsa_params(p: Nat, q: Nat, g: Nat) -> Bool {
-    p.is_prime and q.is_prime and q.divides(p - 1) and
-    1 < g and g < p and g.pow(q).mod(p) = 1
+    p.is_prime and q.is_prime and q.divides(p - Nat.1) and
+    Nat.1 < g and g < p and g.pow(q).mod(p) = Nat.1
 }
 
 /// Bridge: DSA parameter validity unfolds to its arithmetic and order clauses.
 theorem is_dsa_params_unfold(p: Nat, q: Nat, g: Nat) {
     is_dsa_params(p, q, g) = (p.is_prime and q.is_prime and
-        q.divides(p - 1) and 1 < g and g < p and g.pow(q).mod(p) = 1)
+        q.divides(p - Nat.1) and Nat.1 < g and g < p and g.pow(q).mod(p) = Nat.1)
 }
 
 /// True if `y` is the DSA public key corresponding to private key `x`
 /// under parameters `(p, q, g)`.
 define is_dsa_keypair(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) -> Bool {
-    0 < x and x < q and y = g.pow(x).mod(p)
+    Nat.0 < x and x < q and y = g.pow(x).mod(p)
 }
 
 /// Bridge: DSA key-pair validity unfolds to the private-key bounds and
 /// public-key exponent equation.
 theorem is_dsa_keypair_unfold(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat) {
-    is_dsa_keypair(p, q, g, x, y) = (0 < x and x < q and y = g.pow(x).mod(p))
+    is_dsa_keypair(p, q, g, x, y) = (Nat.0 < x and x < q and y = g.pow(x).mod(p))
 }
 
 /// True if `kinv` is the modular inverse of `k` modulo `q`.
 define is_mod_inverse(k: Nat, kinv: Nat, q: Nat) -> Bool {
-    (k * kinv).mod(q) = 1
+    (k * kinv).mod(q) = Nat.1
 }
 
 /// Bridge: DSA modular-inverse validity is the defining product congruence.
 theorem is_mod_inverse_unfold(k: Nat, kinv: Nat, q: Nat) {
-    is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = 1)
+    is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = Nat.1)
 }
 
 /// The first DSA signature component: `r = (g^k mod p) mod q`.
@@ -190,9 +190,9 @@ define dsa_sign_s(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) -> Nat {
 
 /// The DSA `r` component is reduced modulo `q`.
 theorem dsa_sign_r_lt(p: Nat, q: Nat, g: Nat, k: Nat) {
-    q != 0 implies dsa_sign_r(p, q, g, k) < q
+    q != Nat.0 implies dsa_sign_r(p, q, g, k) < q
 } by {
-    if q != 0 {
+    if q != Nat.0 {
         dsa_sign_r(p, q, g, k) = g.pow(k).mod(p).mod(q)
         mod_lt(g.pow(k).mod(p), q)
     }
@@ -200,9 +200,9 @@ theorem dsa_sign_r_lt(p: Nat, q: Nat, g: Nat, k: Nat) {
 
 /// The DSA `s` component is reduced modulo `q`.
 theorem dsa_sign_s_lt(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) {
-    q != 0 implies dsa_sign_s(q, h, x, r, kinv) < q
+    q != Nat.0 implies dsa_sign_s(q, h, x, r, kinv) < q
 } by {
-    if q != 0 {
+    if q != Nat.0 {
         dsa_sign_s(q, h, x, r, kinv) = (kinv * (h + x * r)).mod(q)
         mod_lt(kinv * (h + x * r), q)
     }
@@ -213,7 +213,7 @@ theorem dsa_sign_s_lt(q: Nat, h: Nat, x: Nat, r: Nat, kinv: Nat) {
 /// when `r = (g^{h * w} * y^{r * w} mod p) mod q` for `w = s^{-1} mod q`.
 define dsa_verify(p: Nat, q: Nat, g: Nat, y: Nat, h: Nat,
                   r: Nat, s: Nat, sinv: Nat) -> Bool {
-    0 < r and r < q and 0 < s and s < q and
+    Nat.0 < r and r < q and Nat.0 < s and s < q and
     is_mod_inverse(s, sinv, q) and
     (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) = r
 }
@@ -223,16 +223,16 @@ define dsa_verify(p: Nat, q: Nat, g: Nat, y: Nat, h: Nat,
 /// reduced exponent `((h*sinv).mod(q) + x*(r*sinv).mod(q)).mod(q)` equals `k`.
 theorem dsa_verify_exponent_eq(q: Nat, h: Nat, x: Nat, r: Nat,
                                 k: Nat, kinv: Nat, s: Nat, sinv: Nat) {
-    1 < q and k < q and
-    (k * kinv).mod(q) = 1 and
-    (s * sinv).mod(q) = 1 and
+    Nat.1 < q and k < q and
+    (k * kinv).mod(q) = Nat.1 and
+    (s * sinv).mod(q) = Nat.1 and
     s = (kinv * (h + x * r)).mod(q)
     implies
         ((h * sinv).mod(q) + x * (r * sinv).mod(q)).mod(q) = k
 } by {
-    if 1 < q and k < q and
-       (k * kinv).mod(q) = 1 and
-       (s * sinv).mod(q) = 1 and
+    if Nat.1 < q and k < q and
+       (k * kinv).mod(q) = Nat.1 and
+       (s * sinv).mod(q) = Nat.1 and
        s = (kinv * (h + x * r)).mod(q) {
         dsa_exp_mod_q_factor(q, h, x, r, sinv)
         dsa_k_times_s_from_mod(q, h, x, r, k, kinv, s)
@@ -251,13 +251,13 @@ theorem dsa_verify_exponent_eq(q: Nat, h: Nat, x: Nat, r: Nat,
 theorem dsa_pow_combine(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
                          a: Nat, b: Nat, k: Nat) {
     y = g.pow(x).mod(p) and
-    g.pow(q).mod(p) = 1 and
+    g.pow(q).mod(p) = Nat.1 and
     (a + x * b).mod(q) = k
     implies
         (g.pow(a) * y.pow(b)).mod(p) = g.pow(k).mod(p)
 } by {
     if y = g.pow(x).mod(p) and
-       g.pow(q).mod(p) = 1 and
+       g.pow(q).mod(p) = Nat.1 and
        (a + x * b).mod(q) = k {
         dsa_combine_pow(p, g, x, y, a, b)
         dsa_pow_mod_q(p, q, g, a + x * b)
@@ -273,23 +273,23 @@ theorem dsa_pow_combine(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
 theorem dsa_verify_identity(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
                              h: Nat, r: Nat, k: Nat, kinv: Nat,
                              s: Nat, sinv: Nat) {
-    1 < q and
-    g.pow(q).mod(p) = 1 and
+    Nat.1 < q and
+    g.pow(q).mod(p) = Nat.1 and
     y = g.pow(x).mod(p) and
     k < q and
-    (k * kinv).mod(q) = 1 and
-    (s * sinv).mod(q) = 1 and
+    (k * kinv).mod(q) = Nat.1 and
+    (s * sinv).mod(q) = Nat.1 and
     s = (kinv * (h + x * r)).mod(q)
     implies
         (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p) =
             g.pow(k).mod(p)
 } by {
-    if 1 < q and
-       g.pow(q).mod(p) = 1 and
+    if Nat.1 < q and
+       g.pow(q).mod(p) = Nat.1 and
        y = g.pow(x).mod(p) and
        k < q and
-       (k * kinv).mod(q) = 1 and
-       (s * sinv).mod(q) = 1 and
+       (k * kinv).mod(q) = Nat.1 and
+       (s * sinv).mod(q) = Nat.1 and
        s = (kinv * (h + x * r)).mod(q) {
         dsa_verify_exponent_eq(q, h, x, r, k, kinv, s, sinv)
         dsa_pow_combine(p, q, g, x, y,
@@ -305,25 +305,25 @@ theorem dsa_verify_identity(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
 theorem dsa_verifier_mod_q_eq_r(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
                                  h: Nat, k: Nat, kinv: Nat, sinv: Nat) {
     Nat.1 < q and
-    g.pow(q).mod(p) = 1 and
+    g.pow(q).mod(p) = Nat.1 and
     y = g.pow(x).mod(p) and
     k < q and
-    (k * kinv).mod(q) = 1 and
-    (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = 1
+    (k * kinv).mod(q) = Nat.1 and
+    (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = Nat.1
     implies
         (g.pow((h * sinv).mod(q)) *
          y.pow((dsa_sign_r(p, q, g, k) * sinv).mod(q))).mod(p).mod(q) =
             dsa_sign_r(p, q, g, k)
 } by {
     if Nat.1 < q and
-       g.pow(q).mod(p) = 1 and
+       g.pow(q).mod(p) = Nat.1 and
        y = g.pow(x).mod(p) and
        k < q and
-       (k * kinv).mod(q) = 1 and
-       (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = 1 {
+       (k * kinv).mod(q) = Nat.1 and
+       (dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q) = Nat.1 {
         let r: Nat = dsa_sign_r(p, q, g, k)
         let s: Nat = dsa_sign_s(q, h, x, r, kinv)
-        (s * sinv).mod(q) = 1
+        (s * sinv).mod(q) = Nat.1
         dsa_verify_identity(p, q, g, x, y, h, r, k, kinv, s, sinv)
         (g.pow((h * sinv).mod(q)) * y.pow((r * sinv).mod(q))).mod(p).mod(q) =
             g.pow(k).mod(p).mod(q)
@@ -339,11 +339,11 @@ theorem dsa_correctness(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
                         k: Nat, kinv: Nat, h: Nat, sinv: Nat) {
     is_dsa_params(p, q, g) and
     is_dsa_keypair(p, q, g, x, y) and
-    0 < k and k < q and
+    Nat.0 < k and k < q and
     is_mod_inverse(k, kinv, q) and
     is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv), sinv, q) and
-    0 < dsa_sign_r(p, q, g, k) and
-    0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv)
+    Nat.0 < dsa_sign_r(p, q, g, k) and
+    Nat.0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv)
     implies
         dsa_verify(p, q, g, y, h,
                    dsa_sign_r(p, q, g, k),
@@ -352,24 +352,24 @@ theorem dsa_correctness(p: Nat, q: Nat, g: Nat, x: Nat, y: Nat,
 } by {
     if is_dsa_params(p, q, g) and
        is_dsa_keypair(p, q, g, x, y) and
-       0 < k and k < q and
+       Nat.0 < k and k < q and
        is_mod_inverse(k, kinv, q) and
        is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
                       sinv, q) and
-       0 < dsa_sign_r(p, q, g, k) and
-       0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) {
+       Nat.0 < dsa_sign_r(p, q, g, k) and
+       Nat.0 < dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) {
         is_dsa_params(p, q, g) = (p.is_prime and q.is_prime and
-            q.divides(p - 1) and Nat.1 < g and g < p and g.pow(q).mod(p) = 1)
+            q.divides(p - Nat.1) and Nat.1 < g and g < p and g.pow(q).mod(p) = Nat.1)
         prime_imp_no_proper_divisor(q)
         Nat.1 < q
         q != Nat.0
         is_dsa_keypair(p, q, g, x, y) = (Nat.0 < x and x < q and
             y = g.pow(x).mod(p))
-        is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = 1)
+        is_mod_inverse(k, kinv, q) = ((k * kinv).mod(q) = Nat.1)
         is_mod_inverse(dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv),
                        sinv, q) =
             ((dsa_sign_s(q, h, x, dsa_sign_r(p, q, g, k), kinv) * sinv).mod(q)
-             = 1)
+             = Nat.1)
         dsa_verifier_mod_q_eq_r(p, q, g, x, y, h, k, kinv, sinv)
         mod_lt(g.pow(k).mod(p), q)
         mod_lt(kinv * (h + x * dsa_sign_r(p, q, g, k)), q)

@@ -1,20 +1,21 @@
 from nat import Nat, mul_cancel_left, divides_self, divides_lte, divides_symm, divides_trans, gcd_divides_left, gcd_divides_right, gcd_zero_left, gcd_nonzero_left, add_cancels_left, add_imp_sub, lte_add_right, mul_to_zero, pos_of_ne_zero, zero_or_suc, lt_imp_lte_suc, divides_gcd, lt_suc_right
-from complex import add_zero_right, add_zero_left, mul_one_right, add_comm, add_assoc, mul_comm
-from integer import gcd_mult_left
+from nat import add_comm, add_assoc, mul_comm
+from nat import gcd_mult_left
 from nat import lte_ref, lte_mul_both, lt_and_lte, lte_and_lt, lt_not_ref
 from order import lte_trans, lte_antisymm, lt_or_lte
 from integer import Int, from_nat, add_from_nat, mul_nat_from_nat_left, mul_nat_from_nat_right
-from complex import mul_one_left
+from nat import mul_one_left
 from list import List, map, sum, is_permutation, permutation_preserves_mapped_sum,
     map_map, map_contains, map_contains_of_contains, sum_map_of_pointwise,
     unique_same_contains_imp_permutation, map_length, map_sum_add, map_add
 from function import compose
 from algebra_core import add_fn
-from number_theory.divisor_sum import divisor_list, divisor_list_contains_implies, divisor_list_contains_of, divisor_list_is_unique, divisors_up_to, divisors_up_to_suc_yes, divisors_up_to_suc_no, divisors_up_to_zero, divisors_up_to_complete, divisors_up_to_unique, divisors_up_to_member, divisor_sum_fn, divisor_sum_fn_apply, divisor_sum_fn_at_zero
-from number_theory.dirichlet import divisor_quotient, divisor_quotient_cofactor, divisor_quotient_divides, divisor_quotient_positive
-from number_theory.totient import count_coprime_to, count_coprime_to_suc_yes, count_coprime_to_suc_no, nat_totient, count_multiples_block_no_div, unique_count_one, totient_p_pow, totient_sub_one_pred, not_contains_count_zero
+from number_theory.divisor_sum import divisor_list, divisor_list_contains_implies, divisor_list_contains_of, divisor_list_is_unique, divisor_sum_fn, divisor_sum_fn_apply, divisor_sum_fn_at_zero, divisors_up_to, divisors_up_to_complete, divisors_up_to_member, divisors_up_to_suc_no, divisors_up_to_suc_yes, divisors_up_to_unique, divisors_up_to_zero
+from number_theory.dirichlet import divisor_quotient, divisor_quotient_cofactor, divisor_quotient_divides, divisor_quotient_involution, divisor_quotient_positive
+from number_theory.totient import count_coprime_to, count_coprime_to_suc_no, count_coprime_to_suc_yes, count_multiples_block_no_div, nat_totient, not_contains_count_zero, totient_p_pow, totient_sub_one_pred, unique_count_one
 from number_theory.mobius_inversion import nat_le_add_right
 from finite_set import locally_injective_map_is_unique
+from number_theory.sum_of_two_squares import lte_neq_imp_lt
 numerals Nat
 numerals Int
 
@@ -253,13 +254,13 @@ theorem gcd_eq_block(n: Nat, d: Nat, k: Nat, q: Nat) {
 } by {
     if d != Nat.0 and d.divides(n) and divisor_quotient(n, d) = q and k.coprime(q) {
         define g(x: Nat) -> Bool {
-            x <= d and Nat.0 < x implies count_gcd_eq(n, d, d * k + x) = count_gcd_eq(n, d, d * k) + Nat.1
+            k.coprime(q) and x <= d and Nat.0 < x implies count_gcd_eq(n, d, d * k + x) = count_gcd_eq(n, d, d * k) + Nat.1
         }
         forall(y: Nat) {
-            gcd_eq_block_pred(n, d, k, q)(y) = g(y)
             g(y) = gcd_eq_block_pred(n, d, k, q)(y)
+            gcd_eq_block_pred(n, d, k, q)(y) = g(y)
         }
-        if Nat.0 <= d and Nat.0 < Nat.0 {
+        if k.coprime(q) and Nat.0 <= d and Nat.0 < Nat.0 {
             false
         }
         g(Nat.0)
@@ -281,8 +282,9 @@ theorem gcd_eq_block(n: Nat, d: Nat, k: Nat, q: Nat) {
         Nat.0 < d
         d <= d
         g(d)
-        g(d) = (d <= d and Nat.0 < d implies count_gcd_eq(n, d, d * k + d) = count_gcd_eq(n, d, d * k) + Nat.1)
-        d <= d and Nat.0 < d implies count_gcd_eq(n, d, d * k + d) = count_gcd_eq(n, d, d * k) + Nat.1
+        g(d) = (k.coprime(q) and d <= d and Nat.0 < d implies count_gcd_eq(n, d, d * k + d) = count_gcd_eq(n, d, d * k) + Nat.1)
+        k.coprime(q) and d <= d and Nat.0 < d
+        k.coprime(q) and d <= d and Nat.0 < d implies count_gcd_eq(n, d, d * k + d) = count_gcd_eq(n, d, d * k) + Nat.1
         count_gcd_eq(n, d, d * k + d) = count_gcd_eq(n, d, d * k) + Nat.1
     }
 }
@@ -843,21 +845,6 @@ define gcd_partition_pred(n: Nat) -> (Nat -> Bool) {
     }
 }
 
-/// A value at most another and not equal is smaller.
-theorem lte_neq_imp_lt(a: Nat, b: Nat) {
-    a <= b and a != b implies a < b
-} by {
-    if a <= b and a != b {
-        lt_or_lte(a, b)
-        if b <= a {
-            lte_antisymm(a, b)
-            a = b
-            false
-        }
-        a < b
-    }
-}
-
 /// A value smaller than `b.suc` is at most `b`.
 theorem lt_suc_imp_lte(a: Nat, b: Nat) {
     a < b.suc implies a <= b
@@ -1028,30 +1015,6 @@ theorem gcd_partition(n: Nat) {
 /// The quotient map `d -> n / d` is a function on divisors.
 define divisor_quotient_fn(n: Nat) -> (Nat -> Nat) {
     function(d: Nat) { divisor_quotient(n, d) }
-}
-
-/// Dividing twice by the same divisor restores the divisor.
-theorem divisor_quotient_involution(n: Nat, d: Nat) {
-    Nat.0 < n and d.divides(n)
-        implies divisor_quotient(n, divisor_quotient(n, d)) = d
-} by {
-    if Nat.0 < n and d.divides(n) {
-        divisor_quotient_cofactor(n, d)
-        d * divisor_quotient(n, d) = n
-        divisor_quotient_divides(n, d)
-        divisor_quotient(n, d).divides(n)
-        divisor_quotient_cofactor(n, divisor_quotient(n, d))
-        divisor_quotient(n, d) * divisor_quotient(n, divisor_quotient(n, d)) = n
-        divisor_quotient_positive(n, d)
-        Nat.0 < divisor_quotient(n, d)
-        divisor_quotient(n, d) != Nat.0
-        mul_comm(d, divisor_quotient(n, d))
-        d * divisor_quotient(n, d) = divisor_quotient(n, d) * d
-        divisor_quotient(n, d) * d = n
-        mul_cancel_left(divisor_quotient(n, d), d, divisor_quotient(n, divisor_quotient(n, d)))
-        d = divisor_quotient(n, divisor_quotient(n, d))
-        divisor_quotient(n, divisor_quotient(n, d)) = d
-    }
 }
 
 /// The quotient map permutes the divisor list of `n`.

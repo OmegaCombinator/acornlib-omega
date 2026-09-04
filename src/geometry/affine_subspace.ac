@@ -1,5 +1,6 @@
 from algebra_core import AddCommGroup
 from geometry.affine_space import AffineSpace, affine_zero_vadd, affine_add_vadd, affine_vsub_vadd, affine_vadd_vsub, affine_vsub_self, affine_space_product, affine_space_product_vadd_apply, affine_space_product_vsub_apply
+from geometry import affine_add_vadd_constraint, affine_vadd_vsub_constraint, affine_vsub_vadd_constraint, affine_zero_vadd_constraint, is_affine_space
 from list import List, add_contains_left, add_contains_or, fold_right, add_contains_right, is_permutation, list_contains_implies_count_geq_one, list_not_contains_impl_count_zero, unique_preserves_contains
 from list import add_assoc
 from logic import and_assoc,
@@ -221,6 +222,9 @@ theorem affine_subspace_eq_empty_iff_not_nonempty[V: AddCommGroup, P](
             affine_subspace_ext(a, empty)
             a = empty
         }
+        empty = affine_subspace_empty(space)
+        (a = affine_subspace_empty(space)) = (a = empty)
+        (a = empty) = not affine_subspace_nonempty(a)
         (a = affine_subspace_empty(space)) =
             not affine_subspace_nonempty(a)
     }
@@ -1099,50 +1103,39 @@ theorem affine_subspace_product_eq_empty_iff[V: AddCommGroup, W: AddCommGroup, P
     ((a = affine_subspace_empty(a.space)) or
         (b = affine_subspace_empty(b.space)))
 } by {
-    let product = affine_subspace_product(a, b)
-    let product_space = affine_space_product(a.space, b.space)
-    let product_empty =
-        product = affine_subspace_empty(product_space)
-    let a_empty = a = affine_subspace_empty(a.space)
-    let b_empty = b = affine_subspace_empty(b.space)
-    let product_nonempty = affine_subspace_nonempty(product)
-    let a_nonempty = affine_subspace_nonempty(a)
-    let b_nonempty = affine_subspace_nonempty(b)
-
     affine_subspace_product_space(a, b)
-    product.space = product_space
-    affine_subspace_eq_empty_iff_not_nonempty(product, product_space)
-    product_empty = not product_nonempty
+    affine_subspace_product(a, b).space =
+        affine_space_product(a.space, b.space)
+
+    affine_subspace_eq_empty_iff_not_nonempty(
+        affine_subspace_product(a, b),
+        affine_space_product(a.space, b.space))
+    (affine_subspace_product(a, b) =
+        affine_subspace_empty(affine_space_product(a.space, b.space))) =
+        not affine_subspace_nonempty(affine_subspace_product(a, b))
 
     affine_subspace_product_nonempty_iff(a, b)
-    product_nonempty = (a_nonempty and b_nonempty)
-    not_and(a_nonempty, b_nonempty)
-    not product_nonempty = (not a_nonempty or not b_nonempty)
+    affine_subspace_nonempty(affine_subspace_product(a, b)) =
+        (affine_subspace_nonempty(a) and affine_subspace_nonempty(b))
+    not_and(affine_subspace_nonempty(a), affine_subspace_nonempty(b))
+    not (affine_subspace_nonempty(a) and affine_subspace_nonempty(b)) =
+        (not affine_subspace_nonempty(a) or not affine_subspace_nonempty(b))
+    not affine_subspace_nonempty(affine_subspace_product(a, b)) =
+        (not affine_subspace_nonempty(a) or not affine_subspace_nonempty(b))
 
     affine_subspace_eq_empty_iff_not_nonempty(a, a.space)
-    a_empty = not a_nonempty
+    (a = affine_subspace_empty(a.space)) =
+        not affine_subspace_nonempty(a)
     affine_subspace_eq_empty_iff_not_nonempty(b, b.space)
-    b_empty = not b_nonempty
+    (b = affine_subspace_empty(b.space)) =
+        not affine_subspace_nonempty(b)
 
-    (not a_nonempty or not b_nonempty) = (a_empty or b_empty)
-    if product_empty {
-        not product_nonempty
-        not a_nonempty or not b_nonempty
-    }
-    if not product_empty {
-        product_nonempty
-        a_nonempty and b_nonempty
-        not (not a_nonempty or not b_nonempty)
-    }
-    product_empty = (not a_nonempty or not b_nonempty)
-    product_empty = (a_empty or b_empty)
+    (a = affine_subspace_empty(a.space) or
+        b = affine_subspace_empty(b.space)) =
+        (not affine_subspace_nonempty(a) or not affine_subspace_nonempty(b))
+
     (affine_subspace_product(a, b) =
-        affine_subspace_empty(product_space)) = product_empty
-    ((a = affine_subspace_empty(a.space)) or
-        (b = affine_subspace_empty(b.space))) =
-        (a_empty or b_empty)
-    (affine_subspace_product(a, b) =
-        affine_subspace_empty(product_space)) =
+        affine_subspace_empty(affine_space_product(a.space, b.space))) =
         ((a = affine_subspace_empty(a.space)) or
             (b = affine_subspace_empty(b.space)))
 }
@@ -1744,8 +1737,12 @@ theorem affine_span_fixed_iff[V: AddCommGroup, P](
         affine_subspace_constraint(a, src)
 } by {
     let span = affine_span(a, src)
-    if span.contains = src {
+    if affine_span(a, src).contains = src {
         affine_span_constraint(a, src)
+        affine_subspace_constraint(a, affine_span_contains(a, src))
+        affine_span(a, src).contains = affine_span_contains(a, src)
+        affine_subspace_constraint(a, affine_span(a, src).contains)
+        affine_subspace_constraint(a, src)
     }
     if affine_subspace_constraint(a, src) {
         let s: AffineSubspace[V, P] satisfy {
@@ -1756,7 +1753,10 @@ theorem affine_span_fixed_iff[V: AddCommGroup, P](
         affine_span_subspace_eq(s)
         affine_span(a, src) = s
         span.contains = src
+        affine_span(a, src).contains = src
     }
+    (affine_span(a, src).contains = src) =
+        affine_subspace_constraint(a, src)
 }
 
 /// The intersection of two source predicates for affine spans.

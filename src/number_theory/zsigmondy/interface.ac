@@ -28,3 +28,118 @@ theorem totient_prime_power_formula(p: Nat, k: Nat) {
     Nat.1 <= k and p.is_prime
         implies (p.pow(k)).totient = p.pow(k) - p.pow(k - Nat.1)
 }
+
+define reduced_residue_sum_below[A: AddCommMonoid](
+    n: Nat, k: Nat, f: Nat -> A
+) -> A {
+    sum(map(coprime_residues_below(n, k), f))
+}
+
+define reduced_residue_sum[A: AddCommMonoid](n: Nat, f: Nat -> A) -> A {
+    reduced_residue_sum_below(n, n, f)
+}
+
+theorem reduced_residue_sum_below_zero[A: AddCommMonoid](n: Nat, f: Nat -> A) {
+    reduced_residue_sum_below(n, Nat.0, f) = A.0
+}
+
+theorem reduced_residue_sum_below_suc_yes[A: AddCommMonoid](
+    n: Nat, j: Nat, f: Nat -> A
+) {
+    j.coprime(n)
+        implies reduced_residue_sum_below(n, j.suc, f) = f(j) + reduced_residue_sum_below(n, j, f)
+}
+
+theorem reduced_residue_sum_below_suc_no[A: AddCommMonoid](
+    n: Nat, j: Nat, f: Nat -> A
+) {
+    not j.coprime(n)
+        implies reduced_residue_sum_below(n, j.suc, f) = reduced_residue_sum_below(n, j, f)
+}
+
+theorem reduced_residue_sum_below_congr[A: AddCommMonoid](
+    n: Nat, k: Nat, f: Nat -> A, g: Nat -> A
+) {
+    (forall(a: Nat) { a.coprime(n) implies f(a) = g(a) })
+        implies reduced_residue_sum_below(n, k, f) = reduced_residue_sum_below(n, k, g)
+}
+
+theorem reduced_residue_sum_congr[A: AddCommMonoid](
+    n: Nat, f: Nat -> A, g: Nat -> A
+) {
+    (forall(a: Nat) { a.coprime(n) implies f(a) = g(a) })
+        implies reduced_residue_sum(n, f) = reduced_residue_sum(n, g)
+}
+
+define one_summand(a: Nat) -> Nat {
+    Nat.1
+}
+
+theorem reduced_residue_sum_below_one(n: Nat, k: Nat) {
+    reduced_residue_sum_below(n, k, one_summand) = coprime_residues_below(n, k).length
+}
+
+theorem reduced_residue_sum_one(n: Nat) {
+    reduced_residue_sum(n, one_summand) = n.totient
+}
+
+
+define power_summand[S: Semiring](k: Nat, a: Nat) -> S {
+    from_nat[S](a).pow(k)
+}
+
+define reduced_residue_power_sum[S: Semiring](k: Nat, n: Nat) -> S {
+    reduced_residue_sum(n, power_summand[S](k))
+}
+
+theorem power_summand_zero[S: Semiring](a: Nat) {
+    power_summand[S](Nat.0, a) = S.1
+}
+
+theorem power_summand_one[S: Semiring](a: Nat) {
+    power_summand[S](Nat.1, a) = from_nat[S](a)
+}
+
+define one_summand_in[S: Semiring](a: Nat) -> S {
+    S.1
+}
+
+theorem reduced_residue_power_sum_zero[S: Semiring](n: Nat) {
+    reduced_residue_power_sum[S](Nat.0, n) = reduced_residue_sum(n, one_summand_in[S])
+}
+
+theorem reduced_residue_sum_permuted[A: AddCommMonoid](
+    n: Nat, f: Nat -> A, reordered: List[Nat]
+) {
+    is_permutation(coprime_residues(n), reordered)
+        implies reduced_residue_sum(n, f) = sum(map(reordered, f))
+}
+
+theorem reduced_residue_sum_reindex[A: AddCommMonoid](
+    n: Nat, f: Nat -> A, g: Nat -> Nat
+) {
+    is_permutation(coprime_residues(n), map(coprime_residues(n), g))
+        implies reduced_residue_sum(n, f) = reduced_residue_sum(n, compose(f, g))
+}
+
+define id_summand(a: Nat) -> Nat {
+    a
+}
+
+define modulus_summand(n: Nat, a: Nat) -> Nat {
+    n
+}
+
+theorem reduced_residue_sum_below_modulus(n: Nat, k: Nat) {
+    reduced_residue_sum_below(n, k, modulus_summand(n))
+        = n * coprime_residues_below(n, k).length
+}
+
+theorem reduced_residue_sum_modulus(n: Nat) {
+    reduced_residue_sum(n, modulus_summand(n)) = n * n.totient
+}
+
+theorem reduced_residue_first_power_sum_doubled(n: Nat) {
+    Nat.1 < n implies
+        reduced_residue_sum(n, id_summand) + reduced_residue_sum(n, id_summand) = n * n.totient
+}
